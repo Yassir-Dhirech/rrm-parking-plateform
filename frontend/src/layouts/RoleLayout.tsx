@@ -1,24 +1,18 @@
 import { Layout, Menu, Button } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { roleConfig } from "../lib/roleConfig";
 import { LogoutOutlined } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 
-interface MenuItem {
-  key: string;
-  label: string;
-  path: string;
-}
-
-interface Props {
-  title: string;
-  menuItems: MenuItem[];
-}
-
-export function AppShell({ title, menuItems }: Props) {
+export function RoleLayout() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { role, logout } = useAuth();
+
+  if (!role) return null; // safety guard, ProtectedRoute already ensures this
+
+  const config = roleConfig[role];
 
   const handleLogout = () => {
     logout();
@@ -34,7 +28,7 @@ export function AppShell({ title, menuItems }: Props) {
         <Menu
           theme="dark"
           mode="inline"
-          items={menuItems.map((item) => ({
+          items={config.menuItems.map((item) => ({
             key: item.key,
             label: item.label,
             onClick: () => navigate(item.path),
@@ -43,7 +37,7 @@ export function AppShell({ title, menuItems }: Props) {
       </Sider>
       <Layout>
         <Header style={{ background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
-          <strong>{title}</strong>
+          <strong>{config.title}</strong>
           <Button icon={<LogoutOutlined />} onClick={handleLogout}>
             Déconnexion
           </Button>
