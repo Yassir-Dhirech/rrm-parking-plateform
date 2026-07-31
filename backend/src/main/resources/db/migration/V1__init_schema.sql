@@ -7,7 +7,7 @@
 -- =====================================================================
 -- 1. UTILISATEURS
 -- =====================================================================
-CREATE TABLE utilisateurs (
+CREATE TABLE utilisateursxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
