@@ -16,6 +16,18 @@ export interface PublicDemandeInput {
   typeVehicule: TypeVehicule;
 }
 
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+
+export interface DemandeListItem {
+  id: number;
+  reference: string;
+  typeDemande: "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT";
+  statut: StatutDemande;
+  clientNom: string;
+  parkingNom: string;
+  dateCreation: string;
+}
+
 export interface DemandeSubmissionResult {
   reference: string;
 }
