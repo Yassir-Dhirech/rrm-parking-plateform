@@ -7,19 +7,26 @@ import { Unauthorized } from "../pages/Unauthorized";
 import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig,type Role } from "../lib/roleConfig";
+import {DemandesList } from "../features/demandes/pages/DemandesList";
+const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
+  const extraRoutes =
+    role === "AGENT"
+      ? [{ path: "/agent/demandes", element: <DemandesList /> }]
+      : [];
 
-const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => ({
-  element: <ProtectedRoute allowedRoles={[role]} />,
-  children: [
-    {
-      element: <RoleLayout />,
-      children: [
-        { path: roleConfig[role].homePath, element: <Dashboard /> },
-        // future feature routes for this role get added here later
-      ],
-    },
-  ],
-}));
+  return {
+    element: <ProtectedRoute allowedRoles={[role]} />,
+    children: [
+      {
+        element: <RoleLayout />,
+        children: [
+          { path: roleConfig[role].homePath, element: <Dashboard /> },
+          ...extraRoutes,
+        ],
+      },
+    ],
+  };
+});
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
