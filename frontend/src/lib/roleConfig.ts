@@ -1,4 +1,7 @@
-export type Role = "AGENT" | "SUPERVISEUR" | "RESPONSABLE" | "COMPTABLE" | "RESP_REPORTING" | "ADMIN_SI";
+export type Role = "AGENT" 
+| "SUPERVISEUR" | "RESPONSABLE" |
+ "COMPTABLE" | "RESP_REPORTING" |
+  "ADMIN_SI";
 
 interface MenuItem {
   key: string;
