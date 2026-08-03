@@ -32,6 +32,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   { path: "/unauthorized", element: <Unauthorized /> },
   { path: "/demande-publique", element: <PublicQrForm /> },
+  {path: "/", element: <LoginPage  />},
   ...roleRoutes,
   { path: "*", element: <NotFound /> },
 ]);
