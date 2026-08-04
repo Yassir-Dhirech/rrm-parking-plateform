@@ -31,3 +31,11 @@ export interface DemandeListItem {
 export interface DemandeSubmissionResult {
   reference: string;
 }
+
+export interface DemandeDetail extends DemandeListItem {
+  email: string;
+  telephone: string;
+  immatriculation: string;
+  typeVehicule: string;
+  raisonRejet?: string;
+}

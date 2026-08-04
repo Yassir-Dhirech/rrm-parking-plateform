@@ -8,10 +8,12 @@ import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig,type Role } from "../lib/roleConfig";
 import {DemandesList } from "../features/demandes/pages/DemandesList";
+
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes =
     role === "AGENT"
-      ? [{ path: "/agent/demandes", element: <DemandesList /> }]
+      ? [{ path: "/agent/demandes", element: <DemandesList /> },
+        {path: "/agent/demandes/:id", element: <DemandesList />}]
       : [];
 
   return {
