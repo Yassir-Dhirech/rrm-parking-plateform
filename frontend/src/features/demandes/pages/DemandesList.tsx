@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getDemandesMock } from "../../../api/demandesMock";
 import { type DemandeListItem } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
+import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
 export function DemandesList() {
+    const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["demandes"],
     queryFn: getDemandesMock,
@@ -56,6 +58,10 @@ export function DemandesList() {
         columns={columns}
         dataSource={data}
         loading={isLoading}
+        onRow={(record) => ({
+    onClick: () => navigate(`/agent/demandes/${record.id}`),
+    style: { cursor: "pointer" },
+  })}
       />
     </Card>
   );
