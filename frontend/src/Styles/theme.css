@@ -1,0 +1,14 @@
+:root {
+  --color-primary: #1B7A79;
+  --color-secondary: #E8A93A;
+  --color-accent: #A32659;
+  --color-text: #1A2332;
+  --color-bg: #F7F8FA;
+  --color-border: #D9DCE1;
+
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 32px;
+
+  --font-family: "Inter", sans-serif;
+}

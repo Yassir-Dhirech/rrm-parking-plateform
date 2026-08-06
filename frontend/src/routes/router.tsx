@@ -8,10 +8,11 @@ import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig,type Role } from "../lib/roleConfig";
 import {DemandesList } from "../features/demandes/pages/DemandesList";
+import { LandingPage } from "../pages/LandingPage";
 
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes =
-    role === "AGENT"
+    role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE"
       ? [{ path: "/agent/demandes", element: <DemandesList /> },
         {path: "/agent/demandes/:id", element: <DemandesList />}]
       : [];
@@ -31,10 +32,11 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 });
 
 export const router = createBrowserRouter([
+  {path: "/", element: <LandingPage  />},
   { path: "/login", element: <LoginPage /> },
   { path: "/unauthorized", element: <Unauthorized /> },
   { path: "/demande-publique", element: <PublicQrForm /> },
-  {path: "/", element: <LoginPage  />},
+  
   ...roleRoutes,
   { path: "*", element: <NotFound /> },
 ]);
