@@ -1,0 +1,66 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px var(--spacing-lg);
+  background: var(--color-bg);
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.hero p {
+  font-size: 1.1rem;
+  color: #555;
+  max-width: 600px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.section {
+  padding: 60px var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.landing-subscribe {
+  background: white;
+  padding: 60px var(--spacing-lg);
+}
+
+.landing-subscribe h2 {
+  text-align: center;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-lg);
+}
+
+.landing-subscribe-cards {
+  display: flex;
+  gap: var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+.landing-subscribe-card {
+  flex: 1;
+  max-width: 380px;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.landing-subscribe-card h3 {
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.landing-subscribe-card p {
+  color: #555;
+  margin-bottom: var(--spacing-md);
+}

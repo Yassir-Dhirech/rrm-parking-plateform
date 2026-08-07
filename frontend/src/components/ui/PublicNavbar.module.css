@@ -1,0 +1,33 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  height: 72px;
+  background: white;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  height: 40px;
+}
+
+.links {
+  display: flex;
+  gap: var(--spacing-lg);
+  list-style: none;
+}
+
+.links a {
+  color: var(--color-text);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.links a:hover {
+  color: var(--color-primary);
+}

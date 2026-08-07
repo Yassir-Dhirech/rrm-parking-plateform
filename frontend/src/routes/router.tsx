@@ -8,13 +8,36 @@ import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig,type Role } from "../lib/roleConfig";
 import {DemandesList } from "../features/demandes/pages/DemandesList";
+import { LandingPage } from "../pages/LandingPage";
+import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
+import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
+import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
+import { PaiementsList } from "../features/paiements/pages/PaiementsList";
+import { PaiementDetail } from "../features/paiements/pages/PaiementDetail";
 
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
-  const extraRoutes =
-    role === "AGENT"
-      ? [{ path: "/agent/demandes", element: <DemandesList /> },
-        {path: "/agent/demandes/:id", element: <DemandesList />}]
-      : [];
+  const extraRoutes = [];
+
+  if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/demandes`, element: <DemandesList /> },
+    { path: `${roleConfig[role].homePath}/demandes/:id`, element: <DemandeDetail /> },
+  );
+}
+
+if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/abonnements`, element: <AbonnementsList /> },
+    { path: `${roleConfig[role].homePath}/abonnements/:id`, element: <AbonnementDetail /> },
+  );
+}
+
+if (role === "AGENT" || role === "SUPERVISEUR" || role === "COMPTABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/paiements`, element: <PaiementsList /> },
+    { path: `${roleConfig[role].homePath}/paiements/:id`, element: <PaiementDetail /> },
+  );
+}
 
   return {
     element: <ProtectedRoute allowedRoles={[role]} />,
@@ -31,10 +54,11 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 });
 
 export const router = createBrowserRouter([
+  {path: "/", element: <LandingPage  />},
   { path: "/login", element: <LoginPage /> },
   { path: "/unauthorized", element: <Unauthorized /> },
   { path: "/demande-publique", element: <PublicQrForm /> },
-  {path: "/", element: <LoginPage  />},
+  
   ...roleRoutes,
   { path: "*", element: <NotFound /> },
 ]);

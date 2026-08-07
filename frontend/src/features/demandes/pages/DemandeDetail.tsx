@@ -9,6 +9,7 @@ import {
 } from "../../../api/demandesMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
+import { roleConfig } from "../../../lib/roleConfig";
 
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ export function DemandeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { role } = useAuth();
+  const basePath = role ? roleConfig[role].homePath : "";
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [raison, setRaison] = useState("");
@@ -31,7 +33,7 @@ export function DemandeDetail() {
       message.success("Demande validée");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
-      navigate("/agent/demandes");
+      navigate(`${basePath}/demandes`);
     },
   });
 
@@ -42,7 +44,7 @@ export function DemandeDetail() {
       setRejectModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
-      navigate("/agent/demandes");
+      navigate(`${basePath}/demandes`);
     },
   });
 
@@ -51,7 +53,7 @@ export function DemandeDetail() {
   }
 
   const canAct = role === "AGENT" && data.statut === "SOUMISE";
-
+  
   return (
     <Card title={`Demande ${data.reference}`}>
       <Descriptions column={2} bordered>
