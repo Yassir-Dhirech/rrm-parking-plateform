@@ -4,11 +4,15 @@ import { getDemandesMock } from "../../../api/demandesMock";
 import { type DemandeListItem } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import { roleConfig } from "../../../lib/roleConfig";
 
 const { Title } = Typography;
 
 export function DemandesList() {
     const navigate = useNavigate();
+    const { role } = useAuth();
+    const basePath = role ? roleConfig[role].homePath : "";
   const { data, isLoading } = useQuery({
     queryKey: ["demandes"],
     queryFn: getDemandesMock,
@@ -59,9 +63,9 @@ export function DemandesList() {
         dataSource={data}
         loading={isLoading}
         onRow={(record) => ({
-    onClick: () => navigate(`/agent/demandes/${record.id}`),
-    style: { cursor: "pointer" },
-  })}
+  onClick: () => navigate(`${basePath}/demandes/${record.id}`),
+  style: { cursor: "pointer" },
+})}
       />
     </Card>
   );

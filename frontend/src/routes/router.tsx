@@ -9,13 +9,26 @@ import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig,type Role } from "../lib/roleConfig";
 import {DemandesList } from "../features/demandes/pages/DemandesList";
 import { LandingPage } from "../pages/LandingPage";
+import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
+import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
+import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
 
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
-  const extraRoutes =
-    role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE"
-      ? [{ path: "/agent/demandes", element: <DemandesList /> },
-        {path: "/agent/demandes/:id", element: <DemandesList />}]
-      : [];
+  const extraRoutes = [];
+
+  if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/demandes`, element: <DemandesList /> },
+    { path: `${roleConfig[role].homePath}/demandes/:id`, element: <DemandeDetail /> },
+  );
+}
+
+if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/abonnements`, element: <AbonnementsList /> },
+    { path: `${roleConfig[role].homePath}/abonnements/:id`, element: <AbonnementDetail /> },
+  );
+}
 
   return {
     element: <ProtectedRoute allowedRoles={[role]} />,

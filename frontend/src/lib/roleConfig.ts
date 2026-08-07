@@ -21,7 +21,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     homePath: "/agent",
     title: "Espace Agent",
     menuItems: [
-      { key: "dashboard", label: "Tableau de bord", path: "/agent" },
+      { key: "Tableau de bord", label: "Tableau de bord", path: "/agent" },
       { key: "demandes", label: "Demandes", path: "/agent/demandes" },
     ],
     kpis: ["Demandes en attente", "Demandes traitées aujourd'hui"],
