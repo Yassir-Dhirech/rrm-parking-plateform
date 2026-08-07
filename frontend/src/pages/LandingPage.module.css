@@ -21,10 +21,11 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.section {
+section {
   padding: 60px var(--spacing-lg);
   max-width: 900px;
   margin: 0 auto;
+  height: 100vh;
 }
 
 .landing-subscribe {

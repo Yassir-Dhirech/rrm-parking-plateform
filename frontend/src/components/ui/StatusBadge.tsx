@@ -3,8 +3,10 @@ import { Tag } from "antd";
 type StatutDemande = "SOUMISE" | "EN_COURS" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
+type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
 
-type AnyStatut = StatutDemande | StatutAbonnement | StatutPaiement;
+
+type AnyStatut = StatutDemande | StatutAbonnement | StatutPaiement | StatutFacture;
 
 const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
@@ -20,6 +22,10 @@ const colorMap: Record<AnyStatut, string> = {
   RESILIE: "red",
   CONFIRME: "green",
   ANNULE: "red",
+  BROUILLON: "default",
+  EMISE: "blue",
+  SIGNEE: "green",
+  ANNULEE: "red",
 };
 
 const labelMap: Record<AnyStatut, string> = {
@@ -36,6 +42,10 @@ const labelMap: Record<AnyStatut, string> = {
   RESILIE: "Résilié",
   CONFIRME: "Confirmé",
   ANNULE: "Annulé",
+  BROUILLON: "Brouillon",
+  EMISE: "Émise",
+  SIGNEE: "Signée",
+  ANNULEE: "Annulée",
 };
 
 interface Props {

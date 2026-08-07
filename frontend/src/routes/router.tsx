@@ -14,7 +14,8 @@ import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
 import { PaiementsList } from "../features/paiements/pages/PaiementsList";
 import { PaiementDetail } from "../features/paiements/pages/PaiementDetail";
-
+import { FacturesList } from "../features/factures/pages/FacturesList";
+import { FactureDetail } from "../features/factures/pages/FactureDetail";
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes = [];
 
@@ -36,6 +37,13 @@ if (role === "AGENT" || role === "SUPERVISEUR" || role === "COMPTABLE") {
   extraRoutes.push(
     { path: `${roleConfig[role].homePath}/paiements`, element: <PaiementsList /> },
     { path: `${roleConfig[role].homePath}/paiements/:id`, element: <PaiementDetail /> },
+  );
+}
+
+if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/factures`, element: <FacturesList /> },
+    { path: `${roleConfig[role].homePath}/factures/:id`, element: <FactureDetail /> },
   );
 }
 

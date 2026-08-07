@@ -1,13 +1,15 @@
 import { Layout, Menu, Button, Avatar } from "antd";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import "./RoleLayout.css";
+
 const { Header, Sider, Content } = Layout;
 
 export function RoleLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { role, userName, logout } = useAuth();
 
   if (!role) return null;
@@ -19,15 +21,13 @@ export function RoleLayout() {
     navigate("/login");
   };
 
+  const selectedKey = config.menuItems.find((item) =>
+    location.pathname.startsWith(item.path) && item.path !== config.homePath
+  )?.key ?? (location.pathname === config.homePath ? "dashboard" : undefined);
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          
-        }}
-      >
+      <Sider style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         <div>
           <div className="sidebar-account">
             <Avatar size={40} icon={<UserOutlined />} />
@@ -40,6 +40,7 @@ export function RoleLayout() {
           <Menu
             theme="dark"
             mode="inline"
+            selectedKeys={selectedKey ? [selectedKey] : []}
             items={config.menuItems.map((item) => ({
               key: item.key,
               label: item.label,
@@ -49,12 +50,7 @@ export function RoleLayout() {
         </div>
 
         <div className="sidebar-logout">
-          <Button
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-            block
-            danger
-          >
+          <Button icon={<LogoutOutlined />} onClick={handleLogout} block danger>
             Déconnexion
           </Button>
         </div>
