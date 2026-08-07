@@ -16,6 +16,7 @@ export function LandingPage() {
           Rabat Région Mobilité facilite la gestion de vos abonnements de
           stationnement dans les 17 parkings de la région. Soumettez votre
           demande en quelques minutes.
+          
         </p>
         <Button
           type="primary"

@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--spacing-lg);
-  height: 72px;
+  height: 65px;
   background: white;
   border-bottom: 1px solid var(--color-border);
   position: sticky;
@@ -12,13 +12,14 @@
 }
 
 .logo {
-  height: 40px;
+  height: 50px;
 }
 
 .links {
   display: flex;
   gap: var(--spacing-lg);
   list-style: none;
+  margin: auto;
 }
 
 .links a {
@@ -28,6 +29,13 @@
   transition: color 0.2s;
 }
 
-.links a:hover {
+.links a:hover  {
   color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.links a.active {
+  color: var(--color-primary);
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-primary);
 }

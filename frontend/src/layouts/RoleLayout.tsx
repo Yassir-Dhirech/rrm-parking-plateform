@@ -30,7 +30,7 @@ export function RoleLayout() {
       >
         <div>
           <div className="sidebar-account">
-            <Avatar size={40} icon={<UserOutlined />} />
+            <Avatar size={50} icon={<UserOutlined />} />
             <div className="sidebar-account-info">
               <div className="sidebar-account-name">{userName ?? "Utilisateur"}</div>
               <div className="sidebar-account-role">{config.title}</div>
