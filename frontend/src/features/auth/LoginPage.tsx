@@ -33,7 +33,7 @@ export function LoginPage() {
 
   const handleMockLogin = (role: Role) => {
     const { token } = mockLogin(role);
-    setAuth(token, role);
+    setAuth(token, role, roleConfig[role].title);
     navigate(roleHomeRoute[role]);
   };
 

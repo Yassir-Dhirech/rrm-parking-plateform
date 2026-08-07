@@ -1,16 +1,16 @@
-import { Layout, Menu, Button } from "antd";
+import { Layout, Menu, Button, Avatar } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
-import { LogoutOutlined } from "@ant-design/icons";
-
+import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import "./RoleLayout.css";
 const { Header, Sider, Content } = Layout;
 
 export function RoleLayout() {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
+  const { role, userName, logout } = useAuth();
 
-  if (!role) return null; // safety guard, ProtectedRoute already ensures this
+  if (!role) return null;
 
   const config = roleConfig[role];
 
@@ -21,26 +21,48 @@ export function RoleLayout() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider>
-        <div style={{ color: "white", padding: 16, fontWeight: "bold" }}>
-          RRM Parking
+      <Sider
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          
+        }}
+      >
+        <div>
+          <div className="sidebar-account">
+            <Avatar size={40} icon={<UserOutlined />} />
+            <div className="sidebar-account-info">
+              <div className="sidebar-account-name">{userName ?? "Utilisateur"}</div>
+              <div className="sidebar-account-role">{config.title}</div>
+            </div>
+          </div>
+
+          <Menu
+            theme="dark"
+            mode="inline"
+            items={config.menuItems.map((item) => ({
+              key: item.key,
+              label: item.label,
+              onClick: () => navigate(item.path),
+            }))}
+          />
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          items={config.menuItems.map((item) => ({
-            key: item.key,
-            label: item.label,
-            onClick: () => navigate(item.path),
-          }))}
-        />
-      </Sider>
-      <Layout>
-        <Header style={{ background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
-          <strong>{config.title}</strong>
-          <Button icon={<LogoutOutlined />} onClick={handleLogout}>
+
+        <div className="sidebar-logout">
+          <Button
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            block
+            danger
+          >
             Déconnexion
           </Button>
+        </div>
+      </Sider>
+
+      <Layout>
+        <Header style={{ background: "#fff", display: "flex", alignItems: "center", padding: "0 16px" }}>
+          <strong>{config.title}</strong>
         </Header>
         <Content style={{ margin: 16 }}>
           <Outlet />
