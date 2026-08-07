@@ -27,7 +27,7 @@ export function RoleLayout() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      <Sider style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" , backgroundColor: "var(--color-primary)" }}>
         <div>
           <div className="sidebar-account">
             <Avatar size={40} icon={<UserOutlined />} />
@@ -37,7 +37,7 @@ export function RoleLayout() {
             </div>
           </div>
 
-          <Menu
+          <Menu style={{ backgroundColor: "var(--color-primary)", color: "white" }}
             theme="dark"
             mode="inline"
             selectedKeys={selectedKey ? [selectedKey] : []}
@@ -49,7 +49,7 @@ export function RoleLayout() {
           />
         </div>
 
-        <div className="sidebar-logout">
+        <div className="sidebar-logout" style={{ padding: 16}}>
           <Button icon={<LogoutOutlined />} onClick={handleLogout} block danger>
             Déconnexion
           </Button>

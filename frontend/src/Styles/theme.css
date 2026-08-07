@@ -1,9 +1,10 @@
 :root {
-  --color-primary: #1B7A79;
-  --color-secondary: #E8A93A;
-  --color-accent: #A32659;
-  --color-text: #1A2332;
-  --color-bg: #F7F8FA;
+  --color-primary: #0A6B6B;
+  --color-secondary: #F5A623;
+  --color-accent: #8E2A6B;
+  --color-text: #2D3436;
+  --color-bg: #F8F9FA;
+  --color-hover : rgba(10, 107, 107, 0.08);
   --color-border: #D9DCE1;
 
   --spacing-sm: 8px;
