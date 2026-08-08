@@ -4,9 +4,12 @@ type StatutDemande = "SOUMISE" | "EN_COURS" | "VALIDEE" | "REJETEE" | "CORRIGEE"
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
+type StatutCarte = "A_PREPARER" | "A_ACTIVER" | "ACTIVE" | "EXPIREE" | "DESACTIVEE";
 
 
-type AnyStatut = StatutDemande | StatutAbonnement | StatutPaiement | StatutFacture;
+type AnyStatut = StatutDemande | 
+StatutAbonnement | StatutPaiement | StatutFacture
+ | StatutCarte;
 
 const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
@@ -26,6 +29,11 @@ const colorMap: Record<AnyStatut, string> = {
   EMISE: "blue",
   SIGNEE: "green",
   ANNULEE: "red",
+  A_PREPARER: "default",
+  A_ACTIVER: "gold",
+  DESACTIVEE: "red",
+  EXPIREE: "default",
+  ACTIVE: "green"
 };
 
 const labelMap: Record<AnyStatut, string> = {
@@ -46,6 +54,11 @@ const labelMap: Record<AnyStatut, string> = {
   EMISE: "Émise",
   SIGNEE: "Signée",
   ANNULEE: "Annulée",
+  A_PREPARER: "À préparer",
+  A_ACTIVER: "À activer",
+  DESACTIVEE: "Désactivée",
+  EXPIREE: "Expirée",
+  ACTIVE: "Active"
 };
 
 interface Props {
