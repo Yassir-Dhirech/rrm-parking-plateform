@@ -38,6 +38,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "paiements", label: "Paiements", path: "/superviseur/paiements" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
       { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
+      { key: "contrats", label: "Contrats", path: "/superviseur/contrats" },
     ],
   },
   RESPONSABLE: {
@@ -49,6 +50,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "factures", label: "Factures", path: "/responsable/factures" },
+        { key: "factures", label: "Factures", path: "/responsable/factures" },    
     ],
   },
   COMPTABLE: {
