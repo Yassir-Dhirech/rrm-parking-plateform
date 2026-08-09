@@ -16,6 +16,15 @@ import { PaiementsList } from "../features/paiements/pages/PaiementsList";
 import { PaiementDetail } from "../features/paiements/pages/PaiementDetail";
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
+import { CartesList } from "../features/cartes/pages/CartesList";
+import { CarteDetail } from "../features/cartes/pages/CarteDetail";
+import { ContratDetail } from "../features/contrats/pages/ContratDetail";
+import { ContratsList } from "../features/contrats/pages/ContratsList";
+
+
+
+
+
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes = [];
 
@@ -44,6 +53,19 @@ if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
   extraRoutes.push(
     { path: `${roleConfig[role].homePath}/factures`, element: <FacturesList /> },
     { path: `${roleConfig[role].homePath}/factures/:id`, element: <FactureDetail /> },
+  );
+}
+
+if (role === "AGENT" || role === "SUPERVISEUR") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/cartes`, element: <CartesList /> },
+    { path: `${roleConfig[role].homePath}/cartes/:id`, element: <CarteDetail /> },
+  );
+}
+if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
+    { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },
   );
 }
 
