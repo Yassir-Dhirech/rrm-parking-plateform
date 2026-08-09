@@ -20,6 +20,8 @@ import { CartesList } from "../features/cartes/pages/CartesList";
 import { CarteDetail } from "../features/cartes/pages/CarteDetail";
 import { ContratDetail } from "../features/contrats/pages/ContratDetail";
 import { ContratsList } from "../features/contrats/pages/ContratsList";
+import { RecettesList } from "../features/recettes/pages/RecettesList";
+import { RecetteDetail } from "../features/recettes/pages/RecetteDetail";
 
 
 
@@ -66,6 +68,13 @@ if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
   extraRoutes.push(
     { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
     { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },
+  );
+}
+
+if (role === "SUPERVISEUR" || role === "COMPTABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
+    { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }
   );
 }
 
