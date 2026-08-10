@@ -1,10 +1,13 @@
+
 export type Role = "AGENT"
   | "SUPERVISEUR" | "RESPONSABLE" |
   "COMPTABLE" | "RESP_REPORTING" |
   "ADMIN_SI";
 
+
+
 interface MenuItem {
-  icon: any;
+  
   key: string;
   label: string;
   path: string;
@@ -22,7 +25,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     title: "Espace Agent",
     kpis: ["Demandes en attente", "Demandes traitées aujourd'hui"],
     menuItems: [
-      {icon:"", key: "dashboard", label: "Tableau de bord", path: "/agent" },
+      { key: "dashboard", label: "Tableau de bord", path: "/agent" },
       { key: "demandes", label: "Demandes", path: "/agent/demandes" },
       { key: "paiements", label: "Paiements", path: "/agent/paiements" },
       { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" }],

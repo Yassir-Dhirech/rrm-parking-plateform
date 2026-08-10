@@ -30,7 +30,7 @@ export function RoleLayout() {
       <Sider style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" , backgroundColor: "var(--color-primary)" }}>
         <div>
           <div className="sidebar-logo">
-            <img src="/pictures/logo-rrm.png" alt="RRM Logo" style={{ filter: "drop-shadow(0px 4px 8px #ffffff)" }} />
+            <img src="/pictures/logo-rrm.png" alt="RRM Logo" style={{ filter: "drop-shadow(0px 0px 4px #ffffff)" }} />
           </div>
           <div className="sidebar-account">
             <Avatar size={40} icon={<UserOutlined />} />
@@ -40,21 +40,20 @@ export function RoleLayout() {
             </div>
           </div>
 
-          <Menu style={{ backgroundColor: "var(--color-primary)", color: "white" }}
+          <Menu style={{ backgroundColor: "var(--color-primary)" }}
             theme="dark"
             mode="inline"
             selectedKeys={selectedKey ? [selectedKey] : []}
             items={config.menuItems.map((item) => ({
               key: item.key,
-              icon: item.icon,
               label: item.label,
               onClick: () => navigate(item.path),
             }))}
           />
         </div>
 
-        <div className="sidebar-logout" style={{ padding: 16}}>
-          <Button icon={<LogoutOutlined />} onClick={handleLogout} block danger>
+        <div className="sidebar-logout" style={{ padding: "16px" , alignItems: "center" }}>
+          <Button icon={<LogoutOutlined />} onClick={handleLogout} block danger >
             Déconnexion
           </Button>
         </div>

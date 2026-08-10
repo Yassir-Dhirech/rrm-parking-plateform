@@ -2,11 +2,11 @@
   /* ==========================================================================
      1. PALETTE DE COULEURS OFFICIELLE (Logo Rabat Région Mobilité)
      ========================================================================== */
-  --color-primary: #00637C;          /* Teal principal / Bleuté */
-  --color-primary-dark: #004D60;     /* Hover & états actifs */
+  --color-primary:  #003566;           /* Teal principal / Bleuté */
+  --color-primary-dark: #003566  ;     /* Hover & états actifs */
   --color-primary-light: #E6F2F5;    /* Fonds sélectionnés / Badges */
 
-  --color-secondary: #E6A135;        /* Or / Ambre logo */
+  --color-secondary:  #ffc300;        /* Or / Ambre logo */
   --color-secondary-light: #FDF6EA;  /* Avertissements / Badges "En cours" */
 
   --color-accent: #982B5E;           /* Prune / Magenta logo */
