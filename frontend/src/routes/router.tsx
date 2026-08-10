@@ -20,6 +20,12 @@ import { CartesList } from "../features/cartes/pages/CartesList";
 import { CarteDetail } from "../features/cartes/pages/CarteDetail";
 import { ContratDetail } from "../features/contrats/pages/ContratDetail";
 import { ContratsList } from "../features/contrats/pages/ContratsList";
+import { RecettesList } from "../features/recettes/pages/RecettesList";
+import { RecetteDetail } from "../features/recettes/pages/RecetteDetail";
+import { UtilisateursList } from "../features/admin/pages/UtilisateursList";
+import { ParkingsList } from "../features/admin/pages/ParkingsList";
+import { PlansTarifairesList } from "../features/admin/pages/PlansTarifairesList";
+import { AuditLogsList } from "../features/admin/pages/AuditLogsList";
 
 
 
@@ -66,6 +72,22 @@ if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
   extraRoutes.push(
     { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
     { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },
+  );
+}
+
+if (role === "SUPERVISEUR" || role === "COMPTABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
+    { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }
+  );
+}
+
+if (role === "ADMIN_SI") {
+  extraRoutes.push(
+    { path: "/admin/utilisateurs", element: <UtilisateursList /> },
+    { path: "/admin/parkings", element: <ParkingsList /> },
+    { path: "/admin/tarifs", element: <PlansTarifairesList /> },
+    { path: "/admin/logs", element: <AuditLogsList /> }
   );
 }
 
