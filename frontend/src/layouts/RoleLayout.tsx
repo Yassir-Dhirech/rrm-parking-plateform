@@ -29,6 +29,9 @@ export function RoleLayout() {
     <Layout style={{ minHeight: "100vh" }}>
       <Sider style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" , backgroundColor: "var(--color-primary)" }}>
         <div>
+          <div className="sidebar-logo">
+            <img src="/pictures/logo-rrm.png" alt="RRM Logo" style={{ filter: "drop-shadow(0px 4px 8px #ffffff)" }} />
+          </div>
           <div className="sidebar-account">
             <Avatar size={40} icon={<UserOutlined />} />
             <div className="sidebar-account-info">
@@ -43,6 +46,7 @@ export function RoleLayout() {
             selectedKeys={selectedKey ? [selectedKey] : []}
             items={config.menuItems.map((item) => ({
               key: item.key,
+              icon: item.icon,
               label: item.label,
               onClick: () => navigate(item.path),
             }))}

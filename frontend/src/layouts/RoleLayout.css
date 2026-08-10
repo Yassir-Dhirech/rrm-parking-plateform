@@ -1,4 +1,17 @@
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
+.sidebar-logo img {
+  max-width: 100%;
+  max-height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.35));
+}
 
 .sidebar-account {
   display: flex;

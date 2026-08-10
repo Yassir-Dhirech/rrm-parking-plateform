@@ -1,15 +1,111 @@
 :root {
-  --color-primary: #0A6B6B;
-  --color-secondary: #F5A623;
-  --color-accent: #8E2A6B;
-  --color-text: #2D3436;
-  --color-bg: #F8F9FA;
-  --color-hover : rgba(10, 107, 107, 0.08);
-  --color-border: #D9DCE1;
+  /* ==========================================================================
+     1. PALETTE DE COULEURS OFFICIELLE (Logo Rabat Région Mobilité)
+     ========================================================================== */
+  --color-primary: #00637C;          /* Teal principal / Bleuté */
+  --color-primary-dark: #004D60;     /* Hover & états actifs */
+  --color-primary-light: #E6F2F5;    /* Fonds sélectionnés / Badges */
 
+  --color-secondary: #E6A135;        /* Or / Ambre logo */
+  --color-secondary-light: #FDF6EA;  /* Avertissements / Badges "En cours" */
+
+  --color-accent: #982B5E;           /* Prune / Magenta logo */
+  --color-accent-light: #FBF0F5;     /* Alertes / Actions critiques */
+
+  /* ==========================================================================
+     2. COULEURS NEUTRES & SURFACES
+     ========================================================================== */
+  --color-text: #2D3436;             /* Texte principal haute lisibilité */
+  --color-text-muted: #636E72;       /* Sous-titres & placeholders */
+  --color-bg: #F8F9FA;               /* Fond général de l'application */
+  --color-surface: #FFFFFF;          /* Cards, Modals, Tables */
+  --color-border: #D9DCE1;           /* Bordures standard */
+  --color-hover: rgba(0, 99, 124, 0.08); /* Effet survol harmonisé */
+
+  /* ==========================================================================
+     3. TYPOGRAPHIE & ESPACEMENTS
+     ========================================================================== */
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 32px;
+  --spacing-xl: 48px;
 
-  --font-family: "Inter", sans-serif;
+  /* ==========================================================================
+     4. RAYONS DE COURBURE (Inspirés des arcs du logo)
+     ========================================================================== */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     5. OMBRES (Elevation UI)
+     ========================================================================== */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================================================
+   RESET ET BASE GLOBALE
+   ========================================================================== */
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   CLASSES UTILITAIRES RRM (Pour un design réutilisable rapide)
+   ========================================================================== */
+
+/* 1. Ligne décorative tricolore (Logo signature) */
+.rrm-tricolor-bar {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    var(--color-secondary) 50%,
+    var(--color-primary) 100%
+  );
+}
+
+/* 2. En-tête / Bannière style RRM */
+.rrm-header-banner {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* 3. Carte avec liseré tricolore en haut */
+.rrm-card-accent {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.rrm-card-accent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    var(--color-secondary) 50%,
+    var(--color-primary) 100%
+  );
 }

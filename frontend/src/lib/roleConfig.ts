@@ -1,9 +1,10 @@
-export type Role = "AGENT" 
-| "SUPERVISEUR" | "RESPONSABLE" |
- "COMPTABLE" | "RESP_REPORTING" |
+export type Role = "AGENT"
+  | "SUPERVISEUR" | "RESPONSABLE" |
+  "COMPTABLE" | "RESP_REPORTING" |
   "ADMIN_SI";
 
 interface MenuItem {
+  icon: any;
   key: string;
   label: string;
   path: string;
@@ -15,17 +16,16 @@ interface RoleConfig {
   menuItems: MenuItem[];
   kpis: string[];
 }
-
 export const roleConfig: Record<Role, RoleConfig> = {
   AGENT: {
     homePath: "/agent",
     title: "Espace Agent",
     kpis: ["Demandes en attente", "Demandes traitées aujourd'hui"],
     menuItems: [
-      { key: "dashboard", label: "Tableau de bord", path: "/agent" },
+      {icon:"", key: "dashboard", label: "Tableau de bord", path: "/agent" },
       { key: "demandes", label: "Demandes", path: "/agent/demandes" },
       { key: "paiements", label: "Paiements", path: "/agent/paiements" },
-        { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" }],
+      { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" }],
   },
   SUPERVISEUR: {
     homePath: "/superviseur",
@@ -50,7 +50,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "factures", label: "Factures", path: "/responsable/factures" },
-        { key: "factures", label: "Factures", path: "/responsable/factures" },    
+      { key: "factures", label: "Factures", path: "/responsable/factures" },
     ],
   },
   COMPTABLE: {
