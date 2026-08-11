@@ -17,7 +17,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 
-const { Title, Paragraph } = Typography;
+// const { Title, Paragraph } = Typography;
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -39,23 +39,42 @@ export function Dashboard() {
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
       {/* En-tête de l'Espace */}
-      <Card style={{ background: "linear-gradient(135deg, #006666 0%, #004d4d 100%)", color: "#fff" }}>
+      {/* <Card
+        style={{
+          background: "linear-gradient(135deg, #003566 0%, #001E3D 100%)",
+          color: "#fff",
+          borderRadius: 16,
+          boxShadow: "var(--shadow-md)",
+          border: "none",
+        }}
+        styles={{ body: { padding: "28px 32px" } }}
+      >
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={3} style={{ color: "#fff", margin: 0 }}>
+            <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700 }}>
               {currentRoleConfig?.title || "Tableau de bord RRM"}
             </Title>
-            <Paragraph style={{ color: "rgba(255, 255, 255, 0.85)", margin: 0 }}>
-              Plateforme centralisée de gestion des parkings - Rabat Région Mobilité
+            <Paragraph style={{ color: "rgba(255, 255, 255, 0.85)", margin: "4px 0 0 0", fontSize: 14 }}>
+              Plateforme centralisée de gestion des parkings — Rabat Région Mobilité
             </Paragraph>
           </Col>
           <Col>
-            <Tag color="gold" style={{ fontSize: "14px", padding: "6px 12px" }}>
+            <Tag
+              style={{
+                fontSize: "13px",
+                padding: "6px 14px",
+                fontWeight: 600,
+                background: "var(--color-secondary)",
+                color: "var(--color-primary-dark)",
+                border: "none",
+                borderRadius: 20,
+              }}
+            >
               Rôle actif : {role}
             </Tag>
           </Col>
         </Row>
-      </Card>
+      </Card> */}
 
       {/* Barre de Filtres Globaux */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />
@@ -63,46 +82,46 @@ export function Dashboard() {
       {/* Cartes KPIs Réelles */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderLeft: "4px solid #006666" }}>
+          <Card bordered={false} style={{ borderLeft: "4px solid #003566", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
             <Statistic
               title="Recettes Totales Cumulées"
               value={totalCAHebdo}
               suffix="MAD"
               precision={2}
-              valueStyle={{ color: "#006666" }}
+              valueStyle={{ color: "#003566", fontWeight: 700 }}
               prefix={<DollarOutlined />}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderLeft: "4px solid #faad14" }}>
+          <Card bordered={false} style={{ borderLeft: "4px solid #d97706", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
             <Statistic
               title="Recettes à Valider"
               value={recettesEnAttente}
-              valueStyle={{ color: "#faad14" }}
+              valueStyle={{ color: "#d97706", fontWeight: 700 }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderLeft: "4px solid #722ed1" }}>
+          <Card bordered={false} style={{ borderLeft: "4px solid #982B5E", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
             <Statistic
               title="Contrats à Signer"
               value={contratsEnAttenteSign}
-              valueStyle={{ color: "#722ed1" }}
+              valueStyle={{ color: "#982B5E", fontWeight: 700 }}
               prefix={<FileTextOutlined />}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderLeft: "4px solid #52c41a" }}>
+          <Card bordered={false} style={{ borderLeft: "4px solid #10b981", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
             <Statistic
               title="Parkings en Exploitation"
               value={17}
-              valueStyle={{ color: "#52c41a" }}
+              valueStyle={{ color: "#10b981", fontWeight: 700 }}
               prefix={<CreditCardOutlined />}
             />
           </Card>

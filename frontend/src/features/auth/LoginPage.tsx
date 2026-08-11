@@ -1,9 +1,12 @@
-import { Form, Input, Button, Card, message, Divider, Space } from "antd";
+import { Form, Input, Button, Card, message, Divider, Typography } from "antd";
+import { UserOutlined, LockOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { login } from "../../api/auth";
 import { mockLogin } from "./mockAuth";
 import { type Role, roleConfig } from "../../lib/roleConfig";
+
+const { Title, Text } = Typography;
 
 const roleHomeRoute: Record<string, string> = {
   AGENT: "/agent",
@@ -38,34 +41,79 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <Card title="Connexion — RRM Parking" style={{ width: 380 }}>
-        <Form layout="vertical" onFinish={onFinish}>
-          <Form.Item name="email" label="Email" rules={[{ required: true }]}>
-            <Input />
+    <div
+      style={{
+        minHeight: "92vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #001E3D 0%, #003566 60%, #004D80 100%)",
+        padding: 24,
+      }}
+    >
+      <Card
+        style={{
+          width: "100%",
+          maxWidth: 440,
+          borderRadius: 16,
+          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.25)",
+          border: "none",
+          background: "#ffffff"
+        }}
+        styles={{ body: { padding: "36px 28px" } }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 8 }}>
+          <img
+            src="/pictures/logo-rrm.png"
+            alt="Rabat Région Mobilité"
+            style={{ maxHeight: 60, marginBottom: 16, filter: "drop-shadow(0 2px 4px rgba(0,0,0))" }}
+          />
+          <Title level={4} style={{ margin: 0, color: "var(--color-primary)", fontWeight: 700 }}>
+            Plateforme Parking RRM
+          </Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Connectez-vous à votre espace de gestion
+          </Text>
+        </div>
+
+        <Form layout="vertical" onFinish={onFinish} size="large">
+          <Form.Item name="email" label="Adresse Email" rules={[{ required: true, message: "Saisissez votre email" }]}>
+            <Input prefix={<UserOutlined style={{ color: "#94a3b8" }} />} placeholder="exemple@rrm.ma" />
           </Form.Item>
-          <Form.Item name="motDePasse" label="Mot de passe" rules={[{ required: true }]}>
-            <Input.Password />
+          <Form.Item name="motDePasse" label="Mot de passe" rules={[{ required: true, message: "Saisissez votre mot de passe" }]}>
+            <Input.Password prefix={<LockOutlined style={{ color: "#94a3b8" }} />} placeholder="••••••••" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" block>
-            Se connecter
-          </Button>
+          <Form.Item style={{ marginTop: 0 }}>
+            <Button type="primary" htmlType="submit" block style={{ height: 44, fontWeight: 600, fontSize: 15 }}>
+              Se connecter
+            </Button>
+          </Form.Item>
         </Form>
 
         {isDev && (
           <>
-            <Divider>Connexion rapide (dev uniquement)</Divider>
-            <Space direction="vertical" style={{ width: "100%" }}>
+            <Divider style={{ margin: "24px 0 16px 0", fontSize: 12, color: "#94a3b8" }}>
+              Accès Rapide Démo (Environnement Dev)
+            </Divider>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {(Object.keys(roleConfig) as Role[]).map((role) => (
                 <Button
                   key={role}
-                  block
+                  size="middle"
+                  style={{
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "6px 10px",
+                  }}
                   onClick={() => handleMockLogin(role)}
                 >
-                  Se connecter comme {roleConfig[role].title}
+                  <span>{roleConfig[role].title.replace("Espace ", "")}</span>
+                  <ArrowRightOutlined style={{ fontSize: 10, color: "var(--color-primary)" }} />
                 </Button>
               ))}
-            </Space>
+            </div>
           </>
         )}
       </Card>
