@@ -1,54 +1,82 @@
-.sidebar-logo {
+.app-header {
+  background: var(--color-primary, #003566) !important;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
-  
+  justify-content: space-between;
+  padding: 0 24px !important;
+  height: 64px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  z-index: 100;
 }
 
-.sidebar-logo img {
-  max-width: 100%;
-  max-height: 54px;
+.header-logo-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.header-logo-container img {
+  height: 44px;
   object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s ease;
 }
 
-.sidebar-account {
+.header-logo-container img:hover {
+  transform: scale(1.03);
+}
+
+.header-user-section {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--color-border);
-  border-top: 1px solid var(--color-border);
-  height: 80px;
-  border-radius: 18px;
-  margin-bottom: 10px;
+  gap: 16px;
 }
 
-.sidebar-account-info {
+.header-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-user-avatar {
+  background: var(--color-secondary, #ffc300) !important;
+  color: var(--color-primary-dark, #001e3d) !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.header-user-text {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  line-height: 1.2;
 }
 
-.sidebar-account-name {
-  color: white;
+.header-user-name {
+  color: #ffffff;
   font-weight: 600;
   font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.sidebar-account-role {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 12px;
+.header-user-role {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
 }
 
-menu{
-  color: "white";
+.header-role-tag {
+  background: rgba(255, 195, 0, 0.18) !important;
+  color: #ffc300 !important;
+  border: 1px solid rgba(255, 195, 0, 0.4) !important;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 2px 10px;
 }
 
-.sidebar-logout {
-    justify-content: center;
-    padding: 16px;
+.app-sider {
+  border-inline-end: 1px solid var(--color-border, #e2e8f0) !important;
+}
+
+.app-sider .ant-menu-item {
+  border-radius: 8px !important;
+  margin-block: 4px !important;
+  font-weight: 500;
 }
