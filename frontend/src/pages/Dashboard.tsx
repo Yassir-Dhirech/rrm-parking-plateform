@@ -17,7 +17,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 
-const { Title, Paragraph } = Typography;
+// const { Title, Paragraph } = Typography;
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -39,7 +39,7 @@ export function Dashboard() {
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
       {/* En-tête de l'Espace */}
-      <Card
+      {/* <Card
         style={{
           background: "linear-gradient(135deg, #003566 0%, #001E3D 100%)",
           color: "#fff",
@@ -74,7 +74,7 @@ export function Dashboard() {
             </Tag>
           </Col>
         </Row>
-      </Card>
+      </Card> */}
 
       {/* Barre de Filtres Globaux */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />

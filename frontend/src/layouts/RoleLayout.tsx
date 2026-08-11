@@ -1,5 +1,5 @@
-import React from "react";
-import { Breadcrumb, Layout, Menu, theme, Button, Avatar, Tag } from "antd";
+import React, { useState } from "react";
+import { Layout, Menu, theme, Avatar, Tag, Dropdown, type MenuProps, message } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
@@ -17,8 +17,10 @@ import {
   AuditOutlined,
   UserOutlined,
   LogoutOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import "./RoleLayout.css";
+import { type GlobalFilters, GlobalFilterBar } from "../components/ui/GlobalFilterBar";
 
 const { Header, Content, Sider } = Layout;
 
@@ -37,24 +39,13 @@ const menuIconMap: Record<string, React.ReactNode> = {
   logs: <AuditOutlined />,
 };
 
-const routeTitleMap: Record<string, string> = {
-  demandes: "Demandes",
-  abonnements: "Abonnements",
-  paiements: "Paiements",
-  factures: "Factures",
-  cartes: "Cartes d'accès",
-  contrats: "Contrats",
-  recettes: "Recettes",
-  utilisateurs: "Utilisateurs",
-  parkings: "Parkings",
-  tarifs: "Plans tarifaires",
-  logs: "Logs d'audit",
-};
+
 
 export function RoleLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { role, userName, logout } = useAuth();
+  const [filters, setFilters] = useState<GlobalFilters>({});
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -72,78 +63,91 @@ export function RoleLayout() {
     location.pathname.startsWith(item.path) && item.path !== config.homePath
   )?.key ?? (location.pathname === config.homePath ? "dashboard" : undefined);
 
-  // Generate dynamic breadcrumb trail
-  const pathSnippets = location.pathname.split("/").filter(Boolean);
-  const breadcrumbItems = [
+  // Dynamic User Dropdown Menu Items
+  const userMenuItems: MenuProps["items"] = [
     {
-      title: (
-        <span onClick={() => navigate(config.homePath)} style={{ cursor: "pointer", fontWeight: 500 }}>
-          {config.title}
-        </span>
+      key: "user-details",
+      disabled: true,
+      label: (
+        <div style={{ padding: "4px 6px", cursor: "default" }}>
+          <div style={{ fontWeight: 600, color: "var(--color-primary-dark, #001e3d)", fontSize: 14 }}>
+            {userName ?? "Utilisateur"}
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>{config.title}</div>
+          <Tag color="blue" style={{ marginTop: 6, fontWeight: 600 }}>
+            Rôle: {role}
+          </Tag>
+        </div>
       ),
     },
-    ...pathSnippets.slice(1).map((snippet, idx) => {
-      const isLast = idx === pathSnippets.length - 2;
-      const displayTitle = routeTitleMap[snippet] || snippet;
-      return {
-        title: isLast ? <span>{displayTitle}</span> : <span style={{ cursor: "pointer" }}>{displayTitle}</span>,
-      };
-    }),
+    { type: "divider" },
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "Mon Profil",
+      onClick: () => {
+        message.info(`Session active : ${userName ?? "Utilisateur"} (${config.title})`);
+      },
+    },
+   
+    
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      danger: true,
+      label: "Déconnexion",
+      onClick: handleLogout,
+    },
   ];
+
+
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      {/* Header: Logo on Left, User Profile & Actions on Right */}
+      {/* Header: White theme with Logo on Left, Clickable User Dropdown Menu on Right */}
       <Header className="app-header">
         <div className="header-logo-container" onClick={() => navigate(config.homePath)}>
           <img src="/pictures/logo-rrm.png" alt="Rabat Région Mobilité" />
         </div>
-
-        <div className="header-user-section">
-          <div className="header-user-info">
-            <Avatar size={36} icon={<UserOutlined />} className="header-user-avatar" />
-            <div className="header-user-text">
-              <span className="header-user-name">{userName ?? "Utilisateur"}</span>
-              <span className="header-user-role">{config.title}</span>
+       {/* <div><GlobalFilterBar filters={filters} onChange={setFilters} /></div> */}
+        <Dropdown menu={{ items: userMenuItems }} trigger={["click"]} placement="bottomRight">
+          <div className="header-user-section">
+            <div className="header-user-info">
+              <Avatar size={34} icon={<UserOutlined />} className="header-user-avatar" />
+              <div className="header-user-text">
+                <span className="header-user-name">{userName ?? "Utilisateur"}</span>
+                <span className="header-user-role">{config.title}</span>
+              </div>
+              <DownOutlined style={{ fontSize: 11, color: "var(--color-primary, #003566)", marginLeft: 2 }} />
             </div>
           </div>
-
-          <Tag className="header-role-tag">{role}</Tag>
-
-          <Button
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-            danger
-            type="primary"
-            size="small"
-            style={{ borderRadius: 6, fontWeight: 500 }}
-          >
-            Déconnexion
-          </Button>
-        </div>
+        </Dropdown>
       </Header>
 
-      {/* Body: Sider Left + Content Right */}
+      {/* Body: Blue Sider Left + Content Right */}
       <Layout>
-        <Sider width={230} style={{ background: colorBgContainer }} className="app-sider">
-          <Menu
-            mode="inline"
-            selectedKeys={selectedKey ? [selectedKey] : []}
-            style={{ height: "100%", borderInlineEnd: 0, padding: "12px 8px" }}
-            items={config.menuItems.map((item) => ({
-              key: item.key,
-              icon: menuIconMap[item.key] || <DashboardOutlined />,
-              label: item.label,
-              onClick: () => navigate(item.path),
-            }))}
-          />
+        <Sider width={230} className="app-sider">
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between", padding: "12px 8px" }}>
+            <Menu
+              theme="dark"
+              mode="inline"
+              className="app-sider-menu"
+              selectedKeys={selectedKey ? [selectedKey] : []}
+              style={{ borderInlineEnd: 0 }}
+              items={config.menuItems.map((item) => ({
+                key: item.key,
+                icon: menuIconMap[item.key] || <DashboardOutlined />,
+                label: item.label,
+                onClick: () => navigate(item.path),
+              }))}
+            />
+          </div>
         </Sider>
 
-        <Layout style={{ padding: "0 24px 24px", background: "var(--color-bg, #f4f6fa)" }}>
-          <Breadcrumb items={breadcrumbItems} style={{ margin: "16px 0" }} />
+        <Layout style={{ padding: "10px 24px 24px", background: "var(--color-bg, #f4f6fa)" }}>
           <Content
             style={{
-              padding: 24,
+              padding: 18,
               margin: 0,
               minHeight: 360,
               background: colorBgContainer,

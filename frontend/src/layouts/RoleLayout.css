@@ -1,12 +1,14 @@
 .app-header {
-  background: var(--color-primary, #003566) !important;
+  background: #ffffff !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px !important;
-  height: 64px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  height: 68px;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   z-index: 100;
+  position: sticky;
+  top: 0;
 }
 
 .header-logo-container {
@@ -16,20 +18,35 @@
 }
 
 .header-logo-container img {
-  height: 44px;
+  height: 54px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
   transition: transform 0.2s ease;
 }
 
 .header-logo-container img:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+
 }
 
 .header-user-section {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.header-user-section:hover {
+  background: #ebf3fa;
+  border-color: var(--color-primary, #003566);
+  box-shadow: 0 2px 8px rgba(0, 53, 102, 0.12);
 }
 
 .header-user-info {
@@ -39,10 +56,10 @@
 }
 
 .header-user-avatar {
-  background: var(--color-secondary, #ffc300) !important;
-  color: var(--color-primary-dark, #001e3d) !important;
+  background: var(--color-primary, #003566) !important;
+  color: #ffffff !important;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 53, 102, 0.2);
 }
 
 .header-user-text {
@@ -52,30 +69,40 @@
 }
 
 .header-user-name {
-  color: #ffffff;
+  color: var(--color-primary-dark, #001e3d);
   font-weight: 600;
   font-size: 14px;
 }
 
 .header-user-role {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text-muted, #64748b);
   font-size: 11px;
 }
 
 .header-role-tag {
-  background: rgba(255, 195, 0, 0.18) !important;
-  color: #ffc300 !important;
-  border: 1px solid rgba(255, 195, 0, 0.4) !important;
+  background: var(--color-primary-light, #ebf3fa) !important;
+  color: var(--color-primary, #003566) !important;
+  border: 1px solid #cbd5e1 !important;
   font-weight: 600;
   border-radius: 12px;
   padding: 2px 10px;
 }
 
 .app-sider {
-  border-inline-end: 1px solid var(--color-border, #e2e8f0) !important;
+  background: var(--color-primary, #003566) !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 68px;
+  height: calc(100vh - 68px);
+  overflow-y: auto;
 }
 
-.app-sider .ant-menu-item {
+.app-sider-menu {
+  background: transparent !important;
+  border-inline-end: none !important;
+}
+
+.app-sider-menu .ant-menu-item {
   border-radius: 8px !important;
   margin-block: 4px !important;
   font-weight: 500;
