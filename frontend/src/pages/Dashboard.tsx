@@ -80,6 +80,7 @@ export function Dashboard() {
       <GlobalFilterBar filters={filters} onChange={setFilters} />
 
       {/* Cartes KPIs Réelles */}
+      
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card bordered={false} style={{ borderLeft: "4px solid #003566", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
