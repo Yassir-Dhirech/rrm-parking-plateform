@@ -12,6 +12,7 @@ type AnyStatut = StatutDemande |
 StatutAbonnement | StatutPaiement | StatutFacture
  | StatutCarte | StatutContrat | StatutRecette;
 
+
 const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
   EN_COURS: "gold",
@@ -75,5 +76,5 @@ interface Props {
 }
 
 export function StatusBadge({ statut }: Props) {
-  return <Tag color={colorMap[statut]}>{labelMap[statut]}</Tag>;
+  return <Tag color={colorMap[statut]}>{labelMap[statut]} </Tag>;
 }
