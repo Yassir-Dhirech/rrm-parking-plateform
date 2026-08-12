@@ -5,9 +5,7 @@ export type Role = "AGENT"
   "ADMIN_SI";
 
 
-
 interface MenuItem {
-  
   key: string;
   label: string;
   path: string;
@@ -19,6 +17,7 @@ interface RoleConfig {
   menuItems: MenuItem[];
   kpis: string[];
 }
+
 export const roleConfig: Record<Role, RoleConfig> = {
   AGENT: {
     homePath: "/agent",
