@@ -1,5 +1,4 @@
-import { UtilisateursList } from "../features/admin/pages/UtilisateursList";
-import type{ AuditLog, Parking, PlanTarifaire, Utilisateur } from "../features/admin/types";
+import type { AuditLog, Parking, PlanTarifaire, Utilisateur } from "../features/admin/types";
 
 export const mockUtilisateurs: Utilisateur[] =[
   { id: 1, nom: "El Amrani", prenom: "Simo", email: "s.elamrani@rrm.ma", role: "SUPERVISEUR", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "2026-01-10" },
