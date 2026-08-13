@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { type Role } from "../lib/roleConfig";
 
-type Role = "AGENT" | "SUPERVISEUR" | "RESPONSABLE" | "COMPTABLE" | "RESP_REPORTING" | "ADMIN_SI";
 
 interface AuthContextType {
   token: string | null;
@@ -16,11 +16,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [role, setRole] = useState<Role | null>(localStorage.getItem("role") as Role | null);
   const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
+  const isAuthenticated = !!token;
 
   const login = (newToken: string, newRole: Role, newUserName?: string) => {
     localStorage.setItem("token", newToken);
     localStorage.setItem("role", newRole);
-    if(newUserName) localStorage.setItem("userName", newUserName);
+    if(newUserName){ localStorage.setItem("userName", newUserName);
+  }else {
+  localStorage.removeItem("userName");}
     setToken(newToken);
     setRole(newRole);
     setUserName(newUserName ?? null);
