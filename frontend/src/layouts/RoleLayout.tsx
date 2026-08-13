@@ -123,10 +123,11 @@ export function RoleLayout() {
     <Layout style={{ minHeight: "100vh" }}>
       {/* Header: White theme with Logo, Global Search & User / Notification Section */}
       <Header className="app-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div className="header-logo-container" onClick={() => navigate(config.homePath)}>
-            <img src="/pictures/logo-rrm.png" alt="Rabat Région Mobilité" />
-          </div>
+        <div className="header-logo-container" onClick={() => navigate(config.homePath)}>
+          <img src="/pictures/logo-rrm.png" alt="Rabat Région Mobilité" />
+        </div>
+
+        <div className="header-search-wrapper">
           <GlobalSearch />
         </div>
 
@@ -201,4 +202,4 @@ export function RoleLayout() {
       </Layout>
     </Layout>
   );
-}
+}

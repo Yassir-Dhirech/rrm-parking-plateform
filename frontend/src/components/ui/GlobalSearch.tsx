@@ -12,7 +12,7 @@ interface SearchIndexItem {
   subtitle: string;
   tag?: string;
   tagColor?: string;
-  targetPath: string; // relative path segment e.g. "demandes/1"
+  targetPath: string;
   icon: React.ReactNode;
 }
 
@@ -66,12 +66,11 @@ export const GlobalSearch: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "4px 0",
+          padding: "6px 4px",
           cursor: "pointer",
         }}
         onClick={() => {
           setSearchValue("");
-          // Build absolute target path depending on role & category
           if (item.category === "Parkings" && role === "ADMIN_SI") {
             navigate("/admin/parkings");
           } else {
@@ -80,37 +79,33 @@ export const GlobalSearch: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ color: "var(--color-primary, #003566)", fontSize: 16 }}>{item.icon}</span>
+          <span style={{ color: "#003566", fontSize: 16, display: "flex" }}>{item.icon}</span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b" }}>{item.title}</div>
             <div style={{ fontSize: 11, color: "#64748b" }}>{item.subtitle}</div>
           </div>
         </div>
-        {item.tag && <Tag color={item.tagColor}>{item.tag}</Tag>}
+        {item.tag && <Tag color={item.tagColor} style={{ borderRadius: 10, margin: 0 }}>{item.tag}</Tag>}
       </div>
     ),
   }));
 
   return (
-    <div style={{ width: 280, maxWidth: "100%" }}>
-      <AutoComplete
-        style={{ width: "100%" }}
-        options={options}
-        value={searchValue}
-        onChange={setSearchValue}
-      >
-        <Input
-          prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
-          placeholder="Rechercher (ex: DEM, REC, Agdal...)"
-          allowClear
-          style={{
-            borderRadius: 20,
-            background: "#f1f5f9",
-            border: "1px solid #cbd5e1",
-            padding: "4px 12px",
-          }}
-        />
-      </AutoComplete>
-    </div>
+    <AutoComplete
+      className="global-search-autocomplete"
+      variant="borderless"
+      style={{ width: "100%" }}
+      options={options}
+      value={searchValue}
+      onChange={setSearchValue}
+      popupMatchSelectWidth={340}
+    >
+      <Input
+        prefix={<SearchOutlined style={{ color: "#003566", fontSize: 15 }} />}
+        placeholder="Rechercher (ex: DEM, REC, Agdal...)"
+        allowClear
+        className="header-search-input"
+      />
+    </AutoComplete>
   );
 };

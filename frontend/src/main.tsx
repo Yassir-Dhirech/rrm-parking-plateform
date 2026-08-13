@@ -12,7 +12,7 @@ import "./Styles/theme.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <AuthProvider >
         <ConfigProvider
           theme={{
             token: {
