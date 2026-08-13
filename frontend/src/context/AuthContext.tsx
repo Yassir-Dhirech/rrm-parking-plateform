@@ -16,7 +16,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [role, setRole] = useState<Role | null>(localStorage.getItem("role") as Role | null);
   const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
-  const isAuthenticated = !!token;
 
   const login = (newToken: string, newRole: Role, newUserName?: string) => {
     localStorage.setItem("token", newToken);

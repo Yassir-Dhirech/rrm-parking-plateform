@@ -3,7 +3,6 @@ import { Table, Card, Typography, Tag, Input, Select, Space } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { SearchOutlined } from "@ant-design/icons";
 import { getLogsMock } from "../../../api/adminMock";
-import type{ AuditLog } from "../types";
 import type { Role } from "../../../lib/roleConfig";
 
 const { Title } = Typography;

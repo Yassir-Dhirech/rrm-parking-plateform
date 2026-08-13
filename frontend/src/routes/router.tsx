@@ -31,8 +31,13 @@ import { AuditLogsList } from "../features/admin/pages/AuditLogsList";
 
 
 
+import { NotificationsPage } from "../pages/NotificationsPage";
+
 const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
-  const extraRoutes = [];
+  const extraRoutes = [
+    { path: "/notifications", element: <NotificationsPage /> },
+    { path: `${roleConfig[role].homePath}/notifications`, element: <NotificationsPage /> },
+  ];
 
   if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
   extraRoutes.push(

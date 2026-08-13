@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-import { Layout, Menu, theme, Avatar, Tag, Dropdown, type MenuProps, message } from "antd";
+import React from "react";
+import { Layout, Menu, theme, Avatar, Tag, Dropdown, Badge, Button, type MenuProps, message } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
+import { useQuery } from "@tanstack/react-query";
+import { getNotificationsForRole } from "../api/notificationsMock";
+import { GlobalSearch } from "../components/ui/GlobalSearch";
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -18,9 +21,9 @@ import {
   UserOutlined,
   LogoutOutlined,
   DownOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
 import "./RoleLayout.css";
-import { type GlobalFilters, GlobalFilterBar } from "../components/ui/GlobalFilterBar";
 
 const { Header, Content, Sider } = Layout;
 
@@ -39,20 +42,24 @@ const menuIconMap: Record<string, React.ReactNode> = {
   logs: <AuditOutlined />,
 };
 
-
-
 export function RoleLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { role, userName, logout } = useAuth();
-  const [filters, setFilters] = useState<GlobalFilters>({});
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["notifications", role],
+    queryFn: () => (role ? getNotificationsForRole(role) : Promise.resolve([])),
+    enabled: !!role,
+  });
+
   if (!role) return null;
 
   const config = roleConfig[role];
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
@@ -62,6 +69,8 @@ export function RoleLayout() {
   const selectedKey = config.menuItems.find((item) =>
     location.pathname.startsWith(item.path) && item.path !== config.homePath
   )?.key ?? (location.pathname === config.homePath ? "dashboard" : undefined);
+
+  const notificationsPath = "/notifications";
 
   // Dynamic User Dropdown Menu Items
   const userMenuItems: MenuProps["items"] = [
@@ -89,8 +98,18 @@ export function RoleLayout() {
         message.info(`Session active : ${userName ?? "Utilisateur"} (${config.title})`);
       },
     },
-   
-    
+    {
+      key: "notifications",
+      icon: <BellOutlined />,
+      label: (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <span>Notifications</span>
+          {unreadCount > 0 && <Tag color="red" style={{ margin: 0 }}>{unreadCount}</Tag>}
+        </div>
+      ),
+      onClick: () => navigate(notificationsPath),
+    },
+    { type: "divider" },
     {
       key: "logout",
       icon: <LogoutOutlined />,
@@ -100,28 +119,49 @@ export function RoleLayout() {
     },
   ];
 
-
-
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      {/* Header: White theme with Logo on Left, Clickable User Dropdown Menu on Right */}
+      {/* Header: White theme with Logo, Global Search & User / Notification Section */}
       <Header className="app-header">
-        <div className="header-logo-container" onClick={() => navigate(config.homePath)}>
-          <img src="/pictures/logo-rrm.png" alt="Rabat Région Mobilité" />
-        </div>
-       {/* <div><GlobalFilterBar filters={filters} onChange={setFilters} /></div> */}
-        <Dropdown menu={{ items: userMenuItems }} trigger={["click"]} placement="bottomRight">
-          <div className="header-user-section">
-            <div className="header-user-info">
-              <Avatar size={34} icon={<UserOutlined />} className="header-user-avatar" />
-              <div className="header-user-text">
-                <span className="header-user-name">{userName ?? "Utilisateur"}</span>
-                <span className="header-user-role">{config.title}</span>
-              </div>
-              <DownOutlined style={{ fontSize: 11, color: "var(--color-primary, #003566)", marginLeft: 2 }} />
-            </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <div className="header-logo-container" onClick={() => navigate(config.homePath)}>
+            <img src="/pictures/logo-rrm.png" alt="Rabat Région Mobilité" />
           </div>
-        </Dropdown>
+          <GlobalSearch />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Notification Bell Button */}
+          <Badge count={unreadCount} overflowCount={99}>
+            <Button
+              shape="circle"
+              icon={<BellOutlined style={{ fontSize: 18, color: "#003566" }} />}
+              onClick={() => navigate(notificationsPath)}
+              title="Centre de Notifications"
+              style={{
+                borderColor: "#cbd5e1",
+                background: "#f8fafc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          </Badge>
+
+          {/* User Profile Dropdown */}
+          <Dropdown menu={{ items: userMenuItems }} trigger={["click"]} placement="bottomRight">
+            <div className="header-user-section">
+              <div className="header-user-info">
+                <Avatar size={34} icon={<UserOutlined />} className="header-user-avatar" />
+                <div className="header-user-text">
+                  <span className="header-user-name">{userName ?? "Utilisateur"}</span>
+                  <span className="header-user-role">{config.title}</span>
+                </div>
+                <DownOutlined style={{ fontSize: 11, color: "var(--color-primary, #003566)", marginLeft: 2 }} />
+              </div>
+            </div>
+          </Dropdown>
+        </div>
       </Header>
 
       {/* Body: Blue Sider Left + Content Right */}
@@ -161,4 +201,4 @@ export function RoleLayout() {
       </Layout>
     </Layout>
   );
-}
+}
