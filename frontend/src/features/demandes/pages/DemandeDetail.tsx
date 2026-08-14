@@ -22,6 +22,7 @@ import {
   DollarOutlined,
   FileDoneOutlined,
   ArrowLeftOutlined,
+  FolderCheckOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -33,6 +34,16 @@ import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { type PaymentInfoInput } from "../types";
 
+const BANK_OPTIONS = [
+  { label: "CIH Bank", value: "CIH" },
+  { label: "Attijariwafa Bank", value: "ATTIJARI" },
+  { label: "BMCE Bank of Africa", value: "BMCE" },
+  { label: "Société Générale", value: "SOCIETE GENERALE" },
+  { label: "Banque Populaire", value: "BANQUE POPULAIRE" },
+  { label: "Al Barid Bank", value: "AL BARID" },
+  { label: "Autre", value: "Autre" },
+];
+
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
   const demandeId = Number(id);
@@ -43,20 +54,24 @@ export function DemandeDetail() {
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectType, setRejectType] = useState<"DOSSIER" | "PAIEMENT">("DOSSIER");
   const [raison, setRaison] = useState("");
+  
   const [paymentForm] = Form.useForm<PaymentInfoInput>();
-  const [selectedPaymentMode, setSelectedPaymentMode] = useState<string>("ESPECES");
+  // Form.useWatch reactively tracks the selected payment mode without state desync!
+  const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECES";
 
   const { data, isLoading } = useQuery({
     queryKey: ["demande", demandeId],
     queryFn: () => getDemandeByIdMock(demandeId),
+    enabled: !isNaN(demandeId),
   });
 
   const validerMutation = useMutation({
     mutationFn: (payInput?: PaymentInfoInput) =>
       validerDemandeMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
     onSuccess: () => {
-      message.success("Demande et paiement validés avec succès");
+      message.success("Demande et traitement de dossier validés avec succès");
       setPaymentModalOpen(false);
       paymentForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -65,9 +80,9 @@ export function DemandeDetail() {
   });
 
   const rejeterMutation = useMutation({
-    mutationFn: () => rejeterDemandeMock(demandeId, raison),
+    mutationFn: () => rejeterDemandeMock(demandeId, `[Refus ${rejectType}] ${raison}`),
     onSuccess: () => {
-      message.success("Demande rejetée");
+      message.success(`Demande rejetée (${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier non conforme"})`);
       setRejectModalOpen(false);
       setRaison("");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -80,6 +95,16 @@ export function DemandeDetail() {
   }
 
   const canAct = (role === "AGENT" || role === "SUPERVISEUR") && (data.statut === "SOUMISE" || data.statut === "EN_COURS");
+
+  const handleOpenPaymentModal = () => {
+    paymentForm.resetFields();
+    setPaymentModalOpen(true);
+  };
+
+  const handleOpenRejectModal = (type: "DOSSIER" | "PAIEMENT") => {
+    setRejectType(type);
+    setRejectModalOpen(true);
+  };
 
   const handlePaymentSubmit = (values: PaymentInfoInput) => {
     validerMutation.mutate(values);
@@ -135,7 +160,7 @@ export function DemandeDetail() {
         {/* Display Payment Information if Recorded */}
         {data.paiementInfo && (
           <>
-            <Divider orientation="left" style={{ borderColor: "#cbd5e1" }}>
+            <Divider titlePlacement="left" style={{ borderColor: "#cbd5e1" }}>
               <DollarOutlined style={{ color: "#16a34a" }} /> Information de Paiement Enregistrée
             </Divider>
             <Descriptions column={2} bordered size="small" style={{ backgroundColor: "#f8fafc" }}>
@@ -179,39 +204,68 @@ export function DemandeDetail() {
           </>
         )}
 
-        {/* Action Buttons for Agent / Superviseur */}
+        {/* Action Section matching Use Case Diagram */}
         {canAct && (
-          <div style={{ marginTop: 24, padding: "16px", backgroundColor: "#f1f5f9", borderRadius: 8 }}>
-            <h4 style={{ margin: "0 0 12px 0", color: "#334155" }}>
-              Action de traitement des demandes (Agent & Superviseur)
+          <div style={{ marginTop: 24, padding: "20px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+            <h4 style={{ margin: "0 0 16px 0", color: "#1e293b", fontSize: 15, fontWeight: 600 }}>
+              Traitement des Demandes (Agent & Superviseur)
             </h4>
-            <Space size="middle" wrap>
-              <Button
-                type="primary"
-                icon={<DollarOutlined />}
-                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
-                onClick={() => setPaymentModalOpen(true)}
-              >
-                Validation Paiement & Demande (Saisir Infos)
-              </Button>
 
-              <Button
-                type="default"
-                icon={<CheckCircleOutlined />}
-                onClick={() => validerMutation.mutate()}
-                loading={validerMutation.isPending}
-              >
-                Validation Directe du Dossier
-              </Button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {/* Option 1: Validation Paiement */}
+              <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                <h5 style={{ margin: "0 0 8px 0", color: "#16a34a", fontSize: 13, fontWeight: 600 }}>
+                  <DollarOutlined /> Workflow 1: Validation Paiement
+                </h5>
+                <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
+                  Saisir les détails de paiement (Chèque, Virement, Espèces) pour valider la demande.
+                </p>
+                <Space wrap>
+                  <Button
+                    type="primary"
+                    icon={<DollarOutlined />}
+                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                    onClick={handleOpenPaymentModal}
+                  >
+                    Accepter & Saisir Paiement
+                  </Button>
+                  <Button
+                    danger
+                    size="small"
+                    onClick={() => handleOpenRejectModal("PAIEMENT")}
+                  >
+                    Refuser Paiement
+                  </Button>
+                </Space>
+              </div>
 
-              <Button
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={() => setRejectModalOpen(true)}
-              >
-                Refuser la Demande
-              </Button>
-            </Space>
+              {/* Option 2: Validation de Dossier */}
+              <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                <h5 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 13, fontWeight: 600 }}>
+                  <FolderCheckOutlined /> Workflow 2: Validation du Dossier
+                </h5>
+                <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
+                  Valider directement la conformité des pièces et du dossier sans enregistrer de règlement guichet.
+                </p>
+                <Space wrap>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => validerMutation.mutate()}
+                    loading={validerMutation.isPending}
+                  >
+                    Accepter le Dossier
+                  </Button>
+                  <Button
+                    danger
+                    size="small"
+                    onClick={() => handleOpenRejectModal("DOSSIER")}
+                  >
+                    Refuser le Dossier
+                  </Button>
+                </Space>
+              </div>
+            </div>
           </div>
         )}
       </Card>
@@ -241,7 +295,6 @@ export function DemandeDetail() {
             rules={[{ required: true, message: "Veuillez choisir un mode de paiement" }]}
           >
             <Select
-              onChange={(val) => setSelectedPaymentMode(val)}
               options={[
                 { label: "Espèces (Guichet)", value: "ESPECES" },
                 { label: "Chèque Bancaire", value: "CHEQUE" },
@@ -259,7 +312,7 @@ export function DemandeDetail() {
             <InputNumber disabled style={{ width: "100%" }} addonAfter="MAD" min={0} />
           </Form.Item>
 
-          {selectedPaymentMode === "CHEQUE" && (
+          {currentPaymentMode === "CHEQUE" && (
             <>
               <Form.Item
                 name="numeroCheque"
@@ -275,21 +328,13 @@ export function DemandeDetail() {
               >
                 <Select
                   placeholder="Sélectionner la banque..."
-                  options={[
-                    { label: "CIH Bank", value: "CIH" },
-                    { label: "Attijariwafa Bank", value: "ATTIJARI" },
-                    { label: "BMCE Bank of Africa", value: "BMCE" },
-                    { label: "Société Générale", value: "SOCIETE GENERALE" },
-                    { label: "Banque Populaire", value: "BANQUE POPULAIRE" },
-                    { label: "Al Barid Bank", value: "AL BARID" },
-                    { label: "Autre", value: "Autre" },
-                  ]}
+                  options={BANK_OPTIONS}
                 />
               </Form.Item>
             </>
           )}
 
-          {selectedPaymentMode === "VIREMENT" && (
+          {currentPaymentMode === "VIREMENT" && (
             <>
               <Form.Item
                 name="referenceVirement"
@@ -305,15 +350,7 @@ export function DemandeDetail() {
               >
                 <Select
                   placeholder="Sélectionner la banque..."
-                  options={[
-                    { label: "CIH Bank", value: "CIH" },
-                    { label: "Attijariwafa Bank", value: "ATTIJARI" },
-                    { label: "BMCE Bank of Africa", value: "BMCE" },
-                    { label: "Société Générale", value: "SOCIETE GENERALE" },
-                    { label: "Banque Populaire", value: "BANQUE POPULAIRE" },
-                    { label: "Al Barid Bank", value: "AL BARID" },
-                    { label: "Autre", value: "Autre" },
-                  ]}
+                  options={BANK_OPTIONS}
                 />
               </Form.Item>
             </>
@@ -342,7 +379,7 @@ export function DemandeDetail() {
 
       {/* Modal: Refuser la demande */}
       <Modal
-        title="Refuser la demande"
+        title={`Refuser la demande (${rejectType === "PAIEMENT" ? "Non-conformité Paiement" : "Dossier incomplet"})`}
         open={rejectModalOpen}
         onCancel={() => setRejectModalOpen(false)}
         onOk={() => rejeterMutation.mutate()}
@@ -351,7 +388,7 @@ export function DemandeDetail() {
         okButtonProps={{ danger: true }}
       >
         <p style={{ color: "#64748b", fontSize: 13 }}>
-          Veuillez justifier la raison du refus (pièces manquantes, refus de paiement, non-conformité...).
+          Veuillez justifier la raison du refus ({rejectType === "PAIEMENT" ? "erreur montant, chèque en bois, virement non reçu..." : "pièces manquantes, immatriculation incorrecte, non-conformité..."}).
         </p>
         <Input.TextArea
           placeholder="Motif du refus..."
