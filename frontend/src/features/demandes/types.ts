@@ -1,4 +1,4 @@
-import {type TypeClient, type TypeVehicule } from "../../lib/enums";
+import { type TypeClient, type TypeVehicule } from "../../lib/enums";
 
 export interface PublicDemandeInput {
   parkingId: number;
@@ -32,10 +32,22 @@ export interface DemandeSubmissionResult {
   reference: string;
 }
 
+export type BankOption = "CIH" | "ATTIJARI" | "BMCE" | "SOCIETE GENERALE" | "BANQUE POPULAIRE" | "AL BARID" | "Autre";
+
+export interface PaymentInfoInput {
+  modePaiement: "ESPECES" | "CHEQUE" | "VIREMENT";
+  montant: number;
+  numeroCheque?: string;
+  banque?: BankOption;
+  referenceVirement?: string;
+  remarques?: string;
+}
+
 export interface DemandeDetail extends DemandeListItem {
   email: string;
   telephone: string;
   immatriculation: string;
   typeVehicule: string;
   raisonRejet?: string;
+  paiementInfo?: PaymentInfoInput & { datePaiement?: string; validePar?: string };
 }
