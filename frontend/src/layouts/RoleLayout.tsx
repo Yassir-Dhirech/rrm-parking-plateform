@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Layout, Menu, theme, Avatar, Tag, Dropdown, Badge, Button, type MenuProps, message } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -6,6 +6,7 @@ import { roleConfig } from "../lib/roleConfig";
 import { useQuery } from "@tanstack/react-query";
 import { getNotificationsForRole } from "../api/notificationsMock";
 import { GlobalSearch } from "../components/ui/GlobalSearch";
+import { ProfileModal } from "../components/ui/ProfileModal";
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -46,6 +47,7 @@ export function RoleLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { role, userName, logout } = useAuth();
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -95,7 +97,7 @@ export function RoleLayout() {
       icon: <UserOutlined />,
       label: "Mon Profil",
       onClick: () => {
-        message.info(`Session active : ${userName ?? "Utilisateur"} (${config.title})`);
+        setProfileModalOpen(true);
       },
     },
     {
@@ -200,6 +202,7 @@ export function RoleLayout() {
           </Content>
         </Layout>
       </Layout>
+      <ProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </Layout>
   );
 }
