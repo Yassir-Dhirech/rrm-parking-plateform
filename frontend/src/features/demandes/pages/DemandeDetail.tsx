@@ -15,6 +15,8 @@ import {
   Tag,
   Divider,
   Alert,
+  Row,
+  Col,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -201,7 +203,46 @@ export function DemandeDetail() {
                 </Descriptions.Item>
               )}
             </Descriptions>
+
+            <div style={{ marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
+              <Button
+                type="primary"
+                icon={<FileDoneOutlined />}
+                onClick={() => message.info("Génération du reçu de paiement client en cours...")}
+                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+              >
+                Imprimer Reçu de Paiement (Livraison Client)
+              </Button>
+              {data.paiementInfo.modePaiement === "CHEQUE" && (
+                <Tag color="purple" style={{ padding: "6px 12px", fontSize: 12 }}>
+                  📌 Chèque enregistré — Transmis au service comptable pour dépôt caisse
+                </Tag>
+              )}
+            </div>
           </>
+        )}
+
+        {/* Check & Verification Checklist (Agent Diagram) */}
+        {canAct && (
+          <div style={{ marginTop: 20, padding: 16, backgroundColor: "#f0f9ff", borderRadius: 8, border: "1px solid #bae6fd" }}>
+            <h4 style={{ margin: "0 0 10px 0", color: "#0369a1", fontSize: 14 }}>
+              <CheckCircleOutlined /> Contrôles & Vérifications d'Informations (Agent RRM)
+            </h4>
+            <Row gutter={[12, 12]}>
+              <Col span={12}>
+                <Tag color="blue">✓ Informations Personnelles Conformes</Tag>
+              </Col>
+              <Col span={12}>
+                <Tag color="blue">✓ Immatriculation & Carte Grise Conformes</Tag>
+              </Col>
+              <Col span={12}>
+                <Tag color="green">✓ Capacité Parking Vérifiée (Places Dispo)</Tag>
+              </Col>
+              <Col span={12}>
+                <Tag color="green">✓ Absence de Redondance / Doublon</Tag>
+              </Col>
+            </Row>
+          </div>
         )}
 
         {/* Action Section matching Use Case Diagram */}

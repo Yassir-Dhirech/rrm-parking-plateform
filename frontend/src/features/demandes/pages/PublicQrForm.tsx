@@ -51,7 +51,6 @@ const FORFAITS_OPTIONS = [
     title: "Pass Mensuel Standard",
     duree: "1 Mois",
     priceTTC: 600,
-    priceHT: 500,
     badge: "Populaire",
     desc: "Accès 24/7 au parking sélectionné pour 1 véhicule",
   },
@@ -60,7 +59,6 @@ const FORFAITS_OPTIONS = [
     title: "Pass Trimestriel Mobilité",
     duree: "3 Mois",
     priceTTC: 1600,
-    priceHT: 1333.33,
     badge: "Économique",
     desc: "Abonnement 3 mois avec tarif préférentiel",
   },
@@ -69,7 +67,6 @@ const FORFAITS_OPTIONS = [
     title: "Pass Annuel Premium",
     duree: "12 Mois",
     priceTTC: 6000,
-    priceHT: 5000,
     badge: "2 Mois Offerts",
     desc: "Accès permanent 12 mois + place réservée garantie",
   },
@@ -78,7 +75,6 @@ const FORFAITS_OPTIONS = [
     title: "Forfait Corporate Flotte",
     duree: "12 Mois",
     priceTTC: 5400,
-    priceHT: 4500,
     badge: "Entreprises",
     desc: "Forfait entreprise dès 5 véhicules enregistrés",
   },
@@ -180,7 +176,6 @@ export function PublicQrForm() {
         return 1;
       case "VALIDEE":
         return 2;
-      case "DISPONIBLE":
       case "COMPLETEE":
         return 3;
       default:
@@ -353,7 +348,7 @@ export function PublicQrForm() {
 
                             <Row gutter={16}>
                               <Col xs={24} sm={12}>
-                                <Form.Item name="email" label="Adresse Email (pour recevoir notifications)" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
+                                <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
                                   <Input placeholder="client@example.ma" />
                                 </Form.Item>
                               </Col>
@@ -586,8 +581,10 @@ export function PublicQrForm() {
                               key="copy"
                               type="default"
                               onClick={() => {
-                                navigator.clipboard.writeText(submittedReference);
-                                message.success("Référence copiée !");
+                                if (submittedReference) {
+                                  navigator.clipboard.writeText(submittedReference);
+                                  message.success("Référence copiée !");
+                                }
                               }}
                             >
                               Copier la référence
@@ -596,9 +593,11 @@ export function PublicQrForm() {
                               key="track"
                               type="primary"
                               onClick={() => {
-                                setSearchRef(submittedReference);
-                                setActiveTab("track");
-                                handleTrackSearch();
+                                if (submittedReference) {
+                                  setSearchRef(submittedReference);
+                                  setActiveTab("track");
+                                  handleTrackSearch();
+                                }
                               }}
                             >
                               Suivre l'état de ma demande
