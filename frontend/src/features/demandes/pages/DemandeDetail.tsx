@@ -22,7 +22,7 @@ import {
   DollarOutlined,
   FileDoneOutlined,
   ArrowLeftOutlined,
-  FolderCheckOutlined,
+  FolderOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -67,7 +67,7 @@ export function DemandeDetail() {
     enabled: !isNaN(demandeId),
   });
 
-  const validerMutation = useMutation({
+  const validerMutation = useMutation<void, Error, PaymentInfoInput | undefined>({
     mutationFn: (payInput?: PaymentInfoInput) =>
       validerDemandeMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
     onSuccess: () => {
@@ -242,7 +242,7 @@ export function DemandeDetail() {
               {/* Option 2: Validation de Dossier */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 13, fontWeight: 600 }}>
-                  <FolderCheckOutlined /> Workflow 2: Validation du Dossier
+                  <FolderOutlined /> Workflow 2: Validation du Dossier
                 </h5>
                 <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
                   Valider directement la conformité des pièces et du dossier sans enregistrer de règlement guichet.
@@ -251,7 +251,7 @@ export function DemandeDetail() {
                   <Button
                     type="primary"
                     icon={<CheckCircleOutlined />}
-                    onClick={() => validerMutation.mutate()}
+                    onClick={() => validerMutation.mutate(undefined)}
                     loading={validerMutation.isPending}
                   >
                     Accepter le Dossier

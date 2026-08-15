@@ -1,4 +1,4 @@
-import { type DemandeListItem, type DemandeDetail, type PaymentInfoInput } from "../features/demandes/types";
+import { type DemandeListItem, type DemandeDetail, type PaymentInfoInput, type PublicDemandeInput, type DemandeSubmissionResult } from "../features/demandes/types";
 
 const mockDemandesStore: Record<number, DemandeDetail> = {
   1: {
@@ -20,7 +20,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     typeDemande: "RENOUVELLEMENT",
     statut: "EN_COURS",
     clientNom: "Société Atlas Trans",
-    parkingNom: "Parking Agdal",
+    parkingNom: "Parking Agdal Gare",
     dateCreation: "2026-07-29",
     email: "contact@atlastrans.ma",
     telephone: "0537001122",
@@ -43,8 +43,8 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
       modePaiement: "ESPECES",
       montant: 450,
       datePaiement: "2026-07-27 14:30",
-      validePar: "Agent / Superviseur",
-      remarques: "Paiement au guichet principal",
+      validePar: "Agent Guichet",
+      remarques: "Paiement en espèces au guichet principal",
     },
   },
 };
@@ -74,6 +74,54 @@ export async function getDemandeByIdMock(id: number): Promise<DemandeDetail> {
   return mockDemandesStore[id];
 }
 
+export async function addPublicDemandeMock(input: PublicDemandeInput): Promise<DemandeSubmissionResult> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const newId = Object.keys(mockDemandesStore).length + 100 + Math.floor(Math.random() * 800);
+  const reference = `DEM-2026-${String(newId).padStart(6, "0")}`;
+
+  const clientNom = input.typeClient === "PARTICULIER"
+    ? `${input.prenom ?? ""} ${input.nom ?? ""}`.trim() || "Client Inconnu"
+    : input.raisonSociale || "Entreprise Inconnue";
+
+  const parkingMap: Record<number, string> = {
+    1: "Parking Agdal Gare",
+    2: "Parking Hassan II",
+    3: "Parking Bab El Had",
+    4: "Parking Chellah",
+    5: "Parking Ibn Sina",
+  };
+
+  const newDemande: DemandeDetail = {
+    id: newId,
+    reference,
+    typeDemande: input.typeDemande || "NOUVEL_ABONNEMENT",
+    statut: "SOUMISE",
+    clientNom,
+    parkingNom: parkingMap[input.parkingId] || "Parking Agdal Gare",
+    dateCreation: new Date().toISOString().split("T")[0],
+    email: input.email,
+    telephone: input.telephone,
+    immatriculation: input.immatriculation,
+    typeVehicule: input.typeVehicule || "VOITURE",
+  };
+
+  mockDemandesStore[newId] = newDemande;
+  return { reference };
+}
+
+export async function searchDemandeByReferenceMock(query: string): Promise<DemandeDetail | null> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const q = query.trim().toUpperCase();
+  if (!q) return null;
+  const found = Object.values(mockDemandesStore).find(
+    (d) =>
+      d.reference.toUpperCase() === q ||
+      d.email.toUpperCase() === q ||
+      d.immatriculation.toUpperCase() === q
+  );
+  return found || null;
+}
+
 export async function validerDemandeMock(id: number, paymentInfo?: PaymentInfoInput, actorName?: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   if (mockDemandesStore[id]) {
@@ -86,7 +134,6 @@ export async function validerDemandeMock(id: number, paymentInfo?: PaymentInfoIn
       };
     }
   }
-  console.log(`Demande ${id} validée avec paiements mock`, paymentInfo);
 }
 
 export async function rejeterDemandeMock(id: number, raison: string): Promise<void> {
@@ -95,5 +142,4 @@ export async function rejeterDemandeMock(id: number, raison: string): Promise<vo
     mockDemandesStore[id].statut = "REJETEE";
     mockDemandesStore[id].raisonRejet = raison;
   }
-  console.log(`Demande ${id} rejetée (mock), raison: ${raison}`);
 }

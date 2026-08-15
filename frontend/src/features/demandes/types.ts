@@ -3,6 +3,8 @@ import { type TypeClient, type TypeVehicule } from "../../lib/enums";
 export interface PublicDemandeInput {
   parkingId: number;
   typeClient: TypeClient;
+  typeDemande?: "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT";
+  ancienNumeroCarte?: string;
   nom?: string;
   prenom?: string;
   cin?: string;
@@ -14,6 +16,8 @@ export interface PublicDemandeInput {
   marque?: string;
   modele?: string;
   typeVehicule: TypeVehicule;
+  forfaitId?: number;
+  forfaitNom?: string;
 }
 
 export type StatutDemande = "SOUMISE" | "EN_COURS" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
