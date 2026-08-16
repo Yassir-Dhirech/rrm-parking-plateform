@@ -14,9 +14,18 @@ export const mockParkings: Parking[] = [
 ];
 
 export const mockTarifs: PlanTarifaire[] = [
-  { id: 1, libelle: "Pass Mensuel Particulier Standard", typeAbonnement: "PARTICULIER", dureeMois: 1, tarifHT: 500, tarifTTC: 600, actif: true },
-  { id: 2, libelle: "Pass Annuel Particulier Premium", typeAbonnement: "PARTICULIER", dureeMois: 12, tarifHT: 5000, tarifTTC: 6000, actif: true },
-  { id: 3, libelle: "Forfait Corporate Flotte 5+", typeAbonnement: "CORPORATE", dureeMois: 12, tarifHT: 4500, tarifTTC: 5400, actif: true },
+  { id: 1, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 500, tarifTTC: 600, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 2, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 350, tarifTTC: 420, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 3, libelle: "Abonnement Nuit (Nocturne)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 250, tarifTTC: 300, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 4, libelle: "Abonnement Corporate (Flotte)", typeAbonnement: "CORPORATE", plageHoraire: "Sur mesure", dureeMois: 12, tarifHT: 4500, tarifTTC: 5400, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  
+  { id: 5, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 600, tarifTTC: 720, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 6, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 400, tarifTTC: 480, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 7, libelle: "Abonnement Nuit (Nocturne)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 8, libelle: "Abonnement Corporate (Flotte)", typeAbonnement: "CORPORATE", plageHoraire: "Sur mesure", dureeMois: 12, tarifHT: 5000, tarifTTC: 6000, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+
+  { id: 9, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 450, tarifTTC: 540, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 10, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
 ];
 
 export const mockLogs: AuditLog[] = [

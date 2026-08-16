@@ -49,9 +49,11 @@ export const roleConfig: Record<Role, RoleConfig> = {
     kpis: ["Factures à signer", "CA mensuel", "Abonnements expirant"],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/responsable" },
+      { key: "parkings", label: "Gestion Parkings", path: "/responsable/parkings" },
+      { key: "tarifs", label: "Plans Tarifaires", path: "/responsable/tarifs" },
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
-      { key: "factures", label: "Factures", path: "/responsable/factures" },
+      { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
       { key: "factures", label: "Factures", path: "/responsable/factures" },
     ],
   },

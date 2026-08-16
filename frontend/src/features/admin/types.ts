@@ -19,21 +19,38 @@ export interface Parking {
   nom: string;
   code: string;
   adresse: string;
+  zone?: string;
   capaciteTotale: number;
   placesReserveesAbonnes: number;
+  capaciteAbonnement?: number;
   actif: boolean;
+  verrouille?: boolean;
+  motifVerrouillage?: string;
+  motifDesactivation?: string;
+  latitude?: number;
+  longitude?: number;
 }
+
+export type TypeAbonnementOption =
+  | "PERMANENT_24_7"
+  | "JOUR_8H_20H"
+  | "NUIT_19H_8H"
+  | "CORPORATE"
+  | "DEUX_ROUES"
+  | "PARTICULIER";
 
 // Plans Tarifaires
 export interface PlanTarifaire {
   id: number;
   libelle: string;
-  typeAbonnement: "PARTICULIER" | "CORPORATE";
+  typeAbonnement: TypeAbonnementOption | string;
+  plageHoraire?: string;
   dureeMois: number;
   tarifHT: number;
   tarifTTC: number;
+  typeVehicule?: "V" | "M" | "C" | "VOITURE" | "MOTO" | "CAMIONNETTE";
   parkingId?: number;
-  parkingNom?: string; // Si null => Applicable à tous les parkings
+  parkingNom?: string;
   actif: boolean;
 }
 

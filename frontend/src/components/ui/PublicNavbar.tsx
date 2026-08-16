@@ -7,7 +7,7 @@ export function PublicNavbar() {
 
   return (
     <nav className={styles.navbar}>
-      <img src="../public/pictures/logo-rrm.png" alt="RRM" className={styles.logo} />
+      <img src="/pictures/logo-rrm.png" alt="RRM" className={styles.logo} onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
 
       <ul className={styles.links}>
         <li><a href="#accueil">Accueil</a></li>
