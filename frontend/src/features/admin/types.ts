@@ -19,8 +19,10 @@ export interface Parking {
   nom: string;
   code: string;
   adresse: string;
+  zone?: string;
   capaciteTotale: number;
   placesReserveesAbonnes: number;
+  capaciteAbonnement?: number;
   actif: boolean;
   verrouille?: boolean;
   motifVerrouillage?: string;
@@ -46,6 +48,7 @@ export interface PlanTarifaire {
   dureeMois: number;
   tarifHT: number;
   tarifTTC: number;
+  typeVehicule?: "V" | "M" | "C" | "VOITURE" | "MOTO" | "CAMIONNETTE";
   parkingId?: number;
   parkingNom?: string;
   actif: boolean;

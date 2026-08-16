@@ -53,5 +53,6 @@ export interface DemandeDetail extends DemandeListItem {
   immatriculation: string;
   typeVehicule: string;
   raisonRejet?: string;
+  commentaireCorrection?: string;
   paiementInfo?: PaymentInfoInput & { datePaiement?: string; validePar?: string };
 }
