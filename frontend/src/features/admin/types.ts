@@ -22,6 +22,11 @@ export interface Parking {
   capaciteTotale: number;
   placesReserveesAbonnes: number;
   actif: boolean;
+  verrouille?: boolean;
+  motifVerrouillage?: string;
+  motifDesactivation?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Plans Tarifaires

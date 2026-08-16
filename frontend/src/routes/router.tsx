@@ -87,6 +87,13 @@ if (role === "SUPERVISEUR" || role === "COMPTABLE") {
   );
 }
 
+if (role === "RESPONSABLE") {
+  extraRoutes.push(
+    { path: `${roleConfig[role].homePath}/parkings`, element: <ParkingsList /> },
+    { path: `${roleConfig[role].homePath}/tarifs`, element: <PlansTarifairesList /> },
+  );
+}
+
 if (role === "ADMIN_SI") {
   extraRoutes.push(
     { path: "/admin/utilisateurs", element: <UtilisateursList /> },
