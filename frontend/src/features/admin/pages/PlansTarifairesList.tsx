@@ -14,17 +14,37 @@ import {
   Space,
   Tooltip,
   Alert,
+  Row,
+  Col,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PlusOutlined, EditOutlined, StopOutlined, TagsOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  EditOutlined,
+  StopOutlined,
+  TagsOutlined,
+  ClockCircleOutlined,
+  BuildOutlined,
+  FilterOutlined,
+} from "@ant-design/icons";
 import { getTarifsMock, mockTarifs, getParkingsMock } from "../../../api/adminMock";
 import type { PlanTarifaire } from "../types";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+const TYPE_ABONNEMENT_LABELS: Record<string, { label: string; color: string; defaultPlage: string }> = {
+  PERMANENT_24_7: { label: "Permanent (24h / 7j)", color: "blue", defaultPlage: "24h / 7j" },
+  JOUR_8H_20H: { label: "Jour (08:00 - 20:00)", color: "orange", defaultPlage: "08:00 - 20:00" },
+  NUIT_19H_8H: { label: "Nuit (19:00 - 08:00)", color: "purple", defaultPlage: "19:00 - 08:00" },
+  CORPORATE: { label: "Corporate (Entreprise)", color: "magenta", defaultPlage: "Sur mesure (Flotte)" },
+  DEUX_ROUES: { label: "Deux-Roues / Moto", color: "cyan", defaultPlage: "24h / 7j" },
+  PARTICULIER: { label: "Particulier Standard", color: "geekblue", defaultPlage: "24h / 7j" },
+};
+
 export function PlansTarifairesList() {
   const queryClient = useQueryClient();
+  const [selectedParkingFilter, setSelectedParkingFilter] = useState<number | "ALL">("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -44,6 +64,12 @@ export function PlansTarifairesList() {
     queryFn: getParkingsMock,
   });
 
+  // Filter tariffs by selected parking
+  const filteredTarifs = tarifs.filter((t) => {
+    if (selectedParkingFilter === "ALL") return true;
+    return t.parkingId === selectedParkingFilter;
+  });
+
   // Create Plan Tarifaire Mutation
   const createMutation = useMutation({
     mutationFn: async (values: Partial<PlanTarifaire>) => {
@@ -51,12 +77,14 @@ export function PlansTarifairesList() {
       const tarifTTC = Math.round(tarifHT * 1.2); // TVA 20%
 
       const parkingObj = parkings.find((p) => p.id === values.parkingId);
+      const typeInfo = TYPE_ABONNEMENT_LABELS[values.typeAbonnement || "PERMANENT_24_7"];
 
       mockTarifs.push({
         id: Date.now(),
-        libelle: values.libelle!,
-        typeAbonnement: values.typeAbonnement!,
-        dureeMois: values.dureeMois!,
+        libelle: values.libelle || typeInfo?.label || "Offre Tarifaire",
+        typeAbonnement: values.typeAbonnement || "PERMANENT_24_7",
+        plageHoraire: values.plageHoraire || typeInfo?.defaultPlage || "24h / 7j",
+        dureeMois: values.dureeMois || 1,
         tarifHT,
         tarifTTC,
         parkingId: values.parkingId,
@@ -65,7 +93,7 @@ export function PlansTarifairesList() {
       });
     },
     onSuccess: () => {
-      message.success("Nouveau plan tarifaire créé avec succès !");
+      message.success("Tarif configuré pour le parking avec succès !");
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       setIsCreateModalOpen(false);
       createForm.resetFields();
@@ -88,7 +116,7 @@ export function PlansTarifairesList() {
       }
     },
     onSuccess: () => {
-      message.success("Tarif et caractéristiques du forfait mis à jour !");
+      message.success("Tarif du parking mis à jour avec succès !");
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       setIsEditModalOpen(false);
     },
@@ -124,19 +152,33 @@ export function PlansTarifairesList() {
 
   const columns = [
     {
-      title: "Libellé du Forfait",
-      dataIndex: "libelle",
-      key: "libelle",
-      render: (text: string) => <strong>{text}</strong>,
+      title: "Parking",
+      dataIndex: "parkingNom",
+      key: "parkingNom",
+      render: (nom?: string) => (
+        <span style={{ fontWeight: 600, color: "#0f172a" }}>
+          📍 {nom || "Tous les Parkings"}
+        </span>
+      ),
     },
     {
       title: "Type d'Abonnement",
       dataIndex: "typeAbonnement",
       key: "typeAbonnement",
-      render: (type: PlanTarifaire["typeAbonnement"]) => (
-        <Tag color={type === "CORPORATE" ? "purple" : "blue"}>
-          {type === "CORPORATE" ? "Corporate (Flotte)" : "Particulier (Individuel)"}
-        </Tag>
+      render: (type: string) => {
+        const info = TYPE_ABONNEMENT_LABELS[type] || { label: type, color: "blue" };
+        return <Tag color={info.color}>{info.label}</Tag>;
+      },
+    },
+    {
+      title: "Plage Horaire / Créneau",
+      dataIndex: "plageHoraire",
+      key: "plageHoraire",
+      render: (plage?: string) => (
+        <span>
+          <ClockCircleOutlined style={{ color: "#64748b", marginRight: 6 }} />
+          {plage || "24h / 7j"}
+        </span>
       ),
     },
     {
@@ -146,29 +188,23 @@ export function PlansTarifairesList() {
       render: (m: number) => <Tag color="cyan">{m} mois</Tag>,
     },
     {
-      title: "Tarif HT (MAD)",
+      title: "Prix HT (MAD)",
       dataIndex: "tarifHT",
       key: "tarifHT",
       render: (v: number) => `${v?.toLocaleString("fr-FR")} MAD`,
     },
     {
-      title: "Tarif TTC (TVA 20%)",
+      title: "Prix TTC (TVA 20%)",
       dataIndex: "tarifTTC",
       key: "tarifTTC",
-      render: (v: number) => <strong style={{ color: "#0369a1" }}>{v?.toLocaleString("fr-FR")} MAD</strong>,
-    },
-    {
-      title: "Parking Assigné",
-      dataIndex: "parkingNom",
-      key: "parkingNom",
-      render: (nom?: string) => <span>{nom || "Tous les Parkings"}</span>,
+      render: (v: number) => <strong style={{ color: "#0369a1", fontSize: "1.05rem" }}>{v?.toLocaleString("fr-FR")} MAD</strong>,
     },
     {
       title: "Statut Grille",
       dataIndex: "actif",
       key: "actif",
       render: (actif: boolean) => (
-        <Tag color={actif ? "green" : "red"}>{actif ? "Actif (Proposé)" : "Désactivé"}</Tag>
+        <Tag color={actif ? "green" : "red"}>{actif ? "Actif (Applicable)" : "Désactivé"}</Tag>
       ),
     },
     {
@@ -176,7 +212,7 @@ export function PlansTarifairesList() {
       key: "actions",
       render: (_: unknown, record: PlanTarifaire) => (
         <Space wrap>
-          <Tooltip title="Modifier le prix ou les conditions du forfait">
+          <Tooltip title="Modifier le tarif spécifique de ce parking">
             <Button
               size="small"
               icon={<EditOutlined />}
@@ -187,7 +223,7 @@ export function PlansTarifairesList() {
           </Tooltip>
 
           {record.actif && (
-            <Tooltip title="Désactiver le forfait (pour éviter risque de suppression en cascade)">
+            <Tooltip title="Désactiver le tarif (pour éviter risque de suppression en cascade)">
               <Button
                 size="small"
                 danger
@@ -214,53 +250,58 @@ export function PlansTarifairesList() {
           onClick={() => setIsCreateModalOpen(true)}
           style={{ backgroundColor: "#0284c7", borderColor: "#0284c7" }}
         >
-          Ajouter un Forfait Tarifaire
+          Ajouter / Configurer un Tarif Parking
         </Button>
       }
     >
-      <Title level={4} style={{ margin: "0 0 4px 0" }}>
-        <TagsOutlined /> Gestion des Grilles Tarifaires & Forfaits (Responsable)
-      </Title>
-      <Text type="secondary" style={{ display: "block", marginBottom: 20 }}>
-        Consultez et configurez la tarification des abonnements par parking. Désactivez les offres obsolètes sans risque de suppression en cascade.
-      </Text>
+      <div style={{ marginBottom: 16 }}>
+        <Title level={4} style={{ margin: "0 0 4px 0" }}>
+          <TagsOutlined /> Grille Tarifaire Spécifique par Parking (Responsable)
+        </Title>
+        <Text type="secondary">
+          Chaque parking possède ses propres tarifs selon le type d'abonnement (24h/7j, Jour 8h-20h, Nuit 19h-8h, Corporate entreprise, etc.).
+        </Text>
+      </div>
 
-      <Table columns={columns} dataSource={tarifs} loading={isLoading} rowKey="id" pagination={{ pageSize: 8 }} />
+      {/* Filter by Parking Bar */}
+      <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 8, marginBottom: 20, border: "1px solid #e2e8f0" }}>
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={12} md={8}>
+            <div style={{ fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+              <FilterOutlined /> Filtrer les Tarifs par Parking :
+            </div>
+            <Select
+              style={{ width: "100%" }}
+              size="large"
+              value={selectedParkingFilter}
+              onChange={(val) => setSelectedParkingFilter(val)}
+            >
+              <Option value="ALL">📍 Tous les Parkings de Rabat</Option>
+              {parkings.map((p) => (
+                <Option key={p.id} value={p.id}>
+                  📍 {p.nom} ({p.code})
+                </Option>
+              ))}
+            </Select>
+          </Col>
+        </Row>
+      </div>
 
-      {/* Modal 1: Ajouter un Forfait */}
+      <Table columns={columns} dataSource={filteredTarifs} loading={isLoading} rowKey="id" pagination={{ pageSize: 10 }} />
+
+      {/* Modal 1: Ajouter / Configurer un Tarif pour un Parking */}
       <Modal
-        title="Ajouter un Forfait Tarifaire — RRM"
+        title="Ajouter un Tarif Spécifique pour un Parking"
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
-        okText="Créer le Forfait"
+        okText="Valider & Enregistrer"
         cancelText="Annuler"
       >
         <Form form={createForm} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item name="libelle" label="Libellé de l'Offre" rules={[{ required: true, message: "Libellé requis" }]}>
-            <Input placeholder="Ex: Pass Trimestriel Agdal Gare" />
-          </Form.Item>
-
-          <Form.Item name="typeAbonnement" label="Type d'Abonnement" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: "PARTICULIER", label: "Particulier (Individuel)" },
-                { value: "CORPORATE", label: "Corporate (Flotte Entreprise)" },
-              ]}
-            />
-          </Form.Item>
-
-          <Form.Item name="dureeMois" label="Durée de souscription (en mois)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} min={1} max={36} placeholder="Ex: 1, 3, 6, 12" />
-          </Form.Item>
-
-          <Form.Item name="tarifHT" label="Tarif Hors Taxe (MAD HT)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} min={0} step={50} placeholder="500" addonAfter="MAD HT" />
-          </Form.Item>
-
-          <Form.Item name="parkingId" label="Parking Appliqué (Optionnel)">
-            <Select placeholder="Applicable à tous les parkings par défaut" allowClear>
+          <Form.Item name="parkingId" label="Parking Concerné" rules={[{ required: true, message: "Veuillez choisir un parking" }]}>
+            <Select placeholder="Sélectionnez un parking Rabat" size="large">
               {parkings.map((p) => (
                 <Option key={p.id} value={p.id}>
                   📍 {p.nom} ({p.code})
@@ -268,12 +309,52 @@ export function PlansTarifairesList() {
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item name="typeAbonnement" label="Type d'Abonnement" rules={[{ required: true, message: "Type requis" }]}>
+            <Select
+              size="large"
+              onChange={(val) => {
+                const info = TYPE_ABONNEMENT_LABELS[val];
+                if (info) {
+                  createForm.setFieldValue("libelle", info.label);
+                  createForm.setFieldValue("plageHoraire", info.defaultPlage);
+                }
+              }}
+            >
+              <Option value="PERMANENT_24_7">🕒 Permanent 24h / 7j</Option>
+              <Option value="JOUR_8H_20H">☀️ Journée (08:00 - 20:00)</Option>
+              <Option value="NUIT_19H_8H">🌙 Nuit (19:00 - 08:00)</Option>
+              <Option value="CORPORATE">🏢 Corporate (Abonnement Flotte Entreprise)</Option>
+              <Option value="DEUX_ROUES">🛵 Deux-Roues / Moto</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="libelle" label="Libellé du Forfait" rules={[{ required: true }]}>
+            <Input placeholder="Ex: Abonnement Journée 8h-20h Agdal" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="plageHoraire" label="Plage Horaire / Créneau">
+                <Input placeholder="08:00 - 20:00" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="dureeMois" label="Durée (Mois)" rules={[{ required: true }]} initialValue={1}>
+                <InputNumber style={{ width: "100%" }} min={1} max={36} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="tarifHT" label="Tarif Mensuel HT (MAD HT)" rules={[{ required: true, message: "Tarif requis" }]}>
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" addonAfter="MAD HT" />
+          </Form.Item>
         </Form>
       </Modal>
 
       {/* Modal 2: Modifier le Prix d'un Forfait */}
       <Modal
-        title={`Modifier le Forfait: ${selectedTarif?.libelle}`}
+        title={`Modifier le Prix: ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
         onOk={() => editForm.submit()}
@@ -282,19 +363,21 @@ export function PlansTarifairesList() {
         cancelText="Annuler"
       >
         <Form form={editForm} layout="vertical" onFinish={(v) => editMutation.mutate(v)}>
-          <Form.Item name="libelle" label="Libellé de l'Offre" rules={[{ required: true }]}>
+          <Form.Item name="libelle" label="Libellé du Forfait" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="tarifHT" label="Nouveau Tarif HT (MAD HT)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} min={0} step={50} addonAfter="MAD HT" />
+
+          <Form.Item name="plageHoraire" label="Plage Horaire">
+            <Input />
           </Form.Item>
-          <Form.Item name="dureeMois" label="Durée (Mois)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} min={1} max={36} />
+
+          <Form.Item name="tarifHT" label="Nouveau Tarif HT (MAD HT)" rules={[{ required: true }]}>
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} addonAfter="MAD HT" />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal 3: Désactivation d'un Forfait (Diagram Note: Pas de suppression en cascade) */}
+      {/* Modal 3: Désactivation d'un Forfait */}
       <Modal
         title="Désactivation du Forfait Tarifaire"
         open={isDeactivateModalOpen}
@@ -307,7 +390,7 @@ export function PlansTarifairesList() {
       >
         <Alert
           message="Protection Contre les Suppressions en Cascade :"
-          description="Selon les règles de gestion RRM, ce forfait sera désactivé sans suppression physique en base de données, évitant ainsi tout risque d'altération des abonnements existants."
+          description="Ce forfait sera désactivé pour ce parking sans suppression en base de données, préservant les abonnements en cours."
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
@@ -316,7 +399,7 @@ export function PlansTarifairesList() {
           <Form.Item label="Motif de désactivation du forfait" required>
             <Input.TextArea
               rows={3}
-              placeholder="Raison de la désactivation (ex: Offre remplacée par la nouvelle grille tarifaire 2026)..."
+              placeholder="Raison de la désactivation pour ce parking..."
               value={deactivateReason}
               onChange={(e) => setDeactivateReason(e.target.value)}
             />

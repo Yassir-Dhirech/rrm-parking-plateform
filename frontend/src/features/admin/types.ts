@@ -29,16 +29,25 @@ export interface Parking {
   longitude?: number;
 }
 
+export type TypeAbonnementOption =
+  | "PERMANENT_24_7"
+  | "JOUR_8H_20H"
+  | "NUIT_19H_8H"
+  | "CORPORATE"
+  | "DEUX_ROUES"
+  | "PARTICULIER";
+
 // Plans Tarifaires
 export interface PlanTarifaire {
   id: number;
   libelle: string;
-  typeAbonnement: "PARTICULIER" | "CORPORATE";
+  typeAbonnement: TypeAbonnementOption | string;
+  plageHoraire?: string;
   dureeMois: number;
   tarifHT: number;
   tarifTTC: number;
   parkingId?: number;
-  parkingNom?: string; // Si null => Applicable à tous les parkings
+  parkingNom?: string;
   actif: boolean;
 }
 

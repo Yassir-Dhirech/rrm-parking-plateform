@@ -48,35 +48,48 @@ const { Option } = Select;
 const FORFAITS_OPTIONS = [
   {
     id: 1,
-    title: "Pass Mensuel Standard",
+    title: "Pass Permanent (24h / 7j)",
+    plage: "24h / 7j",
     duree: "1 Mois",
     priceTTC: 600,
-    badge: "Populaire",
-    desc: "Accès 24/7 au parking sélectionné pour 1 véhicule",
+    badge: "Accès 24/7",
+    desc: "Accès permanent jour et nuit au parking sélectionné",
   },
   {
     id: 2,
-    title: "Pass Trimestriel Mobilité",
-    duree: "3 Mois",
-    priceTTC: 1600,
-    badge: "Économique",
-    desc: "Abonnement 3 mois avec tarif préférentiel",
+    title: "Pass Journée (08:00 - 20:00)",
+    plage: "08:00 - 20:00",
+    duree: "1 Mois",
+    priceTTC: 420,
+    badge: "Diurne",
+    desc: "Accès de jour du lundi au samedi de 08:00 à 20:00",
   },
   {
     id: 3,
-    title: "Pass Annuel Premium",
-    duree: "12 Mois",
-    priceTTC: 6000,
-    badge: "2 Mois Offerts",
-    desc: "Accès permanent 12 mois + place réservée garantie",
+    title: "Pass Nuit (19:00 - 08:00)",
+    plage: "19:00 - 08:00",
+    duree: "1 Mois",
+    priceTTC: 300,
+    badge: "Nocturne",
+    desc: "Accès nocturne en soirée et la nuit de 19:00 à 08:00",
   },
   {
     id: 4,
-    title: "Forfait Corporate Flotte",
+    title: "Abonnement Corporate (Flotte)",
+    plage: "Sur mesure",
     duree: "12 Mois",
     priceTTC: 5400,
     badge: "Entreprises",
-    desc: "Forfait entreprise dès 5 véhicules enregistrés",
+    desc: "Abonnement de l'entreprise pour gestion de flotte de véhicules",
+  },
+  {
+    id: 5,
+    title: "Pass Deux-Roues / Moto",
+    plage: "24h / 7j",
+    duree: "1 Mois",
+    priceTTC: 200,
+    badge: "Deux-roues",
+    desc: "Abonnement dédié aux motos, scooters et deux-roues",
   },
 ];
 
@@ -449,7 +462,7 @@ export function PublicQrForm() {
                                 </Select>
                               </Form.Item>
 
-                              <Divider titlePlacement="left">Choisir le Forfait Tarifaire Souhaité</Divider>
+                              <Divider titlePlacement="left">Choisir la Formule d'Abonnement Souhaitée</Divider>
 
                               <Row gutter={[16, 16]}>
                                 {FORFAITS_OPTIONS.map((f) => {
@@ -477,7 +490,10 @@ export function PublicQrForm() {
                                           </Tag>
                                         )}
                                         <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
-                                        <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 10px" }}>{f.desc}</div>
+                                        <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
+                                        <div style={{ marginBottom: 8 }}>
+                                          <Tag color="geekblue">🕒 {f.plage}</Tag>
+                                        </div>
                                         <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0369a1" }}>
                                           {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / {f.duree}</span>
                                         </div>
