@@ -8,6 +8,8 @@ export interface VehiculeContrat {
 }
 
 export interface ContratListItem {
+  dateDebut: string;
+  parkingId: number;
   id: number;
   reference: string;
   entrepriseNom: string;

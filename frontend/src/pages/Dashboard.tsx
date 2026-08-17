@@ -18,8 +18,6 @@ import { RoleCharts } from "../components/charts/RoleCharts";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 
-const { Title, Paragraph } = Typography;
-
 export function Dashboard() {
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -34,51 +32,35 @@ export function Dashboard() {
   const { data: recettes } = useQuery({ queryKey: ["recettes"], queryFn: getRecettesMock });
   const { data: contrats } = useQuery({ queryKey: ["contrats"], queryFn: getContratsMock });
 
-  // Calculs dynamiques de statistiques selon le rôle
-  const totalCAHebdo = recettes?.reduce((acc, r) => acc + r.totalHebdo, 0) || 0;
-  const recettesEnAttente = recettes?.filter((r) => r.statut === "EN_COURS").length || 0;
-  const contratsEnAttenteSign = contrats?.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length || 0;
+  // Application des filtres globaux
+  const filteredRecettes = (recettes || []).filter((r) => {
+    if (filters.parkingId && r.parkingId !== filters.parkingId) return false;
+    if (filters.statut && r.statut !== filters.statut) return false;
+    if (filters.periode) {
+      const [start, end] = filters.periode;
+      if (r.dateDebut && (r.dateDebut < start || r.dateDebut > end)) return false;
+    }
+    return true;
+  });
+
+  const filteredContrats = (contrats || []).filter((c) => {
+    if (filters.parkingId && c.parkingId !== filters.parkingId) return false;
+    if (filters.statut && c.statut !== filters.statut) return false;
+    if (filters.periode) {
+      const [start, end] = filters.periode;
+      if (c.dateDebut && (c.dateDebut < start || c.dateDebut > end)) return false;
+    }
+    return true;
+  });
+
+  // Calculs dynamiques de statistiques selon le rôle et les filtres
+  const totalCAHebdo = filteredRecettes.reduce((acc, r) => acc + r.totalHebdo, 0);
+  const recettesEnAttente = filteredRecettes.filter((r) => r.statut === "EN_COURS").length;
+  const contratsEnAttenteSign = filteredContrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
+  const parkingsCount = filters.parkingId ? 1 : 17;
 
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      {/* En-tête Dynamique de l'Espace avec Titre et Rôle */}
-      <Card
-        style={{
-          background: "linear-gradient(135deg, #003566 0%, #001E3D 100%)",
-          color: "#fff",
-          borderRadius: 14,
-          boxShadow: "var(--shadow-md)",
-          border: "none",
-        }}
-        styles={{ body: { padding: "22px 28px" } }}
-      >
-        <Row justify="space-between" align="middle" style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          <Col>
-            <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, display: "flex", alignItems: "center", gap: 10 }}>
-              <DashboardOutlined /> {currentRoleConfig.title}
-            </Title>
-            <Paragraph style={{ color: "rgba(255, 255, 255, 0.85)", margin: "4px 0 0 0", fontSize: 13 }}>
-              Plateforme de Gestion des Parkings — Rabat Région Mobilité
-            </Paragraph>
-          </Col>
-          <Col>
-            <Tag
-              style={{
-                fontSize: "13px",
-                padding: "6px 16px",
-                fontWeight: 600,
-                background: "rgba(255,255,255,0.15)",
-                color: "#ffffff",
-                border: "1px solid rgba(255,255,255,0.3)",
-                borderRadius: 20,
-              }}
-            >
-              Session Rôle : {role}
-            </Tag>
-          </Col>
-        </Row>
-      </Card>
-
       {/* Barre de Filtres Globaux */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />
 
@@ -123,7 +105,7 @@ export function Dashboard() {
           <Card bordered={false} style={{ borderLeft: "4px solid #10b981", boxShadow: "var(--shadow-sm)", borderRadius: 12 }}>
             <Statistic
               title="Parkings en Exploitation"
-              value={17}
+              value={parkingsCount}
               valueStyle={{ color: "#10b981", fontWeight: 700 }}
               prefix={<CreditCardOutlined />}
             />
@@ -132,14 +114,14 @@ export function Dashboard() {
       </Row>
 
       {/* Graphiques Interactifs Personnalisés par Rôle */}
-      <RoleCharts role={role} />
+      <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} />
 
       {/* Vues Métier & Raccourcis */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <Card title="📋 Activités & Recettes Récentes" style={{ borderRadius: 12 }}>
             <Table
-              dataSource={recettes?.slice(0, 5)}
+              dataSource={filteredRecettes.slice(0, 5)}
               rowKey="id"
               pagination={false}
               size="small"

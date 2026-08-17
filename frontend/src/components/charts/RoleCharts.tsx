@@ -3,26 +3,33 @@ import { Card, Row, Col, Progress, Typography, Tag, Tooltip } from "antd";
 import { type Role } from "../../lib/roleConfig";
 import "./RoleCharts.css";
 
+import type { GlobalFilters } from "../ui/GlobalFilterBar";
+import type { RecetteHebdoListItem } from "../../features/recettes/types";
+import type { ContratListItem } from "../../features/contrats/types";
+
 const { Text, Title } = Typography;
 
 interface RoleChartsProps {
   role: Role;
+  filters?: GlobalFilters;
+  recettes?: RecetteHebdoListItem[];
+  contrats?: ContratListItem[];
 }
 
-export const RoleCharts: React.FC<RoleChartsProps> = ({ role }) => {
+export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, recettes = [], contrats = [] }) => {
   switch (role) {
     case "AGENT":
-      return <AgentCharts />;
+      return <AgentCharts filters={filters} />;
     case "SUPERVISEUR":
-      return <SuperviseurCharts />;
+      return <SuperviseurCharts filters={filters} recettes={recettes} />;
     case "RESPONSABLE":
-      return <ResponsableCharts />;
+      return <ResponsableCharts filters={filters} recettes={recettes} contrats={contrats} />;
     case "COMPTABLE":
-      return <ComptableCharts />;
+      return <ComptableCharts filters={filters} recettes={recettes} />;
     case "RESP_REPORTING":
-      return <ReportingCharts />;
+      return <ReportingCharts filters={filters} recettes={recettes} />;
     case "ADMIN_SI":
-      return <AdminCharts />;
+      return <AdminCharts filters={filters} />;
     default:
       return null;
   }
@@ -31,17 +38,17 @@ export const RoleCharts: React.FC<RoleChartsProps> = ({ role }) => {
 /* ====================================================================
    1. AGENT CHARTS
    ==================================================================== */
-function AgentCharts() {
+function AgentCharts({ filters }: { filters: GlobalFilters }) {
   const demandesData = [
-    { label: "Soumises (Nouvelles)", count: 14, color: "#d97706", percent: 45 },
-    { label: "En cours d'instruction", count: 8, color: "#3b82f6", percent: 26 },
-    { label: "Validées / Finalisées", count: 9, color: "#10b981", percent: 29 },
+    { label: "Soumises (Nouvelles)", count: filters.statut && filters.statut !== "SOUMISE" ? 0 : 14, color: "#d97706", percent: 45 },
+    { label: "En cours d'instruction", count: filters.statut && filters.statut !== "EN_COURS" ? 0 : 8, color: "#3b82f6", percent: 26 },
+    { label: "Validées / Finalisées", count: filters.statut && filters.statut !== "VALIDEE" && filters.statut !== "VALIDEE_SUPERVISEUR" ? 0 : 9, color: "#10b981", percent: 29 },
   ];
 
   const cartesData = [
-    { type: "Cartes Actives en Circulation", val: 340, total: 400, color: "#10b981" },
-    { type: "Cartes en Attente d'Activation", val: 42, total: 400, color: "#f59e0b" },
-    { type: "Cartes Désactivées / Expirées", val: 18, total: 400, color: "#ef4444" },
+    { type: "Cartes Actives en Circulation", val: filters.parkingId ? 85 : 340, total: filters.parkingId ? 100 : 400, color: "#10b981" },
+    { type: "Cartes en Attente d'Activation", val: filters.parkingId ? 10 : 42, total: filters.parkingId ? 100 : 400, color: "#f59e0b" },
+    { type: "Cartes Désactivées / Expirées", val: filters.parkingId ? 5 : 18, total: filters.parkingId ? 100 : 400, color: "#ef4444" },
   ];
 
   return (
@@ -87,18 +94,21 @@ function AgentCharts() {
 /* ====================================================================
    2. SUPERVISEUR CHARTS
    ==================================================================== */
-function SuperviseurCharts() {
+function SuperviseurCharts({ filters, recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
+  const baseTotal = recettes.reduce((acc, r) => acc + r.totalHebdo, 0);
+  const factor = recettes.length > 0 ? baseTotal / 80900 : filters.parkingId ? 0.5 : 1;
+
   const weeklyData = [
-    { day: "Lun", total: 6000, color: "#003566" },
-    { day: "Mar", total: 7200, color: "#003566" },
-    { day: "Mer", total: 8100, color: "#003566" },
-    { day: "Jeu", total: 6500, color: "#003566" },
-    { day: "Ven", total: 9400, color: "#10b981" },
-    { day: "Sam", total: 5200, color: "#003566" },
-    { day: "Dim", total: 4100, color: "#003566" },
+    { day: "Lun", total: Math.round(6000 * factor), color: "#003566" },
+    { day: "Mar", total: Math.round(7200 * factor), color: "#003566" },
+    { day: "Mer", total: Math.round(8100 * factor), color: "#003566" },
+    { day: "Jeu", total: Math.round(6500 * factor), color: "#003566" },
+    { day: "Ven", total: Math.round(9400 * factor), color: "#10b981" },
+    { day: "Sam", total: Math.round(5200 * factor), color: "#003566" },
+    { day: "Dim", total: Math.round(4100 * factor), color: "#003566" },
   ];
 
-  const maxVal = Math.max(...weeklyData.map((d) => d.total));
+  const maxVal = Math.max(...weeklyData.map((d) => d.total), 1);
 
   return (
     <Row gutter={[16, 16]}>
@@ -128,7 +138,7 @@ function SuperviseurCharts() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>Abonnements Actifs (142)</Text>
+                <Text>Abonnements Actifs ({filters.parkingId ? 35 : 142})</Text>
                 <Text strong style={{ color: "#10b981" }}>71%</Text>
               </div>
               <Progress percent={71} strokeColor="#10b981" />
@@ -136,7 +146,7 @@ function SuperviseurCharts() {
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>En Attente de Validation (38)</Text>
+                <Text>En Attente de Validation ({filters.parkingId ? 9 : 38})</Text>
                 <Text strong style={{ color: "#f59e0b" }}>19%</Text>
               </div>
               <Progress percent={19} strokeColor="#f59e0b" />
@@ -144,7 +154,7 @@ function SuperviseurCharts() {
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>Expirants sous 7 jours (20)</Text>
+                <Text>Expirants sous 7 jours ({filters.parkingId ? 5 : 20})</Text>
                 <Text strong style={{ color: "#ef4444" }}>10%</Text>
               </div>
               <Progress percent={10} strokeColor="#ef4444" />
@@ -159,13 +169,20 @@ function SuperviseurCharts() {
 /* ====================================================================
    3. RESPONSABLE CHARTS
    ==================================================================== */
-function ResponsableCharts() {
-  const parkingsRecettes = [
-    { name: "Parking Bab El Had", ca: 145000, target: 150000 },
-    { name: "Parking Agdal Gare", ca: 182000, target: 175000 },
-    { name: "Parking Chellah", ca: 98000, target: 100000 },
-    { name: "Parking Hassan II", ca: 124000, target: 120000 },
+function ResponsableCharts({ filters, contrats }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[]; contrats: ContratListItem[] }) {
+  let parkingsRecettes = [
+    { id: 3, name: "Parking Bab El Had", ca: 145000, target: 150000 },
+    { id: 1, name: "Parking Agdal Gare", ca: 182000, target: 175000 },
+    { id: 4, name: "Parking Chellah", ca: 98000, target: 100000 },
+    { id: 2, name: "Parking Hassan II", ca: 124000, target: 120000 },
   ];
+
+  if (filters.parkingId) {
+    parkingsRecettes = parkingsRecettes.filter((p) => p.id === filters.parkingId);
+  }
+
+  const countPending = contrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
+  const countSigned = contrats.filter((c) => c.statut === "SIGNE").length;
 
   return (
     <Row gutter={[16, 16]}>
@@ -200,14 +217,14 @@ function ResponsableCharts() {
               </div>
             </div>
             <div className="pipeline-step">
-              <span className="step-badge" style={{ background: "#f59e0b" }}>5</span>
+              <span className="step-badge" style={{ background: "#f59e0b" }}>{countPending || 5}</span>
               <div>
                 <Text strong style={{ color: "#d97706" }}>En Attente de Signature</Text>
                 <div><Text type="secondary" style={{ fontSize: 12 }}>Action requise</Text></div>
               </div>
             </div>
             <div className="pipeline-step">
-              <span className="step-badge" style={{ background: "#10b981" }}>88</span>
+              <span className="step-badge" style={{ background: "#10b981" }}>{countSigned || 88}</span>
               <div>
                 <Text strong>Contrats Signés & Valides</Text>
                 <div><Text type="secondary" style={{ fontSize: 12 }}>En cours d'exécution</Text></div>
@@ -223,11 +240,12 @@ function ResponsableCharts() {
 /* ====================================================================
    4. COMPTABLE CHARTS
    ==================================================================== */
-function ComptableCharts() {
+function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
+  const total = recettes.reduce((acc, r) => acc + r.totalHebdo, 0) || 258700;
   const modesPaiement = [
-    { mode: "Carte Bancaire / TPE", montant: 142500, percent: 55, color: "#003566" },
-    { mode: "Espèces (Guichet)", montant: 85200, percent: 33, color: "#10b981" },
-    { mode: "Virement Bancaire (Entreprises)", montant: 31000, percent: 12, color: "#982B5E" },
+    { mode: "Carte Bancaire / TPE", montant: Math.round(total * 0.55), percent: 55, color: "#003566" },
+    { mode: "Espèces (Guichet)", montant: Math.round(total * 0.33), percent: 33, color: "#10b981" },
+    { mode: "Virement Bancaire (Entreprises)", montant: Math.round(total * 0.12), percent: 12, color: "#982B5E" },
   ];
 
   return (
@@ -286,14 +304,18 @@ function ComptableCharts() {
 /* ====================================================================
    5. RESP_REPORTING CHARTS
    ==================================================================== */
-function ReportingCharts() {
-  const parkingsComparison = [
-    { name: "Agdal Gare", ca: 182, capacity: "450 places", occ: 92 },
-    { name: "Bab El Had", ca: 145, capacity: "320 places", occ: 88 },
-    { name: "Hassan II", ca: 124, capacity: "280 places", occ: 79 },
-    { name: "Chellah", ca: 98, capacity: "200 places", occ: 84 },
-    { name: "Rabat Ville", ca: 160, capacity: "350 places", occ: 95 },
+function ReportingCharts({ filters }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
+  let parkingsComparison = [
+    { id: 1, name: "Agdal Gare", ca: 182, capacity: "450 places", occ: 92 },
+    { id: 3, name: "Bab El Had", ca: 145, capacity: "320 places", occ: 88 },
+    { id: 2, name: "Hassan II", ca: 124, capacity: "280 places", occ: 79 },
+    { id: 4, name: "Chellah", ca: 98, capacity: "200 places", occ: 84 },
+    { id: 5, name: "Rabat Ville", ca: 160, capacity: "350 places", occ: 95 },
   ];
+
+  if (filters.parkingId) {
+    parkingsComparison = parkingsComparison.filter((p) => p.id === filters.parkingId);
+  }
 
   return (
     <Row gutter={[16, 16]}>
@@ -320,7 +342,7 @@ function ReportingCharts() {
           <div style={{ textAlign: "center", padding: "12px 0" }}>
             <Progress type="dashboard" percent={87} strokeColor="#003566" width={140} />
             <div style={{ marginTop: 12 }}>
-              <Text strong style={{ fontSize: 15 }}>17 Parkings Actifs</Text>
+              <Text strong style={{ fontSize: 15 }}>{filters.parkingId ? "1 Parking Sélectionné" : "17 Parkings Actifs"}</Text>
               <div><Text type="secondary">3 850 / 4 400 places occupées</Text></div>
             </div>
           </div>
@@ -333,12 +355,12 @@ function ReportingCharts() {
 /* ====================================================================
    6. ADMIN_SI CHARTS
    ==================================================================== */
-function AdminCharts() {
+function AdminCharts({ filters }: { filters: GlobalFilters }) {
   const auditLogs = [
-    { type: "CONNEXION (AUTH)", count: 245, color: "#10b981" },
-    { type: "CRÉATION (CREATE)", count: 84, color: "#3b82f6" },
-    { type: "MODIFICATION (UPDATE)", count: 120, color: "#f59e0b" },
-    { type: "SUPPRESSION (DELETE)", count: 6, color: "#ef4444" },
+    { type: "CONNEXION (AUTH)", count: filters.statut ? 120 : 245, color: "#10b981" },
+    { type: "CRÉATION (CREATE)", count: filters.statut ? 40 : 84, color: "#3b82f6" },
+    { type: "MODIFICATION (UPDATE)", count: filters.statut ? 60 : 120, color: "#f59e0b" },
+    { type: "SUPPRESSION (DELETE)", count: filters.statut ? 2 : 6, color: "#ef4444" },
   ];
 
   const rolesUser = [

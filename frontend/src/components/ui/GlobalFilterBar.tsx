@@ -44,17 +44,26 @@ export function GlobalFilterBar({ filters, onChange, statutOptions }: GlobalFilt
           options={parkings?.map((p) => ({ value: p.id, label: p.nom }))}
         />
 
-        {/* Filtre par Statut (si transmis) */}
-        {statutOptions && statutOptions.length > 0 && (
-          <Select
-            placeholder="Tous les statuts"
-            style={{ width: 200 }}
-            allowClear
-            value={filters.statut}
-            onChange={(val) => onChange({ ...filters, statut: val })}
-            options={statutOptions}
-          />
-        )}
+        {/* Filtre par Statut */}
+        <Select
+          placeholder="Tous les statuts"
+          style={{ width: 200 }}
+          allowClear
+          value={filters.statut}
+          onChange={(val) => onChange({ ...filters, statut: val })}
+          options={
+            statutOptions && statutOptions.length > 0
+              ? statutOptions
+              : [
+                  { value: "EN_COURS", label: "En Cours" },
+                  { value: "SOUMISE", label: "Soumise" },
+                  { value: "VALIDEE", label: "Validée" },
+                  { value: "VALIDEE_SUPERVISEUR", label: "Validée Superviseur" },
+                  { value: "EN_ATTENTE_SIGNATURE", label: "En Attente Signature" },
+                  { value: "SIGNE", label: "Signé" },
+                ]
+          }
+        />
 
         {/* Filtre par Période / Plage de dates */}
         <RangePicker
