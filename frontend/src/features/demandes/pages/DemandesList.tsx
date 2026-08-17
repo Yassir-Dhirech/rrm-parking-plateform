@@ -92,6 +92,7 @@ export function DemandesList() {
   const filteredData = data.filter((item) => {
     // Tab filter
     if (activeTab === "SOUMISE" && item.statut !== "SOUMISE") return false;
+    if (activeTab === "PAIEMENT_ENREGISTRE" && item.statut !== "PAIEMENT_ENREGISTRE") return false;
     if (activeTab === "EN_COURS" && item.statut !== "EN_COURS") return false;
     if (activeTab === "VALIDEE" && item.statut !== "VALIDEE") return false;
     if (activeTab === "REJETEE" && item.statut !== "REJETEE") return false;
@@ -109,7 +110,7 @@ export function DemandesList() {
   });
 
   const countSoumises = data.filter((d) => d.statut === "SOUMISE").length;
-  const countEnCours = data.filter((d) => d.statut === "EN_COURS").length;
+  const countPaiementEnregistre = data.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
   const countValidees = data.filter((d) => d.statut === "VALIDEE").length;
 
   const handleCreateDemande = async () => {
@@ -189,10 +190,10 @@ export function DemandesList() {
         <Col xs={24} sm={8}>
           <Card size="small" style={{ borderRadius: 8, borderColor: "#e2e8f0" }}>
             <Statistic
-              title="Dossiers En Cours de Validation"
-              value={countEnCours}
-              prefix={<FileTextOutlined style={{ color: "#2563eb" }} />}
-              valueStyle={{ color: "#2563eb" }}
+              title="Paiements Enregistrés (À Valider Superviseur)"
+              value={countPaiementEnregistre}
+              prefix={<FileTextOutlined style={{ color: "#0284c7" }} />}
+              valueStyle={{ color: "#0284c7" }}
             />
           </Card>
         </Col>
@@ -213,10 +214,10 @@ export function DemandesList() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
           <div>
             <Title level={4} style={{ margin: 0 }}>
-              <FileTextOutlined /> Consultation & Gestion des Demandes (Agent)
+              <FileTextOutlined /> Consultation & Gestion des Demandes
             </Title>
             <Text type="secondary">
-              Gérez, vérifiez et validez les demandes d'abonnement saisies en ligne ou au guichet.
+              Gérez les encaissements guichet (Agent) et la validation de conformité des dossiers (Superviseur).
             </Text>
           </div>
 
@@ -250,7 +251,7 @@ export function DemandesList() {
           items={[
             { key: "ALL", label: `Toutes les Demandes (${data.length})` },
             { key: "SOUMISE", label: `En Attente de Paiement (${countSoumises})` },
-            { key: "EN_COURS", label: `En Cours de Traitement (${countEnCours})` },
+            { key: "PAIEMENT_ENREGISTRE", label: `Paiement Enregistré (${countPaiementEnregistre})` },
             { key: "VALIDEE", label: `Validées (${countValidees})` },
             { key: "REJETEE", label: "Rejetées" },
           ]}

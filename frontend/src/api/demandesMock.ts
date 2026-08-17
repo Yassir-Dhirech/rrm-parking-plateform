@@ -31,7 +31,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 3,
     reference: "DEM-2026-000003",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "VALIDEE",
+    statut: "PAIEMENT_ENREGISTRE",
     clientNom: "Sara Bennis",
     parkingNom: "Parking Bab El Had",
     dateCreation: "2026-07-27",
@@ -43,8 +43,30 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
       modePaiement: "ESPECES",
       montant: 450,
       datePaiement: "2026-07-27 14:30",
-      validePar: "Agent Guichet",
-      remarques: "Paiement en espèces au guichet principal",
+      validePar: "Agent Guichet (Agent)",
+      remarques: "Paiement en espèces encaissé au guichet principal",
+    },
+  },
+  4: {
+    id: 4,
+    reference: "DEM-2026-000004",
+    typeDemande: "RENOUVELLEMENT",
+    statut: "VALIDEE",
+    clientNom: "Youssef Tazi",
+    parkingNom: "Parking Hassan II",
+    dateCreation: "2026-07-25",
+    email: "youssef.tazi@example.com",
+    telephone: "0611223344",
+    immatriculation: "11223-A-1",
+    typeVehicule: "VOITURE",
+    paiementInfo: {
+      modePaiement: "CHEQUE",
+      montant: 600,
+      numeroCheque: "CHQ-889012",
+      banque: "ATTIJARI",
+      datePaiement: "2026-07-25 11:15",
+      validePar: "Superviseur RRM",
+      remarques: "Paiement chèque vérifié et dossier validé",
     },
   },
 };
@@ -122,17 +144,43 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
   return found || null;
 }
 
-export async function validerDemandeMock(id: number, paymentInfo?: PaymentInfoInput, actorName?: string): Promise<void> {
+/** Action Agent/Superviseur : Encaisser et enregistrer le paiement (passage au statut PAIEMENT_ENREGISTRE) */
+export async function enregistrerPaiementAgentMock(
+  id: number,
+  paymentInfo: PaymentInfoInput,
+  actorName?: string
+): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   if (mockDemandesStore[id]) {
-    mockDemandesStore[id].statut = "VALIDEE";
+    mockDemandesStore[id].statut = "PAIEMENT_ENREGISTRE";
+    mockDemandesStore[id].paiementInfo = {
+      ...paymentInfo,
+      datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
+      validePar: actorName ?? "Agent / Superviseur",
+    };
+  }
+}
+
+/** Action Superviseur Exclusive : Valider la conformité du dossier (requiert un paiement déjà effectué) */
+export async function validerDemandeMock(
+  id: number,
+  paymentInfo?: PaymentInfoInput,
+  actorName?: string
+): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const demande = mockDemandesStore[id];
+  if (demande) {
     if (paymentInfo) {
-      mockDemandesStore[id].paiementInfo = {
+      demande.paiementInfo = {
         ...paymentInfo,
         datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
-        validePar: actorName ?? "Agent / Superviseur",
+        validePar: actorName ?? "Superviseur",
       };
     }
+    if (!demande.paiementInfo) {
+      throw new Error("Impossible de valider le dossier : le règlement du paiement doit être encaissé au préalable.");
+    }
+    demande.statut = "VALIDEE";
   }
 }
 

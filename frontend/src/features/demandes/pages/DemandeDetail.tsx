@@ -15,20 +15,23 @@ import {
   Tag,
   Divider,
   Alert,
-  Row,
-  Col,
+  Steps,
+  Tooltip,
 } from "antd";
 import {
   CheckCircleOutlined,
-  CloseCircleOutlined,
   DollarOutlined,
   FileDoneOutlined,
   ArrowLeftOutlined,
   FolderOutlined,
+  LockOutlined,
+  UserOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
   validerDemandeMock,
+  enregistrerPaiementAgentMock,
   rejeterDemandeMock,
 } from "../../../api/demandesMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -60,7 +63,6 @@ export function DemandeDetail() {
   const [raison, setRaison] = useState("");
   
   const [paymentForm] = Form.useForm<PaymentInfoInput>();
-  // Form.useWatch reactively tracks the selected payment mode without state desync!
   const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECES";
 
   const { data, isLoading } = useQuery({
@@ -69,15 +71,30 @@ export function DemandeDetail() {
     enabled: !isNaN(demandeId),
   });
 
-  const validerMutation = useMutation<void, Error, PaymentInfoInput | undefined>({
-    mutationFn: (payInput?: PaymentInfoInput) =>
-      validerDemandeMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
+  // Action 1: Encaisser / Enregistrer le paiement (Agent & Superviseur) -> statut = PAIEMENT_ENREGISTRE
+  const enregistrerPaiementMutation = useMutation<void, Error, PaymentInfoInput>({
+    mutationFn: (payInput: PaymentInfoInput) =>
+      enregistrerPaiementAgentMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
     onSuccess: () => {
-      message.success("Demande et traitement de dossier validés avec succès");
+      message.success("Paiement encaissé et confirmé avec succès. Le dossier est prêt pour validation.");
       setPaymentModalOpen(false);
       paymentForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
+    },
+  });
+
+  // Action 2: Valider la conformité du dossier (Superviseur UNIQUEMENT) -> statut = VALIDEE
+  const validerDossierMutation = useMutation<void, Error, void>({
+    mutationFn: () =>
+      validerDemandeMock(demandeId, undefined, `${userName ?? "Utilisateur"} (${role})`),
+    onSuccess: () => {
+      message.success("Conformité du dossier validée avec succès par le superviseur !");
+      queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
+      queryClient.invalidateQueries({ queryKey: ["demandes"] });
+    },
+    onError: (err) => {
+      message.error(err.message);
     },
   });
 
@@ -96,7 +113,12 @@ export function DemandeDetail() {
     return <Card loading />;
   }
 
-  const canAct = (role === "AGENT" || role === "SUPERVISEUR") && (data.statut === "SOUMISE" || data.statut === "EN_COURS");
+  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAIEMENT_ENREGISTRE" || data.statut === "VALIDEE";
+  const isDossierValide = data.statut === "VALIDEE";
+  const isAgent = role === "AGENT";
+  const isSuperviseur = role === "SUPERVISEUR";
+
+  const currentStep = isDossierValide ? 2 : isPaiementDone ? 1 : 0;
 
   const handleOpenPaymentModal = () => {
     paymentForm.resetFields();
@@ -109,7 +131,7 @@ export function DemandeDetail() {
   };
 
   const handlePaymentSubmit = (values: PaymentInfoInput) => {
-    validerMutation.mutate(values);
+    enregistrerPaiementMutation.mutate(values);
   };
 
   return (
@@ -130,6 +152,29 @@ export function DemandeDetail() {
           </div>
         }
       >
+        {/* Stepper de Progression du Workflow */}
+        <div style={{ marginBottom: 24, padding: "16px 24px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+          <Steps
+            current={currentStep}
+            items={[
+              {
+                title: "1. Soumission Demande",
+                description: data.dateCreation,
+              },
+              {
+                title: "2. Enregistrement Paiement",
+                description: isPaiementDone ? `Encaissé (${data.paiementInfo?.modePaiement ?? "Oui"})` : "Agent / Guichet",
+                icon: <DollarOutlined />,
+              },
+              {
+                title: "3. Validation Dossier",
+                description: isDossierValide ? "Validé et Activé" : "Superviseur uniquement",
+                icon: <SafetyCertificateOutlined />,
+              },
+            ]}
+          />
+        </div>
+
         {data.statut === "REJETEE" && data.raisonRejet && (
           <Alert
             type="error"
@@ -159,11 +204,11 @@ export function DemandeDetail() {
           <Descriptions.Item label="Date Soumission">{data.dateCreation}</Descriptions.Item>
         </Descriptions>
 
-        {/* Display Payment Information if Recorded */}
+        {/* Enregistrement de Paiement */}
         {data.paiementInfo && (
           <>
             <Divider titlePlacement="left" style={{ borderColor: "#cbd5e1" }}>
-              <DollarOutlined style={{ color: "#16a34a" }} /> Information de Paiement Enregistrée
+              <DollarOutlined style={{ color: "#16a34a" }} /> Informations de Paiement Encaissé
             </Divider>
             <Descriptions column={2} bordered size="small" style={{ backgroundColor: "#f8fafc" }}>
               <Descriptions.Item label="Mode de Paiement">
@@ -188,12 +233,12 @@ export function DemandeDetail() {
                 </Descriptions.Item>
               )}
               {data.paiementInfo.datePaiement && (
-                <Descriptions.Item label="Date de Validation">
+                <Descriptions.Item label="Date Enregistrement">
                   {data.paiementInfo.datePaiement}
                 </Descriptions.Item>
               )}
               {data.paiementInfo.validePar && (
-                <Descriptions.Item label="Validé Par">
+                <Descriptions.Item label="Enregistré Par">
                   {data.paiementInfo.validePar}
                 </Descriptions.Item>
               )}
@@ -222,89 +267,120 @@ export function DemandeDetail() {
           </>
         )}
 
-        {/* Check & Verification Checklist (Agent Diagram) */}
-        {canAct && (
-          <div style={{ marginTop: 20, padding: 16, backgroundColor: "#f0f9ff", borderRadius: 8, border: "1px solid #bae6fd" }}>
-            <h4 style={{ margin: "0 0 10px 0", color: "#0369a1", fontSize: 14 }}>
-              <CheckCircleOutlined /> Contrôles & Vérifications d'Informations (Agent RRM)
-            </h4>
-            <Row gutter={[12, 12]}>
-              <Col span={12}>
-                <Tag color="blue">✓ Informations Personnelles Conformes</Tag>
-              </Col>
-              <Col span={12}>
-                <Tag color="blue">✓ Immatriculation & Carte Grise Conformes</Tag>
-              </Col>
-              <Col span={12}>
-                <Tag color="green">✓ Capacité Parking Vérifiée (Places Dispo)</Tag>
-              </Col>
-              <Col span={12}>
-                <Tag color="green">✓ Absence de Redondance / Doublon</Tag>
-              </Col>
-            </Row>
-          </div>
-        )}
-
-        {/* Action Section matching Use Case Diagram */}
-        {canAct && (
+        {/* Section Actions Métier & Séparation des Rôles */}
+        {!isDossierValide && data.statut !== "REJETEE" && (
           <div style={{ marginTop: 24, padding: "20px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <h4 style={{ margin: "0 0 16px 0", color: "#1e293b", fontSize: 15, fontWeight: 600 }}>
-              Traitement des Demandes (Agent & Superviseur)
+              Séparation des Rôles dans le Workflow : Agent & Superviseur
             </h4>
 
+            {/* Banner pour l'Agent */}
+            {isAgent && (
+              <Alert
+                type="info"
+                showIcon
+                icon={<UserOutlined />}
+                message="Rôle Agent (Guichet)"
+                description="En tant qu'Agent, votre rôle consiste à encaisser le paiement du client et à le confirmer. Une fois le paiement confirmé, le dossier est transmis au Superviseur pour la validation définitive de la conformité du dossier."
+                style={{ marginBottom: 16 }}
+              />
+            )}
+
+            {/* Banner pour le Superviseur */}
+            {isSuperviseur && (
+              <Alert
+                type="warning"
+                showIcon
+                icon={<SafetyCertificateOutlined />}
+                message="Rôle Superviseur"
+                description={
+                  isPaiementDone
+                    ? "✓ Le règlement a été encaissé. Vous pouvez désormais vérifier les pièces et valider la conformité finale du dossier."
+                    : "⚠️ Le règlement n'a pas encore été encaissé. Vous devez d'abord encaisser le paiement avant de pouvoir valider la conformité du dossier."
+                }
+                style={{ marginBottom: 16 }}
+              />
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {/* Option 1: Validation Paiement */}
+              {/* ÉTAPE 1: Encaisser / Valider le Paiement */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 8px 0", color: "#16a34a", fontSize: 13, fontWeight: 600 }}>
-                  <DollarOutlined /> Workflow 1: Validation Paiement
+                  <DollarOutlined /> Étape 1: Encaissement du Paiement (Agent / Superviseur)
                 </h5>
                 <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-                  Saisir les détails de paiement (Chèque, Virement, Espèces) pour valider la demande.
+                  Encaisser et saisir le règlement (Espèces, Chèque, Virement) au guichet.
                 </p>
-                <Space wrap>
-                  <Button
-                    type="primary"
-                    icon={<DollarOutlined />}
-                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
-                    onClick={handleOpenPaymentModal}
-                  >
-                    Accepter & Saisir Paiement
-                  </Button>
-                  <Button
-                    danger
-                    size="small"
-                    onClick={() => handleOpenRejectModal("PAIEMENT")}
-                  >
-                    Refuser Paiement
-                  </Button>
-                </Space>
+                {isPaiementDone ? (
+                  <Tag color="green" style={{ padding: "6px 12px", fontSize: 12 }}>
+                    ✓ Paiement encaissé & confirmé
+                  </Tag>
+                ) : (
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      icon={<DollarOutlined />}
+                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                      onClick={handleOpenPaymentModal}
+                    >
+                      Accepter & Encaisser Paiement
+                    </Button>
+                    <Button
+                      danger
+                      size="small"
+                      onClick={() => handleOpenRejectModal("PAIEMENT")}
+                    >
+                      Refuser Paiement
+                    </Button>
+                  </Space>
+                )}
               </div>
 
-              {/* Option 2: Validation de Dossier */}
+              {/* ÉTAPE 2: Validation du Dossier (SUPERVISEUR UNIQUEMENT APRÈS PAIEMENT) */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 13, fontWeight: 600 }}>
-                  <FolderOutlined /> Workflow 2: Validation du Dossier
+                  <FolderOutlined /> Étape 2: Validation de Conformité du Dossier (Superviseur)
                 </h5>
                 <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-                  Valider directement la conformité des pièces et du dossier sans enregistrer de règlement guichet.
+                  Valider définitivement le dossier et activer l'abonnement (nécessite un paiement préalable).
                 </p>
-                <Space wrap>
-                  <Button
-                    type="primary"
-                    icon={<CheckCircleOutlined />}
-                    onClick={() => validerMutation.mutate(undefined)}
-                    loading={validerMutation.isPending}
-                  >
-                    Accepter le Dossier
-                  </Button>
-                  <Button
-                    danger
-                    size="small"
-                    onClick={() => handleOpenRejectModal("DOSSIER")}
-                  >
-                    Refuser le Dossier
-                  </Button>
-                </Space>
+                
+                {isAgent && (
+                  <Tooltip title="Réservé au Superviseur après encaissement du paiement">
+                    <Button disabled icon={<LockOutlined />}>
+                      Valider le Dossier (Réservé Superviseur)
+                    </Button>
+                  </Tooltip>
+                )}
+
+                {isSuperviseur && (
+                  <Space wrap>
+                    {isPaiementDone ? (
+                      <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
+                        onClick={() => validerDossierMutation.mutate()}
+                        loading={validerDossierMutation.isPending}
+                        style={{ backgroundColor: "#2563eb", borderColor: "#2563eb" }}
+                      >
+                        Valider la Conformité & Activer le Dossier
+                      </Button>
+                    ) : (
+                      <Tooltip title="Vous devez obligatoirement encaisser et enregistrer le paiement à l'Étape 1 avant de valider le dossier.">
+                        <Button disabled icon={<LockOutlined />}>
+                          Valider le Dossier (Encaissement Requis)
+                        </Button>
+                      </Tooltip>
+                    )}
+                    <Button
+                      danger
+                      size="small"
+                      onClick={() => handleOpenRejectModal("DOSSIER")}
+                    >
+                      Refuser le Dossier
+                    </Button>
+                  </Space>
+                )}
               </div>
             </div>
           </div>
@@ -316,7 +392,7 @@ export function DemandeDetail() {
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <DollarOutlined style={{ color: "#16a34a" }} />
-            <span>Saisir les informations de paiement</span>
+            <span>Saisir les informations de paiement (Guichet)</span>
           </div>
         }
         open={paymentModalOpen}
@@ -407,11 +483,11 @@ export function DemandeDetail() {
               <Button
                 type="primary"
                 htmlType="submit"
-                loading={validerMutation.isPending}
+                loading={enregistrerPaiementMutation.isPending}
                 icon={<FileDoneOutlined />}
                 style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
               >
-                Valider le Paiement & la Demande
+                Confirmer & Enregistrer le Paiement
               </Button>
             </Space>
           </Form.Item>

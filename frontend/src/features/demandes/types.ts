@@ -20,7 +20,7 @@ export interface PublicDemandeInput {
   forfaitNom?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
 
 export interface DemandeListItem {
   id: number;
