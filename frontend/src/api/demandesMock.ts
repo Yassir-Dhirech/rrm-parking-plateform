@@ -184,6 +184,125 @@ export async function validerDemandeMock(
   }
 }
 
+export interface RenewalSubscriber {
+  id: number;
+  referenceAbonnement: string;
+  numeroCarte: string;
+  clientNom: string;
+  cin: string;
+  email: string;
+  telephone: string;
+  parkingNom: string;
+  immatriculation: string;
+  typeVehicule: string;
+  forfaitNom: string;
+  montantMensuel: number;
+  dateFinActuelle: string;
+  statut: "ACTIF" | "EXPIRE";
+}
+
+const mockRenewalSubscribers: RenewalSubscriber[] = [
+  {
+    id: 101,
+    referenceAbonnement: "ABO-2026-000001",
+    numeroCarte: "CRT-881029",
+    clientNom: "Karim El Amrani",
+    cin: "AB123456",
+    email: "karim.elamrani@example.com",
+    telephone: "0612345678",
+    parkingNom: "Parking Bab El Had",
+    immatriculation: "12345-A-6",
+    typeVehicule: "VOITURE",
+    forfaitNom: "Pass Permanent (24h / 7j)",
+    montantMensuel: 600,
+    dateFinActuelle: "2026-07-31",
+    statut: "EXPIRE",
+  },
+  {
+    id: 102,
+    referenceAbonnement: "ABO-2026-000002",
+    numeroCarte: "CRT-449102",
+    clientNom: "Société Atlas Trans",
+    cin: "ICE-001234567",
+    email: "contact@atlastrans.ma",
+    telephone: "0537001122",
+    parkingNom: "Parking Agdal Gare",
+    immatriculation: "99887-B-1",
+    typeVehicule: "CAMIONNETTE",
+    forfaitNom: "Abonnement Corporate (Flotte)",
+    montantMensuel: 5400,
+    dateFinActuelle: "2026-08-31",
+    statut: "ACTIF",
+  },
+  {
+    id: 103,
+    referenceAbonnement: "ABO-2026-000003",
+    numeroCarte: "CRT-330192",
+    clientNom: "Sara Bennis",
+    cin: "CD789012",
+    email: "sara.bennis@example.com",
+    telephone: "0677889900",
+    parkingNom: "Parking Bab El Had",
+    immatriculation: "54321-D-2",
+    typeVehicule: "VOITURE",
+    forfaitNom: "Pass Journée (08:00 - 20:00)",
+    montantMensuel: 420,
+    dateFinActuelle: "2026-08-15",
+    statut: "EXPIRE",
+  },
+];
+
+export async function searchSubscriptionsForRenewalMock(query: string): Promise<RenewalSubscriber[]> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const q = query.trim().toUpperCase();
+  if (!q) return [];
+  return mockRenewalSubscribers.filter(
+    (s) =>
+      s.cin.toUpperCase().includes(q) ||
+      s.clientNom.toUpperCase().includes(q) ||
+      s.immatriculation.toUpperCase().includes(q) ||
+      s.referenceAbonnement.toUpperCase().includes(q) ||
+      s.numeroCarte.toUpperCase().includes(q)
+  );
+}
+
+export interface DirectRenewalInput {
+  subscriberId: number;
+  paymentInfo: PaymentInfoInput;
+  actorName?: string;
+}
+
+/** Création et validation directe du renouvellement après encaissement du paiement */
+export async function addRenouvellementDirectMock(input: DirectRenewalInput): Promise<DemandeSubmissionResult> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const sub = mockRenewalSubscribers.find((s) => s.id === input.subscriberId) || mockRenewalSubscribers[0];
+  const newId = Object.keys(mockDemandesStore).length + 200 + Math.floor(Math.random() * 500);
+  const reference = `DEM-2026-RNW${String(newId).padStart(5, "0")}`;
+
+  const newDemande: DemandeDetail = {
+    id: newId,
+    reference,
+    typeDemande: "RENOUVELLEMENT",
+    statut: "VALIDEE", // Direct auto-validation for renewals!
+    clientNom: sub.clientNom,
+    parkingNom: sub.parkingNom,
+    dateCreation: new Date().toISOString().split("T")[0],
+    email: sub.email,
+    telephone: sub.telephone,
+    immatriculation: sub.immatriculation,
+    typeVehicule: sub.typeVehicule,
+    paiementInfo: {
+      ...input.paymentInfo,
+      datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
+      validePar: input.actorName ?? "Agent / Superviseur",
+      remarques: input.paymentInfo.remarques || `Renouvellement automatique validé (Abonnement ${sub.referenceAbonnement})`,
+    },
+  };
+
+  mockDemandesStore[newId] = newDemande;
+  return { reference };
+}
+
 export async function rejeterDemandeMock(id: number, raison: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   if (mockDemandesStore[id]) {

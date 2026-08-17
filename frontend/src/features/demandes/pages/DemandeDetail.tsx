@@ -175,6 +175,17 @@ export function DemandeDetail() {
           />
         </div>
 
+        {data.typeDemande === "RENOUVELLEMENT" && (
+          <Alert
+            type="success"
+            showIcon
+            icon={<SafetyCertificateOutlined />}
+            message="Renouvellement d'Abonnement Existant — Validation Automatique"
+            description="Le dossier et l'éligibilité de ce client ont déjà été contrôlés lors de sa première souscription. L'encaissement du règlement valide et prolonge automatiquement l'abonnement sans nécessiter une seconde validation de dossier."
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
         {data.statut === "REJETEE" && data.raisonRejet && (
           <Alert
             type="error"
