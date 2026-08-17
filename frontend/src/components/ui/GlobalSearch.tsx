@@ -58,6 +58,28 @@ export const GlobalSearch: React.FC = () => {
       )
     : [];
 
+  const navigateToItem = (item: SearchIndexItem) => {
+    setSearchValue("");
+    if (item.category === "Parkings" && role === "ADMIN_SI") {
+      navigate("/admin/parkings");
+    } else {
+      navigate(`${basePath}/${item.targetPath}`);
+    }
+  };
+
+  const handleSelect = (value: string) => {
+    const item = mockSearchDatabase.find((i) => i.title === value);
+    if (item) {
+      navigateToItem(item);
+    }
+  };
+
+  const handlePressEnter = () => {
+    if (filteredItems.length > 0) {
+      navigateToItem(filteredItems[0]);
+    }
+  };
+
   const options = filteredItems.map((item) => ({
     value: item.title,
     label: (
@@ -69,14 +91,7 @@ export const GlobalSearch: React.FC = () => {
           padding: "6px 4px",
           cursor: "pointer",
         }}
-        onClick={() => {
-          setSearchValue("");
-          if (item.category === "Parkings" && role === "ADMIN_SI") {
-            navigate("/admin/parkings");
-          } else {
-            navigate(`${basePath}/${item.targetPath}`);
-          }
-        }}
+        onClick={() => navigateToItem(item)}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ color: "#003566", fontSize: 16, display: "flex" }}>{item.icon}</span>
@@ -98,6 +113,7 @@ export const GlobalSearch: React.FC = () => {
       options={options}
       value={searchValue}
       onChange={setSearchValue}
+      onSelect={handleSelect}
       popupMatchSelectWidth={340}
     >
       <Input
@@ -105,6 +121,7 @@ export const GlobalSearch: React.FC = () => {
         placeholder="Rechercher (ex: DEM, REC, Agdal...)"
         allowClear
         className="header-search-input"
+        onPressEnter={handlePressEnter}
       />
     </AutoComplete>
   );
