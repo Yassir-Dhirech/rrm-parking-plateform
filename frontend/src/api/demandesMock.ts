@@ -268,6 +268,9 @@ export async function searchSubscriptionsForRenewalMock(query: string): Promise<
 
 export interface DirectRenewalInput {
   subscriberId: number;
+  forfaitNom?: string;
+  dureeMois?: number;
+  montantTotal?: number;
   paymentInfo: PaymentInfoInput;
   actorName?: string;
 }
@@ -293,9 +296,10 @@ export async function addRenouvellementDirectMock(input: DirectRenewalInput): Pr
     typeVehicule: sub.typeVehicule,
     paiementInfo: {
       ...input.paymentInfo,
+      montant: input.montantTotal || input.paymentInfo.montant,
       datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
       validePar: input.actorName ?? "Agent / Superviseur",
-      remarques: input.paymentInfo.remarques || `Renouvellement automatique validé (Abonnement ${sub.referenceAbonnement})`,
+      remarques: input.paymentInfo.remarques || `Renouvellement (${input.forfaitNom || sub.forfaitNom} - ${input.dureeMois || 1} mois) - Abonnement ${sub.referenceAbonnement}`,
     },
   };
 
