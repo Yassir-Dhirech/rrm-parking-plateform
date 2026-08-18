@@ -34,10 +34,12 @@ import {
   ArrowRightOutlined,
   SafetyCertificateOutlined,
   BuildOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
+import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
 import { type TypeClient, type TypeVehicule, typeVehiculeLabels } from "../../../lib/enums";
@@ -108,6 +110,7 @@ export function PublicQrForm() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
   const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const { data: parkings, isLoading: parkingsLoading } = useQuery({
@@ -456,7 +459,7 @@ export function PublicQrForm() {
                                 >
                                   {parkings?.map((p) => (
                                     <Option key={p.id} value={p.id}>
-                                      📍 {p.nom} ({p.code})
+                                      <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
                                     </Option>
                                   ))}
                                 </Select>
@@ -492,7 +495,10 @@ export function PublicQrForm() {
                                         <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
                                         <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
                                         <div style={{ marginBottom: 8 }}>
-                                          <Tag color="geekblue">🕒 {f.plage}</Tag>
+                                          <Tag color="geekblue">
+                                            <ClockCircleOutlined style={{ marginRight: 4 }} />
+                                            {f.plage}
+                                          </Tag>
                                         </div>
                                         <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0369a1" }}>
                                           {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / {f.duree}</span>
@@ -570,11 +576,11 @@ export function PublicQrForm() {
                                 type="primary"
                                 size="large"
                                 loading={mutation.isPending}
-                                onClick={handleFinalSubmit}
+                                onClick={() => setIsOtpModalOpen(true)}
                                 icon={<CheckCircleOutlined />}
                                 style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
                               >
-                                Envoyer le formulaire
+                                Envoyer le formulaire & Valider OTP
                               </Button>
                             </div>
                           </div>
@@ -734,7 +740,8 @@ export function PublicQrForm() {
                           <div style={{ backgroundColor: "#f0fdf4", padding: 16, borderRadius: 8, border: "1px solid #bbf7d0" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                               <span style={{ fontWeight: 600, color: "#166534", fontSize: "1.05rem" }}>
-                                🎉 Votre demande est validée ! Carte & Documents disponibles
+                                <CheckCircleOutlined style={{ color: "#16a34a", marginRight: 6 }} />
+                                Votre demande est validée ! Carte & Documents disponibles
                               </span>
                               <Badge status="processing" text="Carte prête au guichet" />
                             </div>
@@ -886,6 +893,18 @@ export function PublicQrForm() {
           </div>
         )}
       </Modal>
+
+      {/* Otp Verification Modal */}
+      <OtpVerificationModal
+        open={isOtpModalOpen}
+        phone={formData.telephone || "0612345678"}
+        email={formData.email || "client@example.ma"}
+        onClose={() => setIsOtpModalOpen(false)}
+        onSuccess={() => {
+          setIsOtpModalOpen(false);
+          handleFinalSubmit();
+        }}
+      />
     </div>
   );
 }
