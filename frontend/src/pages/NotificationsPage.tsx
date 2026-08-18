@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, List, Tag, Button, Typography, Space, Segmented, Badge, Empty, message } from "antd";
+import { Card, List, Tag, Button, Typography, Space, Segmented, Badge, Empty, message, Input, Row, Col, Tooltip } from "antd";
 import {
   BellOutlined,
   CheckCircleOutlined,
@@ -8,6 +8,9 @@ import {
   WarningOutlined,
   ArrowRightOutlined,
   CheckOutlined,
+  SearchOutlined,
+  DeleteOutlined,
+  ClearOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +19,8 @@ import {
   getNotificationsForRole,
   markNotificationAsRead,
   markAllNotificationsAsReadForRole,
+  deleteNotificationMock,
+  clearAllNotificationsForRoleMock,
   type AppNotification,
 } from "../api/notificationsMock";
 
@@ -25,7 +30,10 @@ export function NotificationsPage() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"ALL" | "UNREAD" | "URGENT">("ALL");
+
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "UNREAD" | "URGENT">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [searchText, setSearchText] = useState<string>("");
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", role],
@@ -48,13 +56,38 @@ export function NotificationsPage() {
     },
   });
 
+  const deleteNotifMutation = useMutation({
+    mutationFn: deleteNotificationMock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", role] });
+      message.info("Notification supprimée.");
+    },
+  });
+
+  const clearAllMutation = useMutation({
+    mutationFn: () => (role ? clearAllNotificationsForRoleMock(role) : Promise.resolve()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", role] });
+      message.success("Toutes les notifications de votre espace ont été effacées.");
+    },
+  });
+
   if (!role) return null;
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const filteredNotifications = notifications.filter((n) => {
-    if (filter === "UNREAD") return !n.read;
-    if (filter === "URGENT") return n.type === "danger" || n.type === "warning";
+    if (filterStatus === "UNREAD" && n.read) return false;
+    if (filterStatus === "URGENT" && (n.type !== "danger" && n.type !== "warning")) return false;
+    if (categoryFilter !== "ALL" && n.category !== categoryFilter) return false;
+
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      const matchTitle = n.title.toLowerCase().includes(q);
+      const matchMsg = n.message.toLowerCase().includes(q);
+      return matchTitle || matchMsg;
+    }
+
     return true;
   });
 
@@ -69,6 +102,21 @@ export function NotificationsPage() {
       case "info":
       default:
         return <InfoCircleOutlined style={{ color: "#3b82f6", fontSize: 20 }} />;
+    }
+  };
+
+  const getCategoryTag = (cat?: AppNotification["category"]) => {
+    switch (cat) {
+      case "PAIEMENT":
+        return <Tag color="green">Paiement</Tag>;
+      case "DOSSIER":
+        return <Tag color="purple">Dossier</Tag>;
+      case "RECETTES":
+        return <Tag color="cyan">Recettes</Tag>;
+      case "SYSTEME":
+        return <Tag color="blue">Système</Tag>;
+      default:
+        return null;
     }
   };
 
@@ -97,34 +145,64 @@ export function NotificationsPage() {
             </Paragraph>
           </div>
 
-          <Button
-            type="primary"
-            icon={<CheckOutlined />}
-            disabled={unreadCount === 0}
-            onClick={() => markAllReadMutation.mutate()}
-            style={{ backgroundColor: "#10b981", borderColor: "#10b981" }}
-          >
-            Tout marquer comme lu
-          </Button>
+          <Space wrap>
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              disabled={unreadCount === 0}
+              onClick={() => markAllReadMutation.mutate()}
+              style={{ backgroundColor: "#10b981", borderColor: "#10b981" }}
+            >
+              Tout marquer comme lu
+            </Button>
+            <Button
+              danger
+              icon={<ClearOutlined />}
+              disabled={notifications.length === 0}
+              onClick={() => clearAllMutation.mutate()}
+            >
+              Effacer tout
+            </Button>
+          </Space>
         </Row>
       </Card>
 
-      {/* Barre de Filtres */}
+      {/* Barre de Recherche & Filtres Avancés */}
       <Card bordered={false} style={{ borderRadius: 12, boxShadow: "var(--shadow-sm)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <Segmented
-            value={filter}
-            onChange={(val) => setFilter(val as "ALL" | "UNREAD" | "URGENT")}
-            options={[
-              { label: `Toutes (${notifications.length})`, value: "ALL" },
-              { label: `Non lues (${unreadCount})`, value: "UNREAD" },
-              { label: "Urgentes / Alertes", value: "URGENT" },
-            ]}
-          />
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            Filtrage actif pour le rôle : <Tag color="blue">{role}</Tag>
-          </Text>
-        </div>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={10}>
+            <Input
+              placeholder="Rechercher une notification..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} md={14} style={{ display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            <Segmented
+              value={filterStatus}
+              onChange={(val) => setFilterStatus(val as "ALL" | "UNREAD" | "URGENT")}
+              options={[
+                { label: `Toutes (${notifications.length})`, value: "ALL" },
+                { label: `Non lues (${unreadCount})`, value: "UNREAD" },
+                { label: "Urgentes", value: "URGENT" },
+              ]}
+            />
+
+            <Segmented
+              value={categoryFilter}
+              onChange={(val) => setCategoryFilter(val as string)}
+              options={[
+                { label: "Toutes Catégories", value: "ALL" },
+                { label: "Paiements", value: "PAIEMENT" },
+                { label: "Dossiers", value: "DOSSIER" },
+                { label: "Recettes", value: "RECETTES" },
+                { label: "Système", value: "SYSTEME" },
+              ]}
+            />
+          </Col>
+        </Row>
       </Card>
 
       {/* Liste des Notifications */}
@@ -132,13 +210,13 @@ export function NotificationsPage() {
         <List
           loading={isLoading}
           dataSource={filteredNotifications}
-          locale={{ emptyText: <Empty description="Aucune notification disponible pour le moment." /> }}
+          locale={{ emptyText: <Empty description="Aucune notification disponible." /> }}
           renderItem={(item) => (
             <List.Item
               style={{
                 padding: "16px 20px",
-                background: item.read ? "transparent" : "#f8fafc",
-                borderLeft: item.read ? "3px solid transparent" : "3px solid #003566",
+                background: item.read ? "transparent" : "#f0f9ff",
+                borderLeft: item.read ? "3px solid transparent" : "3px solid #0284c7",
                 borderRadius: 8,
                 marginBottom: 8,
                 transition: "background 0.2s",
@@ -166,16 +244,26 @@ export function NotificationsPage() {
                     Consulter
                   </Button>
                 ),
+                <Tooltip title="Supprimer cette notification">
+                  <Button
+                    size="small"
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => deleteNotifMutation.mutate(item.id)}
+                  />
+                </Tooltip>,
               ]}
             >
               <List.Item.Meta
                 avatar={<div style={{ paddingTop: 4 }}>{getTypeIcon(item.type)}</div>}
                 title={
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <Text strong style={{ fontSize: 15, color: "#0f172a" }}>
                       {item.title}
                     </Text>
                     {!item.read && <Tag color="red">Nouveau</Tag>}
+                    {getCategoryTag(item.category)}
                     <Text type="secondary" style={{ fontSize: 12, marginLeft: "auto" }}>
                       {item.timestamp}
                     </Text>
@@ -194,6 +282,3 @@ export function NotificationsPage() {
     </Space>
   );
 }
-
-// Needed imports for Row
-import { Row } from "antd";

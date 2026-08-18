@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, theme, Avatar, Tag, Dropdown, Badge, Button, type MenuProps } from "antd";
+import { Layout, Menu, theme, Avatar, Tag, Dropdown, type MenuProps } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getNotificationsForRole } from "../api/notificationsMock";
 import { GlobalSearch } from "../components/ui/GlobalSearch";
 import { ProfileModal } from "../components/ui/ProfileModal";
+import { NotificationPopover } from "../components/ui/NotificationPopover";
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -134,22 +135,8 @@ export function RoleLayout() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {/* Notification Bell Button */}
-          <Badge count={unreadCount} overflowCount={99}>
-            <Button
-              shape="circle"
-              icon={<BellOutlined style={{ fontSize: 18, color: "#003566" }} />}
-              onClick={() => navigate(notificationsPath)}
-              title="Centre de Notifications"
-              style={{
-                borderColor: "#cbd5e1",
-                background: "#f8fafc",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            />
-          </Badge>
+          {/* Notification Popover Header Component */}
+          <NotificationPopover />
 
           {/* User Profile Dropdown */}
           <Dropdown menu={{ items: userMenuItems }} trigger={["click"]} placement="bottomRight">
