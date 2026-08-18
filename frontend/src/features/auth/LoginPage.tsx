@@ -1,10 +1,12 @@
-import { Form, Input, Button, Card, message, Divider, Typography } from "antd";
-import { UserOutlined, LockOutlined, ArrowRightOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Card, message, Divider, Typography, Checkbox } from "antd";
+import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { login } from "../../api/auth";
 import { mockLogin } from "./mockAuth";
 import { type Role, roleConfig } from "../../lib/roleConfig";
+import { OtpVerificationModal } from "../../components/ui/OtpVerificationModal";
 
 const { Title, Text } = Typography;
 
@@ -23,11 +25,24 @@ export function LoginPage() {
   const { login: setAuth } = useAuth();
   const navigate = useNavigate();
 
+  const [require2fa, setRequire2fa] = useState<boolean>(false);
+  const [isOtpOpen, setIsOtpOpen] = useState<boolean>(false);
+  const [pendingLogin, setPendingLogin] = useState<{ token: string; role: Role; name?: string } | null>(null);
+
+  const executeLogin = (token: string, role: Role, name?: string) => {
+    setAuth(token, role, name ?? roleConfig[role].title);
+    navigate(roleHomeRoute[role] ?? "/login");
+  };
+
   const onFinish = async (values: { email: string; motDePasse: string }) => {
     try {
       const { token, role } = await login(values.email, values.motDePasse);
-      setAuth(token, role as Role);
-      navigate(roleHomeRoute[role] ?? "/login");
+      if (require2fa) {
+        setPendingLogin({ token, role: role as Role });
+        setIsOtpOpen(true);
+      } else {
+        executeLogin(token, role as Role);
+      }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       message.error("Email ou mot de passe incorrect");
@@ -36,8 +51,12 @@ export function LoginPage() {
 
   const handleMockLogin = (role: Role) => {
     const { token } = mockLogin(role);
-    setAuth(token, role, roleConfig[role].title);
-    navigate(roleHomeRoute[role]);
+    if (require2fa) {
+      setPendingLogin({ token, role, name: roleConfig[role].title });
+      setIsOtpOpen(true);
+    } else {
+      executeLogin(token, role, roleConfig[role].title);
+    }
   };
 
   return (
@@ -83,6 +102,13 @@ export function LoginPage() {
           <Form.Item name="motDePasse" label="Mot de passe" rules={[{ required: true, message: "Saisissez votre mot de passe" }]}>
             <Input.Password prefix={<LockOutlined style={{ color: "#94a3b8" }} />} placeholder="••••••••" />
           </Form.Item>
+
+          <Form.Item style={{ marginBottom: 16 }}>
+            <Checkbox checked={require2fa} onChange={(e) => setRequire2fa(e.target.checked)}>
+              Exiger la vérification 2FA par Code OTP (SMS / Email)
+            </Checkbox>
+          </Form.Item>
+
           <Form.Item style={{ marginTop: 0 }}>
             <Button type="primary" htmlType="submit" block style={{ height: 44, fontWeight: 600, fontSize: 15 }}>
               Se connecter
@@ -110,13 +136,27 @@ export function LoginPage() {
                   onClick={() => handleMockLogin(role)}
                 >
                   <span>{roleConfig[role].title.replace("Espace ", "")}</span>
-                  <ArrowRightOutlined style={{ fontSize: 10, color: "var(--color-primary)" }} />
+                  <SafetyCertificateOutlined style={{ fontSize: 11, color: "var(--color-primary)" }} />
                 </Button>
               ))}
             </div>
           </>
         )}
       </Card>
+
+      {/* Otp Verification Modal for 2FA Login */}
+      <OtpVerificationModal
+        open={isOtpOpen}
+        title="Double Facteur (2FA) - Connexion Sécurisée"
+        subtitle="Entrez le code OTP envoyé par SMS ou Email pour valider votre connexion."
+        onClose={() => setIsOtpOpen(false)}
+        onSuccess={() => {
+          setIsOtpOpen(false);
+          if (pendingLogin) {
+            executeLogin(pendingLogin.token, pendingLogin.role, pendingLogin.name);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -39,6 +39,7 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
+import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
 import { type TypeClient, type TypeVehicule, typeVehiculeLabels } from "../../../lib/enums";
@@ -109,6 +110,7 @@ export function PublicQrForm() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
   const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const { data: parkings, isLoading: parkingsLoading } = useQuery({
@@ -574,11 +576,11 @@ export function PublicQrForm() {
                                 type="primary"
                                 size="large"
                                 loading={mutation.isPending}
-                                onClick={handleFinalSubmit}
+                                onClick={() => setIsOtpModalOpen(true)}
                                 icon={<CheckCircleOutlined />}
                                 style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
                               >
-                                Envoyer le formulaire
+                                Envoyer le formulaire & Valider OTP
                               </Button>
                             </div>
                           </div>
@@ -891,6 +893,18 @@ export function PublicQrForm() {
           </div>
         )}
       </Modal>
+
+      {/* Otp Verification Modal */}
+      <OtpVerificationModal
+        open={isOtpModalOpen}
+        phone={formData.telephone || "0612345678"}
+        email={formData.email || "client@example.ma"}
+        onClose={() => setIsOtpModalOpen(false)}
+        onSuccess={() => {
+          setIsOtpModalOpen(false);
+          handleFinalSubmit();
+        }}
+      />
     </div>
   );
 }
