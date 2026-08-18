@@ -1,5 +1,18 @@
 import React from "react";
-import { Card, Row, Col, Progress, Typography, Tag, Tooltip } from "antd";
+import { Card, Row, Col, Progress, Typography, Tag, Tooltip, Space } from "antd";
+import {
+  BarChartOutlined,
+  CreditCardOutlined,
+  RiseOutlined,
+  PieChartOutlined,
+  BankOutlined,
+  FileTextOutlined,
+  PayCircleOutlined,
+  FileDoneOutlined,
+  AimOutlined,
+  SafetyCertificateOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import { type Role } from "../../lib/roleConfig";
 import "./RoleCharts.css";
 
@@ -54,7 +67,7 @@ function AgentCharts({ filters }: { filters: GlobalFilters }) {
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={12}>
-        <Card title="📊 Progression du Traitement des Demandes (Aujourd'hui)" className="chart-card">
+        <Card title={<Space><BarChartOutlined /><span>Progression du Traitement des Demandes (Aujourd'hui)</span></Space>} className="chart-card">
           <div className="bar-chart-container">
             {demandesData.map((d) => (
               <div key={d.label} className="bar-chart-item">
@@ -70,7 +83,7 @@ function AgentCharts({ filters }: { filters: GlobalFilters }) {
       </Col>
 
       <Col xs={24} lg={12}>
-        <Card title="💳 État des Cartes d'Accès Physiques" className="chart-card">
+        <Card title={<Space><CreditCardOutlined /><span>État des Cartes d'Accès Physiques</span></Space>} className="chart-card">
           <div className="cards-stat-grid">
             {cartesData.map((c) => (
               <div key={c.type} className="cards-stat-item" style={{ borderColor: c.color }}>
@@ -113,7 +126,7 @@ function SuperviseurCharts({ filters, recettes }: { filters: GlobalFilters; rece
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={14}>
-        <Card title="📈 Évolution des Recettes Quotidiennes (Semaine 32)" className="chart-card">
+        <Card title={<Space><RiseOutlined /><span>Évolution des Recettes Quotidiennes (Semaine 32)</span></Space>} className="chart-card">
           <div className="visual-bar-chart">
             {weeklyData.map((item) => {
               const heightPercent = Math.round((item.total / maxVal) * 100);
@@ -134,7 +147,7 @@ function SuperviseurCharts({ filters, recettes }: { filters: GlobalFilters; rece
       </Col>
 
       <Col xs={24} lg={10}>
-        <Card title="📋 Distribution des Abonnements Supervisés" className="chart-card">
+        <Card title={<Space><PieChartOutlined /><span>Distribution des Abonnements Supervisés</span></Space>} className="chart-card">
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -187,7 +200,7 @@ function ResponsableCharts({ filters, contrats }: { filters: GlobalFilters; rece
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={14}>
-        <Card title="🏢 Chiffre d'Affaires par Site & Performance vs Objectif" className="chart-card">
+        <Card title={<Space><BankOutlined /><span>Chiffre d'Affaires par Site & Performance vs Objectif</span></Space>} className="chart-card">
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {parkingsRecettes.map((p) => {
               const ratio = Math.round((p.ca / p.target) * 100);
@@ -207,7 +220,7 @@ function ResponsableCharts({ filters, contrats }: { filters: GlobalFilters; rece
       </Col>
 
       <Col xs={24} lg={10}>
-        <Card title="✍️ Pipeline des Contrats & Signatures" className="chart-card">
+        <Card title={<Space><FileTextOutlined /><span>Pipeline des Contrats & Signatures</span></Space>} className="chart-card">
           <div className="pipeline-container">
             <div className="pipeline-step">
               <span className="step-badge" style={{ background: "#3b82f6" }}>12</span>
@@ -251,7 +264,7 @@ function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: Recet
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={12}>
-        <Card title="💳 Ventilation des Encaissements par Mode de Paiement" className="chart-card">
+        <Card title={<Space><PayCircleOutlined /><span>Ventilation des Encaissements par Mode de Paiement</span></Space>} className="chart-card">
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {modesPaiement.map((m) => (
               <div key={m.mode}>
@@ -269,7 +282,7 @@ function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: Recet
       </Col>
 
       <Col xs={24} lg={12}>
-        <Card title="📄 Statut de Règlement des Factures Émises" className="chart-card">
+        <Card title={<Space><FileDoneOutlined /><span>Statut de Règlement des Factures Émises</span></Space>} className="chart-card">
           <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
             <Col span={8}>
               <div className="compact-stat-box" style={{ background: "#ecfdf5", borderColor: "#10b981" }}>
@@ -320,7 +333,7 @@ function ReportingCharts({ filters }: { filters: GlobalFilters; recettes: Recett
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={16}>
-        <Card title="📊 Comparatif des Recettes (kMAD) & Taux d'Occupation par Site" className="chart-card">
+        <Card title={<Space><BarChartOutlined /><span>Comparatif des Recettes (kMAD) & Taux d'Occupation par Site</span></Space>} className="chart-card">
           <div className="visual-bar-chart" style={{ height: 210 }}>
             {parkingsComparison.map((p) => (
               <div key={p.name} className="v-bar-col">
@@ -338,7 +351,7 @@ function ReportingCharts({ filters }: { filters: GlobalFilters; recettes: Recett
       </Col>
 
       <Col xs={24} lg={8}>
-        <Card title="🎯 Taux de Remplissage Global" className="chart-card">
+        <Card title={<Space><AimOutlined /><span>Taux de Remplissage Global</span></Space>} className="chart-card">
           <div style={{ textAlign: "center", padding: "12px 0" }}>
             <Progress type="dashboard" percent={87} strokeColor="#003566" width={140} />
             <div style={{ marginTop: 12 }}>
@@ -374,7 +387,7 @@ function AdminCharts({ filters }: { filters: GlobalFilters }) {
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={12}>
-        <Card title="🛡️ Volume d'Événements d'Audit (Dernières 24h)" className="chart-card">
+        <Card title={<Space><SafetyCertificateOutlined /><span>Volume d'Événements d'Audit (Dernières 24h)</span></Space>} className="chart-card">
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {auditLogs.map((a) => (
               <div key={a.type}>
@@ -390,7 +403,7 @@ function AdminCharts({ filters }: { filters: GlobalFilters }) {
       </Col>
 
       <Col xs={24} lg={12}>
-        <Card title="👥 Répartition des Comptes Utilisateurs par Rôle" className="chart-card">
+        <Card title={<Space><TeamOutlined /><span>Répartition des Comptes Utilisateurs par Rôle</span></Space>} className="chart-card">
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {rolesUser.map((r) => (
               <div key={r.role}>

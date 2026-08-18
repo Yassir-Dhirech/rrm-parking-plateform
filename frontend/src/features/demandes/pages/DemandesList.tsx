@@ -37,6 +37,8 @@ import {
   CarOutlined,
   UserOutlined,
   IdcardOutlined,
+  EnvironmentOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -462,7 +464,7 @@ export function DemandesList() {
                               >
                                 {parkings?.map((p) => (
                                   <Option key={p.id} value={p.id}>
-                                    📍 {p.nom} ({p.code})
+                                    <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
                                   </Option>
                                 ))}
                               </Select>
@@ -504,7 +506,7 @@ export function DemandesList() {
                           >
                             {FORFAITS_OPTIONS.map((f) => (
                               <Option key={f.id} value={f.id}>
-                                🏷️ {f.title} — {f.priceTTC.toLocaleString("fr-FR")} MAD / mois ({f.badge})
+                                <TagOutlined style={{ marginRight: 6 }} />{f.title} — {f.priceTTC.toLocaleString("fr-FR")} MAD / mois ({f.badge})
                               </Option>
                             ))}
                           </Select>
@@ -737,7 +739,7 @@ export function DemandesList() {
                             <div>
                               <strong>{sub.clientNom}</strong> ({sub.cin}) — <Tag color="blue">{sub.immatriculation}</Tag>
                               <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
-                                📍 Gare/Parking : <strong>{sub.parkingNom}</strong> | Formule actuelle: {sub.forfaitNom} | Expiration: <Tag color="orange">{sub.dateFinActuelle}</Tag>
+                                <EnvironmentOutlined style={{ marginRight: 4 }} />Gare/Parking : <strong>{sub.parkingNom}</strong> | Formule actuelle: {sub.forfaitNom} | Expiration: <Tag color="orange">{sub.dateFinActuelle}</Tag>
                               </div>
                             </div>
                             <Button type="primary" size="small" style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}>
@@ -768,7 +770,7 @@ export function DemandesList() {
                             <Text type="secondary">Client :</Text> <strong>{selectedSubscriber.clientNom}</strong> ({selectedSubscriber.cin})
                           </Col>
                           <Col span={12}>
-                            <Text type="secondary">Gare/Parking d'attache :</Text> <Tag color="green">📍 {selectedSubscriber.parkingNom} (Fixe)</Tag>
+                            <Text type="secondary">Gare/Parking d'attache :</Text> <Tag color="green"><EnvironmentOutlined style={{ marginRight: 4 }} />{selectedSubscriber.parkingNom} (Fixe)</Tag>
                           </Col>
                           <Col span={12}>
                             <Text type="secondary">Immatriculation :</Text> <Tag color="cyan">{selectedSubscriber.immatriculation}</Tag>
@@ -793,7 +795,7 @@ export function DemandesList() {
                               >
                                 {FORFAITS_OPTIONS.map((f) => (
                                   <Option key={f.id} value={f.id}>
-                                    🏷️ {f.title} — {f.priceTTC.toLocaleString("fr-FR")} MAD / mois
+                                    <TagOutlined style={{ marginRight: 6 }} />{f.title} — {f.priceTTC.toLocaleString("fr-FR")} MAD / mois
                                   </Option>
                                 ))}
                               </Select>

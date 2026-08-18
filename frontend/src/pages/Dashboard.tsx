@@ -14,6 +14,7 @@ import {
   AuditOutlined,
   BankOutlined,
   ExclamationCircleOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -165,9 +166,14 @@ export function Dashboard() {
         <Col xs={24} lg={16}>
           <Card
             title={
-              role === "AGENT" || role === "SUPERVISEUR"
-                ? "📋 Demandes d'Abonnement Récentes à Traiter"
-                : "📋 Activités & Recettes Récentes"
+              <Space>
+                <FileTextOutlined />
+                <span>
+                  {role === "AGENT" || role === "SUPERVISEUR"
+                    ? "Demandes d'Abonnement Récentes à Traiter"
+                    : "Activités & Recettes Récentes"}
+                </span>
+              </Space>
             }
             style={{ borderRadius: 12 }}
           >
@@ -227,7 +233,15 @@ export function Dashboard() {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card title="⚡ Raccourcis Espace Métier" style={{ borderRadius: 12 }}>
+          <Card
+            title={
+              <Space>
+                <ThunderboltOutlined />
+                <span>Raccourcis Espace Métier</span>
+              </Space>
+            }
+            style={{ borderRadius: 12 }}
+          >
             <Space direction="vertical" style={{ width: "100%" }}>
               {currentRoleConfig.menuItems.map((item) => (
                 <Button

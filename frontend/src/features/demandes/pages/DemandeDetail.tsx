@@ -27,6 +27,8 @@ import {
   LockOutlined,
   UserOutlined,
   SafetyCertificateOutlined,
+  InfoCircleOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -271,7 +273,7 @@ export function DemandeDetail() {
               </Button>
               {data.paiementInfo.modePaiement === "CHEQUE" && (
                 <Tag color="purple" style={{ padding: "6px 12px", fontSize: 12 }}>
-                  📌 Chèque enregistré — Transmis au service comptable pour dépôt caisse
+                  <InfoCircleOutlined style={{ marginRight: 4 }} />Chèque enregistré — Transmis au service comptable pour dépôt caisse
                 </Tag>
               )}
             </div>
@@ -306,8 +308,8 @@ export function DemandeDetail() {
                 message="Rôle Superviseur"
                 description={
                   isPaiementDone
-                    ? "✓ Le règlement a été encaissé. Vous pouvez désormais vérifier les pièces et valider la conformité finale du dossier."
-                    : "⚠️ Le règlement n'a pas encore été encaissé. Vous devez d'abord encaisser le paiement avant de pouvoir valider la conformité du dossier."
+                    ? "Le règlement a été encaissé. Vous pouvez désormais vérifier les pièces et valider la conformité finale du dossier."
+                    : "Le règlement n'a pas encore été encaissé. Vous devez d'abord encaisser le paiement avant de pouvoir valider la conformité du dossier."
                 }
                 style={{ marginBottom: 16 }}
               />
@@ -324,7 +326,7 @@ export function DemandeDetail() {
                 </p>
                 {isPaiementDone ? (
                   <Tag color="green" style={{ padding: "6px 12px", fontSize: 12 }}>
-                    ✓ Paiement encaissé & confirmé
+                    <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé & confirmé
                   </Tag>
                 ) : (
                   <Space wrap>

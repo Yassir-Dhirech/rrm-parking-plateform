@@ -24,8 +24,9 @@ import {
   StopOutlined,
   TagsOutlined,
   ClockCircleOutlined,
-  BuildOutlined,
   FilterOutlined,
+  EnvironmentOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { getTarifsMock, mockTarifs, getParkingsMock } from "../../../api/adminMock";
 import type { PlanTarifaire } from "../types";
@@ -157,7 +158,7 @@ export function PlansTarifairesList() {
       key: "parkingNom",
       render: (nom?: string) => (
         <span style={{ fontWeight: 600, color: "#0f172a" }}>
-          📍 {nom || "Tous les Parkings"}
+          <EnvironmentOutlined style={{ marginRight: 6 }} />{nom || "Tous les Parkings"}
         </span>
       ),
     },
@@ -276,10 +277,10 @@ export function PlansTarifairesList() {
               value={selectedParkingFilter}
               onChange={(val) => setSelectedParkingFilter(val)}
             >
-              <Option value="ALL">📍 Tous les Parkings de Rabat</Option>
+              <Option value="ALL"><EnvironmentOutlined style={{ marginRight: 6 }} />Tous les Parkings de Rabat</Option>
               {parkings.map((p) => (
                 <Option key={p.id} value={p.id}>
-                  📍 {p.nom} ({p.code})
+                  <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
                 </Option>
               ))}
             </Select>
@@ -304,7 +305,7 @@ export function PlansTarifairesList() {
             <Select placeholder="Sélectionnez un parking Rabat" size="large">
               {parkings.map((p) => (
                 <Option key={p.id} value={p.id}>
-                  📍 {p.nom} ({p.code})
+                  <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
                 </Option>
               ))}
             </Select>
@@ -321,11 +322,11 @@ export function PlansTarifairesList() {
                 }
               }}
             >
-              <Option value="PERMANENT_24_7">🕒 Permanent 24h / 7j</Option>
-              <Option value="JOUR_8H_20H">☀️ Journée (08:00 - 20:00)</Option>
-              <Option value="NUIT_19H_8H">🌙 Nuit (19:00 - 08:00)</Option>
-              <Option value="CORPORATE">🏢 Corporate (Abonnement Flotte Entreprise)</Option>
-              <Option value="DEUX_ROUES">🛵 Deux-Roues / Moto</Option>
+              <Option value="PERMANENT_24_7"><ClockCircleOutlined style={{ marginRight: 6 }} />Permanent 24h / 7j</Option>
+              <Option value="JOUR_8H_20H"><ClockCircleOutlined style={{ marginRight: 6 }} />Journée (08:00 - 20:00)</Option>
+              <Option value="NUIT_19H_8H"><ClockCircleOutlined style={{ marginRight: 6 }} />Nuit (19:00 - 08:00)</Option>
+              <Option value="CORPORATE"><TagOutlined style={{ marginRight: 6 }} />Corporate (Abonnement Flotte Entreprise)</Option>
+              <Option value="DEUX_ROUES"><TagOutlined style={{ marginRight: 6 }} />Deux-Roues / Moto</Option>
             </Select>
           </Form.Item>
 
