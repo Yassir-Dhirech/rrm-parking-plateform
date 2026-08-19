@@ -1,10 +1,15 @@
-import { type TypeClient, type TypeVehicule } from "../../lib/enums";
+import { type TypeClient, type TypeVehicule, type TypeDemande } from "../../lib/enums";
 
 export interface PublicDemandeInput {
   parkingId: number;
   typeClient: TypeClient;
-  typeDemande?: "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT";
+  typeDemande?: TypeDemande;
   ancienNumeroCarte?: string;
+  numeroCarteAbonne?: string;
+  nouveauParkingId?: number;
+  nouveauParkingNom?: string;
+  ancienneImmatriculation?: string;
+  motifChangement?: string;
   nom?: string;
   prenom?: string;
   cin?: string;
@@ -27,7 +32,7 @@ export type StatutDemande = "SOUMISE" | "EN_COURS" | "PAIEMENT_ENREGISTRE" | "VA
 export interface DemandeListItem {
   id: number;
   reference: string;
-  typeDemande: "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT";
+  typeDemande: TypeDemande;
   statut: StatutDemande;
   clientNom: string;
   parkingNom: string;
@@ -54,6 +59,10 @@ export interface DemandeDetail extends DemandeListItem {
   telephone: string;
   immatriculation: string;
   typeVehicule: string;
+  numeroCarteAbonne?: string;
+  nouveauParkingNom?: string;
+  ancienneImmatriculation?: string;
+  motifChangement?: string;
   raisonRejet?: string;
   commentaireCorrection?: string;
   paiementInfo?: PaymentInfoInput & { datePaiement?: string; validePar?: string };

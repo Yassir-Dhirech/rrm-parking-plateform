@@ -18,6 +18,7 @@ import {
   Modal,
   Badge,
   Space,
+  Typography,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -30,8 +31,8 @@ import {
   SearchOutlined,
   IdcardOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
   ArrowRightOutlined,
+  ArrowLeftOutlined,
   SafetyCertificateOutlined,
   BuildOutlined,
   EnvironmentOutlined,
@@ -41,11 +42,13 @@ import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
+import { searchSubscriberByCinOrCardMock, type SubscriberRecord } from "../../../api/subscribersMock";
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
-import { type TypeClient, type TypeVehicule, typeVehiculeLabels } from "../../../lib/enums";
+import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
 
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const FORFAITS_OPTIONS = [
   {
@@ -98,11 +101,26 @@ const FORFAITS_OPTIONS = [
 export function PublicQrForm() {
   const [activeTab, setActiveTab] = useState<string>("form");
   const [currentStep, setCurrentStep] = useState(0);
-  const [typeDemande, setTypeDemande] = useState<"NOUVEL_ABONNEMENT" | "RENOUVELLEMENT">("NOUVEL_ABONNEMENT");
+  const [selectedType, setSelectedType] = useState<TypeDemande | null>(null);
+  const [typeDemande, setTypeDemande] = useState<TypeDemande>("NOUVEL_ABONNEMENT");
   const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
+
+  const handleSelectType = (type: TypeDemande) => {
+    setSelectedType(type);
+    setTypeDemande(type);
+    setCurrentStep(0);
+    setFoundSubscriber(null);
+    setSubscriberSearchQuery("");
+    step1Form.resetFields();
+    step2Form.resetFields();
+  };
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+  const [dureeMois, setDureeMois] = useState<number>(1);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
+  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
+  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
 
   // Tracking state
   const [searchRef, setSearchRef] = useState<string>("");
@@ -132,6 +150,50 @@ export function PublicQrForm() {
   const [step1Form] = Form.useForm();
   const [step2Form] = Form.useForm();
 
+  const handleSearchSubscriber = async () => {
+    if (!subscriberSearchQuery.trim()) {
+      message.warning("Veuillez saisir votre N° CIN ou N° de carte d'abonné");
+      return;
+    }
+    setIsSearchingSubscriber(true);
+    try {
+      const sub = await searchSubscriberByCinOrCardMock(subscriberSearchQuery);
+      if (sub) {
+        setFoundSubscriber(sub);
+        step1Form.setFieldsValue({
+          nom: sub.nom,
+          prenom: sub.prenom,
+          cin: sub.cin,
+          email: sub.email,
+          telephone: sub.telephone,
+          numeroCarteAbonne: sub.numeroCarteAbonne,
+          raisonSociale: sub.nom.includes("Société") ? sub.nom : undefined,
+        });
+        step2Form.setFieldsValue({
+          immatriculation: sub.immatriculation,
+          typeVehicule: sub.typeVehicule,
+          marque: sub.marque,
+          modele: sub.modele,
+          ancienneImmatriculation: sub.immatriculation,
+        });
+        setSelectedForfait(sub.forfaitId);
+        setFormData((prev) => ({
+          ...prev,
+          parkingId: sub.parkingId,
+          numeroCarteAbonne: sub.numeroCarteAbonne,
+          forfaitId: sub.forfaitId,
+          forfaitNom: sub.forfaitNom,
+        }));
+        message.success(`Abonné identifié : ${sub.prenom} ${sub.nom} !`);
+      } else {
+        setFoundSubscriber(null);
+        message.error("Aucun abonné trouvé avec ces identifiants.");
+      }
+    } finally {
+      setIsSearchingSubscriber(false);
+    }
+  };
+
   const goNextFromStep1 = async (): Promise<void> => {
     const values = await step1Form.validateFields();
     setFormData((prev) => ({ ...prev, ...values, typeClient, typeDemande }));
@@ -146,10 +208,16 @@ export function PublicQrForm() {
 
   const handleFinalSubmit = () => {
     const forfaitObj = FORFAITS_OPTIONS.find((f) => f.id === selectedForfait);
+    const monthlyPrice = forfaitObj?.priceTTC || 600;
+    const discount = dureeMois === 12 ? 0.9 : 1;
+    const totalTTC = Math.round(monthlyPrice * dureeMois * discount);
+
     const fullData: PublicDemandeInput = {
       ...formData,
       forfaitId: selectedForfait,
       forfaitNom: forfaitObj?.title,
+      dureeMois,
+      montantTotal: totalTTC,
       typeDemande,
       typeClient,
     } as PublicDemandeInput;
@@ -251,132 +319,311 @@ export function PublicQrForm() {
                   <div>
                     {!submittedReference ? (
                       <>
-                        {/* Type de Demande Radio Selector */}
-                        <div
-                          style={{
-                            backgroundColor: "#f1f5f9",
-                            padding: 16,
-                            borderRadius: 10,
-                            marginBottom: 24,
-                            textAlign: "center",
-                          }}
-                        >
-                          <div style={{ fontWeight: 600, color: "#334155", marginBottom: 8 }}>
-                            Sélectionnez le type de démarche :
-                          </div>
-                          <Radio.Group
-                            value={typeDemande}
-                            onChange={(e) => setTypeDemande(e.target.value)}
-                            buttonStyle="solid"
-                            size="large"
-                          >
-                            <Radio.Button value="NOUVEL_ABONNEMENT">
-                              <FileTextOutlined /> Nouvel Abonnement
-                            </Radio.Button>
-                            <Radio.Button value="RENOUVELLEMENT">
-                              <ReloadOutlined /> Renouvellement d'Abonnement
-                            </Radio.Button>
-                          </Radio.Group>
-                        </div>
+                        {!selectedType ? (
+                          /* 4 Choice Cards Landing Selection Screen */
+                          <div>
+                            <div style={{ textAlign: "center", marginBottom: 28 }}>
+                              <Title level={3} style={{ color: "#0f172a", marginBottom: 6 }}>
+                                Bienvenue sur le Portail d'Abonnement Rabat Région Mobilité
+                              </Title>
+                              <Text type="secondary" style={{ fontSize: 15 }}>
+                                Sélectionnez la démarche que vous souhaitez effectuer :
+                              </Text>
+                            </div>
 
-                        {/* Steps Indicator */}
-                        <Steps
-                          current={currentStep}
-                          items={[
-                            { title: "Client", icon: <UserOutlined /> },
-                            { title: "Véhicule", icon: <CarOutlined /> },
-                            { title: "Parking & Forfait", icon: <BuildOutlined /> },
-                            { title: "Validation", icon: <CheckCircleOutlined /> },
-                          ]}
-                          style={{ marginBottom: 32 }}
-                        />
+                            <Row gutter={[20, 20]}>
+                              <Col xs={24} sm={12}>
+                                <Card
+                                  hoverable
+                                  onClick={() => handleSelectType("NOUVEL_ABONNEMENT")}
+                                  style={{
+                                    borderRadius: 14,
+                                    border: "1px solid #bae6fd",
+                                    backgroundColor: "#f0f9ff",
+                                    transition: "all 0.2s ease",
+                                    height: "100%",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                    <div style={{ padding: 12, backgroundColor: "#e0f2fe", borderRadius: 12, display: "flex" }}>
+                                      <FileTextOutlined style={{ fontSize: 32, color: "#0284c7" }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <h3 style={{ margin: 0, color: "#0369a1", fontSize: "1.15rem" }}>Nouvel Abonnement</h3>
+                                        <Tag color="blue">Création</Tag>
+                                      </div>
+                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
+                                        Première souscription à un abonnement de stationnement dans les parkings de Rabat. Formulaire complet en 4 étapes.
+                                      </p>
+                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#0284c7" }}>
+                                        Commencer cette démarche
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </Col>
+
+                              <Col xs={24} sm={12}>
+                                <Card
+                                  hoverable
+                                  onClick={() => handleSelectType("RENOUVELLEMENT")}
+                                  style={{
+                                    borderRadius: 14,
+                                    border: "1px solid #ddd6fe",
+                                    backgroundColor: "#f5f3ff",
+                                    transition: "all 0.2s ease",
+                                    height: "100%",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                    <div style={{ padding: 12, backgroundColor: "#ede9fe", borderRadius: 12, display: "flex" }}>
+                                      <ClockCircleOutlined style={{ fontSize: 32, color: "#7c3aed" }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <h3 style={{ margin: 0, color: "#6d28d9", fontSize: "1.15rem" }}>Renouvellement d'Abonnement</h3>
+                                        <Tag color="purple">Renouvellement</Tag>
+                                      </div>
+                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
+                                        Prolonger un abonnement existant sans rien ressaisir. Recherche automatique par CIN ou Carte.
+                                      </p>
+                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#7c3aed", borderColor: "#7c3aed" }}>
+                                        Rechercher & Renouveler
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </Col>
+
+                              <Col xs={24} sm={12}>
+                                <Card
+                                  hoverable
+                                  onClick={() => handleSelectType("CHANGEMENT_PARKING")}
+                                  style={{
+                                    borderRadius: 14,
+                                    border: "1px solid #fde68a",
+                                    backgroundColor: "#fffbeb",
+                                    transition: "all 0.2s ease",
+                                    height: "100%",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                    <div style={{ padding: 12, backgroundColor: "#fef3c7", borderRadius: 12, display: "flex" }}>
+                                      <EnvironmentOutlined style={{ fontSize: 32, color: "#d97706" }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "1.15rem" }}>Changement de Parking</h3>
+                                        <Tag color="orange">Transfert</Tag>
+                                      </div>
+                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
+                                        Demander le transfert de votre abonnement vers un autre parking de Rabat (Agdal Gare, Bab El Had...).
+                                      </p>
+                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#d97706", borderColor: "#d97706" }}>
+                                        Demander un Transfert
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </Col>
+
+                              <Col xs={24} sm={12}>
+                                <Card
+                                  hoverable
+                                  onClick={() => handleSelectType("CHANGEMENT_VEHICULE")}
+                                  style={{
+                                    borderRadius: 14,
+                                    border: "1px solid #a5f3fc",
+                                    backgroundColor: "#ecfeff",
+                                    transition: "all 0.2s ease",
+                                    height: "100%",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                    <div style={{ padding: 12, backgroundColor: "#cffaff", borderRadius: 12, display: "flex" }}>
+                                      <CarOutlined style={{ fontSize: 32, color: "#0891b2" }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <h3 style={{ margin: 0, color: "#0e7490", fontSize: "1.15rem" }}>Changement de Véhicule</h3>
+                                        <Tag color="cyan">Véhicule</Tag>
+                                      </div>
+                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
+                                        Mettre à jour la plaque d'immatriculation ou le véhicule associé à votre abonnement actif.
+                                      </p>
+                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#0891b2", borderColor: "#0891b2" }}>
+                                        Changer de Véhicule
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </Col>
+                            </Row>
+                          </div>
+                        ) : (
+                          /* Form Workflow for Selected Type */
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #e2e8f0" }}>
+                              <Button icon={<ArrowLeftOutlined />} onClick={() => setSelectedType(null)}>
+                                Changer de démarche
+                              </Button>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <Text type="secondary">Démarche en cours :</Text>
+                                <Tag color={typeDemandeLabels[typeDemande].color} style={{ fontSize: 14, padding: "4px 12px", borderRadius: 6 }}>
+                                  {typeDemandeLabels[typeDemande].label}
+                                </Tag>
+                              </div>
+                            </div>
+
+                            {/* Steps Indicator */}
+                            <Steps
+                              current={currentStep}
+                              items={[
+                                { title: "Client", icon: <UserOutlined /> },
+                                { title: "Véhicule", icon: <CarOutlined /> },
+                                { title: "Parking & Forfait", icon: <BuildOutlined /> },
+                                { title: "Validation", icon: <CheckCircleOutlined /> },
+                              ]}
+                              style={{ marginBottom: 32 }}
+                            />
 
                         {/* Step 0: Information Personnelles */}
                         {currentStep === 0 && (
                           <Form form={step1Form} layout="vertical">
-                            <Alert
-                              message={
-                                typeDemande === "NOUVEL_ABONNEMENT"
-                                  ? "Formulaire de première souscription — Informations du souscripteur"
-                                  : "Formulaire de renouvellement — Veuillez renseigner les coordonnées du titulaire"
-                              }
-                              type="info"
-                              showIcon
-                              style={{ marginBottom: 20 }}
-                            />
+                            {typeDemande === "NOUVEL_ABONNEMENT" ? (
+                              /* Creation Flow: Manual Input Form */
+                              <>
+                                <Alert
+                                  message="Création d'un Nouvel Abonnement — Renseigner vos Coordonnées"
+                                  type="info"
+                                  showIcon
+                                  style={{ marginBottom: 20 }}
+                                />
+                                <Row gutter={16}>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item label="Type de Client" required>
+                                      <Radio.Group
+                                        value={typeClient}
+                                        onChange={(e) => setTypeClient(e.target.value as TypeClient)}
+                                      >
+                                        <Radio value="PARTICULIER">Particulier</Radio>
+                                        <Radio value="ENTREPRISE">Entreprise</Radio>
+                                      </Radio.Group>
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
 
-                            {typeDemande === "RENOUVELLEMENT" && (
-                              <Form.Item
-                                name="ancienNumeroCarte"
-                                label="N° de Carte / Ancien Contrat"
-                                rules={[{ required: true, message: "Veuillez saisir votre n° de carte d'abonné" }]}
-                              >
-                                <Input prefix={<IdcardOutlined />} placeholder="Ex: CRT-2025-004812" />
-                              </Form.Item>
-                            )}
+                                {typeClient === "PARTICULIER" ? (
+                                  <Row gutter={16}>
+                                    <Col xs={24} sm={8}>
+                                      <Form.Item name="nom" label="Nom" rules={[{ required: true, message: "Nom requis" }]}>
+                                        <Input placeholder="El Amrani" />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={8}>
+                                      <Form.Item name="prenom" label="Prénom" rules={[{ required: true, message: "Prénom requis" }]}>
+                                        <Input placeholder="Karim" />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={8}>
+                                      <Form.Item name="cin" label="N° CIN" rules={[{ required: true, message: "CIN requise" }]}>
+                                        <Input placeholder="AB123456" />
+                                      </Form.Item>
+                                    </Col>
+                                  </Row>
+                                ) : (
+                                  <Row gutter={16}>
+                                    <Col xs={24} sm={14}>
+                                      <Form.Item name="raisonSociale" label="Raison Sociale" rules={[{ required: true, message: "Raison sociale requise" }]}>
+                                        <Input placeholder="Société Atlas Trans SARL" />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={10}>
+                                      <Form.Item name="ice" label="N° ICE (Entreprise)" rules={[{ required: true, message: "ICE requis" }]}>
+                                        <Input placeholder="001234567000089" />
+                                      </Form.Item>
+                                    </Col>
+                                  </Row>
+                                )}
 
-                            <Row gutter={16}>
-                              <Col xs={24} sm={12}>
-                                <Form.Item label="Type de Client" required>
-                                  <Radio.Group
-                                    value={typeClient}
-                                    onChange={(e) => setTypeClient(e.target.value as TypeClient)}
-                                  >
-                                    <Radio value="PARTICULIER">Particulier</Radio>
-                                    <Radio value="ENTREPRISE">Entreprise</Radio>
-                                  </Radio.Group>
-                                </Form.Item>
-                              </Col>
-                            </Row>
-
-                            {typeClient === "PARTICULIER" ? (
-                              <Row gutter={16}>
-                                <Col xs={24} sm={8}>
-                                  <Form.Item name="nom" label="Nom" rules={[{ required: true, message: "Nom requis" }]}>
-                                    <Input placeholder="El Amrani" />
-                                  </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={8}>
-                                  <Form.Item name="prenom" label="Prénom" rules={[{ required: true, message: "Prénom requis" }]}>
-                                    <Input placeholder="Karim" />
-                                  </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={8}>
-                                  <Form.Item name="cin" label="N° CIN" rules={[{ required: true, message: "CIN requise" }]}>
-                                    <Input placeholder="AB123456" />
-                                  </Form.Item>
-                                </Col>
-                              </Row>
+                                <Row gutter={16}>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
+                                      <Input placeholder="client@example.ma" />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="telephone" label="Téléphone Mobile" rules={[{ required: true, message: "Téléphone requis" }]}>
+                                      <Input placeholder="0661234567" />
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
+                              </>
                             ) : (
-                              <Row gutter={16}>
-                                <Col xs={24} sm={14}>
-                                  <Form.Item name="raisonSociale" label="Raison Sociale" rules={[{ required: true, message: "Raison sociale requise" }]}>
-                                    <Input placeholder="Société Atlas Trans SARL" />
-                                  </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={10}>
-                                  <Form.Item name="ice" label="N° ICE (Entreprise)" rules={[{ required: true, message: "ICE requis" }]}>
-                                    <Input placeholder="001234567000089" />
-                                  </Form.Item>
-                                </Col>
-                              </Row>
+                              /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
+                              <div style={{ backgroundColor: "#f0f9ff", padding: 20, borderRadius: 12, border: "1px solid #bae6fd", marginBottom: 24 }}>
+                                <div style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, fontSize: 16 }}>
+                                  <SearchOutlined style={{ marginRight: 6 }} /> Identifier mon Dossier Abonné Existant :
+                                </div>
+                                <div style={{ color: "#475569", marginBottom: 16, fontSize: 13 }}>
+                                  Saisissez simplement votre N° CIN ou N° de Carte RFID pour charger automatiquement votre dossier sans rien ressaisir manuellement.
+                                </div>
+
+                                <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
+                                  <Input
+                                    size="large"
+                                    placeholder="Saisir votre N° CIN (ex: AB123456) ou N° Carte (ex: CRT-2025-001099)..."
+                                    value={subscriberSearchQuery}
+                                    onChange={(e) => setSubscriberSearchQuery(e.target.value)}
+                                    onPressEnter={handleSearchSubscriber}
+                                    prefix={<IdcardOutlined style={{ color: "#0284c7" }} />}
+                                    allowClear
+                                  />
+                                  <Button
+                                    type="primary"
+                                    size="large"
+                                    loading={isSearchingSubscriber}
+                                    onClick={handleSearchSubscriber}
+                                    style={{ backgroundColor: "#0284c7" }}
+                                  >
+                                    Rechercher Mon Profil
+                                  </Button>
+                                </Space.Compact>
+
+                                {foundSubscriber ? (
+                                  <Alert
+                                    type="success"
+                                    showIcon
+                                    message={`Dossier Abonné Chargé : ${foundSubscriber.prenom} ${foundSubscriber.nom}`}
+                                    description={
+                                      <div style={{ marginTop: 6, lineHeight: 1.6 }}>
+                                        <div><strong>CIN :</strong> {foundSubscriber.cin} | <strong>Carte RFID :</strong> {foundSubscriber.numeroCarteAbonne}</div>
+                                        <div><strong>Contact :</strong> {foundSubscriber.email} | {foundSubscriber.telephone}</div>
+                                        <div><strong>Parking Actuel :</strong> {foundSubscriber.parkingNom} | <strong>Immatriculation :</strong> {foundSubscriber.immatriculation}</div>
+                                      </div>
+                                    }
+                                  />
+                                ) : (
+                                  <div style={{ padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #93c5fd", fontSize: 13, color: "#475569" }}>
+                                    💡 <strong>Comptes de démonstration prêts à tester :</strong>
+                                    <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
+                                      <li>CIN : <code>AB123456</code> (Karim El Amrani — Parking Agdal Gare)</li>
+                                      <li>N° Carte : <code>CRT-2025-003421</code> (Sara Bennis — Parking Bab El Had)</li>
+                                      <li>CIN : <code>EF556677</code> (Youssef Tazi — Parking Hassan II)</li>
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
                             )}
 
-                            <Row gutter={16}>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
-                                  <Input placeholder="client@example.ma" />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="telephone" label="Téléphone Mobile" rules={[{ required: true, message: "Téléphone requis" }]}>
-                                  <Input placeholder="0661234567" />
-                                </Form.Item>
-                              </Col>
-                            </Row>
-
-                            <div style={{ textAlign: "right", marginTop: 12 }}>
-                              <Button type="primary" size="large" onClick={goNextFromStep1}>
+                            <div style={{ textAlign: "right", marginTop: 16 }}>
+                              <Button
+                                type="primary"
+                                size="large"
+                                disabled={typeDemande !== "NOUVEL_ABONNEMENT" && !foundSubscriber}
+                                onClick={goNextFromStep1}
+                              >
                                 Continuer <ArrowRightOutlined />
                               </Button>
                             </div>
@@ -387,17 +634,31 @@ export function PublicQrForm() {
                         {currentStep === 1 && (
                           <Form form={step2Form} layout="vertical">
                             <Alert
-                              message="Transmettre les caractéristiques du véhicule à abonner"
+                              message={
+                                typeDemande === "CHANGEMENT_VEHICULE"
+                                  ? "Remplir l'ancienne et la nouvelle plaque d'immatriculation"
+                                  : "Transmettre les caractéristiques du véhicule à abonner"
+                              }
                               type="info"
                               showIcon
                               style={{ marginBottom: 20 }}
                             />
 
+                            {typeDemande === "CHANGEMENT_VEHICULE" && (
+                              <Form.Item
+                                name="ancienneImmatriculation"
+                                label="Ancienne Immatriculation (Plaque Actuelle d'Abonné)"
+                                rules={[{ required: true, message: "Indiquez l'ancienne plaque" }]}
+                              >
+                                <Input placeholder="Ex: 98765-A-1" size="large" />
+                              </Form.Item>
+                            )}
+
                             <Row gutter={16}>
                               <Col xs={24} sm={12}>
                                 <Form.Item
                                   name="immatriculation"
-                                  label="Immatriculation du véhicule"
+                                  label={typeDemande === "CHANGEMENT_VEHICULE" ? "Nouvelle Immatriculation du Véhicule" : "Immatriculation du véhicule"}
                                   rules={[{ required: true, message: "Immatriculation requise" }]}
                                 >
                                   <Input placeholder="Ex: 12345-A-6" size="large" />
@@ -449,7 +710,7 @@ export function PublicQrForm() {
                         {currentStep === 2 && (
                           <div>
                             <Form layout="vertical">
-                              <Form.Item label="Parking de Rabat Souhaité" required>
+                              <Form.Item label={typeDemande === "CHANGEMENT_PARKING" ? "Parking Actuel d'Attache" : "Parking de Rabat Souhaité"} required>
                                 <Select
                                   size="large"
                                   loading={parkingsLoading}
@@ -464,6 +725,54 @@ export function PublicQrForm() {
                                   ))}
                                 </Select>
                               </Form.Item>
+
+                              {typeDemande === "CHANGEMENT_PARKING" && (
+                                <>
+                                  <Form.Item label="Nouveau Parking Souhaité (Transfert)" required>
+                                    <Select
+                                      size="large"
+                                      loading={parkingsLoading}
+                                      placeholder="Sélectionnez le nouveau parking Rabat"
+                                      value={formData.nouveauParkingId}
+                                      onChange={(val) => setFormData((prev) => ({ ...prev, nouveauParkingId: val }))}
+                                    >
+                                      {parkings?.filter((p) => p.id !== formData.parkingId).map((p) => (
+                                        <Option key={p.id} value={p.id}>
+                                          <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
+                                        </Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                  <Form.Item label="Motif de la demande de transfert">
+                                    <Input.TextArea
+                                      rows={2}
+                                      placeholder="Ex: Changement de lieu de résidence ou de bureau à Agdal..."
+                                      value={formData.motifChangement}
+                                      onChange={(e) => setFormData((prev) => ({ ...prev, motifChangement: e.target.value }))}
+                                    />
+                                  </Form.Item>
+                                </>
+                              )}
+
+                              <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
+                                <div style={{ fontWeight: 600, color: "#334155", marginBottom: 10 }}>
+                                  <ClockCircleOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Choisir la Durée d'Engagement / Prolongation :
+                                </div>
+                                <Radio.Group
+                                  value={dureeMois}
+                                  onChange={(e) => setDureeMois(e.target.value)}
+                                  buttonStyle="solid"
+                                  size="large"
+                                  style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+                                >
+                                  <Radio.Button value={1}>1 Mois</Radio.Button>
+                                  <Radio.Button value={3}>3 Mois</Radio.Button>
+                                  <Radio.Button value={6}>6 Mois</Radio.Button>
+                                  <Radio.Button value={12}>
+                                    12 Mois <Tag color="green" style={{ marginLeft: 4 }}>-10% Réduction</Tag>
+                                  </Radio.Button>
+                                </Radio.Group>
+                              </div>
 
                               <Divider titlePlacement="left">Choisir la Formule d'Abonnement Souhaitée</Divider>
 
@@ -501,7 +810,7 @@ export function PublicQrForm() {
                                           </Tag>
                                         </div>
                                         <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0369a1" }}>
-                                          {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / {f.duree}</span>
+                                          {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois</span>
                                         </div>
                                       </Card>
                                     </Col>
@@ -540,10 +849,15 @@ export function PublicQrForm() {
                               <Row gutter={[16, 12]}>
                                 <Col span={12}>
                                   <strong>Type de Demande:</strong>{" "}
-                                  <Tag color="purple">
-                                    {typeDemande === "NOUVEL_ABONNEMENT" ? "Nouvel Abonnement" : "Renouvellement"}
+                                  <Tag color={typeDemandeLabels[typeDemande].color}>
+                                    {typeDemandeLabels[typeDemande].label}
                                   </Tag>
                                 </Col>
+                                {formData.numeroCarteAbonne && (
+                                  <Col span={12}>
+                                    <strong>N° Carte Abonné:</strong> <Tag color="gold">{formData.numeroCarteAbonne}</Tag>
+                                  </Col>
+                                )}
                                 <Col span={12}>
                                   <strong>Client:</strong>{" "}
                                   {typeClient === "PARTICULIER" ? `${formData.prenom} ${formData.nom} (CIN: ${formData.cin})` : `${formData.raisonSociale} (ICE: ${formData.ice})`}
@@ -553,17 +867,31 @@ export function PublicQrForm() {
                                 </Col>
                                 <Col span={12}>
                                   <strong>Véhicule:</strong> {formData.immatriculation} ({typeVehiculeLabels[formData.typeVehicule || "VOITURE"]})
+                                  {formData.ancienneImmatriculation && (
+                                    <div style={{ fontSize: 12, color: "#64748b" }}>Ancienne plaque : {formData.ancienneImmatriculation}</div>
+                                  )}
                                 </Col>
                                 <Col span={12}>
-                                  <strong>Parking Choisis:</strong>{" "}
+                                  <strong>Parking:</strong>{" "}
                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
+                                  {formData.nouveauParkingId && (
+                                    <div style={{ color: "#d97706", fontWeight: 600 }}>
+                                      ➜ Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
+                                    </div>
+                                  )}
                                 </Col>
                                 <Col span={12}>
-                                  <strong>Forfait Sélectionné:</strong>{" "}
-                                  <Tag color="green">
-                                    {FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.title} (
-                                    {FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.priceTTC} MAD TTC)
+                                  <strong>Forfait & Durée:</strong>{" "}
+                                  <Tag color="geekblue">
+                                    {FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.title} ({dureeMois} Mois)
                                   </Tag>
+                                </Col>
+                                <Col span={12}>
+                                  <strong>Montant Total TTC Calculé:</strong>{" "}
+                                  <strong style={{ fontSize: "1.2rem", color: "#16a34a" }}>
+                                    {Math.round((FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.priceTTC || 600) * dureeMois * (dureeMois === 12 ? 0.9 : 1)).toLocaleString("fr-FR")} MAD TTC
+                                  </strong>
+                                  {dureeMois === 12 && <Tag color="green" style={{ marginLeft: 6 }}>10% inclus</Tag>}
                                 </Col>
                               </Row>
                             </Card>
@@ -585,6 +913,8 @@ export function PublicQrForm() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
                       </>
                     ) : (
                       /* Success Confirmation Screen */
