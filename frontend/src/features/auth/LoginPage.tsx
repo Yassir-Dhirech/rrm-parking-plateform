@@ -1,5 +1,11 @@
-import { Form, Input, Button, Card, message, Divider, Typography, Checkbox } from "antd";
-import { UserOutlined, LockOutlined, SafetyCertificateOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Card, message, Divider, Typography, Checkbox, Tag } from "antd";
+import {
+  UserOutlined,
+  LockOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  KeyOutlined,
+} from "@ant-design/icons";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -17,6 +23,15 @@ const roleHomeRoute: Record<string, string> = {
   COMPTABLE: "/comptable",
   RESP_REPORTING: "/reporting",
   ADMIN_SI: "/admin",
+};
+
+const roleBadgeColors: Record<Role, string> = {
+  AGENT: "blue",
+  SUPERVISEUR: "purple",
+  RESPONSABLE: "gold",
+  COMPTABLE: "green",
+  RESP_REPORTING: "cyan",
+  ADMIN_SI: "red",
 };
 
 const isDev = import.meta.env.DEV;
@@ -62,7 +77,7 @@ export function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "92vh",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -73,24 +88,24 @@ export function LoginPage() {
       <Card
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           borderRadius: 16,
-          boxShadow: "0 20px 40px -10px rgba(0, 30, 61, 0.35)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
+          border: "none",
           background: "#ffffff",
           position: "relative",
           overflow: "hidden",
         }}
-        styles={{ body: { padding: "24px 24px 20px" } }}
+        styles={{ body: { padding: "32px 28px 24px" } }}
       >
-        {/* Tricolor Accent Bar */}
+        {/* Top Tricolor Accent Bar */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: 3,
+            height: 4,
             background: "linear-gradient(90deg, #982B5E 0%, #FFC300 50%, #003566 100%)",
           }}
         />
@@ -100,50 +115,59 @@ export function LoginPage() {
             type="link"
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate("/demande-publique")}
-            style={{ padding: 0, color: "#64748b", fontWeight: 500, fontSize: 12.5 }}
+            style={{ padding: 0, color: "#64748b", fontWeight: 500, fontSize: 13 }}
           >
             Retour au Portail Public
           </Button>
         </div>
 
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <img
             src="/pictures/logo-rrm.png"
             alt="Rabat Région Mobilité"
-            style={{ maxHeight: 46, marginBottom: 8, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.12))" }}
+            style={{ maxHeight: 52, marginBottom: 12, objectFit: "contain" }}
           />
-          <Title level={4} style={{ margin: 0, color: "#003566", fontWeight: 800, fontSize: "1.15rem" }}>
-            Espace Agent & Gestion RRM
+          <Title level={4} style={{ margin: "0 0 4px", color: "#003566", fontWeight: 800, fontSize: "1.2rem" }}>
+            Plateforme Parking RRM
           </Title>
-          <Text type="secondary" style={{ fontSize: 12.5 }}>
-            Connectez-vous à votre espace professionnel
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Connectez-vous à votre espace de gestion
           </Text>
         </div>
 
         <Form layout="vertical" onFinish={onFinish} size="large">
           <Form.Item name="email" label="Adresse Email" rules={[{ required: true, message: "Saisissez votre email" }]}>
-            <Input prefix={<UserOutlined style={{ color: "#94a3b8" }} />} placeholder="exemple@rrm.ma" style={{ borderRadius: 10 }} />
+            <Input
+              prefix={<UserOutlined style={{ color: "#003566" }} />}
+              placeholder="exemple@rrm.ma"
+              style={{ borderRadius: 8 }}
+            />
           </Form.Item>
           <Form.Item name="motDePasse" label="Mot de passe" rules={[{ required: true, message: "Saisissez votre mot de passe" }]}>
-            <Input.Password prefix={<LockOutlined style={{ color: "#94a3b8" }} />} placeholder="••••••••" style={{ borderRadius: 10 }} />
+            <Input.Password
+              prefix={<LockOutlined style={{ color: "#003566" }} />}
+              placeholder="••••••••"
+              style={{ borderRadius: 8 }}
+            />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 16 }}>
             <Checkbox checked={require2fa} onChange={(e) => setRequire2fa(e.target.checked)}>
-              Exiger la vérification 2FA par Code OTP (SMS / Email)
+              <span style={{ fontSize: 13, color: "#475569" }}>Exiger la vérification 2FA par Code OTP</span>
             </Checkbox>
           </Form.Item>
 
-          <Form.Item style={{ marginTop: 0 }}>
+          <Form.Item style={{ marginTop: 0, marginBottom: 8 }}>
             <Button
               type="primary"
               htmlType="submit"
               block
+              icon={<ArrowRightOutlined />}
               style={{
-                height: 46,
+                height: 44,
                 fontWeight: 600,
                 fontSize: 15,
-                borderRadius: 10,
+                borderRadius: 8,
                 backgroundColor: "#003566",
                 borderColor: "#003566",
                 boxShadow: "0 4px 12px rgba(0, 53, 102, 0.25)",
@@ -156,8 +180,8 @@ export function LoginPage() {
 
         {isDev && (
           <>
-            <Divider style={{ margin: "24px 0 16px 0", fontSize: 12, color: "#94a3b8" }}>
-              Accès Rapide Démo (Environnement Dev)
+            <Divider style={{ margin: "20px 0 14px 0", fontSize: 12, color: "#94a3b8" }}>
+              <KeyOutlined style={{ marginRight: 4 }} /> Accès Rapide Démo (Dev)
             </Divider>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {(Object.keys(roleConfig) as Role[]).map((role) => (
@@ -171,12 +195,14 @@ export function LoginPage() {
                     justifyContent: "space-between",
                     padding: "6px 10px",
                     borderRadius: 8,
-                    borderColor: "#cbd5e1",
+                    borderColor: "#e2e8f0",
                   }}
                   onClick={() => handleMockLogin(role)}
                 >
-                  <span>{roleConfig[role].title.replace("Espace ", "")}</span>
-                  <SafetyCertificateOutlined style={{ fontSize: 11, color: "#003566" }} />
+                  <span style={{ fontWeight: 500 }}>{roleConfig[role].title.replace("Espace ", "")}</span>
+                  <Tag color={roleBadgeColors[role]} style={{ margin: 0, fontSize: 10, padding: "0 4px" }}>
+                    {role.substring(0, 3)}
+                  </Tag>
                 </Button>
               ))}
             </div>
