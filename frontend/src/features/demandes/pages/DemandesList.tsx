@@ -55,7 +55,7 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
-import { type TypeClient, type TypeVehicule, typeVehiculeLabels } from "../../../lib/enums";
+import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -269,11 +269,10 @@ export function DemandesList() {
       title: "Type",
       dataIndex: "typeDemande",
       key: "typeDemande",
-      render: (value: string) => (
-        <Tag color={value === "NOUVEL_ABONNEMENT" ? "purple" : "cyan"}>
-          {value === "NOUVEL_ABONNEMENT" ? "Nouvel abonnement" : "Renouvellement"}
-        </Tag>
-      ),
+      render: (value: TypeDemande) => {
+        const info = typeDemandeLabels[value] || { label: value, color: "blue" };
+        return <Tag color={info.color}>{info.label}</Tag>;
+      },
     },
     {
       title: "Client / Souscripteur",

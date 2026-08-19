@@ -2,9 +2,9 @@ export type TypeClient = "PARTICULIER" | "ENTREPRISE";
 
 export type TypeVehicule = "VOITURE" | "MOTO" | "CAMIONNETTE";
 
-export type TypeDemande = "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT";
+export type TypeDemande = "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT" | "CHANGEMENT_PARKING" | "CHANGEMENT_VEHICULE";
 
-export type ModePaiement = "ESPECES" | "CHEQUE" ;
+export type ModePaiement = "ESPECES" | "CHEQUE";
 
 export const typeVehiculeLabels: Record<TypeVehicule, string> = {
   VOITURE: "Voiture",
@@ -12,18 +12,14 @@ export const typeVehiculeLabels: Record<TypeVehicule, string> = {
   CAMIONNETTE: "Camionnette",
 };
 
-
 export const modePaiementLabels: Record<ModePaiement, string> = {
   ESPECES: "Espèces",
   CHEQUE: "Chèque",
 };
 
-// export const typeClientLabels: Record<TypeClient, string> = {
-//   PARTICULIER: "Particulier",
-//   ENTREPRISE: "Entreprise",
-// };
-
-// export const typeDemandeLabels: Record<TypeDemande, string> = {
-//   NOUVEL_ABONNEMENT: "Nouvel Abonnement",
-//   RENOUVELLEMENT: "Renouvellement",
-// };
+export const typeDemandeLabels: Record<TypeDemande, { label: string; color: string }> = {
+  NOUVEL_ABONNEMENT: { label: "Nouvel Abonnement", color: "blue" },
+  RENOUVELLEMENT: { label: "Renouvellement", color: "purple" },
+  CHANGEMENT_PARKING: { label: "Changement de Parking", color: "orange" },
+  CHANGEMENT_VEHICULE: { label: "Changement de Véhicule", color: "cyan" },
+};

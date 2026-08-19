@@ -41,7 +41,7 @@ import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
-import { type TypeClient, type TypeVehicule, typeVehiculeLabels } from "../../../lib/enums";
+import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
 
 const { Option } = Select;
@@ -97,7 +97,7 @@ const FORFAITS_OPTIONS = [
 export function PublicQrForm() {
   const [activeTab, setActiveTab] = useState<string>("form");
   const [currentStep, setCurrentStep] = useState(0);
-  const typeDemande = "NOUVEL_ABONNEMENT";
+  const [typeDemande, setTypeDemande] = useState<TypeDemande>("NOUVEL_ABONNEMENT");
   const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
@@ -250,19 +250,41 @@ export function PublicQrForm() {
                   <div>
                     {!submittedReference ? (
                       <>
-                        {/* Information Banner: Public Form for New Subscriptions Only */}
-                        <Alert
-                          message="Formulaire Public de Première Souscription"
-                          description={
-                            <span>
-                              Ce formulaire est réservé exclusivement à la création de <strong>Nouvel Abonnement</strong>. Pour tout <strong>renouvellement d'abonnement</strong>, la démarche est prise en charge directement au guichet RRM par nos agents habilités sur présentation de votre carte d'abonné.
-                            </span>
-                          }
-                          type="info"
-                          showIcon
-                          icon={<FileTextOutlined style={{ color: "#0284c7" }} />}
-                          style={{ marginBottom: 24, borderRadius: 10, borderColor: "#bae6fd", backgroundColor: "#f0f9ff" }}
-                        />
+                        {/* Type de Demande Selector (4 Types) */}
+                        <div
+                          style={{
+                            backgroundColor: "#f8fafc",
+                            padding: 16,
+                            borderRadius: 12,
+                            marginBottom: 24,
+                            border: "1px solid #cbd5e1",
+                            textAlign: "center",
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, color: "#0f172a", marginBottom: 10, fontSize: 15 }}>
+                            Sélectionnez le type de démarche souhaitée :
+                          </div>
+                          <Radio.Group
+                            value={typeDemande}
+                            onChange={(e) => setTypeDemande(e.target.value as TypeDemande)}
+                            buttonStyle="solid"
+                            size="large"
+                            style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}
+                          >
+                            <Radio.Button value="NOUVEL_ABONNEMENT" style={{ borderRadius: 6 }}>
+                              <FileTextOutlined style={{ marginRight: 6 }} /> Nouvel Abonnement
+                            </Radio.Button>
+                            <Radio.Button value="RENOUVELLEMENT" style={{ borderRadius: 6 }}>
+                              <ClockCircleOutlined style={{ marginRight: 6 }} /> Renouvellement
+                            </Radio.Button>
+                            <Radio.Button value="CHANGEMENT_PARKING" style={{ borderRadius: 6 }}>
+                              <EnvironmentOutlined style={{ marginRight: 6 }} /> Changement de Parking
+                            </Radio.Button>
+                            <Radio.Button value="CHANGEMENT_VEHICULE" style={{ borderRadius: 6 }}>
+                              <CarOutlined style={{ marginRight: 6 }} /> Changement de Véhicule
+                            </Radio.Button>
+                          </Radio.Group>
+                        </div>
 
                         {/* Steps Indicator */}
                         <Steps
@@ -279,6 +301,15 @@ export function PublicQrForm() {
                         {/* Step 0: Information Personnelles */}
                         {currentStep === 0 && (
                           <Form form={step1Form} layout="vertical">
+                            {typeDemande !== "NOUVEL_ABONNEMENT" && (
+                              <Form.Item
+                                name="numeroCarteAbonne"
+                                label="N° de Carte RFID / Référence Abonné Existant"
+                                rules={[{ required: true, message: "Saisissez votre N° de carte ou référence d'abonné" }]}
+                              >
+                                <Input prefix={<IdcardOutlined style={{ color: "#0284c7" }} />} placeholder="Ex: CRT-2025-004812" size="large" />
+                              </Form.Item>
+                            )}
 
                             <Row gutter={16}>
                               <Col xs={24} sm={12}>
@@ -352,17 +383,31 @@ export function PublicQrForm() {
                         {currentStep === 1 && (
                           <Form form={step2Form} layout="vertical">
                             <Alert
-                              message="Transmettre les caractéristiques du véhicule à abonner"
+                              message={
+                                typeDemande === "CHANGEMENT_VEHICULE"
+                                  ? "Remplir l'ancienne et la nouvelle plaque d'immatriculation"
+                                  : "Transmettre les caractéristiques du véhicule à abonner"
+                              }
                               type="info"
                               showIcon
                               style={{ marginBottom: 20 }}
                             />
 
+                            {typeDemande === "CHANGEMENT_VEHICULE" && (
+                              <Form.Item
+                                name="ancienneImmatriculation"
+                                label="Ancienne Immatriculation (Plaque Actuelle d'Abonné)"
+                                rules={[{ required: true, message: "Indiquez l'ancienne plaque" }]}
+                              >
+                                <Input placeholder="Ex: 98765-A-1" size="large" />
+                              </Form.Item>
+                            )}
+
                             <Row gutter={16}>
                               <Col xs={24} sm={12}>
                                 <Form.Item
                                   name="immatriculation"
-                                  label="Immatriculation du véhicule"
+                                  label={typeDemande === "CHANGEMENT_VEHICULE" ? "Nouvelle Immatriculation du Véhicule" : "Immatriculation du véhicule"}
                                   rules={[{ required: true, message: "Immatriculation requise" }]}
                                 >
                                   <Input placeholder="Ex: 12345-A-6" size="large" />
@@ -414,7 +459,7 @@ export function PublicQrForm() {
                         {currentStep === 2 && (
                           <div>
                             <Form layout="vertical">
-                              <Form.Item label="Parking de Rabat Souhaité" required>
+                              <Form.Item label={typeDemande === "CHANGEMENT_PARKING" ? "Parking Actuel d'Attache" : "Parking de Rabat Souhaité"} required>
                                 <Select
                                   size="large"
                                   loading={parkingsLoading}
@@ -429,6 +474,34 @@ export function PublicQrForm() {
                                   ))}
                                 </Select>
                               </Form.Item>
+
+                              {typeDemande === "CHANGEMENT_PARKING" && (
+                                <>
+                                  <Form.Item label="Nouveau Parking Souhaité (Transfert)" required>
+                                    <Select
+                                      size="large"
+                                      loading={parkingsLoading}
+                                      placeholder="Sélectionnez le nouveau parking Rabat"
+                                      value={formData.nouveauParkingId}
+                                      onChange={(val) => setFormData((prev) => ({ ...prev, nouveauParkingId: val }))}
+                                    >
+                                      {parkings?.filter((p) => p.id !== formData.parkingId).map((p) => (
+                                        <Option key={p.id} value={p.id}>
+                                          <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
+                                        </Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                  <Form.Item label="Motif de la demande de transfert">
+                                    <Input.TextArea
+                                      rows={2}
+                                      placeholder="Ex: Changement de lieu de résidence ou de bureau à Agdal..."
+                                      value={formData.motifChangement}
+                                      onChange={(e) => setFormData((prev) => ({ ...prev, motifChangement: e.target.value }))}
+                                    />
+                                  </Form.Item>
+                                </>
+                              )}
 
                               <Divider titlePlacement="left">Choisir la Formule d'Abonnement Souhaitée</Divider>
 
@@ -505,10 +578,15 @@ export function PublicQrForm() {
                               <Row gutter={[16, 12]}>
                                 <Col span={12}>
                                   <strong>Type de Demande:</strong>{" "}
-                                  <Tag color="blue">
-                                    Nouvel Abonnement
+                                  <Tag color={typeDemandeLabels[typeDemande].color}>
+                                    {typeDemandeLabels[typeDemande].label}
                                   </Tag>
                                 </Col>
+                                {formData.numeroCarteAbonne && (
+                                  <Col span={12}>
+                                    <strong>N° Carte Abonné:</strong> <Tag color="gold">{formData.numeroCarteAbonne}</Tag>
+                                  </Col>
+                                )}
                                 <Col span={12}>
                                   <strong>Client:</strong>{" "}
                                   {typeClient === "PARTICULIER" ? `${formData.prenom} ${formData.nom} (CIN: ${formData.cin})` : `${formData.raisonSociale} (ICE: ${formData.ice})`}
@@ -518,10 +596,18 @@ export function PublicQrForm() {
                                 </Col>
                                 <Col span={12}>
                                   <strong>Véhicule:</strong> {formData.immatriculation} ({typeVehiculeLabels[formData.typeVehicule || "VOITURE"]})
+                                  {formData.ancienneImmatriculation && (
+                                    <div style={{ fontSize: 12, color: "#64748b" }}>Ancienne plaque : {formData.ancienneImmatriculation}</div>
+                                  )}
                                 </Col>
                                 <Col span={12}>
-                                  <strong>Parking Choisis:</strong>{" "}
+                                  <strong>Parking:</strong>{" "}
                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
+                                  {formData.nouveauParkingId && (
+                                    <div style={{ color: "#d97706", fontWeight: 600 }}>
+                                      ➜ Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
+                                    </div>
+                                  )}
                                 </Col>
                                 <Col span={12}>
                                   <strong>Forfait Sélectionné:</strong>{" "}

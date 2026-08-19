@@ -39,6 +39,7 @@ import {
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { type TypeDemande, typeDemandeLabels } from "../../../lib/enums";
 import { type PaymentInfoInput } from "../types";
 
 const BANK_OPTIONS = [
@@ -200,20 +201,42 @@ export function DemandeDetail() {
 
         <Descriptions title="Informations de la Demande Client" column={2} bordered size="small">
           <Descriptions.Item label="Type de Demande">
-            <Tag color="purple">
-              {data.typeDemande === "NOUVEL_ABONNEMENT" ? "Nouvel Abonnement" : "Renouvellement"}
+            <Tag color={typeDemandeLabels[data.typeDemande as TypeDemande]?.color || "blue"}>
+              {typeDemandeLabels[data.typeDemande as TypeDemande]?.label || data.typeDemande}
             </Tag>
           </Descriptions.Item>
+          {data.numeroCarteAbonne && (
+            <Descriptions.Item label="N° Carte Abonné">
+              <Tag color="gold">{data.numeroCarteAbonne}</Tag>
+            </Descriptions.Item>
+          )}
           <Descriptions.Item label="Nom du Client">
             <strong>{data.clientNom}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Parking Concerné">{data.parkingNom}</Descriptions.Item>
+          <Descriptions.Item label="Parking Concerné">
+            {data.parkingNom}
+            {data.nouveauParkingNom && (
+              <span style={{ color: "#d97706", fontWeight: 600, marginLeft: 6 }}>
+                ➜ Nouveau : {data.nouveauParkingNom}
+              </span>
+            )}
+          </Descriptions.Item>
           <Descriptions.Item label="Email de Contact">{data.email}</Descriptions.Item>
           <Descriptions.Item label="Téléphone">{data.telephone}</Descriptions.Item>
           <Descriptions.Item label="Immatriculation Véhicule">
             <Tag color="cyan">{data.immatriculation}</Tag>
+            {data.ancienneImmatriculation && (
+              <span style={{ fontSize: 12, color: "#64748b", marginLeft: 6 }}>
+                (Ancienne : {data.ancienneImmatriculation})
+              </span>
+            )}
           </Descriptions.Item>
           <Descriptions.Item label="Type de Véhicule">{data.typeVehicule}</Descriptions.Item>
+          {data.motifChangement && (
+            <Descriptions.Item label="Motif du Changement" span={2}>
+              {data.motifChangement}
+            </Descriptions.Item>
+          )}
           <Descriptions.Item label="Date Soumission">{data.dateCreation}</Descriptions.Item>
         </Descriptions>
 
