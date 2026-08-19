@@ -1,31 +1,49 @@
+/* ==========================================================================
+   RABAT RÉGION MOBILITÉ (RRM) — SYSTEME DE DESIGN & THEME GLOBAL
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  /* ==========================================================================
-     1. PALETTE DE COULEURS OFFICIELLE (Logo Rabat Région Mobilité)
-     ========================================================================== */
-  --color-primary: #003566;           /* Bleu Nuit / Navy principal RRM */
-  --color-primary-dark: #001E3D;      /* Deep Navy hover & active states */
-  --color-primary-light: #EBF3FA;     /* Soft blue background / active badges */
+  /* --------------------------------------------------------------------------
+     1. PALETTE DE COULEURS OFFICIELLE RRM
+     -------------------------------------------------------------------------- */
+  --color-primary: #003566;           /* Navy RRM Principal */
+  --color-primary-dark: #001E3D;      /* Deep Navy hover & hero backgrounds */
+  --color-primary-light: #EBF3FA;     /* Soft Navy surface & active badges */
+  --color-primary-glow: rgba(0, 53, 102, 0.25);
 
-  --color-secondary: #FFC300;         /* Or / Ambre logo RRM */
+  --color-secondary: #FFC300;         /* Ambre Logo RRM */
   --color-secondary-dark: #E0A800;
-  --color-secondary-light: #FFF8E5;   /* Warm highlight background */
+  --color-secondary-light: #FFF8E5;
 
-  --color-accent: #982B5E;            /* Prune / Magenta accent */
-  --color-accent-light: #FBF0F5;      /* Alertes & highlight */
+  --color-accent: #982B5E;            /* Prune Accent RRM */
+  --color-accent-light: #FBF0F5;
 
-  /* ==========================================================================
-     2. COULEURS NEUTRES & SURFACES
-     ========================================================================== */
-  --color-text: #1E293B;              /* Slate 800 - Texte principal */
-  --color-text-muted: #64748B;        /* Slate 500 - Secondaire */
-  --color-bg: #F4F6FA;                /* Fond d'application moderne */
-  --color-surface: #FFFFFF;           /* Cards, Modals, Tables */
-  --color-border: #E2E8F0;            /* Bordures subtiles */
-  --color-hover: rgba(0, 53, 102, 0.06);
+  /* Couleurs de statut */
+  --color-success: #10B981;
+  --color-success-bg: #ECFDF5;
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FFFBEB;
+  --color-error: #EF4444;
+  --color-error-bg: #FEF2F2;
+  --color-info: #0284C7;
+  --color-info-bg: #F0F9FF;
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
+     2. NEUTRES & SURFACES
+     -------------------------------------------------------------------------- */
+  --color-text: #0F172A;              /* Slate 900 */
+  --color-text-body: #334155;         /* Slate 700 */
+  --color-text-muted: #64748B;        /* Slate 500 */
+  --color-bg: #F8FAFC;                /* Slate 50 background */
+  --color-surface: #FFFFFF;           /* Cards & Modals */
+  --color-border: #E2E8F0;            /* Border Slate 200 */
+  --color-border-hover: #CBD5E1;
+
+  /* --------------------------------------------------------------------------
      3. TYPOGRAPHIE & ESPACEMENTS
-     ========================================================================== */
+     -------------------------------------------------------------------------- */
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
   --spacing-xs: 4px;
@@ -34,35 +52,44 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
      4. RAYONS DE COURBURE & ELEVATION
-     ========================================================================== */
+     -------------------------------------------------------------------------- */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px -2px rgba(0, 53, 102, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 24px -4px rgba(0, 53, 102, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 14px -2px rgba(0, 53, 102, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 53, 102, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(2, 132, 199, 0.25);
+
+  --transition-fast: all 0.15s ease;
+  --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ==========================================================================
+/* --------------------------------------------------------------------------
    RESET ET BASE GLOBALE
-   ========================================================================== */
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);
   background-color: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-text-body);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar personnalisée */
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -78,11 +105,54 @@ body {
   background: #94a3b8;
 }
 
-/* ==========================================================================
-   CLASSES UTILITAIRES RRM
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   ANIMATIONS KEYFRAMES
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-/* Ligne décorative tricolore RRM */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(2, 132, 199, 0.5);
+  }
+}
+
+@keyframes floatCard {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   CLASSES UTILITAIRES & DECORATIVES RRM
+   -------------------------------------------------------------------------- */
+.rrm-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.rrm-hover-lift {
+  transition: var(--transition-normal);
+}
+
+.rrm-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
 .rrm-tricolor-bar {
   height: 4px;
   width: 100%;
@@ -94,41 +164,18 @@ body {
   );
 }
 
-/* En-tête / Bannière RRM */
+.rrm-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius-lg);
+}
+
 .rrm-header-banner {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: var(--color-surface);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
-}
-
-/* Carte avec liseré tricolore */
-.rrm-card-accent {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.rrm-card-accent:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.rrm-card-accent::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent) 0%,
-    var(--color-secondary) 50%,
-    var(--color-primary) 100%
-  );
 }

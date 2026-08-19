@@ -274,28 +274,38 @@ export function PublicQrForm() {
       {/* Top Banner */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+          background: "linear-gradient(135deg, #001E3D 0%, #003566 60%, #004D80 100%)",
           color: "#ffffff",
-          padding: "40px 24px",
+          padding: "24px 20px 32px",
           textAlign: "center",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          boxShadow: "0 4px 16px rgba(0, 53, 102, 0.15)",
+          position: "relative",
         }}
       >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Tag color="cyan" style={{ fontSize: 13, padding: "4px 12px", borderRadius: 20, marginBottom: 12 }}>
-            <QrcodeOutlined /> Service Abonné sans Compte — Scanner Code QR
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <Tag color="gold" style={{ fontSize: 12, padding: "2px 12px", borderRadius: 20, marginBottom: 8, fontWeight: 600 }}>
+            <QrcodeOutlined style={{ marginRight: 6 }} /> Service Abonné sans Compte — Rabat Région Mobilité
           </Tag>
-          <h1 style={{ color: "#ffffff", fontSize: "2rem", fontWeight: 700, margin: "10px 0" }}>
-            Plateforme d'Abonnement des Parkings de Rabat
+          <h1 style={{ color: "#ffffff", fontSize: "1.65rem", fontWeight: 800, margin: "6px 0 8px", letterSpacing: "-0.5px" }}>
+            Portail des Démarches & Abonnements Parking
           </h1>
-          <p style={{ color: "#cbd5e1", fontSize: "1.05rem", maxWidth: 680, margin: "0 auto" }}>
-            Remplissez votre demande ou renouvellement d'abonnement en ligne sans créer de compte.
-            Suivez l'état de votre dossier et téléchargez vos documents.
+          <p style={{ color: "#cbd5e1", fontSize: "0.95rem", maxWidth: 660, margin: "0 auto", lineHeight: 1.5 }}>
+            Effectuez votre demande en ligne (Création, Renouvellement, Changement de Parking ou de Véhicule) en toute simplicité et suivez l'avancement de votre dossier avec votre code de suivi.
           </p>
         </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            background: "linear-gradient(90deg, #982B5E 0%, #FFC300 50%, #0284C7 100%)",
+          }}
+        />
       </div>
 
-      <div style={{ maxWidth: 960, margin: "-20px auto 0", padding: "0 16px" }}>
+      <div style={{ maxWidth: 960, margin: "-16px auto 0", padding: "0 16px" }}>
         <Card
           style={{
             borderRadius: 12,
@@ -617,7 +627,14 @@ export function PublicQrForm() {
                               </div>
                             )}
 
-                            <div style={{ textAlign: "right", marginTop: 16 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+                              <Button
+                                size="large"
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => setSelectedType(null)}
+                              >
+                                Retour aux démarches
+                              </Button>
                               <Button
                                 type="primary"
                                 size="large"
@@ -696,7 +713,7 @@ export function PublicQrForm() {
                             </Row>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                              <Button size="large" onClick={() => setCurrentStep(0)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(0)}>
                                 Précédent
                               </Button>
                               <Button type="primary" size="large" onClick={goNextFromStep2}>
@@ -820,7 +837,7 @@ export function PublicQrForm() {
                             </Form>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" onClick={() => setCurrentStep(1)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(1)}>
                                 Précédent
                               </Button>
                               <Button
@@ -897,7 +914,7 @@ export function PublicQrForm() {
                             </Card>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" onClick={() => setCurrentStep(2)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(2)}>
                                 Modifier les infos
                               </Button>
                               <Button

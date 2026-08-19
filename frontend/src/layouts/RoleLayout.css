@@ -1,3 +1,7 @@
+/* ==========================================================================
+   BACK-OFFICE LAYOUT (RoleLayout.css)
+   ========================================================================== */
+
 .app-header {
   background: #ffffff !important;
   display: flex;
@@ -6,10 +10,11 @@
   height: 68px;
   line-height: normal !important;
   border-bottom: 1px solid var(--color-border, #e2e8f0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   z-index: 100;
   position: sticky;
   top: 0;
+  padding: 0 24px !important;
 }
 
 .header-logo-container {
@@ -19,16 +24,59 @@
 }
 
 .header-logo-container img {
-  height: 54px;
+  height: 52px;
   object-fit: contain;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
-  transition: transform 0.2s ease;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .header-logo-container img:hover {
   transform: scale(1.02);
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 2px 6px rgba(0, 53, 102, 0.3));
+}
 
+.header-search-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 420px;
+  margin: 0 24px;
+  height: 100%;
+}
+
+.global-search-autocomplete,
+.global-search-autocomplete.ant-select {
+  width: 100% !important;
+}
+
+.global-search-autocomplete .ant-select-selector {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.header-search-input {
+  height: 40px !important;
+  border-radius: 20px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  transition: var(--transition-normal, all 0.2s ease) !important;
+}
+
+.header-search-input:hover {
+  background: #ffffff !important;
+  border-color: #94a3b8 !important;
+}
+
+.header-search-input:focus,
+.header-search-input:focus-within {
+  background: #ffffff !important;
+  border-color: var(--color-primary, #003566) !important;
+  box-shadow: 0 0 0 3px rgba(0, 53, 102, 0.1) !important;
 }
 
 .header-user-section {
@@ -36,11 +84,11 @@
   align-items: center;
   gap: 12px;
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: 24px;
   border: 1px solid #cbd5e1;
   background: #f8fafc;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-normal, all 0.2s ease);
   user-select: none;
 }
 
@@ -72,21 +120,12 @@
 .header-user-name {
   color: var(--color-primary-dark, #001e3d);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .header-user-role {
   color: var(--color-text-muted, #64748b);
   font-size: 11px;
-}
-
-.header-role-tag {
-  background: var(--color-primary-light, #ebf3fa) !important;
-  color: var(--color-primary, #003566) !important;
-  border: 1px solid #cbd5e1 !important;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 2px 10px;
 }
 
 .app-sider {
@@ -107,56 +146,10 @@
   border-radius: 8px !important;
   margin-block: 4px !important;
   font-weight: 500;
+  transition: var(--transition-fast, all 0.15s ease) !important;
 }
 
-.header-search-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  max-width: 380px;
-  margin: 0 24px;
-  height: 100%;
-  line-height: normal !important;
-}
-
-.global-search-autocomplete,
-.global-search-autocomplete.ant-select {
-  width: 100% !important;
-}
-
-.global-search-autocomplete .ant-select-selector,
-.global-search-autocomplete.ant-select-focused .ant-select-selector,
-.global-search-autocomplete.ant-select-open .ant-select-selector,
-.global-search-autocomplete .ant-select-selector:hover,
-.global-search-autocomplete .ant-select-selector:focus {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-  padding: 0 !important;
-  height: auto !important;
-}
-
-.header-search-input {
-  height: 38px !important;
-  border-radius: 20px !important;
-  background: #f1f5f9 !important;
-  border: 1px solid #cbd5e1 !important;
-  padding: 0 14px !important;
-  font-size: 13px !important;
-  transition: all 0.2s ease !important;
-}
-
-.header-search-input:hover {
-  background: #ffffff !important;
-  border-color: #94a3b8 !important;
-}
-
-.header-search-input:focus,
-.header-search-input-focused,
-.header-search-input:focus-within {
-  background: #ffffff !important;
-  border-color: var(--color-primary, #003566) !important;
-  box-shadow: 0 0 0 2px rgba(0, 53, 102, 0.15) !important;
+.app-sider-menu .ant-menu-item-selected {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  font-weight: 700 !important;
 }
