@@ -683,7 +683,7 @@ export function DemandesList() {
               key: "RENEWAL",
               label: (
                 <span>
-                  <ReloadOutlined /> 2. Renouvellement d'Abonnement (Même Gare, Formule & Durée Personnalisables)
+                  <ReloadOutlined /> 2. Renouvellement Guichet (Exclusif Personnel RRM)
                 </span>
               ),
               children: (
@@ -692,7 +692,7 @@ export function DemandesList() {
                     type="info"
                     showIcon
                     icon={<ReloadOutlined />}
-                    message="Procédure de Renouvellement Direct (Validation Automatique)"
+                    message="Procédure de Renouvellement Direct Guichet (Exclusif Agents RRM)"
                     description="Recherchez l'abonné existant. Le parking d'attache (gare) reste conservé, mais vous pouvez modifier la Formule et la Durée. Une fois le paiement encaissé, l'abonnement est automatiquement prolongé sans nécessiter une 2ème validation de dossier !"
                     style={{ marginBottom: 16 }}
                   />

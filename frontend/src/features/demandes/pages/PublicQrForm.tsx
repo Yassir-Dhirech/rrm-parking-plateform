@@ -30,7 +30,6 @@ import {
   SearchOutlined,
   IdcardOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
   ArrowRightOutlined,
   SafetyCertificateOutlined,
   BuildOutlined,
@@ -98,7 +97,7 @@ const FORFAITS_OPTIONS = [
 export function PublicQrForm() {
   const [activeTab, setActiveTab] = useState<string>("form");
   const [currentStep, setCurrentStep] = useState(0);
-  const [typeDemande, setTypeDemande] = useState<"NOUVEL_ABONNEMENT" | "RENOUVELLEMENT">("NOUVEL_ABONNEMENT");
+  const typeDemande = "NOUVEL_ABONNEMENT";
   const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
@@ -251,33 +250,19 @@ export function PublicQrForm() {
                   <div>
                     {!submittedReference ? (
                       <>
-                        {/* Type de Demande Radio Selector */}
-                        <div
-                          style={{
-                            backgroundColor: "#f1f5f9",
-                            padding: 16,
-                            borderRadius: 10,
-                            marginBottom: 24,
-                            textAlign: "center",
-                          }}
-                        >
-                          <div style={{ fontWeight: 600, color: "#334155", marginBottom: 8 }}>
-                            Sélectionnez le type de démarche :
-                          </div>
-                          <Radio.Group
-                            value={typeDemande}
-                            onChange={(e) => setTypeDemande(e.target.value)}
-                            buttonStyle="solid"
-                            size="large"
-                          >
-                            <Radio.Button value="NOUVEL_ABONNEMENT">
-                              <FileTextOutlined /> Nouvel Abonnement
-                            </Radio.Button>
-                            <Radio.Button value="RENOUVELLEMENT">
-                              <ReloadOutlined /> Renouvellement d'Abonnement
-                            </Radio.Button>
-                          </Radio.Group>
-                        </div>
+                        {/* Information Banner: Public Form for New Subscriptions Only */}
+                        <Alert
+                          message="Formulaire Public de Première Souscription"
+                          description={
+                            <span>
+                              Ce formulaire est réservé exclusivement à la création de <strong>Nouvel Abonnement</strong>. Pour tout <strong>renouvellement d'abonnement</strong>, la démarche est prise en charge directement au guichet RRM par nos agents habilités sur présentation de votre carte d'abonné.
+                            </span>
+                          }
+                          type="info"
+                          showIcon
+                          icon={<FileTextOutlined style={{ color: "#0284c7" }} />}
+                          style={{ marginBottom: 24, borderRadius: 10, borderColor: "#bae6fd", backgroundColor: "#f0f9ff" }}
+                        />
 
                         {/* Steps Indicator */}
                         <Steps
@@ -294,26 +279,6 @@ export function PublicQrForm() {
                         {/* Step 0: Information Personnelles */}
                         {currentStep === 0 && (
                           <Form form={step1Form} layout="vertical">
-                            <Alert
-                              message={
-                                typeDemande === "NOUVEL_ABONNEMENT"
-                                  ? "Formulaire de première souscription — Informations du souscripteur"
-                                  : "Formulaire de renouvellement — Veuillez renseigner les coordonnées du titulaire"
-                              }
-                              type="info"
-                              showIcon
-                              style={{ marginBottom: 20 }}
-                            />
-
-                            {typeDemande === "RENOUVELLEMENT" && (
-                              <Form.Item
-                                name="ancienNumeroCarte"
-                                label="N° de Carte / Ancien Contrat"
-                                rules={[{ required: true, message: "Veuillez saisir votre n° de carte d'abonné" }]}
-                              >
-                                <Input prefix={<IdcardOutlined />} placeholder="Ex: CRT-2025-004812" />
-                              </Form.Item>
-                            )}
 
                             <Row gutter={16}>
                               <Col xs={24} sm={12}>
@@ -540,8 +505,8 @@ export function PublicQrForm() {
                               <Row gutter={[16, 12]}>
                                 <Col span={12}>
                                   <strong>Type de Demande:</strong>{" "}
-                                  <Tag color="purple">
-                                    {typeDemande === "NOUVEL_ABONNEMENT" ? "Nouvel Abonnement" : "Renouvellement"}
+                                  <Tag color="blue">
+                                    Nouvel Abonnement
                                   </Tag>
                                 </Col>
                                 <Col span={12}>
