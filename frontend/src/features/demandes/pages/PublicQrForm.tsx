@@ -20,6 +20,7 @@ import {
   Space,
   Typography,
   Checkbox,
+  Upload,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -38,6 +39,9 @@ import {
   BuildOutlined,
   EnvironmentOutlined,
   FilePdfOutlined,
+  UploadOutlined,
+  FileImageOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -572,6 +576,40 @@ export function PublicQrForm() {
                                     </Form.Item>
                                   </Col>
                                 </Row>
+
+                                {/* CIN Photos Upload Section */}
+                                <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                                  <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
+                                </Divider>
+
+                                <Row gutter={16}>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                      <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                        </p>
+                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                          Charger CIN Recto
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                      </Upload.Dragger>
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                      <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                        </p>
+                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                          Charger CIN Verso
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                      </Upload.Dragger>
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
                               </>
                             ) : (
                               /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
@@ -715,6 +753,40 @@ export function PublicQrForm() {
                               <Col xs={24} sm={12}>
                                 <Form.Item name="modele" label="Modèle (Optionnel)">
                                   <Input placeholder="Sandero, Clio, 208..." />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+
+                            {/* Carte Grise Photos Upload Section */}
+                            <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                              <FileImageOutlined style={{ marginRight: 6 }} /> Carte Grise du Véhicule (Photos Recto / Verso)
+                            </Divider>
+
+                            <Row gutter={16}>
+                              <Col xs={24} sm={12}>
+                                <Form.Item name="carteGriseRecto" label="Photo Carte Grise — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                  <Upload.Dragger name="carteGriseRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
+                                    </p>
+                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                      Charger Carte Grise Recto
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                  </Upload.Dragger>
+                                </Form.Item>
+                              </Col>
+                              <Col xs={24} sm={12}>
+                                <Form.Item name="carteGriseVerso" label="Photo Carte Grise — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                  <Upload.Dragger name="carteGriseVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
+                                    </p>
+                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                      Charger Carte Grise Verso
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                  </Upload.Dragger>
                                 </Form.Item>
                               </Col>
                             </Row>
@@ -916,6 +988,17 @@ export function PublicQrForm() {
                                     {Math.round((FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.priceTTC || 600) * dureeMois * (dureeMois === 12 ? 0.9 : 1)).toLocaleString("fr-FR")} MAD TTC
                                   </strong>
                                   {dureeMois === 12 && <Tag color="green" style={{ marginLeft: 6 }}>10% inclus</Tag>}
+                                </Col>
+                                <Col span={24}>
+                                  <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                                    <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Photos Renseignées :</strong>
+                                    <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
+                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
+                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto (Face Avant)</Tag>
+                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso (Face Arrière)</Tag>
+                                    </div>
+                                  </div>
                                 </Col>
                               </Row>
                             </Card>
