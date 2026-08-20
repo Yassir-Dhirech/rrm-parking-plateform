@@ -9,6 +9,7 @@ import {
   WarningOutlined,
   SafetyCertificateOutlined,
   HomeOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -132,7 +133,7 @@ export function AbonnementDetail() {
               <div>
                 <div><strong>Motif de suspension :</strong> {data.motifSuspension || "Suspension administrative"}</div>
                 <div style={{ fontSize: 12, marginTop: 4, color: "#b45309" }}>
-                  ⚠️ L'accès aux barrières automatiques RFID / LPR de tous les parkings est temporairement bloqué pour cet abonné.
+                  L'accès aux barrières automatiques RFID / LPR de tous les parkings est temporairement bloqué pour cet abonné.
                 </div>
               </div>
             }
@@ -187,7 +188,7 @@ export function AbonnementDetail() {
 
           {data.motifSuspension && (
             <Descriptions.Item label="Historique Suspension" span={2}>
-              <Text type="danger">⛔ {data.motifSuspension}</Text>
+              <Text type="danger"><StopOutlined style={{ marginRight: 4 }} /> {data.motifSuspension}</Text>
             </Descriptions.Item>
           )}
         </Descriptions>

@@ -43,6 +43,7 @@ import {
   FileImageOutlined,
   PaperClipOutlined,
   ThunderboltOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -128,7 +129,7 @@ export function PublicQrForm() {
   const handleBetaFillAndNext = () => {
     if (!selectedType) {
       handleSelectType("NOUVEL_ABONNEMENT");
-      message.success("⚡ BETA: Choix 'Nouvel Abonnement' sélectionné !");
+      message.success("[BETA] Choix 'Nouvel Abonnement' sélectionné !");
       return;
     }
 
@@ -150,7 +151,7 @@ export function PublicQrForm() {
         telephone: "0612345678",
       }));
       setCurrentStep(1);
-      message.success("⚡ BETA: Étape 0 (Identité) auto-remplie & franchie ⏩");
+      message.success("[BETA] Étape 0 (Identité) auto-remplie & franchie");
     } else if (currentStep === 1) {
       step2Form.setFieldsValue({
         immatriculation: "12345-A-6",
@@ -166,7 +167,7 @@ export function PublicQrForm() {
         modele: "Sandero",
       }));
       setCurrentStep(2);
-      message.success("⚡ BETA: Étape 1 (Véhicule) auto-remplie & franchie ⏩");
+      message.success("[BETA] Étape 1 (Véhicule) auto-remplie & franchie");
     } else if (currentStep === 2) {
       setFormData((prev) => ({
         ...prev,
@@ -175,11 +176,11 @@ export function PublicQrForm() {
         dureeMois: 12,
       }));
       setCurrentStep(3);
-      message.success("⚡ BETA: Étape 2 (Parking & Forfait) auto-remplie & franchie ⏩");
+      message.success("[BETA] Étape 2 (Parking & Forfait) auto-remplie & franchie");
     } else if (currentStep === 3) {
       setAcceptTerms(true);
       setIsOtpModalOpen(true);
-      message.success("⚡ BETA: Conditions acceptées & Ouverture de la modale OTP ⚡");
+      message.success("[BETA] Conditions acceptées & Ouverture de la modale OTP");
     }
   };
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
@@ -397,7 +398,7 @@ export function PublicQrForm() {
                 backgroundColor: "#fff7ed",
               }}
             >
-              ⚡ Passer cette Étape (BETA)
+              Passer cette Étape (BETA)
             </Button>
           </div>
 
@@ -738,7 +739,7 @@ export function PublicQrForm() {
                                   />
                                 ) : (
                                   <div style={{ padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #93c5fd", fontSize: 13, color: "#475569" }}>
-                                    💡 <strong>Comptes de démonstration prêts à tester :</strong>
+                                    <BulbOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Comptes de démonstration prêts à tester :</strong>
                                     <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
                                       <li>CIN : <code>AB123456</code> (Karim El Amrani — Parking Agdal Gare)</li>
                                       <li>N° Carte : <code>CRT-2025-003421</code> (Sara Bennis — Parking Bab El Had)</li>
@@ -1053,7 +1054,7 @@ export function PublicQrForm() {
                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
                                   {formData.nouveauParkingId && (
                                     <div style={{ color: "#d97706", fontWeight: 600 }}>
-                                      ➜ Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
+                                      <ArrowRightOutlined style={{ marginRight: 4 }} /> Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
                                     </div>
                                   )}
                                 </Col>

@@ -29,6 +29,7 @@ import {
   SafetyCertificateOutlined,
   InfoCircleOutlined,
   CheckOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -217,7 +218,7 @@ export function DemandeDetail() {
             {data.parkingNom}
             {data.nouveauParkingNom && (
               <span style={{ color: "#d97706", fontWeight: 600, marginLeft: 6 }}>
-                ➜ Nouveau : {data.nouveauParkingNom}
+                <ArrowRightOutlined style={{ marginRight: 4 }} /> Nouveau : {data.nouveauParkingNom}
               </span>
             )}
           </Descriptions.Item>

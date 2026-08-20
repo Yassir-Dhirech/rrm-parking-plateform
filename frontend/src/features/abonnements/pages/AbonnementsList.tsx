@@ -119,10 +119,10 @@ export function AbonnementsList() {
         <Segmented
           options={[
             { label: `Tous (${data.length})`, value: "ALL" },
-            { label: `⭐ Staff RRM (${data.filter((i) => i.type === "STAFF").length})`, value: "STAFF" },
+            { label: `Staff RRM (${data.filter((i) => i.type === "STAFF").length})`, value: "STAFF" },
             { label: `Réguliers (${data.filter((i) => i.type === "REGULIER").length})`, value: "REGULIER" },
             { label: `Entreprises (${data.filter((i) => i.type === "ENTREPRISE").length})`, value: "ENTREPRISE" },
-            { label: `⛔ Suspendus (${data.filter((i) => i.statut === "SUSPENDU").length})`, value: "SUSPENDU" },
+            { label: `Suspendus (${data.filter((i) => i.statut === "SUSPENDU").length})`, value: "SUSPENDU" },
           ]}
           value={filterType}
           onChange={(val) => setFilterType(val as string)}
@@ -164,7 +164,7 @@ export function AbonnementsList() {
         <Form form={form} layout="vertical" onFinish={handleCreateSubmit}>
           <Form.Item name="type" label="Type d'Abonnement" rules={[{ required: true }]}>
             <Radio.Group buttonStyle="solid">
-              <Radio.Button value="STAFF">⭐ Staff RRM (Personnel)</Radio.Button>
+              <Radio.Button value="STAFF">Staff RRM (Personnel)</Radio.Button>
               <Radio.Button value="REGULIER">Régulier (Particulier)</Radio.Button>
               <Radio.Button value="ENTREPRISE">Entreprise</Radio.Button>
             </Radio.Group>

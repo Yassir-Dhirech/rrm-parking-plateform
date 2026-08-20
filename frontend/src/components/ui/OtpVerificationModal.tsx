@@ -6,6 +6,7 @@ import {
   MailOutlined,
   ReloadOutlined,
   CheckCircleOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import { sendOtpMock, verifyOtpMock } from "../../api/otpMock";
 
@@ -231,7 +232,7 @@ export function OtpVerificationModal({
         {/* Hint for Demo Testing */}
         <div style={{ marginBottom: 20 }}>
           <Tag color="geekblue" style={{ padding: "4px 12px", fontSize: 12 }}>
-            💡 Code OTP de test / démo : <strong>123456</strong>
+            <BulbOutlined style={{ marginRight: 4 }} /> Code OTP de test / démo : <strong>123456</strong>
           </Tag>
         </div>
 
