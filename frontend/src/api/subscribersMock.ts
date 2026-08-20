@@ -51,7 +51,7 @@ const mockSubscribersDatabase: SubscriberRecord[] = [
     immatriculation: "99887-B-1",
     marque: "Peugeot",
     modele: "Boxer",
-    typeVehicule: "CAMIONNETTE",
+    typeVehicule: "VOITURE",
     parkingId: 1,
     parkingNom: "Parking Agdal Gare",
     forfaitId: 4,

@@ -651,14 +651,18 @@ export function PublicQrForm() {
                         {currentStep === 1 && (
                           <Form form={step2Form} layout="vertical">
                             <Alert
-                              message={
-                                typeDemande === "CHANGEMENT_VEHICULE"
-                                  ? "Remplir l'ancienne et la nouvelle plaque d'immatriculation"
-                                  : "Transmettre les caractéristiques du véhicule à abonner"
-                              }
                               type="info"
                               showIcon
-                              style={{ marginBottom: 20 }}
+                              icon={<IdcardOutlined style={{ color: "#0284c7" }} />}
+                              message="Abonnement Nominatif — Accès par Carte RFID"
+                              description={
+                                <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                                  L'immatriculation est renseignée <strong>uniquement à titre informatif</strong>.
+                                  Vous pouvez accéder au parking <strong>directement grâce à votre carte d'abonné RFID</strong>.
+                                  Votre abonnement est nominatif (lié à la personne et non au véhicule).
+                                </div>
+                              }
+                              style={{ marginBottom: 20, borderRadius: 10, border: "1px solid #bae6fd", backgroundColor: "#f0f9ff" }}
                             />
 
                             {typeDemande === "CHANGEMENT_VEHICULE" && (

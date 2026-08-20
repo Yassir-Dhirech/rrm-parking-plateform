@@ -1,6 +1,6 @@
 export type TypeClient = "PARTICULIER" | "ENTREPRISE" | "STAFF";
 
-export type TypeVehicule = "VOITURE" | "MOTO" | "CAMIONNETTE";
+export type TypeVehicule = "VOITURE" | "MOTO";
 
 export type TypeDemande = "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT" | "CHANGEMENT_PARKING" | "CHANGEMENT_VEHICULE";
 
@@ -14,8 +14,7 @@ export const typeClientLabels: Record<TypeClient, { label: string; color: string
 
 export const typeVehiculeLabels: Record<TypeVehicule, string> = {
   VOITURE: "Voiture",
-  MOTO: "Moto",
-  CAMIONNETTE: "Camionnette",
+  MOTO: "Moto / Deux-roues",
 };
 
 export const modePaiementLabels: Record<ModePaiement, string> = {

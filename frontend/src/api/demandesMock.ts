@@ -25,7 +25,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     email: "contact@atlastrans.ma",
     telephone: "0537001122",
     immatriculation: "99887-B-1",
-    typeVehicule: "CAMIONNETTE",
+    typeVehicule: "VOITURE",
   },
   3: {
     id: 3,
