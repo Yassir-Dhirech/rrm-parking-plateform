@@ -19,6 +19,8 @@ import {
   Badge,
   Space,
   Typography,
+  Checkbox,
+  Upload,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -36,6 +38,12 @@ import {
   SafetyCertificateOutlined,
   BuildOutlined,
   EnvironmentOutlined,
+  FilePdfOutlined,
+  UploadOutlined,
+  FileImageOutlined,
+  PaperClipOutlined,
+  ThunderboltOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -106,6 +114,7 @@ export function PublicQrForm() {
   const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
+  const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
 
   const handleSelectType = (type: TypeDemande) => {
     setSelectedType(type);
@@ -115,6 +124,64 @@ export function PublicQrForm() {
     setSubscriberSearchQuery("");
     step1Form.resetFields();
     step2Form.resetFields();
+  };
+
+  const handleBetaFillAndNext = () => {
+    if (!selectedType) {
+      handleSelectType("NOUVEL_ABONNEMENT");
+      message.success("[BETA] Choix 'Nouvel Abonnement' sélectionné !");
+      return;
+    }
+
+    if (currentStep === 0) {
+      step1Form.setFieldsValue({
+        nom: "El Amrani",
+        prenom: "Karim",
+        cin: "AB123456",
+        email: "karim.demo@rrm.ma",
+        telephone: "0612345678",
+      });
+      setFormData((prev) => ({
+        ...prev,
+        typeClient: "PARTICULIER",
+        nom: "El Amrani",
+        prenom: "Karim",
+        cin: "AB123456",
+        email: "karim.demo@rrm.ma",
+        telephone: "0612345678",
+      }));
+      setCurrentStep(1);
+      message.success("[BETA] Étape 0 (Identité) auto-remplie & franchie");
+    } else if (currentStep === 1) {
+      step2Form.setFieldsValue({
+        immatriculation: "12345-A-6",
+        typeVehicule: "VOITURE",
+        marque: "Dacia",
+        modele: "Sandero",
+      });
+      setFormData((prev) => ({
+        ...prev,
+        immatriculation: "12345-A-6",
+        typeVehicule: "VOITURE",
+        marque: "Dacia",
+        modele: "Sandero",
+      }));
+      setCurrentStep(2);
+      message.success("[BETA] Étape 1 (Véhicule) auto-remplie & franchie");
+    } else if (currentStep === 2) {
+      setFormData((prev) => ({
+        ...prev,
+        parkingId: 1,
+        forfaitId: 1,
+        dureeMois: 12,
+      }));
+      setCurrentStep(3);
+      message.success("[BETA] Étape 2 (Parking & Forfait) auto-remplie & franchie");
+    } else if (currentStep === 3) {
+      setAcceptTerms(true);
+      setIsOtpModalOpen(true);
+      message.success("[BETA] Conditions acceptées & Ouverture de la modale OTP");
+    }
   };
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
   const [dureeMois, setDureeMois] = useState<number>(1);
@@ -274,28 +341,38 @@ export function PublicQrForm() {
       {/* Top Banner */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+          background: "linear-gradient(135deg, #001E3D 0%, #003566 60%, #004D80 100%)",
           color: "#ffffff",
-          padding: "40px 24px",
+          padding: "24px 20px 32px",
           textAlign: "center",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          boxShadow: "0 4px 16px rgba(0, 53, 102, 0.15)",
+          position: "relative",
         }}
       >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Tag color="cyan" style={{ fontSize: 13, padding: "4px 12px", borderRadius: 20, marginBottom: 12 }}>
-            <QrcodeOutlined /> Service Abonné sans Compte — Scanner Code QR
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <Tag color="gold" style={{ fontSize: 12, padding: "2px 12px", borderRadius: 20, marginBottom: 8, fontWeight: 600 }}>
+            <QrcodeOutlined style={{ marginRight: 6 }} /> Service Abonné sans Compte — Rabat Région Mobilité
           </Tag>
-          <h1 style={{ color: "#ffffff", fontSize: "2rem", fontWeight: 700, margin: "10px 0" }}>
-            Plateforme d'Abonnement des Parkings de Rabat
+          <h1 style={{ color: "#ffffff", fontSize: "1.65rem", fontWeight: 800, margin: "6px 0 8px", letterSpacing: "-0.5px" }}>
+            Portail des Démarches & Abonnements Parking
           </h1>
-          <p style={{ color: "#cbd5e1", fontSize: "1.05rem", maxWidth: 680, margin: "0 auto" }}>
-            Remplissez votre demande ou renouvellement d'abonnement en ligne sans créer de compte.
-            Suivez l'état de votre dossier et téléchargez vos documents.
+          <p style={{ color: "#cbd5e1", fontSize: "0.95rem", maxWidth: 660, margin: "0 auto", lineHeight: 1.5 }}>
+            Effectuez votre demande en ligne (Création, Renouvellement, Changement de Parking ou de Véhicule) en toute simplicité et suivez l'avancement de votre dossier avec votre code de suivi.
           </p>
         </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            background: "linear-gradient(90deg, #982B5E 0%, #FFC300 50%, #0284C7 100%)",
+          }}
+        />
       </div>
 
-      <div style={{ maxWidth: 960, margin: "-20px auto 0", padding: "0 16px" }}>
+      <div style={{ maxWidth: 960, margin: "-16px auto 0", padding: "0 16px" }}>
         <Card
           style={{
             borderRadius: 12,
@@ -303,6 +380,28 @@ export function PublicQrForm() {
             border: "1px solid #e2e8f0",
           }}
         >
+          {/* Temporary BETA Dev Helper Button */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px dashed #e2e8f0" }}>
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              Portail Public de Demandes d'Abonnement
+            </span>
+            <Button
+              type="dashed"
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={handleBetaFillAndNext}
+              style={{
+                fontWeight: 600,
+                borderRadius: 6,
+                borderColor: "#f97316",
+                color: "#ea580c",
+                backgroundColor: "#fff7ed",
+              }}
+            >
+              Passer cette Étape (BETA)
+            </Button>
+          </div>
+
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
@@ -559,6 +658,40 @@ export function PublicQrForm() {
                                     </Form.Item>
                                   </Col>
                                 </Row>
+
+                                {/* CIN Photos Upload Section */}
+                                <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                                  <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
+                                </Divider>
+
+                                <Row gutter={16}>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                      <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                        </p>
+                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                          Charger CIN Recto
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                      </Upload.Dragger>
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} sm={12}>
+                                    <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                      <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                        </p>
+                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                          Charger CIN Verso
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                      </Upload.Dragger>
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
                               </>
                             ) : (
                               /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
@@ -606,7 +739,7 @@ export function PublicQrForm() {
                                   />
                                 ) : (
                                   <div style={{ padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #93c5fd", fontSize: 13, color: "#475569" }}>
-                                    💡 <strong>Comptes de démonstration prêts à tester :</strong>
+                                    <BulbOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Comptes de démonstration prêts à tester :</strong>
                                     <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
                                       <li>CIN : <code>AB123456</code> (Karim El Amrani — Parking Agdal Gare)</li>
                                       <li>N° Carte : <code>CRT-2025-003421</code> (Sara Bennis — Parking Bab El Had)</li>
@@ -617,7 +750,14 @@ export function PublicQrForm() {
                               </div>
                             )}
 
-                            <div style={{ textAlign: "right", marginTop: 16 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+                              <Button
+                                size="large"
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => setSelectedType(null)}
+                              >
+                                Retour aux démarches
+                              </Button>
                               <Button
                                 type="primary"
                                 size="large"
@@ -634,14 +774,18 @@ export function PublicQrForm() {
                         {currentStep === 1 && (
                           <Form form={step2Form} layout="vertical">
                             <Alert
-                              message={
-                                typeDemande === "CHANGEMENT_VEHICULE"
-                                  ? "Remplir l'ancienne et la nouvelle plaque d'immatriculation"
-                                  : "Transmettre les caractéristiques du véhicule à abonner"
-                              }
                               type="info"
                               showIcon
-                              style={{ marginBottom: 20 }}
+                              icon={<IdcardOutlined style={{ color: "#0284c7" }} />}
+                              message="Abonnement Nominatif — Accès par Carte RFID"
+                              description={
+                                <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                                  L'immatriculation est renseignée <strong>uniquement à titre informatif</strong>.
+                                  Vous pouvez accéder au parking <strong>directement grâce à votre carte d'abonné RFID</strong>.
+                                  Votre abonnement est nominatif (lié à la personne et non au véhicule).
+                                </div>
+                              }
+                              style={{ marginBottom: 20, borderRadius: 10, border: "1px solid #bae6fd", backgroundColor: "#f0f9ff" }}
                             />
 
                             {typeDemande === "CHANGEMENT_VEHICULE" && (
@@ -695,8 +839,42 @@ export function PublicQrForm() {
                               </Col>
                             </Row>
 
+                            {/* Carte Grise Photos Upload Section */}
+                            <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                              <FileImageOutlined style={{ marginRight: 6 }} /> Carte Grise du Véhicule (Photos Recto / Verso)
+                            </Divider>
+
+                            <Row gutter={16}>
+                              <Col xs={24} sm={12}>
+                                <Form.Item name="carteGriseRecto" label="Photo Carte Grise — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                  <Upload.Dragger name="carteGriseRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
+                                    </p>
+                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                      Charger Carte Grise Recto
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                  </Upload.Dragger>
+                                </Form.Item>
+                              </Col>
+                              <Col xs={24} sm={12}>
+                                <Form.Item name="carteGriseVerso" label="Photo Carte Grise — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                  <Upload.Dragger name="carteGriseVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
+                                    </p>
+                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                      Charger Carte Grise Verso
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                  </Upload.Dragger>
+                                </Form.Item>
+                              </Col>
+                            </Row>
+
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                              <Button size="large" onClick={() => setCurrentStep(0)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(0)}>
                                 Précédent
                               </Button>
                               <Button type="primary" size="large" onClick={goNextFromStep2}>
@@ -820,7 +998,7 @@ export function PublicQrForm() {
                             </Form>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" onClick={() => setCurrentStep(1)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(1)}>
                                 Précédent
                               </Button>
                               <Button
@@ -876,7 +1054,7 @@ export function PublicQrForm() {
                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
                                   {formData.nouveauParkingId && (
                                     <div style={{ color: "#d97706", fontWeight: 600 }}>
-                                      ➜ Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
+                                      <ArrowRightOutlined style={{ marginRight: 4 }} /> Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
                                     </div>
                                   )}
                                 </Col>
@@ -893,20 +1071,58 @@ export function PublicQrForm() {
                                   </strong>
                                   {dureeMois === 12 && <Tag color="green" style={{ marginLeft: 6 }}>10% inclus</Tag>}
                                 </Col>
+                                <Col span={24}>
+                                  <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                                    <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Photos Renseignées :</strong>
+                                    <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
+                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
+                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto (Face Avant)</Tag>
+                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso (Face Arrière)</Tag>
+                                    </div>
+                                  </div>
+                                </Col>
                               </Row>
                             </Card>
 
+                            {/* Terms & Conditions Checkbox */}
+                            <div style={{ marginTop: 20, padding: "14px 18px", backgroundColor: "#ffffff", borderRadius: 10, border: "1px solid #cbd5e1" }}>
+                              <Checkbox
+                                checked={acceptTerms}
+                                onChange={(e) => setAcceptTerms(e.target.checked)}
+                              >
+                                <span style={{ fontSize: 13.5, color: "#334155" }}>
+                                  J'ai lu et j'accepte les{" "}
+                                  <a
+                                    href="/documents/conditions-generales-rrm.pdf"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => {
+                                      message.info("Ouverture des Conditions Générales d'Abonnement Rabat Région Mobilité (PDF)...");
+                                    }}
+                                    style={{ color: "#0284c7", textDecoration: "underline", fontWeight: 600 }}
+                                  >
+                                    <FilePdfOutlined style={{ marginRight: 4 }} />
+                                    Conditions Générales d'Abonnement Rabat Région Mobilité (Fichier PDF)
+                                  </a>
+                                </span>
+                              </Checkbox>
+                            </div>
+
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" onClick={() => setCurrentStep(2)}>
+                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(2)}>
                                 Modifier les infos
                               </Button>
                               <Button
                                 type="primary"
                                 size="large"
-                                loading={mutation.isPending}
+                                disabled={!acceptTerms || mutation.isPending}
                                 onClick={() => setIsOtpModalOpen(true)}
                                 icon={<CheckCircleOutlined />}
-                                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                                style={{
+                                  backgroundColor: acceptTerms ? "#16a34a" : "#cbd5e1",
+                                  borderColor: acceptTerms ? "#16a34a" : "#cbd5e1",
+                                }}
                               >
                                 Envoyer le formulaire & Valider OTP
                               </Button>

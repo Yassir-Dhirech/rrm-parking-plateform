@@ -48,7 +48,7 @@ export interface PlanTarifaire {
   dureeMois: number;
   tarifHT: number;
   tarifTTC: number;
-  typeVehicule?: "V" | "M" | "C" | "VOITURE" | "MOTO" | "CAMIONNETTE";
+  typeVehicule?: "V" | "M" | "VOITURE" | "MOTO";
   parkingId?: number;
   parkingNom?: string;
   actif: boolean;

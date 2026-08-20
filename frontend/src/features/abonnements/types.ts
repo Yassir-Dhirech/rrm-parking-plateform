@@ -1,6 +1,6 @@
 export type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 
-export type TypeAbonnement = "REGULIER" | "ENTREPRISE";
+export type TypeAbonnement = "REGULIER" | "ENTREPRISE" | "STAFF";
 
 export interface AbonnementListItem {
   id: number;
@@ -18,4 +18,5 @@ export interface AbonnementDetail extends AbonnementListItem {
   planTarifaireNom?: string;
   contratReference?: string;
   montantTotal: number;
+  motifSuspension?: string;
 }
