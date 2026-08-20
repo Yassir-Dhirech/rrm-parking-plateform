@@ -42,6 +42,7 @@ import {
   UploadOutlined,
   FileImageOutlined,
   PaperClipOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -122,6 +123,64 @@ export function PublicQrForm() {
     setSubscriberSearchQuery("");
     step1Form.resetFields();
     step2Form.resetFields();
+  };
+
+  const handleBetaFillAndNext = () => {
+    if (!selectedType) {
+      handleSelectType("NOUVEL_ABONNEMENT");
+      message.success("⚡ BETA: Choix 'Nouvel Abonnement' sélectionné !");
+      return;
+    }
+
+    if (currentStep === 0) {
+      step1Form.setFieldsValue({
+        nom: "El Amrani",
+        prenom: "Karim",
+        cin: "AB123456",
+        email: "karim.demo@rrm.ma",
+        telephone: "0612345678",
+      });
+      setFormData((prev) => ({
+        ...prev,
+        typeClient: "PARTICULIER",
+        nom: "El Amrani",
+        prenom: "Karim",
+        cin: "AB123456",
+        email: "karim.demo@rrm.ma",
+        telephone: "0612345678",
+      }));
+      setCurrentStep(1);
+      message.success("⚡ BETA: Étape 0 (Identité) auto-remplie & franchie ⏩");
+    } else if (currentStep === 1) {
+      step2Form.setFieldsValue({
+        immatriculation: "12345-A-6",
+        typeVehicule: "VOITURE",
+        marque: "Dacia",
+        modele: "Sandero",
+      });
+      setFormData((prev) => ({
+        ...prev,
+        immatriculation: "12345-A-6",
+        typeVehicule: "VOITURE",
+        marque: "Dacia",
+        modele: "Sandero",
+      }));
+      setCurrentStep(2);
+      message.success("⚡ BETA: Étape 1 (Véhicule) auto-remplie & franchie ⏩");
+    } else if (currentStep === 2) {
+      setFormData((prev) => ({
+        ...prev,
+        parkingId: 1,
+        forfaitId: 1,
+        dureeMois: 12,
+      }));
+      setCurrentStep(3);
+      message.success("⚡ BETA: Étape 2 (Parking & Forfait) auto-remplie & franchie ⏩");
+    } else if (currentStep === 3) {
+      setAcceptTerms(true);
+      setIsOtpModalOpen(true);
+      message.success("⚡ BETA: Conditions acceptées & Ouverture de la modale OTP ⚡");
+    }
   };
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
   const [dureeMois, setDureeMois] = useState<number>(1);
@@ -320,6 +379,28 @@ export function PublicQrForm() {
             border: "1px solid #e2e8f0",
           }}
         >
+          {/* Temporary BETA Dev Helper Button */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px dashed #e2e8f0" }}>
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              Portail Public de Demandes d'Abonnement
+            </span>
+            <Button
+              type="dashed"
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={handleBetaFillAndNext}
+              style={{
+                fontWeight: 600,
+                borderRadius: 6,
+                borderColor: "#f97316",
+                color: "#ea580c",
+                backgroundColor: "#fff7ed",
+              }}
+            >
+              ⚡ Passer cette Étape (BETA)
+            </Button>
+          </div>
+
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
