@@ -18,4 +18,5 @@ export interface AbonnementDetail extends AbonnementListItem {
   planTarifaireNom?: string;
   contratReference?: string;
   montantTotal: number;
+  motifSuspension?: string;
 }

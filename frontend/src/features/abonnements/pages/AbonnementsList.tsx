@@ -51,6 +51,7 @@ export function AbonnementsList() {
 
   const filteredData = data.filter((item) => {
     if (filterType === "ALL") return true;
+    if (filterType === "SUSPENDU") return item.statut === "SUSPENDU";
     return item.type === filterType;
   });
 
@@ -121,6 +122,7 @@ export function AbonnementsList() {
             { label: `⭐ Staff RRM (${data.filter((i) => i.type === "STAFF").length})`, value: "STAFF" },
             { label: `Réguliers (${data.filter((i) => i.type === "REGULIER").length})`, value: "REGULIER" },
             { label: `Entreprises (${data.filter((i) => i.type === "ENTREPRISE").length})`, value: "ENTREPRISE" },
+            { label: `⛔ Suspendus (${data.filter((i) => i.statut === "SUSPENDU").length})`, value: "SUSPENDU" },
           ]}
           value={filterType}
           onChange={(val) => setFilterType(val as string)}

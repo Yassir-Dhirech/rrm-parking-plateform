@@ -53,6 +53,8 @@ const mockAbonnements: AbonnementListItem[] = [
   },
 ];
 
+const suspendedMotifs: Record<number, string> = {};
+
 export async function getAbonnementsMock(): Promise<AbonnementListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   return [...mockAbonnements];
@@ -96,6 +98,31 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
   return newItem;
 }
 
+export interface SuspendAbonnementInput {
+  id: number;
+  motif: string;
+}
+
+export async function suspendAbonnementMock({ id, motif }: SuspendAbonnementInput): Promise<AbonnementDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const found = mockAbonnements.find((item) => item.id === id);
+  if (found) {
+    found.statut = "SUSPENDU";
+    suspendedMotifs[id] = motif;
+  }
+  return getAbonnementByIdMock(id);
+}
+
+export async function reactivateAbonnementMock(id: number): Promise<AbonnementDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const found = mockAbonnements.find((item) => item.id === id);
+  if (found) {
+    found.statut = "ACTIF";
+    delete suspendedMotifs[id];
+  }
+  return getAbonnementByIdMock(id);
+}
+
 export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetail> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = mockAbonnements.find((item) => item.id === id);
@@ -112,5 +139,6 @@ export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetai
     vehiculeImmatriculation: "12345-A-6",
     planTarifaireNom: found?.type === "STAFF" ? "Pass Exonéré Staff RRM" : "Voiture - 6 mois",
     montantTotal: found?.type === "STAFF" ? 0 : 1200,
+    motifSuspension: suspendedMotifs[id] || (found?.statut === "SUSPENDU" ? "Suspension administrative" : undefined),
   };
 }
