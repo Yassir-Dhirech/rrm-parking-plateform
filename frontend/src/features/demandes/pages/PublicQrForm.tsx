@@ -19,6 +19,7 @@ import {
   Badge,
   Space,
   Typography,
+  Checkbox,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -36,6 +37,7 @@ import {
   SafetyCertificateOutlined,
   BuildOutlined,
   EnvironmentOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -106,6 +108,7 @@ export function PublicQrForm() {
   const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
+  const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
 
   const handleSelectType = (type: TypeDemande) => {
     setSelectedType(type);
@@ -917,6 +920,30 @@ export function PublicQrForm() {
                               </Row>
                             </Card>
 
+                            {/* Terms & Conditions Checkbox */}
+                            <div style={{ marginTop: 20, padding: "14px 18px", backgroundColor: "#ffffff", borderRadius: 10, border: "1px solid #cbd5e1" }}>
+                              <Checkbox
+                                checked={acceptTerms}
+                                onChange={(e) => setAcceptTerms(e.target.checked)}
+                              >
+                                <span style={{ fontSize: 13.5, color: "#334155" }}>
+                                  J'ai lu et j'accepte les{" "}
+                                  <a
+                                    href="/documents/conditions-generales-rrm.pdf"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => {
+                                      message.info("Ouverture des Conditions Générales d'Abonnement Rabat Région Mobilité (PDF)...");
+                                    }}
+                                    style={{ color: "#0284c7", textDecoration: "underline", fontWeight: 600 }}
+                                  >
+                                    <FilePdfOutlined style={{ marginRight: 4 }} />
+                                    Conditions Générales d'Abonnement Rabat Région Mobilité (Fichier PDF)
+                                  </a>
+                                </span>
+                              </Checkbox>
+                            </div>
+
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
                               <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(2)}>
                                 Modifier les infos
@@ -924,10 +951,13 @@ export function PublicQrForm() {
                               <Button
                                 type="primary"
                                 size="large"
-                                loading={mutation.isPending}
+                                disabled={!acceptTerms || mutation.isPending}
                                 onClick={() => setIsOtpModalOpen(true)}
                                 icon={<CheckCircleOutlined />}
-                                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                                style={{
+                                  backgroundColor: acceptTerms ? "#16a34a" : "#cbd5e1",
+                                  borderColor: acceptTerms ? "#16a34a" : "#cbd5e1",
+                                }}
                               >
                                 Envoyer le formulaire & Valider OTP
                               </Button>
