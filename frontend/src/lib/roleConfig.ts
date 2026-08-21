@@ -38,6 +38,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "demandes", label: "Demandes", path: "/superviseur/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/superviseur/abonnements" },
       { key: "paiements", label: "Paiements", path: "/superviseur/paiements" },
+      { key: "recettes", label: "Recettes Hebdo", path: "/superviseur/recettes" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
       { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
       { key: "contrats", label: "Contrats", path: "/superviseur/contrats" },
@@ -53,6 +54,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "tarifs", label: "Plans Tarifaires", path: "/responsable/tarifs" },
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
+      { key: "recettes", label: "Recettes Hebdo", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
       { key: "factures", label: "Factures", path: "/responsable/factures" },
     ],
@@ -63,6 +65,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     kpis: ["Paiements du jour", "Recette hebdo"],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
+      { key: "recettes", label: "Recettes Hebdo (Versement)", path: "/comptable/recettes" },
       { key: "paiements", label: "Paiements", path: "/comptable/paiements" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
     ],

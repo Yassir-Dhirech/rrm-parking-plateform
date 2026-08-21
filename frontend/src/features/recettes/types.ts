@@ -1,9 +1,25 @@
-export type StatutRecette = "EN_COURS" | "VALIDEE_SUPERVISEUR" | "CLOTUREE";
+export type StatutRecette = 
+  | "EN_COURS" 
+  | "EN_ATTENTE_TRANSMISSION" 
+  | "TRANSMIS_COMPTABILITE" 
+  | "VALIDEE_SUPERVISEUR" 
+  | "VALIDEE_COMPTABILITE";
+
+export interface ChequeRemiseDetail {
+  id: number;
+  referencePaiement: string;
+  numeroCheque: string;
+  banque: string;
+  emetteur: string;
+  montant: number;
+  datePaiement: string;
+}
 
 export interface RecetteJournee {
   date: string;
   montantEspeces: number;
   montantCarte: number;
+  montantCheque: number;
   montantVirement: number;
   totalJournee: number;
   nombreTransactions: number;
@@ -11,19 +27,31 @@ export interface RecetteJournee {
 
 export interface RecetteHebdoListItem {
   id: number;
-  reference: string; // Ex: REC-2026-W32-P1
+  reference: string;
   parkingNom: string;
   parkingId: number;
-  semaineAnnee: string; // Ex: "Semaine 32 (2026)"
+  semaineAnnee: string;
   dateDebut: string;
   dateFin: string;
   totalHebdo: number;
+  totalEspeces: number;
+  totalCheques: number;
+  totalCarte: number;
+  totalVirement: number;
+  nombreCheques: number;
   statut: StatutRecette;
 }
 
 export interface RecetteHebdoDetail extends RecetteHebdoListItem {
+  superviseurNom?: string;
   validePar?: string;
   dateValidation?: string;
+  transmisPar?: string;
+  dateTransmission?: string;
+  comptableNom?: string;
+  dateEncaissementComptable?: string;
+  quittanceNumero?: string;
   commentaires?: string;
   detailJours: RecetteJournee[];
+  chequesRemis: ChequeRemiseDetail[];
 }

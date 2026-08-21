@@ -87,7 +87,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
-  if (role === "SUPERVISEUR" || role === "COMPTABLE") {
+  if (role === "SUPERVISEUR" || role === "COMPTABLE" || role === "RESPONSABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
       { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }
