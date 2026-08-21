@@ -15,6 +15,10 @@ export interface PublicDemandeInput {
   cin?: string;
   raisonSociale?: string;
   ice?: string;
+  rcEntreprise?: string;
+  ifEntreprise?: string;
+  nomRepresentant?: string;
+  fonctionRepresentant?: string;
   email: string;
   telephone: string;
   immatriculation: string;
