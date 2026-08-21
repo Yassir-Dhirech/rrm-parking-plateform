@@ -8,6 +8,7 @@ import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -88,8 +89,8 @@ export function AbonnementsList() {
       key: "statut",
       render: (statut: AbonnementListItem["statut"]) => <StatusBadge statut={statut} />,
     },
-    { title: "Date Début", dataIndex: "dateDebut", key: "dateDebut" },
-    { title: "Date Expiration", dataIndex: "dateFin", key: "dateFin" },
+    { title: "Date Début", dataIndex: "dateDebut", key: "dateDebut", render: (d: string) => formatDate(d) },
+    { title: "Date Expiration", dataIndex: "dateFin", key: "dateFin", render: (d: string) => formatDate(d) },
   ];
 
   return (

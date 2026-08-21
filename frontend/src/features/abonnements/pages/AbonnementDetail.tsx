@@ -15,6 +15,7 @@ import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock 
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -167,8 +168,8 @@ export function AbonnementDetail() {
             {data.parkingNom}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Date de Début">{data.dateDebut}</Descriptions.Item>
-          <Descriptions.Item label="Date d'Expiration">{data.dateFin}</Descriptions.Item>
+          <Descriptions.Item label="Date de Début">{formatDate(data.dateDebut)}</Descriptions.Item>
+          <Descriptions.Item label="Date d'Expiration">{formatDate(data.dateFin)}</Descriptions.Item>
 
           {data.vehiculeImmatriculation && (
             <Descriptions.Item label="Immatriculation Véhicule (LPR)">

@@ -5,6 +5,7 @@ import { CheckCircleOutlined, PrinterOutlined } from "@ant-design/icons";
 import { getRecetteByIdMock, validerRecetteMock } from "../../../api/recettesMock";
 import { useAuth } from "../../../context/AuthContext";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
+import { formatDate } from "../../../lib/dateUtils";
 import type { RecetteJournee } from "../types";
 
 const { Title } = Typography;
@@ -44,7 +45,7 @@ export function RecetteDetail() {
   };
 
   const columnsDetail = [
-    { title: "Date", dataIndex: "date", key: "date" },
+    { title: "Date", dataIndex: "date", key: "date", render: (d: string) => formatDate(d) },
     { title: "Transactions", dataIndex: "nombreTransactions", key: "nombreTransactions" },
     {
       title: "Espèces (MAD)",
@@ -79,8 +80,8 @@ export function RecetteDetail() {
         <Descriptions bordered column={2}>
           <Descriptions.Item label="Parking">{recette.parkingNom}</Descriptions.Item>
           <Descriptions.Item label="Période">{recette.semaineAnnee}</Descriptions.Item>
-          <Descriptions.Item label="Date de début">{recette.dateDebut}</Descriptions.Item>
-          <Descriptions.Item label="Date de fin">{recette.dateFin}</Descriptions.Item>
+          <Descriptions.Item label="Date de début">{formatDate(recette.dateDebut)}</Descriptions.Item>
+          <Descriptions.Item label="Date de fin">{formatDate(recette.dateFin)}</Descriptions.Item>
           <Descriptions.Item label="Total Encaissements">
             <Tag color="teal" style={{ fontSize: "14px", padding: "4px 8px" }}>
               {recette.totalHebdo.toLocaleString("fr-FR")} MAD
@@ -88,7 +89,7 @@ export function RecetteDetail() {
           </Descriptions.Item>
           {recette.validePar && (
             <Descriptions.Item label="Validé par">
-              {recette.validePar} (le {recette.dateValidation})
+              {recette.validePar} (le {formatDate(recette.dateValidation)})
             </Descriptions.Item>
           )}
         </Descriptions>

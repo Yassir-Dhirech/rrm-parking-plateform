@@ -54,6 +54,7 @@ import { searchSubscriberByCinOrCardMock, type SubscriberRecord } from "../../..
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
 import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -1394,7 +1395,7 @@ export function PublicQrForm() {
             <p><strong>Client:</strong> {trackedDemande.clientNom}</p>
             <p><strong>Montant Régler:</strong> {trackedDemande.paiementInfo?.montant ?? 600} MAD</p>
             <p><strong>Mode de Paiement:</strong> {trackedDemande.paiementInfo?.modePaiement ?? "ESPECES"}</p>
-            <p><strong>Date de Paiement:</strong> {trackedDemande.paiementInfo?.datePaiement ?? trackedDemande.dateCreation}</p>
+            <p><strong>Date de Paiement:</strong> {formatDate(trackedDemande.paiementInfo?.datePaiement || trackedDemande.dateCreation)}</p>
             <p><strong>Validé Par:</strong> {trackedDemande.paiementInfo?.validePar ?? "Agent Guichet RRM"}</p>
           </div>
         )}

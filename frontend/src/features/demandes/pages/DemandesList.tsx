@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { type TypeDemande, typeDemandeLabels } from "../../../lib/enums";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Title, Text } = Typography;
 
@@ -110,6 +111,7 @@ export function DemandesList() {
       title: "Date Soumission",
       dataIndex: "dateCreation",
       key: "dateCreation",
+      render: (d: string) => formatDate(d),
     },
   ];
 

@@ -1,4 +1,5 @@
 import { type DemandeListItem, type DemandeDetail, type PaymentInfoInput, type PublicDemandeInput, type DemandeSubmissionResult } from "../features/demandes/types";
+import { formatDate } from "../lib/dateUtils";
 
 const mockDemandesStore: Record<number, DemandeDetail> = {
   1: {
@@ -8,7 +9,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "SOUMISE",
     clientNom: "Karim El Amrani",
     parkingNom: "Parking Bab El Had",
-    dateCreation: "2026-07-28",
+    dateCreation: "28/07/2026",
     email: "karim.elamrani@example.com",
     telephone: "0612345678",
     immatriculation: "12345-A-6",
@@ -21,7 +22,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "EN_COURS",
     clientNom: "Société Atlas Trans",
     parkingNom: "Parking Agdal Gare",
-    dateCreation: "2026-07-29",
+    dateCreation: "29/07/2026",
     email: "contact@atlastrans.ma",
     telephone: "0537001122",
     immatriculation: "99887-B-1",
@@ -34,7 +35,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "PAIEMENT_ENREGISTRE",
     clientNom: "Sara Bennis",
     parkingNom: "Parking Bab El Had",
-    dateCreation: "2026-07-27",
+    dateCreation: "27/07/2026",
     email: "sara.bennis@example.com",
     telephone: "0677889900",
     immatriculation: "54321-D-2",
@@ -42,7 +43,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     paiementInfo: {
       modePaiement: "ESPECES",
       montant: 450,
-      datePaiement: "2026-07-27 14:30",
+      datePaiement: "27/07/2026 14:30",
       validePar: "Agent Guichet (Agent)",
       remarques: "Paiement en espèces encaissé au guichet principal",
     },
@@ -54,7 +55,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "VALIDEE",
     clientNom: "Youssef Tazi",
     parkingNom: "Parking Hassan II",
-    dateCreation: "2026-07-25",
+    dateCreation: "25/07/2026",
     email: "youssef.tazi@example.com",
     telephone: "0611223344",
     immatriculation: "11223-A-1",
@@ -64,7 +65,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
       montant: 600,
       numeroCheque: "CHQ-889012",
       banque: "ATTIJARI",
-      datePaiement: "2026-07-25 11:15",
+      datePaiement: "25/07/2026 11:15",
       validePar: "Superviseur RRM",
       remarques: "Paiement chèque vérifié et dossier validé",
     },
@@ -73,76 +74,77 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 5,
     reference: "DEM-2026-000005",
     typeDemande: "CHANGEMENT_PARKING",
-    statut: "SOUMISE",
-    clientNom: "Amine Alami",
-    parkingNom: "Parking Agdal Gare",
-    nouveauParkingNom: "Parking Bab El Had",
-    numeroCarteAbonne: "CRT-2025-001099",
-    motifChangement: "Changement de lieu de travail à Bab El Had",
-    dateCreation: "2026-08-01",
-    email: "amine.alami@example.ma",
-    telephone: "0665432109",
-    immatriculation: "67890-B-1",
+    statut: "EN_COURS",
+    clientNom: "Mehdi Alami",
+    parkingNom: "Parking Bab El Had",
+    nouveauParkingNom: "Parking Agdal Gare",
+    dateCreation: "30/07/2026",
+    email: "mehdi.alami@example.com",
+    telephone: "0655443322",
+    immatriculation: "77889-C-4",
     typeVehicule: "VOITURE",
+    motifChangement: "Changement de lieu de travail vers le quartier Agdal.",
   },
   6: {
     id: 6,
     reference: "DEM-2026-000006",
     typeDemande: "CHANGEMENT_VEHICULE",
-    statut: "EN_COURS",
-    clientNom: "Meryem Chraibi",
-    parkingNom: "Parking Bab El Had",
-    numeroCarteAbonne: "CRT-2025-003421",
-    ancienneImmatriculation: "98765-A-1",
-    immatriculation: "12345-H-6",
-    dateCreation: "2026-08-02",
-    email: "meryem.chraibi@example.ma",
-    telephone: "0661122334",
+    statut: "VALIDEE",
+    clientNom: "Houda Naciri",
+    parkingNom: "Parking Hassan II",
+    ancienneImmatriculation: "44332-B-5",
+    immatriculation: "88990-A-1",
+    dateCreation: "24/07/2026",
+    email: "houda.naciri@example.com",
+    telephone: "0699887766",
     typeVehicule: "VOITURE",
+    motifChangement: "Acquisition d'un nouveau véhicule.",
+    paiementInfo: {
+      modePaiement: "ESPECES",
+      montant: 50,
+      datePaiement: "24/07/2026 16:45",
+      validePar: "Agent Guichet (Agent)",
+      remarques: "Frais de réémission de badge et mise à jour LPR",
+    },
   },
 };
 
 export async function getDemandesMock(): Promise<DemandeListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return Object.values(mockDemandesStore).map(({ email, telephone, immatriculation, typeVehicule, raisonRejet, paiementInfo, ...item }) => item);
+  return Object.values(mockDemandesStore).map(({ id, reference, typeDemande, statut, clientNom, parkingNom, dateCreation }) => ({
+    id,
+    reference,
+    typeDemande,
+    statut,
+    clientNom,
+    parkingNom,
+    dateCreation: formatDate(dateCreation),
+  }));
 }
 
 export async function getDemandeByIdMock(id: number): Promise<DemandeDetail> {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  if (!mockDemandesStore[id]) {
-    return {
-      id,
-      reference: `DEM-2026-00000${id}`,
-      typeDemande: "NOUVEL_ABONNEMENT",
-      statut: "SOUMISE",
-      clientNom: "Karim El Amrani",
-      parkingNom: "Parking Bab El Had",
-      dateCreation: "2026-07-28",
-      email: "karim.elamrani@example.com",
-      telephone: "0612345678",
-      immatriculation: "12345-A-6",
-      typeVehicule: "VOITURE",
-    };
-  }
-  return mockDemandesStore[id];
+  const found = mockDemandesStore[id];
+  if (!found) throw new Error("Demande introuvable");
+  return {
+    ...found,
+    dateCreation: formatDate(found.dateCreation),
+    paiementInfo: found.paiementInfo
+      ? {
+          ...found.paiementInfo,
+          datePaiement: formatDate(found.paiementInfo.datePaiement),
+        }
+      : undefined,
+  };
 }
 
-export async function addPublicDemandeMock(input: PublicDemandeInput): Promise<DemandeSubmissionResult> {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  const newId = Object.keys(mockDemandesStore).length + 100 + Math.floor(Math.random() * 800);
+export async function submitPublicDemande(input: PublicDemandeInput): Promise<DemandeSubmissionResult> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const newId = Object.keys(mockDemandesStore).length + 100 + Math.floor(Math.random() * 900);
   const reference = `DEM-2026-${String(newId).padStart(6, "0")}`;
-
-  const clientNom = input.typeClient === "PARTICULIER"
-    ? `${input.prenom ?? ""} ${input.nom ?? ""}`.trim() || "Client Inconnu"
-    : input.raisonSociale || "Entreprise Inconnue";
-
-  const parkingMap: Record<number, string> = {
-    1: "Parking Agdal Gare",
-    2: "Parking Hassan II",
-    3: "Parking Bab El Had",
-    4: "Parking Chellah",
-    5: "Parking Ibn Sina",
-  };
+  const clientNom = input.typeClient === "ENTREPRISE" && input.raisonSociale
+    ? input.raisonSociale
+    : `${input.nom || ""} ${input.prenom || ""}`.trim() || "Client Public";
 
   const newDemande: DemandeDetail = {
     id: newId,
@@ -150,12 +152,13 @@ export async function addPublicDemandeMock(input: PublicDemandeInput): Promise<D
     typeDemande: input.typeDemande || "NOUVEL_ABONNEMENT",
     statut: "SOUMISE",
     clientNom,
-    parkingNom: parkingMap[input.parkingId] || "Parking Agdal Gare",
-    dateCreation: new Date().toISOString().split("T")[0],
+    parkingNom: "Parking Agdal Gare",
+    dateCreation: formatDate(new Date().toISOString()),
     email: input.email,
     telephone: input.telephone,
     immatriculation: input.immatriculation,
-    typeVehicule: input.typeVehicule || "VOITURE",
+    typeVehicule: input.typeVehicule,
+    ancienneImmatriculation: input.ancienneImmatriculation,
   };
 
   mockDemandesStore[newId] = newDemande;
@@ -163,55 +166,44 @@ export async function addPublicDemandeMock(input: PublicDemandeInput): Promise<D
 }
 
 export async function searchDemandeByReferenceMock(query: string): Promise<DemandeDetail | null> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 400));
   const q = query.trim().toUpperCase();
   if (!q) return null;
   const found = Object.values(mockDemandesStore).find(
-    (d) =>
-      d.reference.toUpperCase() === q ||
-      d.email.toUpperCase() === q ||
-      d.immatriculation.toUpperCase() === q
+    (d) => d.reference.toUpperCase() === q || d.email.toUpperCase() === q
   );
-  return found || null;
+  if (!found) return null;
+  return {
+    ...found,
+    dateCreation: formatDate(found.dateCreation),
+    paiementInfo: found.paiementInfo
+      ? {
+          ...found.paiementInfo,
+          datePaiement: formatDate(found.paiementInfo.datePaiement),
+        }
+      : undefined,
+  };
 }
 
-/** Action Agent/Superviseur : Encaisser et enregistrer le paiement (passage au statut PAIEMENT_ENREGISTRE) */
-export async function enregistrerPaiementAgentMock(
-  id: number,
-  paymentInfo: PaymentInfoInput,
-  actorName?: string
-): Promise<void> {
+export async function validerDemandeMock(id: number, _decision?: any, _validePar?: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
+  if (mockDemandesStore[id]) {
+    mockDemandesStore[id].statut = "VALIDEE";
+  }
+}
+
+export const addPublicDemandeMock = submitPublicDemande;
+export const enregistrerPaiementAgentMock = submitPaiementGuichetMock;
+
+export async function submitPaiementGuichetMock(id: number, paymentInfo: PaymentInfoInput, actorName?: string): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
   if (mockDemandesStore[id]) {
     mockDemandesStore[id].statut = "PAIEMENT_ENREGISTRE";
     mockDemandesStore[id].paiementInfo = {
       ...paymentInfo,
-      datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
-      validePar: actorName ?? "Agent / Superviseur",
+      datePaiement: formatDate(new Date().toISOString()),
+      validePar: actorName || "Agent Guichet (Agent)",
     };
-  }
-}
-
-/** Action Superviseur Exclusive : Valider la conformité du dossier (requiert un paiement déjà effectué) */
-export async function validerDemandeMock(
-  id: number,
-  paymentInfo?: PaymentInfoInput,
-  actorName?: string
-): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const demande = mockDemandesStore[id];
-  if (demande) {
-    if (paymentInfo) {
-      demande.paiementInfo = {
-        ...paymentInfo,
-        datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
-        validePar: actorName ?? "Superviseur",
-      };
-    }
-    if (!demande.paiementInfo) {
-      throw new Error("Impossible de valider le dossier : le règlement du paiement doit être encaissé au préalable.");
-    }
-    demande.statut = "VALIDEE";
   }
 }
 
@@ -236,7 +228,7 @@ const mockRenewalSubscribers: RenewalSubscriber[] = [
   {
     id: 101,
     referenceAbonnement: "ABO-2026-000001",
-    numeroCarte: "CRT-881029",
+    numeroCarte: "CRT-992014",
     clientNom: "Karim El Amrani",
     cin: "AB123456",
     email: "karim.elamrani@example.com",
@@ -246,7 +238,7 @@ const mockRenewalSubscribers: RenewalSubscriber[] = [
     typeVehicule: "VOITURE",
     forfaitNom: "Pass Permanent (24h / 7j)",
     montantMensuel: 600,
-    dateFinActuelle: "2026-07-31",
+    dateFinActuelle: "31/07/2026",
     statut: "EXPIRE",
   },
   {
@@ -259,10 +251,10 @@ const mockRenewalSubscribers: RenewalSubscriber[] = [
     telephone: "0537001122",
     parkingNom: "Parking Agdal Gare",
     immatriculation: "99887-B-1",
-    typeVehicule: "CAMIONNETTE",
+    typeVehicule: "VOITURE",
     forfaitNom: "Abonnement Corporate (Flotte)",
     montantMensuel: 5400,
-    dateFinActuelle: "2026-08-31",
+    dateFinActuelle: "31/08/2026",
     statut: "ACTIF",
   },
   {
@@ -278,7 +270,7 @@ const mockRenewalSubscribers: RenewalSubscriber[] = [
     typeVehicule: "VOITURE",
     forfaitNom: "Pass Journée (08:00 - 20:00)",
     montantMensuel: 420,
-    dateFinActuelle: "2026-08-15",
+    dateFinActuelle: "15/08/2026",
     statut: "EXPIRE",
   },
 ];
@@ -306,7 +298,6 @@ export interface DirectRenewalInput {
   actorName?: string;
 }
 
-/** Création et validation directe du renouvellement après encaissement du paiement */
 export async function addRenouvellementDirectMock(input: DirectRenewalInput): Promise<DemandeSubmissionResult> {
   await new Promise((resolve) => setTimeout(resolve, 400));
   const sub = mockRenewalSubscribers.find((s) => s.id === input.subscriberId) || mockRenewalSubscribers[0];
@@ -317,10 +308,10 @@ export async function addRenouvellementDirectMock(input: DirectRenewalInput): Pr
     id: newId,
     reference,
     typeDemande: "RENOUVELLEMENT",
-    statut: "VALIDEE", // Direct auto-validation for renewals!
+    statut: "VALIDEE",
     clientNom: sub.clientNom,
     parkingNom: sub.parkingNom,
-    dateCreation: new Date().toISOString().split("T")[0],
+    dateCreation: formatDate(new Date().toISOString()),
     email: sub.email,
     telephone: sub.telephone,
     immatriculation: sub.immatriculation,
@@ -328,7 +319,7 @@ export async function addRenouvellementDirectMock(input: DirectRenewalInput): Pr
     paiementInfo: {
       ...input.paymentInfo,
       montant: input.montantTotal || input.paymentInfo.montant,
-      datePaiement: new Date().toISOString().slice(0, 16).replace("T", " "),
+      datePaiement: formatDate(new Date().toISOString()),
       validePar: input.actorName ?? "Agent / Superviseur",
       remarques: input.paymentInfo.remarques || `Renouvellement (${input.forfaitNom || sub.forfaitNom} - ${input.dureeMois || 1} mois) - Abonnement ${sub.referenceAbonnement}`,
     },

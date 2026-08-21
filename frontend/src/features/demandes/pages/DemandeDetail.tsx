@@ -41,6 +41,7 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { type TypeDemande, typeDemandeLabels } from "../../../lib/enums";
+import { formatDate } from "../../../lib/dateUtils";
 import { type PaymentInfoInput } from "../types";
 
 const BANK_OPTIONS = [
@@ -238,7 +239,7 @@ export function DemandeDetail() {
               {data.motifChangement}
             </Descriptions.Item>
           )}
-          <Descriptions.Item label="Date Soumission">{data.dateCreation}</Descriptions.Item>
+          <Descriptions.Item label="Date Soumission">{formatDate(data.dateCreation)}</Descriptions.Item>
         </Descriptions>
 
         {/* Enregistrement de Paiement */}

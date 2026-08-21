@@ -6,6 +6,7 @@ import type{ FactureListItem } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Title } = Typography;
 
@@ -34,7 +35,7 @@ export function FacturesList() {
       key: "statut",
       render: (statut: FactureListItem["statut"]) => <StatusBadge statut={statut} />,
     },
-    { title: "Date émission", dataIndex: "dateEmission", key: "dateEmission" },
+    { title: "Date émission", dataIndex: "dateEmission", key: "dateEmission", render: (d: string) => formatDate(d) },
   ];
 
   return (
