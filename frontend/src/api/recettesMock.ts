@@ -152,3 +152,93 @@ export async function validerEncaissementComptableMock(id: number): Promise<Rece
   recette.quittanceNumero = "QUIT-2026-" + String(Math.floor(Math.random() * 90000) + 10000);
   return recette;
 }
+
+export interface PaiementAEncasserRecette {
+  id: number;
+  referencePaiement: string;
+  parkingId: number;
+  parkingNom: string;
+  clientNom: string;
+  modePaiement: "ESPECES" | "CHEQUE" | "VIREMENT" | "CARTE";
+  montant: number;
+  datePaiement: string;
+  numeroCheque?: string;
+  banque?: string;
+}
+
+export const mockPaiementsNonEncaisses: PaiementAEncasserRecette[] = [
+  { id: 101, referencePaiement: "PAY-2026-00091", parkingId: 1, parkingNom: "Parking Agdal Gare", clientNom: "Karim El Amrani", modePaiement: "ESPECES", montant: 600, datePaiement: "18/08/2026" },
+  { id: 102, referencePaiement: "PAY-2026-00092", parkingId: 1, parkingNom: "Parking Agdal Gare", clientNom: "Société Atlas Trans SARL", modePaiement: "CHEQUE", montant: 6000, datePaiement: "18/08/2026", numeroCheque: "CHQ-9912019", banque: "Attijariwafa Bank" },
+  { id: 103, referencePaiement: "PAY-2026-00093", parkingId: 1, parkingNom: "Parking Agdal Gare", clientNom: "Sara Bennis", modePaiement: "ESPECES", montant: 1200, datePaiement: "19/08/2026" },
+  { id: 104, referencePaiement: "PAY-2026-00094", parkingId: 1, parkingNom: "Parking Agdal Gare", clientNom: "Imprimerie Agdal", modePaiement: "CHEQUE", montant: 4800, datePaiement: "19/08/2026", numeroCheque: "CHQ-5520192", banque: "Banque Populaire" },
+  { id: 105, referencePaiement: "PAY-2026-00095", parkingId: 1, parkingNom: "Parking Agdal Gare", clientNom: "Youssef Tazi", modePaiement: "ESPECES", montant: 300, datePaiement: "20/08/2026" },
+  
+  { id: 201, referencePaiement: "PAY-2026-00096", parkingId: 2, parkingNom: "Parking Hassan II", clientNom: "Maroc Telecom Agency", modePaiement: "CHEQUE", montant: 7200, datePaiement: "18/08/2026", numeroCheque: "CHQ-1102938", banque: "BMCE Bank" },
+  { id: 202, referencePaiement: "PAY-2026-00097", parkingId: 2, parkingNom: "Parking Hassan II", clientNom: "Omar Bennani", modePaiement: "ESPECES", montant: 1500, datePaiement: "19/08/2026" },
+  
+  { id: 301, referencePaiement: "PAY-2026-00098", parkingId: 3, parkingNom: "Parking Bab El Had", clientNom: "Cabinet Benali", modePaiement: "ESPECES", montant: 1800, datePaiement: "20/08/2026" },
+];
+
+export async function getPaiementsAEncasserMock(parkingId?: number): Promise<PaiementAEncasserRecette[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if (!parkingId) resolve(mockPaiementsNonEncaisses);
+      else resolve(mockPaiementsNonEncaisses.filter((p) => p.parkingId === parkingId));
+    }, 200);
+  });
+}
+
+export async function creerRecetteSupervisorMock(input: {
+  parkingId: number;
+  parkingNom: string;
+  semaineAnnee: string;
+  paiementsChoisis: PaiementAEncasserRecette[];
+}): Promise<RecetteHebdoDetail> {
+  const totalEspeces = input.paiementsChoisis.filter(p => p.modePaiement === "ESPECES").reduce((a, b) => a + b.montant, 0);
+  const chequesPaiements = input.paiementsChoisis.filter(p => p.modePaiement === "CHEQUE");
+  const totalCheques = chequesPaiements.reduce((a, b) => a + b.montant, 0);
+  const totalHebdo = totalEspeces + totalCheques;
+
+  const newRecette: RecetteHebdoDetail = {
+    id: mockRecettes.length + 1,
+    reference: `REC-2026-W34-P0${input.parkingId}`,
+    parkingId: input.parkingId,
+    parkingNom: input.parkingNom,
+    semaineAnnee: input.semaineAnnee || "Semaine 34 (2026)",
+    dateDebut: formatDate(new Date().toISOString()),
+    dateFin: formatDate(new Date().toISOString()),
+    totalHebdo,
+    totalEspeces,
+    totalCheques,
+    totalCarte: 0,
+    totalVirement: 0,
+    nombreCheques: chequesPaiements.length,
+    statut: "EN_ATTENTE_TRANSMISSION",
+    superviseurNom: "M. Samir El Amrani (Superviseur)",
+    validePar: "M. Samir El Amrani (Superviseur)",
+    dateValidation: formatDate(new Date().toISOString()),
+    detailJours: [
+      {
+        date: formatDate(new Date().toISOString()),
+        montantEspeces: totalEspeces,
+        montantCheque: totalCheques,
+        montantCarte: 0,
+        montantVirement: 0,
+        totalJournee: totalHebdo,
+        nombreTransactions: input.paiementsChoisis.length,
+      }
+    ],
+    chequesRemis: chequesPaiements.map((c, idx) => ({
+      id: idx + 100,
+      referencePaiement: c.referencePaiement,
+      numeroCheque: c.numeroCheque || `CHQ-${100000 + idx}`,
+      banque: c.banque || "Attijariwafa Bank",
+      emetteur: c.clientNom,
+      montant: c.montant,
+      datePaiement: c.datePaiement,
+    })),
+  };
+
+  mockRecettes.unshift(newRecette);
+  return newRecette;
+}
