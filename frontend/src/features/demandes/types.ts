@@ -24,6 +24,8 @@ export interface PublicDemandeInput {
   forfaitId?: number;
   forfaitNom?: string;
   dureeMois?: number;
+  categorieDuree?: "COURTE" | "LONGUE";
+  nombreAbonnements?: number;
   montantTotal?: number;
   cinRectoUrl?: string;
   cinVersoUrl?: string;

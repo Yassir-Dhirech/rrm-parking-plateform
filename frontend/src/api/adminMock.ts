@@ -27,6 +27,10 @@ export const mockTarifs: PlanTarifaire[] = [
 
   { id: 9, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 450, tarifTTC: 540, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
   { id: 10, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+
+  { id: 11, libelle: "Longue Durée 20 Ans (08:00 - 20:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416, tarifTTC: 500, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 12, libelle: "Longue Durée 20 Ans (08:00 - 22:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458, tarifTTC: 550, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 13, libelle: "Longue Durée 20 Ans (24h / 7j)", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541, tarifTTC: 650, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
 ];
 
 export const mockLogs: AuditLog[] = [

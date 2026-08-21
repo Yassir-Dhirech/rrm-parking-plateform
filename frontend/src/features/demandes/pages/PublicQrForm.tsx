@@ -21,6 +21,8 @@ import {
   Typography,
   Checkbox,
   Upload,
+  InputNumber,
+  Segmented,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -59,12 +61,12 @@ import { formatDate } from "../../../lib/dateUtils";
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const FORFAITS_OPTIONS = [
+const FORFAITS_COURTE_DUREE = [
   {
     id: 1,
     title: "Pass Permanent (24h / 7j)",
     plage: "24h / 7j",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 600,
     badge: "Accès 24/7",
     desc: "Accès permanent jour et nuit au parking sélectionné",
@@ -73,39 +75,71 @@ const FORFAITS_OPTIONS = [
     id: 2,
     title: "Pass Journée (08:00 - 20:00)",
     plage: "08:00 - 20:00",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 420,
     badge: "Diurne",
     desc: "Accès de jour du lundi au samedi de 08:00 à 20:00",
   },
   {
     id: 3,
+    title: "Pass Étendu (08:00 - 22:00)",
+    plage: "08:00 - 22:00",
+    duree: "3 à 12 Mois",
+    priceTTC: 500,
+    badge: "Jour + Soir",
+    desc: "Accès étendu de 08:00 à 22:00 du lundi au samedi",
+  },
+  {
+    id: 4,
     title: "Pass Nuit (19:00 - 08:00)",
     plage: "19:00 - 08:00",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 300,
     badge: "Nocturne",
     desc: "Accès nocturne en soirée et la nuit de 19:00 à 08:00",
   },
   {
-    id: 4,
-    title: "Abonnement Corporate (Flotte)",
-    plage: "Sur mesure",
-    duree: "12 Mois",
-    priceTTC: 5400,
-    badge: "Entreprises",
-    desc: "Abonnement de l'entreprise pour gestion de flotte de véhicules",
-  },
-  {
     id: 5,
     title: "Pass Deux-Roues / Moto",
     plage: "24h / 7j",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 200,
     badge: "Deux-roues",
     desc: "Abonnement dédié aux motos, scooters et deux-roues",
   },
 ];
+
+const FORFAITS_LONGUE_DUREE = [
+  {
+    id: 101,
+    title: "Formule Jour (08:00 - 20:00)",
+    plage: "08:00 - 20:00",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 500,
+    badge: "500 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Créneau diurne 08:00 à 20:00 (500 DH / mois / personne)",
+  },
+  {
+    id: 102,
+    title: "Formule Étendue (08:00 - 22:00)",
+    plage: "08:00 - 22:00",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 550,
+    badge: "550 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Créneau étendu 08:00 à 22:00 (550 DH / mois / personne)",
+  },
+  {
+    id: 103,
+    title: "Formule Permanence (24h / 7j)",
+    plage: "24h / 7j",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 650,
+    badge: "650 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Accès garanti 24h / 7j (650 DH / mois / personne)",
+  },
+];
+
+const ALL_FORFAITS = [...FORFAITS_COURTE_DUREE, ...FORFAITS_LONGUE_DUREE];
 
 export function PublicQrForm() {
   const [activeTab, setActiveTab] = useState<string>("form");
@@ -116,6 +150,22 @@ export function PublicQrForm() {
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
+  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+  const [dureeMois, setDureeMois] = useState<number>(6);
+  const [categorieDuree, setCategorieDuree] = useState<"COURTE" | "LONGUE">("COURTE");
+  const [nombreAbonnements, setNombreAbonnements] = useState<number>(1);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
+  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
+  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
+
+  // Tracking state
+  const [searchRef, setSearchRef] = useState<string>("");
+  const [trackedDemande, setTrackedDemande] = useState<DemandeDetail | null>(null);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
+  const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const handleSelectType = (type: TypeDemande) => {
     setSelectedType(type);
@@ -174,7 +224,7 @@ export function PublicQrForm() {
         ...prev,
         parkingId: 1,
         forfaitId: 1,
-        dureeMois: 12,
+        dureeMois: 6,
       }));
       setCurrentStep(3);
       message.success("[BETA] Étape 2 (Parking & Forfait) auto-remplie & franchie");
@@ -184,20 +234,6 @@ export function PublicQrForm() {
       message.success("[BETA] Conditions acceptées & Ouverture de la modale OTP");
     }
   };
-  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
-  const [dureeMois, setDureeMois] = useState<number>(1);
-  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
-  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
-  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
-
-  // Tracking state
-  const [searchRef, setSearchRef] = useState<string>("");
-  const [trackedDemande, setTrackedDemande] = useState<DemandeDetail | null>(null);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
-  const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
-  const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const { data: parkings, isLoading: parkingsLoading } = useQuery({
     queryKey: ["public-parkings"],
@@ -275,16 +311,17 @@ export function PublicQrForm() {
   };
 
   const handleFinalSubmit = () => {
-    const forfaitObj = FORFAITS_OPTIONS.find((f) => f.id === selectedForfait);
-    const monthlyPrice = forfaitObj?.priceTTC || 600;
-    const discount = dureeMois === 12 ? 0.9 : 1;
-    const totalTTC = Math.round(monthlyPrice * dureeMois * discount);
+    const forfaitObj = ALL_FORFAITS.find((f) => f.id === selectedForfait);
+    const monthlyPrice = forfaitObj?.priceTTC || 500;
+    const totalTTC = Math.round(monthlyPrice * dureeMois * nombreAbonnements);
 
     const fullData: PublicDemandeInput = {
       ...formData,
       forfaitId: selectedForfait,
       forfaitNom: forfaitObj?.title,
       dureeMois,
+      categorieDuree,
+      nombreAbonnements,
       montantTotal: totalTTC,
       typeDemande,
       typeClient,
@@ -660,39 +697,43 @@ export function PublicQrForm() {
                                   </Col>
                                 </Row>
 
-                                {/* CIN Photos Upload Section */}
-                                <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
-                                  <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
-                                </Divider>
+                                {/* CIN Photos Upload Section (Particulier Uniquement) */}
+                                {typeClient === "PARTICULIER" && (
+                                  <>
+                                    <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                                      <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
+                                    </Divider>
 
-                                <Row gutter={16}>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                      <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                        </p>
-                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                          Charger CIN Recto
-                                        </p>
-                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                      </Upload.Dragger>
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                      <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                        </p>
-                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                          Charger CIN Verso
-                                        </p>
-                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                      </Upload.Dragger>
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
+                                    <Row gutter={16}>
+                                      <Col xs={24} sm={12}>
+                                        <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                          <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                            <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                              <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                            </p>
+                                            <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                              Charger CIN Recto
+                                            </p>
+                                            <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                          </Upload.Dragger>
+                                        </Form.Item>
+                                      </Col>
+                                      <Col xs={24} sm={12}>
+                                        <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                          <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                            <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                              <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                            </p>
+                                            <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                              Charger CIN Verso
+                                            </p>
+                                            <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                          </Upload.Dragger>
+                                        </Form.Item>
+                                      </Col>
+                                    </Row>
+                                  </>
+                                )}
                               </>
                             ) : (
                               /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
@@ -933,69 +974,118 @@ export function PublicQrForm() {
                                 </>
                               )}
 
-                              <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
+                               {/* Quantité d'Abonnements / Badges RFID */}
+                               <div style={{ backgroundColor: "#ffffff", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 16 }}>
+                                 <Row align="middle" justify="space-between" gutter={16}>
+                                   <Col xs={24} sm={15}>
+                                     <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14 }}>
+                                       <IdcardOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Nombre d'Abonnements / Badges RFID Souhaités :
+                                     </div>
+                                     <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                                       {typeClient === "ENTREPRISE"
+                                         ? "Commandez plusieurs abonnements ou badges RFID pour vos collaborateurs / flotte entreprise."
+                                         : "Quantité d'abonnements ou badges RFID à souscrire simultanément."}
+                                     </div>
+                                   </Col>
+                                   <Col xs={24} sm={9} style={{ textAlign: "right" }}>
+                                     <InputNumber
+                                       min={1}
+                                       max={100}
+                                       size="large"
+                                       value={nombreAbonnements}
+                                       onChange={(val) => setNombreAbonnements(val || 1)}
+                                       addonAfter="Abonnement(s)"
+                                       style={{ width: "100%" }}
+                                     />
+                                   </Col>
+                                 </Row>
+                               </div>
+
+                               <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
                                 <div style={{ fontWeight: 600, color: "#334155", marginBottom: 10 }}>
                                   <ClockCircleOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Choisir la Durée d'Engagement / Prolongation :
                                 </div>
-                                <Radio.Group
-                                  value={dureeMois}
-                                  onChange={(e) => setDureeMois(e.target.value)}
-                                  buttonStyle="solid"
-                                  size="large"
-                                  style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-                                >
-                                  <Radio.Button value={1}>1 Mois</Radio.Button>
-                                  <Radio.Button value={3}>3 Mois</Radio.Button>
-                                  <Radio.Button value={6}>6 Mois</Radio.Button>
-                                  <Radio.Button value={12}>
-                                    12 Mois <Tag color="green" style={{ marginLeft: 4 }}>-10% Réduction</Tag>
-                                  </Radio.Button>
-                                </Radio.Group>
+                                <Segmented
+                                   options={[
+                                     { label: "Courte Durée (3 à 12 Mois)", value: "COURTE" },
+                                     { label: "Longue Durée (20 Ans / Concession)", value: "LONGUE" },
+                                   ]}
+                                   value={categorieDuree}
+                                   onChange={(val) => {
+                                     const cat = val as "COURTE" | "LONGUE";
+                                     setCategorieDuree(cat);
+                                     if (cat === "LONGUE") {
+                                       setDureeMois(240);
+                                       setSelectedForfait(101);
+                                     } else {
+                                       setDureeMois(6);
+                                       setSelectedForfait(1);
+                                     }
+                                   }}
+                                   style={{ marginBottom: 14 }}
+                                 />
+
+                                 {categorieDuree === "COURTE" ? (
+                                   <Radio.Group
+                                     value={dureeMois}
+                                     onChange={(e) => setDureeMois(e.target.value)}
+                                     buttonStyle="solid"
+                                     size="large"
+                                     style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+                                   >
+                                     <Radio.Button value={3}>3 Mois</Radio.Button>
+                                     <Radio.Button value={6}>6 Mois</Radio.Button>
+                                     <Radio.Button value={9}>9 Mois</Radio.Button>
+                                     <Radio.Button value={12}>12 Mois (1 An)</Radio.Button>
+                                   </Radio.Group>
+                                 ) : (
+                                   <div style={{ padding: "10px 14px", backgroundColor: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", color: "#0369a1", fontWeight: 600, fontSize: 13 }}>
+                                     Abonnement Longue Durée fixe de <strong>20 Ans (240 Mois)</strong> — Droit d'usage privilégié et garantie de place réservée.
+                                   </div>
+                                 )}
+                                 
+                                 <Row gutter={[16, 16]}>
+                                 {(categorieDuree === "LONGUE" ? FORFAITS_LONGUE_DUREE : FORFAITS_COURTE_DUREE).map((f) => {
+                                   const isSelected = selectedForfait === f.id;
+                                   return (
+                                     <Col xs={24} sm={12} key={f.id}>
+                                       <Card
+                                         hoverable
+                                         onClick={() => setSelectedForfait(f.id)}
+                                         style={{
+                                           borderColor: isSelected ? "#0284c7" : "#e2e8f0",
+                                           backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
+                                           borderWidth: isSelected ? 2 : 1,
+                                           borderRadius: 10,
+                                           cursor: "pointer",
+                                           position: "relative",
+                                         }}
+                                       >
+                                         {f.badge && (
+                                           <Tag
+                                             color={isSelected ? "blue" : "default"}
+                                             style={{ position: "absolute", top: 12, right: 12 }}
+                                           >
+                                             {f.badge}
+                                           </Tag>
+                                         )}
+                                         <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
+                                         <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
+                                         <div style={{ marginBottom: 8 }}>
+                                           <Tag color="geekblue">
+                                             <ClockCircleOutlined style={{ marginRight: 4 }} />
+                                             {f.plage}
+                                           </Tag>
+                                         </div>
+                                         <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0369a1" }}>
+                                           {f.priceTTC.toLocaleString("fr-FR")} DH <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois / personne</span>
+                                         </div>
+                                       </Card>
+                                     </Col>
+                                   );
+                                 })}
+                                 </Row>
                               </div>
-
-                              <Divider titlePlacement="left">Choisir la Formule d'Abonnement Souhaitée</Divider>
-
-                              <Row gutter={[16, 16]}>
-                                {FORFAITS_OPTIONS.map((f) => {
-                                  const isSelected = selectedForfait === f.id;
-                                  return (
-                                    <Col xs={24} sm={12} key={f.id}>
-                                      <Card
-                                        hoverable
-                                        onClick={() => setSelectedForfait(f.id)}
-                                        style={{
-                                          borderColor: isSelected ? "#0284c7" : "#e2e8f0",
-                                          backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
-                                          borderWidth: isSelected ? 2 : 1,
-                                          borderRadius: 10,
-                                          cursor: "pointer",
-                                          position: "relative",
-                                        }}
-                                      >
-                                        {f.badge && (
-                                          <Tag
-                                            color={isSelected ? "blue" : "default"}
-                                            style={{ position: "absolute", top: 12, right: 12 }}
-                                          >
-                                            {f.badge}
-                                          </Tag>
-                                        )}
-                                        <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
-                                        <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
-                                        <div style={{ marginBottom: 8 }}>
-                                          <Tag color="geekblue">
-                                            <ClockCircleOutlined style={{ marginRight: 4 }} />
-                                            {f.plage}
-                                          </Tag>
-                                        </div>
-                                        <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0369a1" }}>
-                                          {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois</span>
-                                        </div>
-                                      </Card>
-                                    </Col>
-                                  );
-                                })}
-                              </Row>
                             </Form>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
@@ -1060,24 +1150,31 @@ export function PublicQrForm() {
                                   )}
                                 </Col>
                                 <Col span={12}>
+                                  <strong>Quantité:</strong>{" "}
+                                  <Tag color="purple">{nombreAbonnements} {nombreAbonnements > 1 ? "Abonnements / Badges RFID" : "Abonnement RFID"}</Tag>
+                                </Col>
+                                <Col span={12}>
                                   <strong>Forfait & Durée:</strong>{" "}
                                   <Tag color="geekblue">
-                                    {FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.title} ({dureeMois} Mois)
+                                    {ALL_FORFAITS.find((f) => f.id === selectedForfait)?.title} ({categorieDuree === "LONGUE" ? "20 Ans (Longue Durée)" : `${dureeMois} Mois`})
                                   </Tag>
                                 </Col>
                                 <Col span={12}>
                                   <strong>Montant Total TTC Calculé:</strong>{" "}
                                   <strong style={{ fontSize: "1.2rem", color: "#16a34a" }}>
-                                    {Math.round((FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.priceTTC || 600) * dureeMois * (dureeMois === 12 ? 0.9 : 1)).toLocaleString("fr-FR")} MAD TTC
+                                    {Math.round((ALL_FORFAITS.find((f) => f.id === selectedForfait)?.priceTTC || 500) * dureeMois * nombreAbonnements).toLocaleString("fr-FR")} MAD TTC
                                   </strong>
-                                  {dureeMois === 12 && <Tag color="green" style={{ marginLeft: 6 }}>10% inclus</Tag>}
                                 </Col>
                                 <Col span={24}>
                                   <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
                                     <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Photos Renseignées :</strong>
                                     <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
-                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
+                                      {typeClient === "PARTICULIER" && (
+                                        <>
+                                          <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
+                                          <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
+                                        </>
+                                      )}
                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto (Face Avant)</Tag>
                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso (Face Arrière)</Tag>
                                     </div>

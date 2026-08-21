@@ -207,11 +207,11 @@ export function AbonnementsList() {
             <Col span={12}>
               <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
                 <Select>
-                  <Option value={1}>1 Mois</Option>
-                  <Option value={3}>3 Mois</Option>
-                  <Option value={6}>6 Mois</Option>
-                  <Option value={12}>12 Mois (1 An)</Option>
-                  <Option value={24}>24 Mois (2 Ans)</Option>
+                  <Option value={3}>3 Mois (Courte Durée)</Option>
+                  <Option value={6}>6 Mois (Courte Durée)</Option>
+                  <Option value={9}>9 Mois (Courte Durée)</Option>
+                  <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
+                  <Option value={240}>20 Ans (Longue Durée / Concession)</Option>
                 </Select>
               </Form.Item>
             </Col>
