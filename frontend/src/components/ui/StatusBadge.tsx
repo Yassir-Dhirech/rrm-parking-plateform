@@ -6,7 +6,10 @@ type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
 type StatutCarte = "A_PREPARER" | "A_ACTIVER" | "ACTIVE" | "EXPIREE" | "DESACTIVEE";
  type StatutContrat = 'EN_ATTENTE_SIGNATURE' | 'SIGNE' | 'RESILIE' | 'EXPIRE';
-type StatutRecette = "EN_COURS" | "VALIDEE_SUPERVISEUR" | "CLOTUREE";
+type StatutRecette = 
+  | "EN_COURS"
+  | "COMPLETED" 
+  | "RECEIVED";
 
 type AnyStatut = StatutDemande | 
 StatutAbonnement | StatutPaiement | StatutFacture
@@ -39,8 +42,8 @@ const colorMap: Record<AnyStatut, string> = {
   ACTIVE: "green",
   EN_ATTENTE_SIGNATURE: "gold",
   SIGNE: "green",
-  VALIDEE_SUPERVISEUR: "green",
-  CLOTUREE: "green",
+  COMPLETED: "purple",
+  RECEIVED: "green",
 };
 
 const labelMap: Record<AnyStatut, string> = {
@@ -69,8 +72,8 @@ const labelMap: Record<AnyStatut, string> = {
   ACTIVE: "Active",
   EN_ATTENTE_SIGNATURE: "En attente de signature",
   SIGNE: "Signé",
-  VALIDEE_SUPERVISEUR: "Validée superviseur",
-  CLOTUREE: "Clôturée",
+  COMPLETED: "Completed (Complétée par Superviseur)",
+  RECEIVED: "Received (Reçue par Comptabilité)",
 };
 
 interface Props {

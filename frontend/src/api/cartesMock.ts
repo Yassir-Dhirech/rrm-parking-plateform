@@ -30,7 +30,7 @@ export async function getCarteByIdMock(id: number): Promise<CarteDetail> {
     statut: "A_ACTIVER",
     abonnementReference: "ABO-2026-000001",
     clientNom: "Karim El Amrani",
-    datePreparation: "2026-01-16",
+    datePreparation: "16/01/2026",
     preparePar: "Agent Rachid",
   };
 }

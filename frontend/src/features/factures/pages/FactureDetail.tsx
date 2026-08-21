@@ -5,6 +5,7 @@ import { getFactureByIdMock, signerFactureMock } from "../../../api/facturesMock
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { formatDate } from "../../../lib/dateUtils";
 
 export function FactureDetail() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +48,7 @@ export function FactureDetail() {
         <Descriptions.Item label="Montant TVA">{data.montantTva.toLocaleString("fr-FR")} MAD</Descriptions.Item>
         <Descriptions.Item label="Montant TTC">{data.montantTtc.toLocaleString("fr-FR")} MAD</Descriptions.Item>
         <Descriptions.Item label="Abonnement">{data.abonnementReference}</Descriptions.Item>
-        <Descriptions.Item label="Date émission">{data.dateEmission}</Descriptions.Item>
+        <Descriptions.Item label="Date émission">{formatDate(data.dateEmission)}</Descriptions.Item>
         <Descriptions.Item label="Générée par">{data.genereePar}</Descriptions.Item>
         {data.signeePar && <Descriptions.Item label="Signée par">{data.signeePar}</Descriptions.Item>}
       </Descriptions>

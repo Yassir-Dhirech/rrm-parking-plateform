@@ -15,6 +15,10 @@ export interface PublicDemandeInput {
   cin?: string;
   raisonSociale?: string;
   ice?: string;
+  rcEntreprise?: string;
+  ifEntreprise?: string;
+  nomRepresentant?: string;
+  fonctionRepresentant?: string;
   email: string;
   telephone: string;
   immatriculation: string;
@@ -24,6 +28,8 @@ export interface PublicDemandeInput {
   forfaitId?: number;
   forfaitNom?: string;
   dureeMois?: number;
+  categorieDuree?: "COURTE" | "LONGUE";
+  nombreAbonnements?: number;
   montantTotal?: number;
   cinRectoUrl?: string;
   cinVersoUrl?: string;

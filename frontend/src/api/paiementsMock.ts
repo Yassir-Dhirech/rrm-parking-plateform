@@ -1,4 +1,5 @@
-import type{ PaiementListItem, PaiementDetail } from "../features/paiements/types";
+import type { PaiementListItem, PaiementDetail } from "../features/paiements/types";
+import { formatDate } from "../lib/dateUtils";
 
 const mockPaiements: PaiementListItem[] = [
   {
@@ -8,7 +9,7 @@ const mockPaiements: PaiementListItem[] = [
     modePaiement: "ESPECES",
     statut: "CONFIRME",
     clientNom: "Karim El Amrani",
-    datePaiement: "2026-01-15",
+    datePaiement: "15/01/2026",
   },
   {
     id: 2,
@@ -17,7 +18,7 @@ const mockPaiements: PaiementListItem[] = [
     modePaiement: "CHEQUE",
     statut: "CONFIRME",
     clientNom: "Société Atlas Trans",
-    datePaiement: "2025-06-01",
+    datePaiement: "01/06/2025",
   },
   {
     id: 3,
@@ -26,25 +27,29 @@ const mockPaiements: PaiementListItem[] = [
     modePaiement: "CHEQUE",
     statut: "EN_ATTENTE",
     clientNom: "Sara Bennis",
-    datePaiement: "2026-07-30",
+    datePaiement: "30/07/2026",
   },
 ];
 
 export async function getPaiementsMock(): Promise<PaiementListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 400));
-  return mockPaiements;
+  return mockPaiements.map((p) => ({
+    ...p,
+    datePaiement: formatDate(p.datePaiement),
+  }));
 }
 
 export async function getPaiementByIdMock(id: number): Promise<PaiementDetail> {
   await new Promise((resolve) => setTimeout(resolve, 300));
+  const found = mockPaiements.find((p) => p.id === id);
   return {
     id,
-    reference: `PAY-2026-00000${id}`,
-    montant: 1200,
-    modePaiement: "ESPECES",
-    statut: "CONFIRME",
-    clientNom: "Karim El Amrani",
-    datePaiement: "2026-01-15",
+    reference: found?.reference || `PAY-2026-00000${id}`,
+    montant: found?.montant || 1200,
+    modePaiement: found?.modePaiement || "ESPECES",
+    statut: found?.statut || "CONFIRME",
+    clientNom: found?.clientNom || "Karim El Amrani",
+    datePaiement: formatDate(found?.datePaiement || "15/01/2026"),
     abonnementReference: "ABO-2026-000001",
     enregistrePar: "Agent Rachid",
   };

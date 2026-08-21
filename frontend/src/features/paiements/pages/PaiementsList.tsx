@@ -7,6 +7,7 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { modePaiementLabels } from "../../../lib/enums";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Title } = Typography;
 
@@ -43,7 +44,7 @@ export function PaiementsList() {
       key: "statut",
       render: (statut: PaiementListItem["statut"]) => <StatusBadge statut={statut} />,
     },
-    { title: "Date", dataIndex: "datePaiement", key: "datePaiement" },
+    { title: "Date", dataIndex: "datePaiement", key: "datePaiement", render: (d: string) => formatDate(d) },
   ];
 
   return (

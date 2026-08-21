@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SearchOutlined } from "@ant-design/icons";
 import { getLogsMock } from "../../../api/adminMock";
 import type { Role } from "../../../lib/roleConfig";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Title } = Typography;
 
@@ -28,7 +29,7 @@ export function AuditLogsList() {
   });
 
   const columns = [
-    { title: "Horodatage", dataIndex: "timestamp", key: "timestamp", width: 170 },
+    { title: "Horodatage", dataIndex: "timestamp", key: "timestamp", width: 170, render: (v: string) => formatDate(v) },
     { title: "Utilisateur", dataIndex: "utilisateurEmail", key: "utilisateurEmail" },
     {
       title: "Rôle",

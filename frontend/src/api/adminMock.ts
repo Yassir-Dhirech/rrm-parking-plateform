@@ -1,10 +1,11 @@
 import type { AuditLog, Parking, PlanTarifaire, Utilisateur } from "../features/admin/types";
+import { formatDate } from "../lib/dateUtils";
 
-export const mockUtilisateurs: Utilisateur[] =[
-  { id: 1, nom: "El Amrani", prenom: "Simo", email: "s.elamrani@rrm.ma", role: "SUPERVISEUR", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "2026-01-10" },
-  { id: 2, nom: "Benali", prenom: "Khadija", email: "k.benali@rrm.ma", role: "AGENT", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "2026-01-15" },
-  { id: 3, nom: "Chraibi", prenom: "Omar", email: "o.chraibi@rrm.ma", role: "RESPONSABLE", actif: true, dateCreation: "2026-01-05" },
-  { id: 4, nom: "Tazi", prenom: "Fatima", email: "f.tazi@rrm.ma", role: "COMPTABLE", actif: true, dateCreation: "2026-01-20" },
+export const mockUtilisateurs: Utilisateur[] = [
+  { id: 1, nom: "El Amrani", prenom: "Simo", email: "s.elamrani@rrm.ma", role: "SUPERVISEUR", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "10/01/2026" },
+  { id: 2, nom: "Benali", prenom: "Khadija", email: "k.benali@rrm.ma", role: "AGENT", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "15/01/2026" },
+  { id: 3, nom: "Chraibi", prenom: "Omar", email: "o.chraibi@rrm.ma", role: "RESPONSABLE", actif: true, dateCreation: "05/01/2026" },
+  { id: 4, nom: "Tazi", prenom: "Fatima", email: "f.tazi@rrm.ma", role: "COMPTABLE", actif: true, dateCreation: "20/01/2026" },
 ];
 
 export const mockParkings: Parking[] = [
@@ -26,17 +27,21 @@ export const mockTarifs: PlanTarifaire[] = [
 
   { id: 9, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 450, tarifTTC: 540, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
   { id: 10, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+
+  { id: 11, libelle: "Longue Durée 20 Ans (08:00 - 20:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416, tarifTTC: 500, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 12, libelle: "Longue Durée 20 Ans (08:00 - 22:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458, tarifTTC: 550, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 13, libelle: "Longue Durée 20 Ans (24h / 7j)", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541, tarifTTC: 650, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
 ];
 
 export const mockLogs: AuditLog[] = [
-  { id: 1, timestamp: "2026-08-09 14:22:10", utilisateurEmail: "s.elamrani@rrm.ma", role: "SUPERVISEUR", action: "VALIDATION_RECETTE", entite: "RecetteHebdo", entiteId: "REC-2026-W31-P01", adresseIp: "196.200.14.12", details: "Validation recette semaine 31" },
-  { id: 2, timestamp: "2026-08-09 11:05:44", utilisateurEmail: "o.chraibi@rrm.ma", role: "RESPONSABLE", action: "SIGNATURE_CONTRAT", entite: "ContratCorporate", entiteId: "CTR-2026-0002", adresseIp: "196.200.14.18", details: "Signature du contrat Maroc Telecom Agency" },
-  { id: 3, timestamp: "2026-08-08 16:40:02", utilisateurEmail: "k.benali@rrm.ma", role: "AGENT", action: "CREATION_PAIEMENT", entite: "Paiement", entiteId: "PAI-2026-0891", adresseIp: "196.200.14.33", details: "Enregistrement paiement espèces 600 MAD" },
+  { id: 1, timestamp: "09/08/2026 14:22", utilisateurEmail: "s.elamrani@rrm.ma", role: "SUPERVISEUR", action: "VALIDATION_RECETTE", entite: "RecetteHebdo", entiteId: "REC-2026-W31-P01", adresseIp: "196.200.14.12", details: "Validation recette semaine 31" },
+  { id: 2, timestamp: "09/08/2026 11:05", utilisateurEmail: "o.chraibi@rrm.ma", role: "RESPONSABLE", action: "SIGNATURE_CONTRAT", entite: "ContratCorporate", entiteId: "CTR-2026-0002", adresseIp: "196.200.14.18", details: "Signature du contrat Maroc Telecom Agency" },
+  { id: 3, timestamp: "08/08/2026 16:40", utilisateurEmail: "k.benali@rrm.ma", role: "AGENT", action: "CREATION_PAIEMENT", entite: "Paiement", entiteId: "PAI-2026-0891", adresseIp: "196.200.14.33", details: "Enregistrement paiement espèces 600 MAD" },
 ];
 
 // Async Mocks
 export async function getUtilisateursMock(): Promise<Utilisateur[]> {
-  return new Promise((res) => setTimeout(() => res(mockUtilisateurs), 300));
+  return new Promise((res) => setTimeout(() => res(mockUtilisateurs.map((u) => ({ ...u, dateCreation: formatDate(u.dateCreation) }))), 300));
 }
 export async function getParkingsMock(): Promise<Parking[]> {
   return new Promise((res) => setTimeout(() => res(mockParkings), 300));
@@ -45,5 +50,5 @@ export async function getTarifsMock(): Promise<PlanTarifaire[]> {
   return new Promise((res) => setTimeout(() => res(mockTarifs), 300));
 }
 export async function getLogsMock(): Promise<AuditLog[]> {
-  return new Promise((res) => setTimeout(() => res(mockLogs), 300));
+  return new Promise((res) => setTimeout(() => res(mockLogs.map((l) => ({ ...l, timestamp: formatDate(l.timestamp) }))), 300));
 }

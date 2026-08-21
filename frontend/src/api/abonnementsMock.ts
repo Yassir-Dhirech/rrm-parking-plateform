@@ -1,4 +1,5 @@
 import type { AbonnementListItem, AbonnementDetail, TypeAbonnement } from "../features/abonnements/types";
+import { formatDate } from "../lib/dateUtils";
 
 const mockAbonnements: AbonnementListItem[] = [
   {
@@ -8,8 +9,8 @@ const mockAbonnements: AbonnementListItem[] = [
     statut: "ACTIF",
     clientNom: "Karim El Amrani",
     parkingNom: "Parking Bab El Had",
-    dateDebut: "2026-01-15",
-    dateFin: "2026-07-15",
+    dateDebut: "15/01/2026",
+    dateFin: "15/07/2026",
   },
   {
     id: 2,
@@ -18,8 +19,8 @@ const mockAbonnements: AbonnementListItem[] = [
     statut: "ACTIF",
     clientNom: "Société Atlas Trans",
     parkingNom: "Parking Agdal Gare",
-    dateDebut: "2025-06-01",
-    dateFin: "2030-06-01",
+    dateDebut: "01/06/2025",
+    dateFin: "01/06/2030",
   },
   {
     id: 3,
@@ -28,8 +29,8 @@ const mockAbonnements: AbonnementListItem[] = [
     statut: "EXPIRE",
     clientNom: "Sara Bennis",
     parkingNom: "Parking Bab El Had",
-    dateDebut: "2025-10-01",
-    dateFin: "2026-04-01",
+    dateDebut: "01/10/2025",
+    dateFin: "01/04/2026",
   },
   {
     id: 4,
@@ -38,8 +39,8 @@ const mockAbonnements: AbonnementListItem[] = [
     statut: "ACTIF",
     clientNom: "Youssef Tazi (Agent RRM)",
     parkingNom: "Parking Agdal Gare",
-    dateDebut: "2026-01-01",
-    dateFin: "2026-12-31",
+    dateDebut: "01/01/2026",
+    dateFin: "31/12/2026",
   },
   {
     id: 5,
@@ -48,8 +49,8 @@ const mockAbonnements: AbonnementListItem[] = [
     statut: "ACTIF",
     clientNom: "Meriem Filali (Superviseur RRM)",
     parkingNom: "Parking Hassan II",
-    dateDebut: "2026-01-01",
-    dateFin: "2026-12-31",
+    dateDebut: "01/01/2026",
+    dateFin: "31/12/2026",
   },
 ];
 
@@ -79,9 +80,9 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
   const reference = `${refPrefix}-2026-${String(newId).padStart(6, "0")}`;
 
   const today = new Date();
-  const dateDebut = today.toISOString().split("T")[0];
+  const dateDebut = formatDate(today.toISOString());
   const endDateObj = new Date(today.setMonth(today.getMonth() + input.dureeMois));
-  const dateFin = endDateObj.toISOString().split("T")[0];
+  const dateFin = formatDate(endDateObj.toISOString());
 
   const newItem: AbonnementListItem = {
     id: newId,
@@ -134,8 +135,8 @@ export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetai
     statut: found?.statut || "ACTIF",
     clientNom: found?.clientNom || "Karim El Amrani",
     parkingNom: found?.parkingNom || "Parking Bab El Had",
-    dateDebut: found?.dateDebut || "2026-01-15",
-    dateFin: found?.dateFin || "2026-07-15",
+    dateDebut: formatDate(found?.dateDebut || "15/01/2026"),
+    dateFin: formatDate(found?.dateFin || "15/07/2026"),
     vehiculeImmatriculation: "12345-A-6",
     planTarifaireNom: found?.type === "STAFF" ? "Pass Exonéré Staff RRM" : "Voiture - 6 mois",
     montantTotal: found?.type === "STAFF" ? 0 : 1200,

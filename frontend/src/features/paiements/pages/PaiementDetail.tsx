@@ -4,6 +4,7 @@ import { Card, Descriptions } from "antd";
 import { getPaiementByIdMock } from "../../../api/paiementsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { modePaiementLabels } from "../../../lib/enums";
+import { formatDate } from "../../../lib/dateUtils";
 
 export function PaiementDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,7 @@ export function PaiementDetail() {
         <Descriptions.Item label="Client">{data.clientNom}</Descriptions.Item>
         <Descriptions.Item label="Montant">{data.montant.toLocaleString("fr-FR")} MAD</Descriptions.Item>
         <Descriptions.Item label="Abonnement">{data.abonnementReference}</Descriptions.Item>
-        <Descriptions.Item label="Date">{data.datePaiement}</Descriptions.Item>
+        <Descriptions.Item label="Date">{formatDate(data.datePaiement)}</Descriptions.Item>
         <Descriptions.Item label="Enregistré par">{data.enregistrePar}</Descriptions.Item>
         {data.numeroCheque && (
           <Descriptions.Item label="N° chèque">{data.numeroCheque}</Descriptions.Item>

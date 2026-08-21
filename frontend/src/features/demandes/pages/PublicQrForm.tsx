@@ -21,6 +21,8 @@ import {
   Typography,
   Checkbox,
   Upload,
+  InputNumber,
+  Segmented,
 } from "antd";
 import {
   QrcodeOutlined,
@@ -44,6 +46,10 @@ import {
   PaperClipOutlined,
   ThunderboltOutlined,
   BulbOutlined,
+  BankOutlined,
+  SolutionOutlined,
+  AuditOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -54,16 +60,17 @@ import { searchSubscriberByCinOrCardMock, type SubscriberRecord } from "../../..
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
 import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
+import { formatDate } from "../../../lib/dateUtils";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const FORFAITS_OPTIONS = [
+const FORFAITS_COURTE_DUREE = [
   {
     id: 1,
     title: "Pass Permanent (24h / 7j)",
     plage: "24h / 7j",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 600,
     badge: "Accès 24/7",
     desc: "Accès permanent jour et nuit au parking sélectionné",
@@ -72,39 +79,71 @@ const FORFAITS_OPTIONS = [
     id: 2,
     title: "Pass Journée (08:00 - 20:00)",
     plage: "08:00 - 20:00",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 420,
     badge: "Diurne",
     desc: "Accès de jour du lundi au samedi de 08:00 à 20:00",
   },
   {
     id: 3,
+    title: "Pass Étendu (08:00 - 22:00)",
+    plage: "08:00 - 22:00",
+    duree: "3 à 12 Mois",
+    priceTTC: 500,
+    badge: "Jour + Soir",
+    desc: "Accès étendu de 08:00 à 22:00 du lundi au samedi",
+  },
+  {
+    id: 4,
     title: "Pass Nuit (19:00 - 08:00)",
     plage: "19:00 - 08:00",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 300,
     badge: "Nocturne",
     desc: "Accès nocturne en soirée et la nuit de 19:00 à 08:00",
   },
   {
-    id: 4,
-    title: "Abonnement Corporate (Flotte)",
-    plage: "Sur mesure",
-    duree: "12 Mois",
-    priceTTC: 5400,
-    badge: "Entreprises",
-    desc: "Abonnement de l'entreprise pour gestion de flotte de véhicules",
-  },
-  {
     id: 5,
     title: "Pass Deux-Roues / Moto",
     plage: "24h / 7j",
-    duree: "1 Mois",
+    duree: "3 à 12 Mois",
     priceTTC: 200,
     badge: "Deux-roues",
     desc: "Abonnement dédié aux motos, scooters et deux-roues",
   },
 ];
+
+const FORFAITS_LONGUE_DUREE = [
+  {
+    id: 101,
+    title: "Formule Jour (08:00 - 20:00)",
+    plage: "08:00 - 20:00",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 500,
+    badge: "500 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Créneau diurne 08:00 à 20:00 (500 DH / mois / personne)",
+  },
+  {
+    id: 102,
+    title: "Formule Étendue (08:00 - 22:00)",
+    plage: "08:00 - 22:00",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 550,
+    badge: "550 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Créneau étendu 08:00 à 22:00 (550 DH / mois / personne)",
+  },
+  {
+    id: 103,
+    title: "Formule Permanence (24h / 7j)",
+    plage: "24h / 7j",
+    duree: "20 Ans (Longue Durée)",
+    priceTTC: 650,
+    badge: "650 DH / mois",
+    desc: "Contrat Longue Durée 20 Ans — Accès garanti 24h / 7j (650 DH / mois / personne)",
+  },
+];
+
+const ALL_FORFAITS = [...FORFAITS_COURTE_DUREE, ...FORFAITS_LONGUE_DUREE];
 
 export function PublicQrForm() {
   const [activeTab, setActiveTab] = useState<string>("form");
@@ -115,6 +154,22 @@ export function PublicQrForm() {
   const [selectedForfait, setSelectedForfait] = useState<number>(1);
   const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
+  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+  const [dureeMois, setDureeMois] = useState<number>(6);
+  const [categorieDuree, setCategorieDuree] = useState<"COURTE" | "LONGUE">("COURTE");
+  const [nombreAbonnements, setNombreAbonnements] = useState<number>(1);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
+  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
+  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
+
+  // Tracking state
+  const [searchRef, setSearchRef] = useState<string>("");
+  const [trackedDemande, setTrackedDemande] = useState<DemandeDetail | null>(null);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
+  const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const handleSelectType = (type: TypeDemande) => {
     setSelectedType(type);
@@ -134,22 +189,47 @@ export function PublicQrForm() {
     }
 
     if (currentStep === 0) {
-      step1Form.setFieldsValue({
-        nom: "El Amrani",
-        prenom: "Karim",
-        cin: "AB123456",
-        email: "karim.demo@rrm.ma",
-        telephone: "0612345678",
-      });
-      setFormData((prev) => ({
-        ...prev,
-        typeClient: "PARTICULIER",
-        nom: "El Amrani",
-        prenom: "Karim",
-        cin: "AB123456",
-        email: "karim.demo@rrm.ma",
-        telephone: "0612345678",
-      }));
+      if (typeClient === "ENTREPRISE") {
+        step1Form.setFieldsValue({
+          raisonSociale: "Société Atlas Trans SARL",
+          ice: "001524389000045",
+          rcEntreprise: "RC 142850 Rabat",
+          ifEntreprise: "IF 40291823",
+          nomRepresentant: "M. Othmane Bennani",
+          fonctionRepresentant: "Responsable Flotte & Logistique",
+          email: "contact.flotte@atlastrans.ma",
+          telephone: "0537123456",
+        });
+        setFormData((prev) => ({
+          ...prev,
+          typeClient: "ENTREPRISE",
+          raisonSociale: "Société Atlas Trans SARL",
+          ice: "001524389000045",
+          rcEntreprise: "RC 142850 Rabat",
+          ifEntreprise: "IF 40291823",
+          nomRepresentant: "M. Othmane Bennani",
+          fonctionRepresentant: "Responsable Flotte & Logistique",
+          email: "contact.flotte@atlastrans.ma",
+          telephone: "0537123456",
+        }));
+      } else {
+        step1Form.setFieldsValue({
+          nom: "El Amrani",
+          prenom: "Karim",
+          cin: "AB123456",
+          email: "karim.demo@rrm.ma",
+          telephone: "0612345678",
+        });
+        setFormData((prev) => ({
+          ...prev,
+          typeClient: "PARTICULIER",
+          nom: "El Amrani",
+          prenom: "Karim",
+          cin: "AB123456",
+          email: "karim.demo@rrm.ma",
+          telephone: "0612345678",
+        }));
+      }
       setCurrentStep(1);
       message.success("[BETA] Étape 0 (Identité) auto-remplie & franchie");
     } else if (currentStep === 1) {
@@ -173,7 +253,7 @@ export function PublicQrForm() {
         ...prev,
         parkingId: 1,
         forfaitId: 1,
-        dureeMois: 12,
+        dureeMois: 6,
       }));
       setCurrentStep(3);
       message.success("[BETA] Étape 2 (Parking & Forfait) auto-remplie & franchie");
@@ -183,20 +263,6 @@ export function PublicQrForm() {
       message.success("[BETA] Conditions acceptées & Ouverture de la modale OTP");
     }
   };
-  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
-  const [dureeMois, setDureeMois] = useState<number>(1);
-  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
-  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
-  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
-
-  // Tracking state
-  const [searchRef, setSearchRef] = useState<string>("");
-  const [trackedDemande, setTrackedDemande] = useState<DemandeDetail | null>(null);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
-  const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
-  const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
 
   const { data: parkings, isLoading: parkingsLoading } = useQuery({
     queryKey: ["public-parkings"],
@@ -274,16 +340,17 @@ export function PublicQrForm() {
   };
 
   const handleFinalSubmit = () => {
-    const forfaitObj = FORFAITS_OPTIONS.find((f) => f.id === selectedForfait);
-    const monthlyPrice = forfaitObj?.priceTTC || 600;
-    const discount = dureeMois === 12 ? 0.9 : 1;
-    const totalTTC = Math.round(monthlyPrice * dureeMois * discount);
+    const forfaitObj = ALL_FORFAITS.find((f) => f.id === selectedForfait);
+    const monthlyPrice = forfaitObj?.priceTTC || 500;
+    const totalTTC = Math.round(monthlyPrice * dureeMois * nombreAbonnements);
 
     const fullData: PublicDemandeInput = {
       ...formData,
       forfaitId: selectedForfait,
       forfaitNom: forfaitObj?.title,
       dureeMois,
+      categorieDuree,
+      nombreAbonnements,
       montantTotal: totalTTC,
       typeDemande,
       typeClient,
@@ -591,107 +658,263 @@ export function PublicQrForm() {
                         {currentStep === 0 && (
                           <Form form={step1Form} layout="vertical">
                             {typeDemande === "NOUVEL_ABONNEMENT" ? (
-                              /* Creation Flow: Manual Input Form */
                               <>
                                 <Alert
-                                  message="Création d'un Nouvel Abonnement — Renseigner vos Coordonnées"
-                                  type="info"
-                                  showIcon
-                                  style={{ marginBottom: 20 }}
-                                />
-                                <Row gutter={16}>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item label="Type de Client" required>
-                                      <Radio.Group
-                                        value={typeClient}
-                                        onChange={(e) => setTypeClient(e.target.value as TypeClient)}
-                                      >
-                                        <Radio value="PARTICULIER">Particulier</Radio>
-                                        <Radio value="ENTREPRISE">Entreprise</Radio>
-                                      </Radio.Group>
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
+                                   message={typeClient === "ENTREPRISE" ? "Dossier Corporate Entreprise — Formulaire Officiel Société & Flotte" : "Création d'un Nouvel Abonnement — Coordonnées Personnelles"}
+                                   type={typeClient === "ENTREPRISE" ? "warning" : "info"}
+                                   showIcon
+                                   style={{ marginBottom: 20 }}
+                                 />
 
-                                {typeClient === "PARTICULIER" ? (
-                                  <Row gutter={16}>
-                                    <Col xs={24} sm={8}>
-                                      <Form.Item name="nom" label="Nom" rules={[{ required: true, message: "Nom requis" }]}>
-                                        <Input placeholder="El Amrani" />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col xs={24} sm={8}>
-                                      <Form.Item name="prenom" label="Prénom" rules={[{ required: true, message: "Prénom requis" }]}>
-                                        <Input placeholder="Karim" />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col xs={24} sm={8}>
-                                      <Form.Item name="cin" label="N° CIN" rules={[{ required: true, message: "CIN requise" }]}>
-                                        <Input placeholder="AB123456" />
-                                      </Form.Item>
-                                    </Col>
-                                  </Row>
-                                ) : (
-                                  <Row gutter={16}>
-                                    <Col xs={24} sm={14}>
-                                      <Form.Item name="raisonSociale" label="Raison Sociale" rules={[{ required: true, message: "Raison sociale requise" }]}>
-                                        <Input placeholder="Société Atlas Trans SARL" />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col xs={24} sm={10}>
-                                      <Form.Item name="ice" label="N° ICE (Entreprise)" rules={[{ required: true, message: "ICE requis" }]}>
-                                        <Input placeholder="001234567000089" />
-                                      </Form.Item>
-                                    </Col>
-                                  </Row>
-                                )}
+                                 {/* Type de Client Card Selector */}
+                                 <div style={{ marginBottom: 24 }}>
+                                   <Text style={{ fontWeight: 600, color: "#334155", display: "block", marginBottom: 10, fontSize: 14 }}>
+                                     Choisissez votre profil de souscription :
+                                   </Text>
+                                   <Row gutter={[16, 16]}>
+                                     <Col xs={24} sm={12}>
+                                       <div
+                                         onClick={() => setTypeClient("PARTICULIER")}
+                                         style={{
+                                           padding: "16px 20px",
+                                           borderRadius: 12,
+                                           border: typeClient === "PARTICULIER" ? "2px solid #0284c7" : "1px solid #cbd5e1",
+                                           backgroundColor: typeClient === "PARTICULIER" ? "#f0f9ff" : "#ffffff",
+                                           cursor: "pointer",
+                                           transition: "all 0.2s ease",
+                                           boxShadow: typeClient === "PARTICULIER" ? "0 4px 12px rgba(2,132,199,0.12)" : "none",
+                                         }}
+                                       >
+                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                           <div
+                                             style={{
+                                               width: 44,
+                                               height: 44,
+                                               borderRadius: "50%",
+                                               backgroundColor: typeClient === "PARTICULIER" ? "#0284c7" : "#e2e8f0",
+                                               color: typeClient === "PARTICULIER" ? "#ffffff" : "#64748b",
+                                               display: "flex",
+                                               alignItems: "center",
+                                               justifyContent: "center",
+                                               fontSize: 20,
+                                             }}
+                                           >
+                                             <UserOutlined />
+                                           </div>
+                                           <div>
+                                             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Client Particulier</div>
+                                             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Personne physique — Souscription personnelle & badge nominatif</div>
+                                           </div>
+                                         </div>
+                                       </div>
+                                     </Col>
+                                     <Col xs={24} sm={12}>
+                                       <div
+                                         onClick={() => setTypeClient("ENTREPRISE")}
+                                         style={{
+                                           padding: "16px 20px",
+                                           borderRadius: 12,
+                                           border: typeClient === "ENTREPRISE" ? "2px solid #0284c7" : "1px solid #cbd5e1",
+                                           backgroundColor: typeClient === "ENTREPRISE" ? "#f0f9ff" : "#ffffff",
+                                           cursor: "pointer",
+                                           transition: "all 0.2s ease",
+                                           boxShadow: typeClient === "ENTREPRISE" ? "0 4px 12px rgba(2,132,199,0.12)" : "none",
+                                         }}
+                                       >
+                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                           <div
+                                             style={{
+                                               width: 44,
+                                               height: 44,
+                                               borderRadius: "50%",
+                                               backgroundColor: typeClient === "ENTREPRISE" ? "#0284c7" : "#e2e8f0",
+                                               color: typeClient === "ENTREPRISE" ? "#ffffff" : "#64748b",
+                                               display: "flex",
+                                               alignItems: "center",
+                                               justifyContent: "center",
+                                               fontSize: 20,
+                                             }}
+                                           >
+                                             <BankOutlined />
+                                           </div>
+                                           <div>
+                                             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Entreprise & Flotte Corporate</div>
+                                             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Personne morale — Compte société, gestion de flotte & facturation centralisée</div>
+                                           </div>
+                                         </div>
+                                       </div>
+                                     </Col>
+                                   </Row>
+                                 </div>
 
-                                <Row gutter={16}>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
-                                      <Input placeholder="client@example.ma" />
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="telephone" label="Téléphone Mobile" rules={[{ required: true, message: "Téléphone requis" }]}>
-                                      <Input placeholder="0661234567" />
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
+                                 {/* FORMULAIRE PARTICULIER */}
+                                 {typeClient === "PARTICULIER" ? (
+                                   <>
+                                     <Divider titlePlacement="left" style={{ margin: "20px 0 16px", fontSize: 13, color: "#0284c7" }}>
+                                       <UserOutlined style={{ marginRight: 6 }} /> Coordonnées du Souscripteur (Personne Physique)
+                                     </Divider>
 
-                                {/* CIN Photos Upload Section */}
-                                <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
-                                  <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
-                                </Divider>
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={8}>
+                                         <Form.Item name="nom" label="Nom de famille" rules={[{ required: true, message: "Nom requis" }]}>
+                                           <Input placeholder="El Amrani" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={8}>
+                                         <Form.Item name="prenom" label="Prénom" rules={[{ required: true, message: "Prénom requis" }]}>
+                                           <Input placeholder="Karim" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={8}>
+                                         <Form.Item name="cin" label="N° CIN (Carte d'Identité)" rules={[{ required: true, message: "CIN requise" }]}>
+                                           <Input placeholder="AB123456" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
 
-                                <Row gutter={16}>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                      <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                        </p>
-                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                          Charger CIN Recto
-                                        </p>
-                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                      </Upload.Dragger>
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} sm={12}>
-                                    <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                      <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                        <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                          <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                        </p>
-                                        <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                          Charger CIN Verso
-                                        </p>
-                                        <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                      </Upload.Dragger>
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="email" label="Adresse Email Personnel" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
+                                           <Input placeholder="karim.elamrani@gmail.com" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="telephone" label="Téléphone Mobile Direct" rules={[{ required: true, message: "Téléphone requis" }]}>
+                                           <Input placeholder="0661234567" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+
+                                     <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
+                                       <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
+                                     </Divider>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                           <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                               <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                             </p>
+                                             <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                               Charger CIN Recto
+                                             </p>
+                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                           </Upload.Dragger>
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                           <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
+                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                               <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                             </p>
+                                             <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                               Charger CIN Verso
+                                             </p>
+                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
+                                           </Upload.Dragger>
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+                                   </>
+                                 ) : (
+                                   /* FORMULAIRE ENTREPRISE & CORPORATE */
+                                   <div style={{ backgroundColor: "#f8fafc", padding: 20, borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                                     <Divider titlePlacement="left" style={{ margin: "0 0 16px", fontSize: 13, color: "#0284c7" }}>
+                                       <BankOutlined style={{ marginRight: 6 }} /> Informations Légales de la Société (Personne Morale)
+                                     </Divider>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={14}>
+                                         <Form.Item name="raisonSociale" label="Raison Sociale / Nom Officiel" rules={[{ required: true, message: "Raison sociale requise" }]}>
+                                           <Input placeholder="Ex: Société Atlas Trans SARL" size="large" prefix={<BankOutlined style={{ color: "#94a3b8" }} />} />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={10}>
+                                         <Form.Item name="ice" label="N° ICE (Identifiant Commun de l'Entreprise)" rules={[{ required: true, message: "ICE 15 chiffres requis" }]}>
+                                           <Input placeholder="Ex: 001524389000045" size="large" prefix={<AuditOutlined style={{ color: "#94a3b8" }} />} />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="rcEntreprise" label="N° Registre de Commerce (RC)">
+                                           <Input placeholder="Ex: RC 142850 Rabat" size="large" prefix={<FileTextOutlined style={{ color: "#94a3b8" }} />} />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="ifEntreprise" label="Identifiant Fiscal (IF) / Patente">
+                                           <Input placeholder="Ex: IF 40291823" size="large" prefix={<SolutionOutlined style={{ color: "#94a3b8" }} />} />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+
+                                     <Divider titlePlacement="left" style={{ margin: "16px 0 16px", fontSize: 13, color: "#0284c7" }}>
+                                       <TeamOutlined style={{ marginRight: 6 }} /> Représentant Légal & Contact Flotte Entreprise
+                                     </Divider>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="nomRepresentant" label="Nom & Prénom du Représentant / Interlocuteur" rules={[{ required: true, message: "Nom du représentant requis" }]}>
+                                           <Input placeholder="Ex: M. Othmane Bennani" size="large" prefix={<UserOutlined style={{ color: "#94a3b8" }} />} />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="fonctionRepresentant" label="Fonction dans l'Entreprise">
+                                           <Input placeholder="Ex: Responsable Flotte & Moyens Généraux" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="email" label="Email Professionnel (Facturation & Alertes)" rules={[{ required: true, type: "email", message: "Email pro valide requis" }]}>
+                                           <Input placeholder="Ex: contact.flotte@atlastrans.ma" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="telephone" label="Téléphone Direct / Fixe Entreprise" rules={[{ required: true, message: "Téléphone direct requis" }]}>
+                                           <Input placeholder="Ex: 0537123456" size="large" />
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+
+                                     <Divider style={{ margin: "16px 0 14px", fontSize: 13, color: "#64748b" }}>
+                                       <PaperClipOutlined style={{ marginRight: 6 }} /> Justificatifs Légaux Société (Photos / Scans PDF)
+                                     </Divider>
+
+                                     <Row gutter={16}>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="rcDocument" label="Scan Extrait RC / Kbis Société" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                           <Upload.Dragger name="rcDocument" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 10, backgroundColor: "#ffffff" }}>
+                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                               <FilePdfOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                             </p>
+                                             <p style={{ margin: "4px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                               Charger Registre de Commerce (RC)
+                                             </p>
+                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Scan officiel (PDF, PNG, JPG)</p>
+                                           </Upload.Dragger>
+                                         </Form.Item>
+                                       </Col>
+                                       <Col xs={24} sm={12}>
+                                         <Form.Item name="iceDocument" label="Attestation ICE / Patente Société" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
+                                           <Upload.Dragger name="iceDocument" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 10, backgroundColor: "#ffffff" }}>
+                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
+                                               <AuditOutlined style={{ fontSize: 24, color: "#0284c7" }} />
+                                             </p>
+                                             <p style={{ margin: "4px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                                               Charger Attestation ICE / IF
+                                             </p>
+                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Attestation fiscale (PDF, PNG, JPG)</p>
+                                           </Upload.Dragger>
+                                         </Form.Item>
+                                       </Col>
+                                     </Row>
+                                   </div>
+                                 )}
                               </>
                             ) : (
                               /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
@@ -932,69 +1155,123 @@ export function PublicQrForm() {
                                 </>
                               )}
 
-                              <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
+                               {/* Quantité d'Abonnements / Badges RFID */}
+                               <div style={{ backgroundColor: "#ffffff", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 16 }}>
+                                 <Row align="middle" justify="space-between" gutter={16}>
+                                   <Col xs={24} sm={15}>
+                                     <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14 }}>
+                                       <IdcardOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Nombre d'Abonnements / Badges RFID Souhaités :
+                                     </div>
+                                     <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                                       {typeClient === "ENTREPRISE"
+                                         ? "Commandez plusieurs abonnements ou badges RFID pour vos collaborateurs / flotte entreprise."
+                                         : "Quantité d'abonnements ou badges RFID à souscrire simultanément."}
+                                     </div>
+                                   </Col>
+                                   <Col xs={24} sm={9} style={{ textAlign: "right" }}>
+                                     <InputNumber
+                                       min={1}
+                                       max={100}
+                                       size="large"
+                                       value={nombreAbonnements}
+                                       onChange={(val) => setNombreAbonnements(val || 1)}
+                                       addonAfter="Abonnement(s)"
+                                       style={{ width: "100%" }}
+                                     />
+                                   </Col>
+                                 </Row>
+                               </div>
+
+                               <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
                                 <div style={{ fontWeight: 600, color: "#334155", marginBottom: 10 }}>
                                   <ClockCircleOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Choisir la Durée d'Engagement / Prolongation :
                                 </div>
-                                <Radio.Group
-                                  value={dureeMois}
-                                  onChange={(e) => setDureeMois(e.target.value)}
-                                  buttonStyle="solid"
-                                  size="large"
-                                  style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-                                >
-                                  <Radio.Button value={1}>1 Mois</Radio.Button>
-                                  <Radio.Button value={3}>3 Mois</Radio.Button>
-                                  <Radio.Button value={6}>6 Mois</Radio.Button>
-                                  <Radio.Button value={12}>
-                                    12 Mois <Tag color="green" style={{ marginLeft: 4 }}>-10% Réduction</Tag>
-                                  </Radio.Button>
+                                <Segmented
+                                   options={[
+                                     { label: "Courte Durée (3 à 12 Mois)", value: "COURTE" },
+                                     { label: "Longue Durée (20 Ans / Concession)", value: "LONGUE" },
+                                   ]}
+                                   value={categorieDuree}
+                                   onChange={(val) => {
+                                     const cat = val as "COURTE" | "LONGUE";
+                                     setCategorieDuree(cat);
+                                     if (cat === "LONGUE") {
+                                       setDureeMois(240);
+                                       setSelectedForfait(101);
+                                     } else {
+                                       setDureeMois(6);
+                                       setSelectedForfait(1);
+                                     }
+                                   }}
+                                   style={{ marginBottom: 14 }}
+                                 />
+
+                                 {categorieDuree === "COURTE" ? (
+                                   <Radio.Group
+                                     value={dureeMois}
+                                     onChange={(e) => setDureeMois(e.target.value)}
+                                     buttonStyle="solid"
+                                     size="large"
+                                     style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+                                   >
+                                     <Radio.Button value={3}>3 Mois</Radio.Button>
+                                     <Radio.Button value={6}>6 Mois</Radio.Button>
+                                     <Radio.Button value={9}>9 Mois</Radio.Button>
+                                     <Radio.Button value={12}>12 Mois (1 An)</Radio.Button>
                                 </Radio.Group>
+                                 ) : (
+                                   <div style={{ padding: "10px 14px", backgroundColor: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", color: "#0369a1", fontWeight: 600, fontSize: 13 }}>
+                                     Abonnement Longue Durée fixe de <strong>20 Ans (240 Mois)</strong> — Droit d'usage privilégié et garantie de place réservée.
+                                   </div>
+                                 )}
+
+                                 {/* Section Formules d'Abonnement avec espacement */}
+                                 <Divider titlePlacement="left" style={{ margin: "28px 0 20px" }}>
+                                   Choisir la Formule d'Abonnement Souhaitée
+                                 </Divider>
+                                 
+                                 <Row gutter={[16, 16]} style={{ marginTop: 12 }}>
+                                 {(categorieDuree === "LONGUE" ? FORFAITS_LONGUE_DUREE : FORFAITS_COURTE_DUREE).map((f) => {
+                                   const isSelected = selectedForfait === f.id;
+                                   return (
+                                     <Col xs={24} sm={12} key={f.id}>
+                                       <Card
+                                         hoverable
+                                         onClick={() => setSelectedForfait(f.id)}
+                                         style={{
+                                           borderColor: isSelected ? "#0284c7" : "#e2e8f0",
+                                           backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
+                                           borderWidth: isSelected ? 2 : 1,
+                                           borderRadius: 10,
+                                           cursor: "pointer",
+                                           position: "relative",
+                                         }}
+                                       >
+                                         {f.badge && (
+                                           <Tag
+                                             color={isSelected ? "blue" : "default"}
+                                             style={{ position: "absolute", top: 12, right: 12 }}
+                                           >
+                                             {f.badge}
+                                           </Tag>
+                                         )}
+                                         <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
+                                         <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
+                                         <div style={{ marginBottom: 8 }}>
+                                           <Tag color="geekblue">
+                                             <ClockCircleOutlined style={{ marginRight: 4 }} />
+                                             {f.plage}
+                                           </Tag>
+                                         </div>
+                                         <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0369a1" }}>
+                                           {f.priceTTC.toLocaleString("fr-FR")} DH <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois / personne</span>
+                                         </div>
+                                       </Card>
+                                     </Col>
+                                   );
+                                 })}
+                                 </Row>
                               </div>
-
-                              <Divider titlePlacement="left">Choisir la Formule d'Abonnement Souhaitée</Divider>
-
-                              <Row gutter={[16, 16]}>
-                                {FORFAITS_OPTIONS.map((f) => {
-                                  const isSelected = selectedForfait === f.id;
-                                  return (
-                                    <Col xs={24} sm={12} key={f.id}>
-                                      <Card
-                                        hoverable
-                                        onClick={() => setSelectedForfait(f.id)}
-                                        style={{
-                                          borderColor: isSelected ? "#0284c7" : "#e2e8f0",
-                                          backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
-                                          borderWidth: isSelected ? 2 : 1,
-                                          borderRadius: 10,
-                                          cursor: "pointer",
-                                          position: "relative",
-                                        }}
-                                      >
-                                        {f.badge && (
-                                          <Tag
-                                            color={isSelected ? "blue" : "default"}
-                                            style={{ position: "absolute", top: 12, right: 12 }}
-                                          >
-                                            {f.badge}
-                                          </Tag>
-                                        )}
-                                        <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
-                                        <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
-                                        <div style={{ marginBottom: 8 }}>
-                                          <Tag color="geekblue">
-                                            <ClockCircleOutlined style={{ marginRight: 4 }} />
-                                            {f.plage}
-                                          </Tag>
-                                        </div>
-                                        <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0369a1" }}>
-                                          {f.priceTTC.toLocaleString("fr-FR")} MAD <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois</span>
-                                        </div>
-                                      </Card>
-                                    </Col>
-                                  );
-                                })}
-                              </Row>
                             </Form>
 
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
@@ -1036,52 +1313,85 @@ export function PublicQrForm() {
                                     <strong>N° Carte Abonné:</strong> <Tag color="gold">{formData.numeroCarteAbonne}</Tag>
                                   </Col>
                                 )}
-                                <Col span={12}>
-                                  <strong>Client:</strong>{" "}
-                                  {typeClient === "PARTICULIER" ? `${formData.prenom} ${formData.nom} (CIN: ${formData.cin})` : `${formData.raisonSociale} (ICE: ${formData.ice})`}
-                                </Col>
-                                <Col span={12}>
-                                  <strong>Email & Tél:</strong> {formData.email} | {formData.telephone}
-                                </Col>
-                                <Col span={12}>
-                                  <strong>Véhicule:</strong> {formData.immatriculation} ({typeVehiculeLabels[formData.typeVehicule || "VOITURE"]})
-                                  {formData.ancienneImmatriculation && (
-                                    <div style={{ fontSize: 12, color: "#64748b" }}>Ancienne plaque : {formData.ancienneImmatriculation}</div>
-                                  )}
-                                </Col>
-                                <Col span={12}>
-                                  <strong>Parking:</strong>{" "}
-                                  {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
-                                  {formData.nouveauParkingId && (
-                                    <div style={{ color: "#d97706", fontWeight: 600 }}>
-                                      <ArrowRightOutlined style={{ marginRight: 4 }} /> Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
-                                    </div>
-                                  )}
-                                </Col>
-                                <Col span={12}>
-                                  <strong>Forfait & Durée:</strong>{" "}
-                                  <Tag color="geekblue">
-                                    {FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.title} ({dureeMois} Mois)
-                                  </Tag>
-                                </Col>
-                                <Col span={12}>
-                                  <strong>Montant Total TTC Calculé:</strong>{" "}
-                                  <strong style={{ fontSize: "1.2rem", color: "#16a34a" }}>
-                                    {Math.round((FORFAITS_OPTIONS.find((f) => f.id === selectedForfait)?.priceTTC || 600) * dureeMois * (dureeMois === 12 ? 0.9 : 1)).toLocaleString("fr-FR")} MAD TTC
-                                  </strong>
-                                  {dureeMois === 12 && <Tag color="green" style={{ marginLeft: 6 }}>10% inclus</Tag>}
-                                </Col>
-                                <Col span={24}>
-                                  <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
-                                    <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Photos Renseignées :</strong>
-                                    <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
-                                      <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
-                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto (Face Avant)</Tag>
-                                      <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso (Face Arrière)</Tag>
-                                    </div>
-                                  </div>
-                                </Col>
+                                 {typeClient === "PARTICULIER" ? (
+                                   <>
+                                     <Col span={12}>
+                                       <strong>Souscripteur (Particulier):</strong> {formData.prenom} {formData.nom}
+                                     </Col>
+                                     <Col span={12}>
+                                       <strong>N° CIN:</strong> <Tag color="blue">{formData.cin}</Tag>
+                                     </Col>
+                                     <Col span={12}>
+                                       <strong>Email & Tél:</strong> {formData.email} | {formData.telephone}
+                                     </Col>
+                                   </>
+                                 ) : (
+                                   <>
+                                     <Col span={12}>
+                                       <strong>Société / Raison Sociale:</strong> <Tag color="orange" style={{ fontWeight: 600 }}>{formData.raisonSociale}</Tag>
+                                     </Col>
+                                     <Col span={12}>
+                                       <strong>Identifiants Fiscaux:</strong> ICE: <code>{formData.ice}</code> {formData.rcEntreprise && `| ${formData.rcEntreprise}`}
+                                     </Col>
+                                     <Col span={12}>
+                                       <strong>Interlocuteur Flotte:</strong> {formData.nomRepresentant || "Responsable Flotte"} {formData.fonctionRepresentant && `(${formData.fonctionRepresentant})`}
+                                     </Col>
+                                     <Col span={12}>
+                                       <strong>Contact Pro:</strong> {formData.email} | {formData.telephone}
+                                     </Col>
+                                   </>
+                                 )}
+                                 <Col span={12}>
+                                   <strong>Véhicule / Flotte:</strong> {formData.immatriculation} ({typeVehiculeLabels[formData.typeVehicule || "VOITURE"]})
+                                   {formData.ancienneImmatriculation && (
+                                     <div style={{ fontSize: 12, color: "#64748b" }}>Ancienne plaque : {formData.ancienneImmatriculation}</div>
+                                   )}
+                                 </Col>
+                                 <Col span={12}>
+                                   <strong>Parking Sélectionné:</strong>{" "}
+                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
+                                   {formData.nouveauParkingId && (
+                                     <div style={{ color: "#d97706", fontWeight: 600 }}>
+                                       <ArrowRightOutlined style={{ marginRight: 4 }} /> Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
+                                     </div>
+                                   )}
+                                 </Col>
+                                 <Col span={12}>
+                                   <strong>Nombre de Badges / Cartes:</strong>{" "}
+                                   <Tag color="purple">{nombreAbonnements} {nombreAbonnements > 1 ? "Badges RFID / Cartes Flotte" : "Badge RFID"}</Tag>
+                                 </Col>
+                                 <Col span={12}>
+                                   <strong>Forfait & Durée:</strong>{" "}
+                                   <Tag color="geekblue">
+                                     {ALL_FORFAITS.find((f) => f.id === selectedForfait)?.title} ({categorieDuree === "LONGUE" ? "20 Ans (Longue Durée)" : `${dureeMois} Mois`})
+                                   </Tag>
+                                 </Col>
+                                 <Col span={12}>
+                                   <strong>Montant Total TTC Calculé:</strong>{" "}
+                                   <strong style={{ fontSize: "1.2rem", color: "#16a34a" }}>
+                                     {Math.round((ALL_FORFAITS.find((f) => f.id === selectedForfait)?.priceTTC || 500) * dureeMois * nombreAbonnements).toLocaleString("fr-FR")} DH TTC
+                                   </strong>
+                                 </Col>
+                                 <Col span={24}>
+                                   <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                                     <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Renseignées :</strong>
+                                     <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                                       {typeClient === "PARTICULIER" ? (
+                                         <>
+                                           <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
+                                           <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
+                                         </>
+                                       ) : (
+                                         <>
+                                           <Tag color="orange"><FilePdfOutlined style={{ marginRight: 4 }} /> Registre de Commerce (RC Société)</Tag>
+                                           <Tag color="orange"><AuditOutlined style={{ marginRight: 4 }} /> Attestation ICE / Patente Fiscale</Tag>
+                                         </>
+                                       )}
+                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto</Tag>
+                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso</Tag>
+                                     </div>
+                                   </div>
+                                 </Col>
                               </Row>
                             </Card>
 
@@ -1394,7 +1704,7 @@ export function PublicQrForm() {
             <p><strong>Client:</strong> {trackedDemande.clientNom}</p>
             <p><strong>Montant Régler:</strong> {trackedDemande.paiementInfo?.montant ?? 600} MAD</p>
             <p><strong>Mode de Paiement:</strong> {trackedDemande.paiementInfo?.modePaiement ?? "ESPECES"}</p>
-            <p><strong>Date de Paiement:</strong> {trackedDemande.paiementInfo?.datePaiement ?? trackedDemande.dateCreation}</p>
+            <p><strong>Date de Paiement:</strong> {formatDate(trackedDemande.paiementInfo?.datePaiement || trackedDemande.dateCreation)}</p>
             <p><strong>Validé Par:</strong> {trackedDemande.paiementInfo?.validePar ?? "Agent Guichet RRM"}</p>
           </div>
         )}
