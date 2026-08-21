@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, AuditOutlined, DollarOutlined } from "@ant-design/icons";
-import { getRecetteByIdMock, validerRecetteMock, transmettreComptabiliteMock, validerEncaissementComptableMock } from "../../../api/recettesMock";
+import { getRecetteByIdMock, markRecetteAsCompletedMock, markRecetteAsReceivedMock } from "../../../api/recettesMock";
 import { useAuth } from "../../../context/AuthContext";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { formatDate } from "../../../lib/dateUtils";
@@ -22,28 +22,19 @@ export function RecetteDetail() {
     enabled: !!recetteId,
   });
 
-  const validerMutation = useMutation({
-    mutationFn: validerRecetteMock,
+  const markCompletedMutation = useMutation({
+    mutationFn: markRecetteAsCompletedMock,
     onSuccess: () => {
-      message.success("Recette hebdomadaire validée par le superviseur !");
+      message.success("Recette finalisée et marquée comme COMPLETED par le Superviseur !");
       queryClient.invalidateQueries({ queryKey: ["recette", recetteId] });
       queryClient.invalidateQueries({ queryKey: ["recettes"] });
     },
   });
 
-  const transmettreMutation = useMutation({
-    mutationFn: transmettreComptabiliteMock,
-    onSuccess: () => {
-      message.success("Bordereau de recette et fonds transmis au Service Financier & Comptabilité !");
-      queryClient.invalidateQueries({ queryKey: ["recette", recetteId] });
-      queryClient.invalidateQueries({ queryKey: ["recettes"] });
-    },
-  });
-
-  const encaissementComptableMutation = useMutation({
-    mutationFn: validerEncaissementComptableMock,
+  const markReceivedMutation = useMutation({
+    mutationFn: markRecetteAsReceivedMock,
     onSuccess: (data) => {
-      message.success(`Encaissement comptable clôturé ! Quittance d'encaissement N° ${data.quittanceNumero} générée.`);
+      message.success(`Recette marquée comme RECEIVED (Reçue par la Comptabilité) ! Quittance N° ${data.quittanceNumero}.`);
       queryClient.invalidateQueries({ queryKey: ["recette", recetteId] });
       queryClient.invalidateQueries({ queryKey: ["recettes"] });
     },
@@ -52,41 +43,23 @@ export function RecetteDetail() {
   if (isLoading) return <Spin size="large" />;
   if (!recette) return <Card>Recette introuvable</Card>;
 
-  const handleValider = () => {
+  const handleMarkAsCompleted = () => {
     Modal.confirm({
-      title: "Validation Superviseur — Arrêté de Caisse",
-      content: `Valider l'arrêté de caisse pour ${recette.parkingNom} (${recette.semaineAnnee}) au montant de ${recette.totalHebdo.toLocaleString("fr-FR")} DH ?`,
-      okText: "Valider l'Arrêté",
+      title: "Finaliser l'Arrêté de Recette (Set to COMPLETED)",
+      content: `Clôturer la collecte en cours pour ${recette.parkingNom} (${recette.semaineAnnee}) et transmettre l'arrêté de caisse (${recette.totalHebdo.toLocaleString("fr-FR")} DH) au statut COMPLETED ?`,
+      okText: "Finaliser & Passer à COMPLETED",
       cancelText: "Annuler",
-      onOk: () => validerMutation.mutateAsync(recette.id),
+      onOk: () => markCompletedMutation.mutateAsync(recette.id),
     });
   };
 
-  const handleTransmettre = () => {
+  const handleMarkAsReceived = () => {
     Modal.confirm({
-      title: "Transmission des Fonds au Service Financier / Comptable",
-      content: (
-        <div>
-          <p>Confirmer la remise physique du bordereau de caisse au service comptabilité :</p>
-          <ul>
-            <li><strong>Total Liquide (Espèces) :</strong> {(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH</li>
-            <li><strong>Total Chèques ({recette.nombreCheques || 0}) :</strong> {(recette.totalCheques || 0).toLocaleString("fr-FR")} DH</li>
-          </ul>
-        </div>
-      ),
-      okText: "Transmettre à la Comptabilité",
+      title: "Confirmer la Réception des Fonds (Set to RECEIVED)",
+      content: `Certifier la réception physique des espèces (${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH) et des ${recette.nombreCheques || 0} chèque(s) par le service comptabilité ?`,
+      okText: "Marquer comme Reçue (RECEIVED)",
       cancelText: "Annuler",
-      onOk: () => transmettreMutation.mutateAsync(recette.id),
-    });
-  };
-
-  const handleValiderEncaissement = () => {
-    Modal.confirm({
-      title: "Validation & Encaissement Comptable (Service Financier)",
-      content: `Certifier la réception des fonds (Espèces & Chèques) pour la ${recette.semaineAnnee} et émettre la Quittance d'Encaissement ?`,
-      okText: "Valider l'Encaissement",
-      cancelText: "Annuler",
-      onOk: () => encaissementComptableMutation.mutateAsync(recette.id),
+      onOk: () => markReceivedMutation.mutateAsync(recette.id),
     });
   };
 
@@ -152,22 +125,32 @@ export function RecetteDetail() {
           </Tag>
         </div>
 
-        {recette.statut === "VALIDEE_COMPTABILITE" && (
+        {recette.statut === "RECEIVED" && (
           <Alert
             type="success"
             showIcon
-            message={`Recette Encaissée & Clôturée par la Comptabilité (Quittance N° ${recette.quittanceNumero || "QUIT-2026-00481"})`}
-            description={`Les fonds en espèces (${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH) et les ${recette.nombreCheques || 0} chèques physiques (${(recette.totalCheques || 0).toLocaleString("fr-FR")} DH) ont été réceptionnés et visés par la comptabilité.`}
+            message={`Statut : RECEIVED — Recette Reçue & Validée par la Comptabilité (Quittance N° ${recette.quittanceNumero || "QUIT-2026-00481"})`}
+            description={`La somme en espèces (${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH) et les ${recette.nombreCheques || 0} chèque(s) physique(s) (${(recette.totalCheques || 0).toLocaleString("fr-FR")} DH) ont été réceptionnés et confirmés par le service comptable.`}
             style={{ marginBottom: 20 }}
           />
         )}
 
-        {recette.statut === "TRANSMIS_COMPTABILITE" && (
+        {recette.statut === "COMPLETED" && (
           <Alert
             type="info"
             showIcon
-            message="Transmis au Service Financier & Comptabilité"
-            description="Le bordereau de remise de caisse et les chèques physiques ont été déposés au service financier. En attente de visé comptable."
+            message="Statut : COMPLETED — Recette Complétée par le Superviseur"
+            description="Le superviseur a complété cette recette et déposé le bordereau. Le comptable peut maintenant la faire passer au statut RECEIVED après vérification des fonds."
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        {recette.statut === "EN_COURS" && (
+          <Alert
+            type="warning"
+            showIcon
+            message="Statut : EN_COURS — Collecte Hebdomadaire Active en Cours"
+            description="Les encaissements quotidiens s'accumulent au niveau du guichet. Le superviseur peut finaliser et clôturer cet arrêté de caisse pour le passer au statut COMPLETED."
             style={{ marginBottom: 20 }}
           />
         )}
@@ -180,12 +163,12 @@ export function RecetteDetail() {
           <Descriptions.Item label="Superviseur Référent">{recette.superviseurNom || "M. Samir El Amrani"}</Descriptions.Item>
           <Descriptions.Item label="Transmission Comptable">{recette.transmisPar || "En attente"}</Descriptions.Item>
           {recette.validePar && (
-            <Descriptions.Item label="Validé par Superviseur">
+            <Descriptions.Item label="Complété par Superviseur">
               {recette.validePar} (le {formatDate(recette.dateValidation)})
             </Descriptions.Item>
           )}
           {recette.comptableNom && (
-            <Descriptions.Item label="Encaissement Comptabilité">
+            <Descriptions.Item label="Reçu par Comptabilité">
               {recette.comptableNom} (le {formatDate(recette.dateEncaissementComptable)})
             </Descriptions.Item>
           )}
@@ -225,40 +208,29 @@ export function RecetteDetail() {
           </Button>
 
           <Space size="middle">
-            {role === "SUPERVISEUR" && recette.statut === "EN_COURS" && (
-              <Button
-                icon={<CheckCircleOutlined />}
-                size="large"
-                loading={validerMutation.isPending}
-                onClick={handleValider}
-              >
-                Viser l'Arrêté Hebdo
-              </Button>
-            )}
-
-            {(role === "SUPERVISEUR" || role === "RESPONSABLE") && (recette.statut === "EN_COURS" || recette.statut === "VALIDEE_SUPERVISEUR") && (
+            {(role === "SUPERVISEUR" || role === "RESPONSABLE") && recette.statut === "EN_COURS" && (
               <Button
                 type="primary"
                 icon={<SendOutlined />}
                 size="large"
-                loading={transmettreMutation.isPending}
-                onClick={handleTransmettre}
+                loading={markCompletedMutation.isPending}
+                onClick={handleMarkAsCompleted}
                 style={{ backgroundColor: "#0284c7" }}
               >
-                Transmettre les Fonds au Service Financier (Comptabilité)
+                Finaliser l'Arrêté & Passer à COMPLETED
               </Button>
             )}
 
-            {(role === "RESPONSABLE" || role === "SUPERVISEUR") && recette.statut === "TRANSMIS_COMPTABILITE" && (
+            {role === "COMPTABLE" && recette.statut === "COMPLETED" && (
               <Button
                 type="primary"
                 icon={<CheckCircleOutlined />}
                 size="large"
-                loading={encaissementComptableMutation.isPending}
-                onClick={handleValiderEncaissement}
+                loading={markReceivedMutation.isPending}
+                onClick={handleMarkAsReceived}
                 style={{ backgroundColor: "#16a34a" }}
               >
-                Valider l'Encaissement Comptable & Émettre Quittance
+                Valider la Réception des Fonds (Set to RECEIVED)
               </Button>
             )}
           </Space>

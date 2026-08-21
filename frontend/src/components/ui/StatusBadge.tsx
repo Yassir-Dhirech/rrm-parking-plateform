@@ -7,12 +7,9 @@ type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
 type StatutCarte = "A_PREPARER" | "A_ACTIVER" | "ACTIVE" | "EXPIREE" | "DESACTIVEE";
  type StatutContrat = 'EN_ATTENTE_SIGNATURE' | 'SIGNE' | 'RESILIE' | 'EXPIRE';
 type StatutRecette = 
-  | "EN_COURS" 
-  | "EN_ATTENTE_TRANSMISSION" 
-  | "TRANSMIS_COMPTABILITE" 
-  | "VALIDEE_SUPERVISEUR" 
-  | "VALIDEE_COMPTABILITE" 
-  | "CLOTUREE";
+  | "EN_COURS"
+  | "COMPLETED" 
+  | "RECEIVED";
 
 type AnyStatut = StatutDemande | 
 StatutAbonnement | StatutPaiement | StatutFacture
@@ -45,11 +42,8 @@ const colorMap: Record<AnyStatut, string> = {
   ACTIVE: "green",
   EN_ATTENTE_SIGNATURE: "gold",
   SIGNE: "green",
-  EN_ATTENTE_TRANSMISSION: "cyan",
-  TRANSMIS_COMPTABILITE: "purple",
-  VALIDEE_SUPERVISEUR: "blue",
-  VALIDEE_COMPTABILITE: "green",
-  CLOTUREE: "green",
+  COMPLETED: "purple",
+  RECEIVED: "green",
 };
 
 const labelMap: Record<AnyStatut, string> = {
@@ -78,11 +72,8 @@ const labelMap: Record<AnyStatut, string> = {
   ACTIVE: "Active",
   EN_ATTENTE_SIGNATURE: "En attente de signature",
   SIGNE: "Signé",
-  EN_ATTENTE_TRANSMISSION: "Prêt à transmettre",
-  TRANSMIS_COMPTABILITE: "Transmis Comptabilité",
-  VALIDEE_SUPERVISEUR: "Validée Superviseur",
-  VALIDEE_COMPTABILITE: "Validée Comptabilité",
-  CLOTUREE: "Clôturée",
+  COMPLETED: "Completed (Complétée par Superviseur)",
+  RECEIVED: "Received (Reçue par Comptabilité)",
 };
 
 interface Props {

@@ -1,9 +1,7 @@
 export type StatutRecette = 
-  | "EN_COURS" 
-  | "EN_ATTENTE_TRANSMISSION" 
-  | "TRANSMIS_COMPTABILITE" 
-  | "VALIDEE_SUPERVISEUR" 
-  | "VALIDEE_COMPTABILITE";
+  | "EN_COURS"
+  | "COMPLETED" 
+  | "RECEIVED";
 
 export interface ChequeRemiseDetail {
   id: number;

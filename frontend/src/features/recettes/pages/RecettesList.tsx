@@ -216,8 +216,8 @@ export function RecettesList() {
         <Col xs={24} sm={6}>
           <Card size="small" style={{ backgroundColor: "#fff7ed", borderColor: "#ffedd5" }}>
             <Statistic
-              title="Transmissions Comptables"
-              value={data?.filter((r) => r.statut === "VALIDEE_COMPTABILITE" || r.statut === "TRANSMIS_COMPTABILITE").length || 0}
+              title="Recettes Complétées / Reçues"
+              value={data?.filter((r) => r.statut === "RECEIVED" || r.statut === "COMPLETED").length || 0}
               suffix={`/ ${data?.length || 0}`}
               prefix={<AuditOutlined style={{ color: "#ea580c" }} />}
               valueStyle={{ color: "#c2410c", fontWeight: 700 }}

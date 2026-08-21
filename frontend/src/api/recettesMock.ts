@@ -16,7 +16,7 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     totalCarte: 9500,
     totalVirement: 1000,
     nombreCheques: 3,
-    statut: "VALIDEE_COMPTABILITE",
+    statut: "RECEIVED",
     superviseurNom: "M. Samir El Amrani",
     validePar: "M. Samir El Amrani (Superviseur)",
     dateValidation: "03/08/2026",
@@ -25,7 +25,7 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     comptableNom: "Mme. Fatine Chraibi (Comptabilité RRM)",
     dateEncaissementComptable: "03/08/2026 14:45",
     quittanceNumero: "QUIT-2026-00481",
-    commentaires: "Versement de 20 000 MAD en espèces et 3 chèques physiques (18 000 MAD) conforme au bordereau de caisse.",
+    commentaires: "Versement de 20 000 MAD en espèces et 3 chèques physiques (18 000 MAD) réceptionné et confirmé par la comptabilité.",
     detailJours: [
       { date: "27/07/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 4000, montantVirement: 0, totalJournee: 7000, nombreTransactions: 24 },
       { date: "28/07/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 3500, montantVirement: 0, totalJournee: 12000, nombreTransactions: 19 },
@@ -55,13 +55,13 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     totalCarte: 7200,
     totalVirement: 800,
     nombreCheques: 2,
-    statut: "TRANSMIS_COMPTABILITE",
+    statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani",
     validePar: "M. Samir El Amrani",
     dateValidation: "10/08/2026",
     transmisPar: "M. Samir El Amrani (Bordereau #BD-2026-089)",
     dateTransmission: "10/08/2026 09:15",
-    commentaires: "Semaine 32 prête pour récolement et encaissement en comptabilité. 12 400 DH liquide + 2 chèques physiques.",
+    commentaires: "Recette complétée par le superviseur et transmise au service financier. 12 400 DH liquide + 2 chèques physiques.",
     detailJours: [
       { date: "03/08/2026", montantEspeces: 2200, montantCheque: 6000, montantCarte: 3800, montantVirement: 0, totalJournee: 12000, nombreTransactions: 20 },
       { date: "04/08/2026", montantEspeces: 1800, montantCheque: 0, montantCarte: 4200, montantVirement: 0, totalJournee: 6000, nombreTransactions: 21 },
@@ -125,28 +125,21 @@ export async function getRecetteByIdMock(id: number): Promise<RecetteHebdoDetail
   );
 }
 
-export async function validerRecetteMock(id: number): Promise<RecetteHebdoDetail> {
+export async function markRecetteAsCompletedMock(id: number): Promise<RecetteHebdoDetail> {
   const recette = mockRecettes.find((r) => r.id === id);
   if (!recette) throw new Error("Recette introuvable");
-  recette.statut = "VALIDEE_SUPERVISEUR";
+  recette.statut = "COMPLETED";
   recette.validePar = "Superviseur RRM";
-  recette.dateValidation = formatDate(new Date().toISOString());
-  return recette;
-}
-
-export async function transmettreComptabiliteMock(id: number): Promise<RecetteHebdoDetail> {
-  const recette = mockRecettes.find((r) => r.id === id);
-  if (!recette) throw new Error("Recette introuvable");
-  recette.statut = "TRANSMIS_COMPTABILITE";
   recette.transmisPar = "Superviseur RRM (Bordereau #BD-" + Math.floor(100 + Math.random() * 900) + ")";
+  recette.dateValidation = formatDate(new Date().toISOString());
   recette.dateTransmission = formatDate(new Date().toISOString());
   return recette;
 }
 
-export async function validerEncaissementComptableMock(id: number): Promise<RecetteHebdoDetail> {
+export async function markRecetteAsReceivedMock(id: number): Promise<RecetteHebdoDetail> {
   const recette = mockRecettes.find((r) => r.id === id);
   if (!recette) throw new Error("Recette introuvable");
-  recette.statut = "VALIDEE_COMPTABILITE";
+  recette.statut = "RECEIVED";
   recette.comptableNom = "Service Financier & Comptabilité RRM";
   recette.dateEncaissementComptable = formatDate(new Date().toISOString());
   recette.quittanceNumero = "QUIT-2026-" + String(Math.floor(Math.random() * 90000) + 10000);
@@ -213,10 +206,12 @@ export async function creerRecetteSupervisorMock(input: {
     totalCarte: 0,
     totalVirement: 0,
     nombreCheques: chequesPaiements.length,
-    statut: "EN_ATTENTE_TRANSMISSION",
+    statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani (Superviseur)",
     validePar: "M. Samir El Amrani (Superviseur)",
     dateValidation: formatDate(new Date().toISOString()),
+    transmisPar: "M. Samir El Amrani (Bordereau #BD-" + Math.floor(100 + Math.random() * 900) + ")",
+    dateTransmission: formatDate(new Date().toISOString()),
     detailJours: [
       {
         date: formatDate(new Date().toISOString()),
