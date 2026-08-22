@@ -20,9 +20,29 @@ export interface Parking {
   code: string;
   adresse: string;
   zone?: string;
-  capaciteTotale: number;
+  capaciteTotale: number; // Ex: 450 places
   placesReserveesAbonnes: number;
-  capaciteAbonnement?: number;
+
+  // Répartition par pourcentages configurés par le Responsable
+  pourcentageTickets: number; // Ex: 50%
+  pourcentageAbonnements: number; // Ex: 50%
+  pourcentageCorporate: number; // Ex: 60% des abonnements pour les entreprises
+  pourcentageParticulier: number; // Ex: 40% des abonnements pour les particuliers
+
+  // Quotas calculés en nombre de places
+  quotaTickets: number; // Math.round(capaciteTotale * pourcentageTickets / 100)
+  quotaAbonnementsTotal: number; // Math.round(capaciteTotale * pourcentageAbonnements / 100)
+  quotaCorporate: number; // Math.round(quotaAbonnementsTotal * pourcentageCorporate / 100)
+  quotaParticulier: number; // Math.round(quotaAbonnementsTotal * pourcentageParticulier / 100)
+
+  // Nombre d'abonnements actifs occupant une place (Occupation réelle)
+  abonnementsParticulierActifs: number; // Ex: 42
+  abonnementsCorporateActifs: number; // Ex: 78
+
+  // Places restantes calculées
+  placesRestantesParticulier: number; // quotaParticulier - abonnementsParticulierActifs
+  placesRestantesCorporate: number; // quotaCorporate - abonnementsCorporateActifs
+
   actif: boolean;
   verrouille?: boolean;
   motifVerrouillage?: string;

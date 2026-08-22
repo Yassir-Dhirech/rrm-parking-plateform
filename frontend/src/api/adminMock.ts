@@ -8,11 +8,128 @@ export const mockUtilisateurs: Utilisateur[] = [
   { id: 4, nom: "Tazi", prenom: "Fatima", email: "f.tazi@rrm.ma", role: "COMPTABLE", actif: true, dateCreation: "20/01/2026" },
 ];
 
+// Helper to recalculate Quotas and Remaining Places for a Parking
+export function recalculerQuotasParking(p: Parking): Parking {
+  const quotaTickets = Math.round(p.capaciteTotale * (p.pourcentageTickets / 100));
+  const quotaAbonnementsTotal = Math.round(p.capaciteTotale * (p.pourcentageAbonnements / 100));
+  const quotaCorporate = Math.round(quotaAbonnementsTotal * (p.pourcentageCorporate / 100));
+  const quotaParticulier = Math.round(quotaAbonnementsTotal * (p.pourcentageParticulier / 100));
+
+  const placesRestantesParticulier = Math.max(0, quotaParticulier - p.abonnementsParticulierActifs);
+  const placesRestantesCorporate = Math.max(0, quotaCorporate - p.abonnementsCorporateActifs);
+
+  return {
+    ...p,
+    placesReserveesAbonnes: quotaAbonnementsTotal,
+    quotaTickets,
+    quotaAbonnementsTotal,
+    quotaCorporate,
+    quotaParticulier,
+    placesRestantesParticulier,
+    placesRestantesCorporate,
+  };
+}
+
 export const mockParkings: Parking[] = [
-  { id: 1, code: "PRK-AGD", nom: "Parking Agdal Gare", adresse: "Avenue Hajj Ahmed Balafrej, Rabat", capaciteTotale: 450, placesReserveesAbonnes: 150, actif: true },
-  { id: 2, code: "PRK-HSN", nom: "Parking Hassan II", adresse: "Boulevard Hassan II, Rabat", capaciteTotale: 300, placesReserveesAbonnes: 100, actif: true },
-  { id: 3, code: "PRK-BAB", nom: "Parking Bab El Had", adresse: "Place Bab El Had, Rabat", capaciteTotale: 200, placesReserveesAbonnes: 50, actif: true },
+  recalculerQuotasParking({
+    id: 1,
+    code: "PRK-AGD",
+    nom: "Parking Agdal Gare",
+    adresse: "Avenue Hajj Ahmed Balafrej, Rabat",
+    capaciteTotale: 450,
+    placesReserveesAbonnes: 225,
+    pourcentageTickets: 50,
+    pourcentageAbonnements: 50,
+    pourcentageCorporate: 60,
+    pourcentageParticulier: 40,
+    quotaTickets: 225,
+    quotaAbonnementsTotal: 225,
+    quotaCorporate: 135,
+    quotaParticulier: 90,
+    abonnementsParticulierActifs: 42,
+    abonnementsCorporateActifs: 78,
+    placesRestantesParticulier: 48,
+    placesRestantesCorporate: 57,
+    actif: true,
+  }),
+  recalculerQuotasParking({
+    id: 2,
+    code: "PRK-HSN",
+    nom: "Parking Hassan II",
+    adresse: "Boulevard Hassan II, Rabat",
+    capaciteTotale: 300,
+    placesReserveesAbonnes: 150,
+    pourcentageTickets: 50,
+    pourcentageAbonnements: 50,
+    pourcentageCorporate: 60,
+    pourcentageParticulier: 40,
+    quotaTickets: 150,
+    quotaAbonnementsTotal: 150,
+    quotaCorporate: 90,
+    quotaParticulier: 60,
+    abonnementsParticulierActifs: 28,
+    abonnementsCorporateActifs: 45,
+    placesRestantesParticulier: 32,
+    placesRestantesCorporate: 45,
+    actif: true,
+  }),
+  recalculerQuotasParking({
+    id: 3,
+    code: "PRK-BAB",
+    nom: "Parking Bab El Had",
+    adresse: "Place Bab El Had, Rabat",
+    capaciteTotale: 200,
+    placesReserveesAbonnes: 100,
+    pourcentageTickets: 50,
+    pourcentageAbonnements: 50,
+    pourcentageCorporate: 50,
+    pourcentageParticulier: 50,
+    quotaTickets: 100,
+    quotaAbonnementsTotal: 100,
+    quotaCorporate: 50,
+    quotaParticulier: 50,
+    abonnementsParticulierActifs: 18,
+    abonnementsCorporateActifs: 22,
+    placesRestantesParticulier: 32,
+    placesRestantesCorporate: 28,
+    actif: true,
+  }),
 ];
+
+// Helper to decrement remaining capacity when a new subscription is added
+export function reserverPlaceParkingMock(
+  parkingId: number,
+  typeClient: "PARTICULIER" | "ENTREPRISE",
+  nombreAbonnements: number = 1
+): { success: boolean; message?: string; placesRestantes?: number } {
+  const parkingIndex = mockParkings.findIndex((p) => p.id === parkingId);
+  if (parkingIndex === -1) {
+    return { success: true, placesRestantes: 50 };
+  }
+
+  const p = mockParkings[parkingIndex];
+  if (typeClient === "ENTREPRISE") {
+    if (p.placesRestantesCorporate < nombreAbonnements) {
+      return {
+        success: false,
+        message: `Capacité Corporate insuffisante dans ${p.nom} (Quota: ${p.quotaCorporate}, Inscrits: ${p.abonnementsCorporateActifs}, Demande: ${nombreAbonnements}, Places Restantes: ${p.placesRestantesCorporate}).`,
+      };
+    }
+    p.abonnementsCorporateActifs += nombreAbonnements;
+    mockParkings[parkingIndex] = recalculerQuotasParking(p);
+    return { success: true, placesRestantes: mockParkings[parkingIndex].placesRestantesCorporate };
+  } else {
+    if (p.placesRestantesParticulier < nombreAbonnements) {
+      return {
+        success: false,
+        message: `Capacité Particulier insuffisante dans ${p.nom} (Quota: ${p.quotaParticulier}, Inscrits: ${p.abonnementsParticulierActifs}, Demande: ${nombreAbonnements}, Places Restantes: ${p.placesRestantesParticulier}).`,
+      };
+    }
+    p.abonnementsParticulierActifs += nombreAbonnements;
+    mockParkings[parkingIndex] = recalculerQuotasParking(p);
+    return { success: true, placesRestantes: mockParkings[parkingIndex].placesRestantesParticulier };
+  }
+}
 
 export const mockTarifs: PlanTarifaire[] = [
   { id: 1, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 500, tarifTTC: 600, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
