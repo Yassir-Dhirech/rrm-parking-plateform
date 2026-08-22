@@ -417,44 +417,53 @@ export function ParkingsList() {
 
       {/* Modal 1: Ajouter un Parking */}
       <Modal
-        title="Ajouter un Nouveau Parking — Rabat Région Mobilité"
+        title={
+          <span>
+            <PlusOutlined style={{ color: "#0284c7" }} /> Ajouter un Nouveau Parking — Rabat Région Mobilité
+          </span>
+        }
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
-        okText="Valider & Créer"
+        okText="Valider & Créer le Parking"
         cancelText="Annuler"
+        width={680}
       >
-        <Form form={createForm} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
+        <Form
+          form={createForm}
+          layout="vertical"
+          initialValues={{
+            capaciteTotale: 450,
+            pourcentageTickets: 50,
+            pourcentageAbonnements: 50,
+            pourcentageCorporate: 60,
+            pourcentageParticulier: 40,
+            latitude: 34.02088,
+            longitude: -6.84165,
+          }}
+          onFinish={(v) => createMutation.mutate(v)}
+        >
+          <Divider titlePlacement="left" style={{ margin: "4px 0 16px" }}>
+            <EnvironmentOutlined style={{ color: "#0284c7" }} /> 1. Identification & Localisation GPS
+          </Divider>
+
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="code" label="Code Parking" rules={[{ required: true, message: "Code requis" }]}>
-                <Input placeholder="PRK-AGD" />
+              <Form.Item name="code" label="Code Identifiant Unique" rules={[{ required: true, message: "Code requis (ex: PRK-AGD)" }]}>
+                <Input placeholder="ex: PRK-AGD" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="nom" label="Nom du Parking" rules={[{ required: true, message: "Nom requis" }]}>
-                <Input placeholder="Parking Agdal Gare" />
+              <Form.Item name="nom" label="Nom Officiel du Parking" rules={[{ required: true, message: "Nom requis" }]}>
+                <Input placeholder="ex: Parking Agdal Gare" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item name="adresse" label="Adresse Physique" rules={[{ required: true }]}>
-            <Input placeholder="Avenue Hajj Ahmed Balafrej, Rabat" />
+          <Form.Item name="adresse" label="Adresse Physique Complète" rules={[{ required: true, message: "Adresse requise" }]}>
+            <Input placeholder="ex: Avenue Hajj Ahmed Balafrej, Rabat" />
           </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="capaciteTotale" label="Capacité Totale" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={1} placeholder="450" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="placesReserveesAbonnes" label="Quota Places Abonnés" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} placeholder="150" />
-              </Form.Item>
-            </Col>
-          </Row>
 
           <Row gutter={16}>
             <Col span={12}>
@@ -465,6 +474,44 @@ export function ParkingsList() {
             <Col span={12}>
               <Form.Item name="longitude" label="Longitude GPS (Google Maps)">
                 <InputNumber style={{ width: "100%" }} step={0.0001} placeholder="-6.84165" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider titlePlacement="left" style={{ margin: "16px 0 16px" }}>
+            <PieChartOutlined style={{ color: "#0284c7" }} /> 2. Capacité Globale & Quotas d'Attribution
+          </Divider>
+
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="capaciteTotale" label="Capacité Globale" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={10} max={5000} placeholder="450" size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="pourcentageTickets" label="% Réservé Tickets " rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="pourcentageAbonnements" label="% Réservé Abonnements Total" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="pourcentageParticulier" label="% Quota Abonnements Particuliers" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
           </Row>
@@ -487,7 +534,7 @@ export function ParkingsList() {
         width={650}
       >
         <Alert
-          message="Répartition Stratégique de la Capacité (Responsable Exploitation)"
+          message="Répartition Stratégique de la Capacité"
           description="Fixez les pourcentages d'attribution du parking. Chaque nouvelle souscription décrémente automatiquement le nombre de places restantes."
           type="info"
           showIcon
@@ -530,7 +577,7 @@ export function ParkingsList() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="pourcentageTickets" label="% Reserve Tickets (Rotation / Passagers)" rules={[{ required: true }]}>
+              <Form.Item name="pourcentageTickets" label="% Reserve Tickets" rules={[{ required: true }]}>
                 <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
@@ -547,7 +594,7 @@ export function ParkingsList() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate (Flottes)" rules={[{ required: true }]}>
+              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate" rules={[{ required: true }]}>
                 <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
@@ -592,39 +639,88 @@ export function ParkingsList() {
 
       {/* Modal 2: Modifier les Informations d'un Parking */}
       <Modal
-        title={`Modifier le Parking: ${selectedParking?.nom}`}
+        title={
+          <span>
+            <EditOutlined style={{ color: "#0284c7" }} /> Modifier les Caractéristiques du Parking: {selectedParking?.nom}
+          </span>
+        }
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
         onOk={() => editForm.submit()}
         confirmLoading={editMutation.isPending}
         okText="Enregistrer les modifications"
         cancelText="Annuler"
+        width={680}
       >
         <Form form={editForm} layout="vertical" onFinish={(v) => editMutation.mutate(v)}>
+          <Divider titlePlacement="left" style={{ margin: "4px 0 16px" }}>
+            <EnvironmentOutlined style={{ color: "#0284c7" }} /> 1. Identification & Localisation GPS
+          </Divider>
+
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="code" label="Code Parking" rules={[{ required: true }]}>
+              <Form.Item name="code" label="Code Identifiant Unique" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="nom" label="Nom" rules={[{ required: true }]}>
+              <Form.Item name="nom" label="Nom Officiel du Parking" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="adresse" label="Adresse" rules={[{ required: true }]}>
+
+          <Form.Item name="adresse" label="Adresse Physique Complète" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
+
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="capaciteTotale" label="Capacité Totale" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={1} />
+              <Form.Item name="latitude" label="Latitude GPS (Google Maps)">
+                <InputNumber style={{ width: "100%" }} step={0.0001} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="placesReserveesAbonnes" label="Quota Abonnés" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} />
+              <Form.Item name="longitude" label="Longitude GPS (Google Maps)">
+                <InputNumber style={{ width: "100%" }} step={0.0001} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider titlePlacement="left" style={{ margin: "16px 0 16px" }}>
+            <PieChartOutlined style={{ color: "#0284c7" }} /> 2. Capacité Globale & Quotas d'Attribution
+          </Divider>
+
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="capaciteTotale" label="Capacité Globale (Places)" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={10} max={5000} size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="pourcentageTickets" label="% Reserve Tickets (Rotation Passagers)" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="pourcentageAbonnements" label="% Réservé Abonnements Total" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate (Flottes)" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="pourcentageParticulier" label="% Quota Abonnements Particuliers" rules={[{ required: true }]}>
+                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
           </Row>
