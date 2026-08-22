@@ -14,10 +14,9 @@ export interface GlobalFilters {
 interface GlobalFilterBarProps {
   filters: GlobalFilters;
   onChange: (filters: GlobalFilters) => void;
-  statutOptions?: { value: string; label: string }[];
 }
 
-export function GlobalFilterBar({ filters, onChange, statutOptions }: GlobalFilterBarProps) {
+export function GlobalFilterBar({ filters, onChange }: GlobalFilterBarProps) {
   const { data: parkings } = useQuery({
     queryKey: ["admin_parkings"],
     queryFn: getParkingsMock,
@@ -37,32 +36,11 @@ export function GlobalFilterBar({ filters, onChange, statutOptions }: GlobalFilt
         {/* Filtre par Parking */}
         <Select
           placeholder="Tous les Parkings"
-          style={{ width: 220 }}
+          style={{ width: 240 }}
           allowClear
           value={filters.parkingId}
           onChange={(val) => onChange({ ...filters, parkingId: val })}
           options={parkings?.map((p) => ({ value: p.id, label: p.nom }))}
-        />
-
-        {/* Filtre par Statut */}
-        <Select
-          placeholder="Tous les statuts"
-          style={{ width: 200 }}
-          allowClear
-          value={filters.statut}
-          onChange={(val) => onChange({ ...filters, statut: val })}
-          options={
-            statutOptions && statutOptions.length > 0
-              ? statutOptions
-              : [
-                  { value: "EN_COURS", label: "En Cours" },
-                  { value: "SOUMISE", label: "Soumise" },
-                  { value: "VALIDEE", label: "Validée" },
-                  { value: "VALIDEE_SUPERVISEUR", label: "Validée Superviseur" },
-                  { value: "EN_ATTENTE_SIGNATURE", label: "En Attente Signature" },
-                  { value: "SIGNE", label: "Signé" },
-                ]
-          }
         />
 
         {/* Filtre par Période / Plage de dates */}

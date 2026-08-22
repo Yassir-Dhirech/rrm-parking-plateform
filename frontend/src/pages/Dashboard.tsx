@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Row, Col, Card, Statistic, Table, Button, Space } from "antd";
+import { Row, Col, Card, Statistic, Table, Button, Space, Tag, Progress } from "antd";
 import {
   FileTextOutlined,
   CreditCardOutlined,
@@ -15,6 +15,7 @@ import {
   BankOutlined,
   ExclamationCircleOutlined,
   ThunderboltOutlined,
+  PieChartOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ import { RoleCharts } from "../components/charts/RoleCharts";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
+import { getParkingsMock } from "../api/adminMock";
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -41,6 +43,12 @@ export function Dashboard() {
   const { data: recettes = [] } = useQuery({ queryKey: ["recettes"], queryFn: getRecettesMock });
   const { data: contrats = [] } = useQuery({ queryKey: ["contrats"], queryFn: getContratsMock });
   const { data: demandes = [] } = useQuery({ queryKey: ["demandes"], queryFn: getDemandesMock });
+  const { data: parkingsList = [] } = useQuery({ queryKey: ["admin_parkings"], queryFn: getParkingsMock });
+
+  const filteredParkings = parkingsList.filter((p) => {
+    if (filters.parkingId && p.id !== filters.parkingId) return false;
+    return true;
+  });
 
   // Application des filtres globaux
   const filteredRecettes = recettes.filter((r) => {
@@ -160,6 +168,96 @@ export function Dashboard() {
 
       {/* Graphiques Interactifs Personnalisés par Rôle */}
       <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} />
+
+      {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
+      {(role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") && (
+        <Card
+          title={
+            <Space>
+              <PieChartOutlined style={{ color: "#0284c7" }} />
+              <span>Places Libres d'Abonnements par Parking (Temps Réel)</span>
+            </Space>
+          }
+          style={{ borderRadius: 12 }}
+        >
+          <Table
+            dataSource={filteredParkings}
+            rowKey="id"
+            pagination={false}
+            size="middle"
+            columns={[
+              {
+                title: "Parking & Code",
+                key: "parking",
+                render: (_, record) => (
+                  <div>
+                    <strong style={{ fontSize: 14 }}>{record.nom}</strong>
+                    <Space style={{ marginTop: 2, display: "block" }}>
+                      <Tag color="blue" style={{ fontSize: 11, fontWeight: 600 }}>{record.code}</Tag>
+                      <span style={{ fontSize: 12, color: "#64748b" }}>{record.adresse}</span>
+                    </Space>
+                  </div>
+                ),
+              },
+              {
+                title: "Places Libres — Particuliers (Normal)",
+                key: "dispoParticulier",
+                render: (_, record) => {
+                  const libres = record.placesRestantesParticulier ?? 0;
+                  const totalQuota = record.quotaParticulier ?? 90;
+                  const occup = record.abonnementsParticulierActifs ?? 0;
+                  const pctOccup = Math.round((occup / (totalQuota || 1)) * 100);
+                  const colorTag = libres === 0 ? "red" : libres <= 10 ? "gold" : "green";
+
+                  return (
+                    <div style={{ maxWidth: 220 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <Tag color={colorTag} style={{ fontWeight: 700, fontSize: 12.5 }}>
+                          <UserOutlined style={{ marginRight: 4 }} /> {libres} places libres
+                        </Tag>
+                        <span style={{ fontSize: 11.5, color: "#475569" }}>Quota: {totalQuota}</span>
+                      </div>
+                      <Progress percent={pctOccup} size="small" strokeColor={libres === 0 ? "#ef4444" : "#0284c7"} />
+                    </div>
+                  );
+                },
+              },
+              {
+                title: "Places Libres — Corporate (Flottes)",
+                key: "dispoCorporate",
+                render: (_, record) => {
+                  const libres = record.placesRestantesCorporate ?? 0;
+                  const totalQuota = record.quotaCorporate ?? 135;
+                  const occup = record.abonnementsCorporateActifs ?? 0;
+                  const pctOccup = Math.round((occup / (totalQuota || 1)) * 100);
+                  const colorTag = libres === 0 ? "red" : libres <= 10 ? "gold" : "purple";
+
+                  return (
+                    <div style={{ maxWidth: 220 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <Tag color={colorTag} style={{ fontWeight: 700, fontSize: 12.5 }}>
+                          <BankOutlined style={{ marginRight: 4 }} /> {libres} places libres
+                        </Tag>
+                        <span style={{ fontSize: 11.5, color: "#475569" }}>Quota: {totalQuota}</span>
+                      </div>
+                      <Progress percent={pctOccup} size="small" strokeColor={libres === 0 ? "#ef4444" : "#9333ea"} />
+                    </div>
+                  );
+                },
+              },
+              {
+                title: "Statut d'Accès",
+                key: "statut",
+                render: (_, record) => {
+                  if (!record.actif) return <Tag color="red">Désactivé</Tag>;
+                  if (record.verrouille) return <Tag color="volcano">Sous Maintenance</Tag>;
+                  return <Tag color="green">Disponible</Tag>;
+                },
+              },
+            ]}
+          />
+        </Card>
+      )}
 
       {/* Vues Métier & Raccourcis Spécifiques */}
       <Row gutter={[16, 16]}>
