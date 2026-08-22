@@ -1,5 +1,6 @@
 import type { AbonnementListItem, AbonnementDetail, TypeAbonnement } from "../features/abonnements/types";
 import { formatDate } from "../lib/dateUtils";
+import { reserverPlaceParkingMock } from "./adminMock";
 
 const mockAbonnements: AbonnementListItem[] = [
   {
@@ -94,6 +95,9 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
     dateDebut,
     dateFin,
   };
+
+  const typeClientTarget = input.type === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER";
+  reserverPlaceParkingMock(1, typeClientTarget, 1);
 
   mockAbonnements.unshift(newItem);
   return newItem;

@@ -57,6 +57,7 @@ import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
 import { searchSubscriberByCinOrCardMock, type SubscriberRecord } from "../../../api/subscribersMock";
+import { reserverPlaceParkingMock } from "../../../api/adminMock";
 import { type PublicDemandeInput, type DemandeDetail } from "../types";
 import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
@@ -273,6 +274,8 @@ export function PublicQrForm() {
     mutationFn: submitPublicDemande,
     onSuccess: (result) => {
       setSubmittedReference(result.reference);
+      const targetType: "PARTICULIER" | "ENTREPRISE" = typeClient === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER";
+      reserverPlaceParkingMock(formData.parkingId || 1, targetType, nombreAbonnements);
       message.success("Votre demande a été soumise avec succès !");
     },
     onError: () => {
