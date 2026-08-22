@@ -1,9 +1,11 @@
-import { useParams } from "react-router-dom";
-import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert } from "antd";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert, Input, Tooltip } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, AuditOutlined, DollarOutlined } from "@ant-design/icons";
-import { getRecetteByIdMock, markRecetteAsCompletedMock, markRecetteAsReceivedMock } from "../../../api/recettesMock";
+import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, AuditOutlined, DollarOutlined, StopOutlined, LinkOutlined, UserOutlined } from "@ant-design/icons";
+import { getRecetteByIdMock, markRecetteAsCompletedMock, markRecetteAsReceivedMock, rejeterChequeEtSuspendreCarteMock } from "../../../api/recettesMock";
 import { useAuth } from "../../../context/AuthContext";
+import { roleConfig } from "../../../lib/roleConfig";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { formatDate } from "../../../lib/dateUtils";
 import type { RecetteJournee, ChequeRemiseDetail } from "../types";
@@ -98,17 +100,100 @@ export function RecetteDetail() {
     },
   ];
 
+  const [selectedCheque, setSelectedCheque] = useState<ChequeRemiseDetail | null>(null);
+  const [isRejetModalOpen, setIsRejetModalOpen] = useState(false);
+  const [motifRejetInput, setMotifRejetInput] = useState("");
+
+  const rejeterChequeMutation = useMutation({
+    mutationFn: (values: { chequeId: number; motifRejet: string }) =>
+      rejeterChequeEtSuspendreCarteMock({ recetteId: recette.id, chequeId: values.chequeId, motifRejet: values.motifRejet }),
+    onSuccess: () => {
+      message.warning("Chèque marqué comme REJETÉ. L'abonnement et la carte d'accès ont été automatiquement suspendus !");
+      queryClient.invalidateQueries({ queryKey: ["recette", recetteId] });
+      setIsRejetModalOpen(false);
+      setMotifRejetInput("");
+    },
+  });
+
+  const handleOpenRejetModal = (cheque: ChequeRemiseDetail) => {
+    setSelectedCheque(cheque);
+    setMotifRejetInput("");
+    setIsRejetModalOpen(true);
+  };
+
+  const navigate = useNavigate();
+  const basePath = role ? roleConfig[role].homePath : "";
+  const canAccessAbonnements = role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "ADMIN_SI";
+
   const columnsCheques = [
-    { title: "N° Paiement", dataIndex: "referencePaiement", key: "referencePaiement", render: (r: string) => <Tag color="blue">{r}</Tag> },
-    { title: "N° Chèque Physique", dataIndex: "numeroCheque", key: "numeroCheque", render: (c: string) => <strong>{c}</strong> },
-    { title: "Banque Émettrice", dataIndex: "banque", key: "banque" },
-    { title: "Tireur / Émetteur", dataIndex: "emetteur", key: "emetteur" },
-    { title: "Date Recouvrement", dataIndex: "datePaiement", key: "datePaiement", render: (d: string) => formatDate(d) },
+    { title: "N° Paiement", dataIndex: "referencePaiement", key: "referencePaiement", width: 130, render: (r: string) => <Tag color="blue">{r}</Tag> },
+    { title: "N° Chèque Physique", dataIndex: "numeroCheque", key: "numeroCheque", width: 140, render: (c: string) => <strong>{c}</strong> },
+    { title: "Banque Émettrice", dataIndex: "banque", key: "banque", width: 140 },
     {
-      title: "Montant du Chèque",
+      title: "Client / Émetteur",
+      dataIndex: "emetteur",
+      key: "emetteur",
+      width: 180,
+      render: (e: string, record: ChequeRemiseDetail) =>
+        canAccessAbonnements ? (
+          <Button
+            type="link"
+            style={{ padding: 0, fontWeight: 600, height: "auto", color: "#0284c7" }}
+            onClick={() => navigate(`${basePath}/abonnements/${record.id || 1}`)}
+          >
+            <UserOutlined style={{ marginRight: 4 }} />
+            {e}
+          </Button>
+        ) : (
+          <span>
+            <UserOutlined style={{ marginRight: 4 }} />
+            {e}
+          </span>
+        ),
+    },
+    { title: "Date Recouvrement", dataIndex: "datePaiement", key: "datePaiement", width: 130, render: (d: string) => formatDate(d) },
+    {
+      title: "Montant Chèque",
       dataIndex: "montant",
       key: "montant",
-      render: (v: number) => <strong style={{ color: "#7e22ce" }}>{v.toLocaleString("fr-FR")} DH TTC</strong>,
+      width: 130,
+      render: (v: number) => <strong style={{ color: "#7e22ce" }}>{v.toLocaleString("fr-FR")} DH</strong>,
+    },
+    
+    {
+      title: "Action",
+      key: "actionsNavigation",
+      width: 190,
+      render: (_: unknown, record: ChequeRemiseDetail) => (
+        <Space wrap>
+          {canAccessAbonnements && (
+            <Tooltip title="Consulter la fiche de l'abonné et sa carte d'accès RFID">
+              <Button
+                size="small"
+                icon={<LinkOutlined />}
+                onClick={() => navigate(`${basePath}/abonnements/${record.id || 1}`)}
+              >
+                Fiche Abonné
+              </Button>
+            </Tooltip>
+          )}
+
+          {role === "COMPTABLE" && (
+            record.statut === "REJETE" ? (
+              <Tag color="volcano" style={{ fontSize: 11 }}>Carte Suspendue</Tag>
+            ) : (
+              <Button
+                danger
+                size="small"
+                icon={<StopOutlined />}
+                onClick={() => handleOpenRejetModal(record)}
+              >
+                Rejeter & Suspendre Carte
+              </Button>
+            )
+          )}
+        </Space>
+      ),
     },
   ];
 
@@ -245,6 +330,7 @@ export function RecetteDetail() {
             dataSource={recette.chequesRemis}
             rowKey="id"
             pagination={false}
+            scroll={{ x: "max-content" }}
           />
         </Card>
       )}
@@ -256,8 +342,65 @@ export function RecetteDetail() {
           dataSource={recette.detailJours}
           rowKey="date"
           pagination={false}
+          scroll={{ x: "max-content" }}
         />
       </Card>
+
+      {/* Modal Rejet Chèque & Suspension Carte (Comptabilité) */}
+      <Modal
+        title={
+          <Space>
+            <StopOutlined style={{ color: "#ef4444" }} />
+            <span>Signalement Chèque Impayé & Suspension de la Carte d'Accès</span>
+          </Space>
+        }
+        open={isRejetModalOpen}
+        onCancel={() => setIsRejetModalOpen(false)}
+        onOk={() => {
+          if (!motifRejetInput.trim()) {
+            message.error("Veuillez spécifier le motif du rejet par la banque.");
+            return;
+          }
+          if (selectedCheque) {
+            rejeterChequeMutation.mutate({ chequeId: selectedCheque.id, motifRejet: motifRejetInput });
+          }
+        }}
+        confirmLoading={rejeterChequeMutation.isPending}
+        okText="Confirmer le Rejet & Suspendre la Carte"
+        okButtonProps={{ danger: true }}
+        cancelText="Annuler"
+      >
+        <Alert
+          type="error"
+          showIcon
+          message="Présomption de Validité Lelevée — Procédure d'Impayé"
+          description="Les chèques sont présumés valides à la remise pour délivrer la carte d'accès. La confirmation du rejet par la banque entraînera la SUSPENSION IMMÉDIATE de la carte et de l'abonnement associé, et transmettra une alerte d'urgence à l'Agent et au Superviseur."
+          style={{ marginBottom: 16 }}
+        />
+
+        {selectedCheque && (
+          <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
+            <Descriptions.Item label="N° Chèque">{selectedCheque.numeroCheque}</Descriptions.Item>
+            <Descriptions.Item label="Banque Émettrice">{selectedCheque.banque}</Descriptions.Item>
+            <Descriptions.Item label="Tireur / Émetteur">{selectedCheque.emetteur}</Descriptions.Item>
+            <Descriptions.Item label="Montant du Chèque">
+              <strong style={{ color: "#ef4444" }}>{selectedCheque.montant.toLocaleString("fr-FR")} DH TTC</strong>
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+
+        <div style={{ marginTop: 12 }}>
+          <label style={{ fontWeight: 600, display: "block", marginBottom: 6 }}>
+            Motif de Rejet par la Banque (Requis) :
+          </label>
+          <Input.TextArea
+            rows={3}
+            placeholder="Ex: Chèque sans provision (Attijariwafa Bank), signature non conforme, compte clôturé..."
+            value={motifRejetInput}
+            onChange={(e) => setMotifRejetInput(e.target.value)}
+          />
+        </div>
+      </Modal>
     </Space>
   );
 }

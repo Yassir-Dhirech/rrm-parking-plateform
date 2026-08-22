@@ -237,3 +237,27 @@ export async function creerRecetteSupervisorMock(input: {
   mockRecettes.unshift(newRecette);
   return newRecette;
 }
+
+export interface RejeterChequeInput {
+  recetteId: number;
+  chequeId: number;
+  motifRejet: string;
+}
+
+export async function rejeterChequeEtSuspendreCarteMock({
+  recetteId,
+  chequeId,
+  motifRejet,
+}: RejeterChequeInput): Promise<RecetteHebdoDetail> {
+  const recette = mockRecettes.find((r) => r.id === recetteId);
+  if (!recette) throw new Error("Recette introuvable");
+
+  const cheque = recette.chequesRemis.find((c) => c.id === chequeId);
+  if (!cheque) throw new Error("Chèque introuvable");
+
+  cheque.statut = "REJETE";
+  cheque.motifRejet = motifRejet;
+  cheque.dateRejet = formatDate(new Date().toISOString());
+
+  return recette;
+}

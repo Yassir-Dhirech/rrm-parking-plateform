@@ -11,6 +11,10 @@ export interface ChequeRemiseDetail {
   emetteur: string;
   montant: number;
   datePaiement: string;
+  statut?: "CONFIRME" | "REJETE"; // "CONFIRME" par présomption de validité
+  motifRejet?: string;
+  dateRejet?: string;
+  abonnementReference?: string;
 }
 
 export interface RecetteJournee {
