@@ -9,11 +9,14 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "SOUMISE",
     clientNom: "Karim El Amrani",
     parkingNom: "Parking Bab El Had",
-    dateCreation: "28/07/2026",
+    dateCreation: "18/08/2026",
     email: "karim.elamrani@example.com",
     telephone: "0612345678",
     immatriculation: "12345-A-6",
     typeVehicule: "VOITURE",
+    agentAffecteNom: "Agent Rachid",
+    slaRestantJours: 2,
+    slaStatut: "ALERT_3_JOURS",
   },
   2: {
     id: 2,
@@ -22,11 +25,18 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "EN_COURS",
     clientNom: "Société Atlas Trans",
     parkingNom: "Parking Agdal Gare",
-    dateCreation: "29/07/2026",
+    dateCreation: "22/08/2026",
     email: "contact@atlastrans.ma",
     telephone: "0537001122",
     immatriculation: "99887-B-1",
     typeVehicule: "VOITURE",
+    agentAffecteNom: "Agent Rachid",
+    traiteParNom: "Agent Rachid",
+    roleTraitePar: "AGENT",
+    dateTraitement: "22/08/2026 14:10",
+    dureeTraitementJours: 0.5,
+    slaRestantJours: 6,
+    slaStatut: "DANS_LES_DELAIS",
   },
   3: {
     id: 3,
@@ -35,16 +45,22 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "PAIEMENT_ENREGISTRE",
     clientNom: "Sara Bennis",
     parkingNom: "Parking Bab El Had",
-    dateCreation: "27/07/2026",
+    dateCreation: "17/08/2026",
     email: "sara.bennis@example.com",
     telephone: "0677889900",
     immatriculation: "54321-D-2",
     typeVehicule: "VOITURE",
+    traiteParNom: "Agent Rachid",
+    roleTraitePar: "AGENT",
+    dateTraitement: "18/08/2026 14:30",
+    dureeTraitementJours: 1.0,
+    slaRestantJours: 1,
+    slaStatut: "ALERT_1_JOUR",
     paiementInfo: {
       modePaiement: "ESPECES",
       montant: 450,
-      datePaiement: "27/07/2026 14:30",
-      validePar: "Agent Guichet (Agent)",
+      datePaiement: "18/08/2026 14:30",
+      validePar: "Agent Rachid (Guichet Agdal)",
       remarques: "Paiement en espèces encaissé au guichet principal",
     },
   },
@@ -55,18 +71,24 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     statut: "VALIDEE",
     clientNom: "Youssef Tazi",
     parkingNom: "Parking Hassan II",
-    dateCreation: "25/07/2026",
+    dateCreation: "15/08/2026",
     email: "youssef.tazi@example.com",
     telephone: "0611223344",
     immatriculation: "11223-A-1",
     typeVehicule: "VOITURE",
+    traiteParNom: "M. Samir El Amrani (Superviseur)",
+    roleTraitePar: "SUPERVISEUR",
+    dateTraitement: "17/08/2026 11:15",
+    dureeTraitementJours: 2.0,
+    slaRestantJours: 5,
+    slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
       modePaiement: "CHEQUE",
       montant: 600,
       numeroCheque: "CHQ-889012",
       banque: "ATTIJARI",
-      datePaiement: "25/07/2026 11:15",
-      validePar: "Superviseur RRM",
+      datePaiement: "17/08/2026 11:15",
+      validePar: "M. Samir El Amrani (Superviseur)",
       remarques: "Paiement chèque vérifié et dossier validé",
     },
   },
@@ -78,11 +100,14 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     clientNom: "Mehdi Alami",
     parkingNom: "Parking Bab El Had",
     nouveauParkingNom: "Parking Agdal Gare",
-    dateCreation: "30/07/2026",
+    dateCreation: "16/08/2026",
     email: "mehdi.alami@example.com",
     telephone: "0655443322",
     immatriculation: "77889-C-4",
     typeVehicule: "VOITURE",
+    agentAffecteNom: "Agent Hassan",
+    slaRestantJours: 0,
+    slaStatut: "DEPASSE",
     motifChangement: "Changement de lieu de travail vers le quartier Agdal.",
   },
   6: {
@@ -94,31 +119,74 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     parkingNom: "Parking Hassan II",
     ancienneImmatriculation: "44332-B-5",
     immatriculation: "88990-A-1",
-    dateCreation: "24/07/2026",
+    dateCreation: "14/08/2026",
     email: "houda.naciri@example.com",
     telephone: "0699887766",
     typeVehicule: "VOITURE",
+    traiteParNom: "Agent Hassan",
+    roleTraitePar: "AGENT",
+    dateTraitement: "15/08/2026 16:45",
+    dureeTraitementJours: 1.2,
+    slaRestantJours: 5,
+    slaStatut: "DANS_LES_DELAIS",
     motifChangement: "Acquisition d'un nouveau véhicule.",
     paiementInfo: {
       modePaiement: "ESPECES",
       montant: 50,
-      datePaiement: "24/07/2026 16:45",
-      validePar: "Agent Guichet (Agent)",
+      datePaiement: "15/08/2026 16:45",
+      validePar: "Agent Hassan",
       remarques: "Frais de réémission de badge et mise à jour LPR",
     },
   },
 };
 
+export interface SlaAgentPerformance {
+  agentNom: string;
+  role: "AGENT" | "SUPERVISEUR";
+  totalTraites: number;
+  dureeMoyenneJours: number;
+  tauxDansLesDelais: number;
+  dansLesDelaisCount: number;
+  horsDelaisCount: number;
+}
+
+export async function getSlaPerformanceStatsMock() {
+  const demandes = Object.values(mockDemandesStore);
+  const total = demandes.length;
+  const traites = demandes.filter((d) => d.statut === "VALIDEE" || d.statut === "PAIEMENT_ENREGISTRE" || d.statut === "REJETEE");
+  const dureeMoyenne = traites.reduce((acc, curr) => acc + (curr.dureeTraitementJours || 1.5), 0) / (traites.length || 1);
+  const dansLesDelais = traites.filter((d) => (d.dureeTraitementJours || 1.5) <= 7).length;
+
+  return {
+    totalDemandes: total,
+    demandesTraitees: traites.length,
+    dureeMoyenneJours: Number(dureeMoyenne.toFixed(1)),
+    tauxRespectSla: Math.round((dansLesDelais / (traites.length || 1)) * 100),
+    demandesEnAlerte: demandes.filter((d) => d.slaStatut === "ALERT_3_JOURS" || d.slaStatut === "ALERT_1_JOUR" || d.slaStatut === "DEPASSE").length,
+    agentsPerformance: [
+      { agentNom: "Agent Rachid (Agdal)", role: "AGENT", totalTraites: 14, dureeMoyenneJours: 1.5, tauxDansLesDelais: 100, dansLesDelaisCount: 14, horsDelaisCount: 0 },
+      { agentNom: "Agent Hassan (Hassan II)", role: "AGENT", totalTraites: 11, dureeMoyenneJours: 2.1, tauxDansLesDelais: 91, dansLesDelaisCount: 10, horsDelaisCount: 1 },
+      { agentNom: "M. Samir El Amrani (Superviseur)", role: "SUPERVISEUR", totalTraites: 19, dureeMoyenneJours: 1.1, tauxDansLesDelais: 100, dansLesDelaisCount: 19, horsDelaisCount: 0 },
+    ] as SlaAgentPerformance[],
+  };
+}
+
 export async function getDemandesMock(): Promise<DemandeListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return Object.values(mockDemandesStore).map(({ id, reference, typeDemande, statut, clientNom, parkingNom, dateCreation }) => ({
-    id,
-    reference,
-    typeDemande,
-    statut,
-    clientNom,
-    parkingNom,
-    dateCreation: formatDate(dateCreation),
+  return Object.values(mockDemandesStore).map((d) => ({
+    id: d.id,
+    reference: d.reference,
+    typeDemande: d.typeDemande,
+    statut: d.statut,
+    clientNom: d.clientNom,
+    parkingNom: d.parkingNom,
+    dateCreation: formatDate(d.dateCreation),
+    traiteParNom: d.traiteParNom,
+    roleTraitePar: d.roleTraitePar,
+    dateTraitement: d.dateTraitement ? formatDate(d.dateTraitement) : undefined,
+    dureeTraitementJours: d.dureeTraitementJours,
+    slaRestantJours: d.slaRestantJours,
+    slaStatut: d.slaStatut,
   }));
 }
 

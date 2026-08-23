@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Table, Card, Typography, Tag, Button, Modal, Form, Input, Select, Radio, Checkbox, message, Segmented, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, CarOutlined } from "@ant-design/icons";
+import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, CarOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { getAbonnementsMock, createStaffAbonnementMock, type CreateStaffAbonnementInput } from "../../../api/abonnementsMock";
 import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -83,6 +83,22 @@ export function AbonnementsList() {
     },
     { title: "Client / Bénéficiaire", dataIndex: "clientNom", key: "clientNom" },
     { title: "Parking d'Attache", dataIndex: "parkingNom", key: "parkingNom" },
+    {
+      title: "Traité Par",
+      dataIndex: "traiteParNom",
+      key: "traiteParNom",
+      render: (agentNom?: string) =>
+        agentNom ? (
+          <Tag color="cyan">
+            <UserOutlined style={{ marginRight: 4 }} />
+            {agentNom}
+          </Tag>
+        ) : (
+          <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
+            Non Traité Encore
+          </Tag>
+        ),
+    },
     {
       title: "Statut",
       dataIndex: "statut",

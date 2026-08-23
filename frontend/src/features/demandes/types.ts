@@ -39,6 +39,8 @@ export interface PublicDemandeInput {
 
 export type StatutDemande = "SOUMISE" | "EN_COURS" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
 
+export type StatutSla = "DANS_LES_DELAIS" | "ALERT_5_JOURS" | "ALERT_3_JOURS" | "ALERT_1_JOUR" | "DEPASSE";
+
 export interface DemandeListItem {
   id: number;
   reference: string;
@@ -47,6 +49,14 @@ export interface DemandeListItem {
   clientNom: string;
   parkingNom: string;
   dateCreation: string;
+  // Performance & SLA Tracking
+  agentAffecteNom?: string;
+  traiteParNom?: string;
+  roleTraitePar?: "AGENT" | "SUPERVISEUR";
+  dateTraitement?: string;
+  dureeTraitementJours?: number;
+  slaRestantJours?: number;
+  slaStatut?: StatutSla;
 }
 
 export interface DemandeSubmissionResult {

@@ -17,6 +17,8 @@ import {
   Alert,
   Steps,
   Tooltip,
+  Row,
+  Col,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -30,6 +32,8 @@ import {
   InfoCircleOutlined,
   CheckOutlined,
   ArrowRightOutlined,
+  ClockCircleOutlined,
+  AlertOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -200,6 +204,50 @@ export function DemandeDetail() {
             style={{ marginBottom: 20 }}
           />
         )}
+
+        {/* Attribution Intervenant & Suivi SLA 7 Jours */}
+        <Card size="small" style={{ marginBottom: 20, backgroundColor: "#f8fafc", borderRadius: 8, borderColor: "#cbd5e1" }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} md={8}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Intervenant Traitant :</div>
+              <strong style={{ fontSize: 14, color: "#003566" }}>
+                <UserOutlined style={{ marginRight: 4 }} />
+                {data.traiteParNom || data.agentAffecteNom || "Agent Rachid (Guichet Agdal)"}
+              </strong>
+              {data.roleTraitePar && <Tag color="blue" style={{ marginLeft: 6 }}>{data.roleTraitePar}</Tag>}
+            </Col>
+
+            <Col xs={24} md={8}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Durée de Traitement (SLA 7 Jours) :</div>
+              {data.dureeTraitementJours !== undefined ? (
+                <strong style={{ fontSize: 14, color: "#16a34a" }}>
+                  <ClockCircleOutlined style={{ marginRight: 4 }} />
+                  {data.dureeTraitementJours} Jour(s) (Date : {data.dateTraitement})
+                </strong>
+              ) : (
+                <strong style={{ fontSize: 14, color: "#0284c7" }}>
+                  <ClockCircleOutlined style={{ marginRight: 4 }} />
+                  En cours ({data.slaRestantJours ?? 5} jour(s) restant(s))
+                </strong>
+              )}
+            </Col>
+
+            <Col xs={24} md={8} style={{ textAlign: "right" }}>
+              {data.slaStatut === "ALERT_1_JOUR" && (
+                <Tag color="red" icon={<AlertOutlined />}>URGENT : 1 Jour Restant SLA</Tag>
+              )}
+              {data.slaStatut === "ALERT_3_JOURS" && (
+                <Tag color="warning" icon={<ClockCircleOutlined />}>Alerte : 3 Jours Restants</Tag>
+              )}
+              {data.slaStatut === "DEPASSE" && (
+                <Tag color="red" icon={<AlertOutlined />}>Retard SLA (&gt;7 Jours)</Tag>
+              )}
+              {(!data.slaStatut || data.slaStatut === "DANS_LES_DELAIS") && (
+                <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais (7 Jours)</Tag>
+              )}
+            </Col>
+          </Row>
+        </Card>
 
         <Descriptions title="Informations de la Demande Client" column={2} bordered size="small">
           <Descriptions.Item label="Type de Demande">
