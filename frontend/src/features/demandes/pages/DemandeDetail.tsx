@@ -17,6 +17,8 @@ import {
   Alert,
   Steps,
   Tooltip,
+  Row,
+  Col,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -30,6 +32,8 @@ import {
   InfoCircleOutlined,
   CheckOutlined,
   ArrowRightOutlined,
+  ClockCircleOutlined,
+  AlertOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -201,46 +205,184 @@ export function DemandeDetail() {
           />
         )}
 
-        <Descriptions title="Informations de la Demande Client" column={2} bordered size="small">
+        {/* Attribution Intervenant & Suivi SLA 7 Jours */}
+        <Card size="small" style={{ marginBottom: 20, backgroundColor: "#f8fafc", borderRadius: 8, borderColor: "#cbd5e1" }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} md={8}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Intervenant Traitant :</div>
+              <strong style={{ fontSize: 14, color: "#003566" }}>
+                <UserOutlined style={{ marginRight: 4 }} />
+                {data.traiteParNom || data.agentAffecteNom || "Agent Rachid (Guichet Agdal)"}
+              </strong>
+              {data.roleTraitePar && <Tag color="blue" style={{ marginLeft: 6 }}>{data.roleTraitePar}</Tag>}
+            </Col>
+
+            <Col xs={24} md={8}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Durée de Traitement (SLA 7 Jours) :</div>
+              {data.dureeTraitementJours !== undefined ? (
+                <strong style={{ fontSize: 14, color: "#16a34a" }}>
+                  <ClockCircleOutlined style={{ marginRight: 4 }} />
+                  {data.dureeTraitementJours} Jour(s) (Date : {data.dateTraitement})
+                </strong>
+              ) : (
+                <strong style={{ fontSize: 14, color: "#0284c7" }}>
+                  <ClockCircleOutlined style={{ marginRight: 4 }} />
+                  En cours ({data.slaRestantJours ?? 5} jour(s) restant(s))
+                </strong>
+              )}
+            </Col>
+
+            <Col xs={24} md={8} style={{ textAlign: "right" }}>
+              {data.slaStatut === "ALERT_1_JOUR" && (
+                <Tag color="red" icon={<AlertOutlined />}>URGENT : 1 Jour Restant SLA</Tag>
+              )}
+              {data.slaStatut === "ALERT_3_JOURS" && (
+                <Tag color="warning" icon={<ClockCircleOutlined />}>Alerte : 3 Jours Restants</Tag>
+              )}
+              {data.slaStatut === "DEPASSE" && (
+                <Tag color="red" icon={<AlertOutlined />}>Retard SLA (&gt;7 Jours)</Tag>
+              )}
+              {(!data.slaStatut || data.slaStatut === "DANS_LES_DELAIS") && (
+                <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais (7 Jours)</Tag>
+              )}
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Informations Générales Souscripteur */}
+        <Descriptions title="Informations Souscripteur & Contact" column={2} bordered size="small" style={{ marginBottom: 20 }}>
           <Descriptions.Item label="Type de Demande">
             <Tag color={typeDemandeLabels[data.typeDemande as TypeDemande]?.color || "blue"}>
               {typeDemandeLabels[data.typeDemande as TypeDemande]?.label || data.typeDemande}
             </Tag>
           </Descriptions.Item>
-          {data.numeroCarteAbonne && (
-            <Descriptions.Item label="N° Carte Abonné">
-              <Tag color="gold">{data.numeroCarteAbonne}</Tag>
-            </Descriptions.Item>
-          )}
-          <Descriptions.Item label="Nom du Client">
+          <Descriptions.Item label="Catégorie Client">
+            <Tag color={data.typeClient === "ENTREPRISE" ? "purple" : "blue"}>
+              {data.typeClient === "ENTREPRISE" ? "Entreprise" : "Particulier"}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Nom du Client / Souscripteur">
             <strong>{data.clientNom}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Parking Concerné">
-            {data.parkingNom}
-            {data.nouveauParkingNom && (
-              <span style={{ color: "#d97706", fontWeight: 600, marginLeft: 6 }}>
-                <ArrowRightOutlined style={{ marginRight: 4 }} /> Nouveau : {data.nouveauParkingNom}
-              </span>
-            )}
+          <Descriptions.Item label={data.typeClient === "ENTREPRISE" ? "ICE Entreprise" : "CIN Client"}>
+            <strong>{data.ice || data.cin || "A748392"}</strong>
           </Descriptions.Item>
           <Descriptions.Item label="Email de Contact">{data.email}</Descriptions.Item>
-          <Descriptions.Item label="Téléphone">{data.telephone}</Descriptions.Item>
-          <Descriptions.Item label="Immatriculation Véhicule">
-            <Tag color="cyan">{data.immatriculation}</Tag>
-            {data.ancienneImmatriculation && (
-              <span style={{ fontSize: 12, color: "#64748b", marginLeft: 6 }}>
-                (Ancienne : {data.ancienneImmatriculation})
-              </span>
-            )}
+          <Descriptions.Item label="Numéro GSM">{data.telephone}</Descriptions.Item>
+          <Descriptions.Item label="Date de Soumission" span={2}>
+            {formatDate(data.dateCreation)}
           </Descriptions.Item>
-          <Descriptions.Item label="Type de Véhicule">{data.typeVehicule}</Descriptions.Item>
-          {data.motifChangement && (
-            <Descriptions.Item label="Motif du Changement" span={2}>
-              {data.motifChangement}
-            </Descriptions.Item>
-          )}
-          <Descriptions.Item label="Date Soumission">{formatDate(data.dateCreation)}</Descriptions.Item>
         </Descriptions>
+
+        {/* Détails Spécifiques au Type de Demande */}
+        <Card
+          size="small"
+          title={
+            <Space>
+              <FolderOutlined style={{ color: "#0284c7" }} />
+              <span style={{ color: "#003566", fontWeight: 700 }}>
+                Spécificités du Dossier : {typeDemandeLabels[data.typeDemande as TypeDemande]?.label}
+              </span>
+            </Space>
+          }
+          style={{ marginBottom: 20, borderRadius: 10, borderColor: "#cbd5e1" }}
+        >
+          {data.typeDemande === "NOUVEL_ABONNEMENT" && (
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="Parking d'Attache Sollicité">
+                <strong>{data.parkingNom}</strong>
+              </Descriptions.Item>
+              <Descriptions.Item label="Formule Tarifaire Choisie">
+                <Tag color="blue">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Durée de Souscription">
+                {data.dureeMois || 6} Mois
+              </Descriptions.Item>
+              <Descriptions.Item label="Immatriculation Véhicule (LPR)">
+                <Tag color="cyan">{data.immatriculation}</Tag> ({data.typeVehicule || "Voiture"})
+              </Descriptions.Item>
+              <Descriptions.Item label="Montant Tarifaire Total TTC" span={2}>
+                <strong style={{ fontSize: 16, color: "#16a34a" }}>
+                  {data.montantTotal || 3600} MAD TTC
+                </strong>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+
+          {data.typeDemande === "RENOUVELLEMENT" && (
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="N° Carte Abonné RFID Actuel">
+                <Tag color="gold" style={{ fontSize: 14, fontWeight: 700 }}>
+                  {data.numeroCarteAbonne || "CRT-2025-001099"}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Parking d'Attache">
+                <strong>{data.parkingNom}</strong>
+              </Descriptions.Item>
+              <Descriptions.Item label="Formule à Prolonger">
+                <Tag color="purple">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Période de Prolongation">
+                {data.dureeMois || 12} Mois
+              </Descriptions.Item>
+              <Descriptions.Item label="Immatriculation Véhicule Rattaché">
+                <Tag color="cyan">{data.immatriculation}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Montant du Renouvellement">
+                <strong style={{ fontSize: 16, color: "#16a34a" }}>
+                  {data.montantTotal || 6600} MAD TTC
+                </strong>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+
+          {data.typeDemande === "CHANGEMENT_PARKING" && (
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="N° Carte Abonné Actif">
+                <Tag color="gold">{data.numeroCarteAbonne || "CRT-2025-000844"}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Parking d'Origine Actuel">
+                <Tag color="default">{data.parkingNom}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Nouveau Parking Demande (Destination)" span={2}>
+                <Tag color="orange" style={{ fontSize: 14, padding: "4px 12px" }}>
+                  <ArrowRightOutlined style={{ marginRight: 6 }} />
+                  Destination : {data.nouveauParkingNom || "Parking Agdal Gare"}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Motif du Transfert Demande" span={2}>
+                <em>{data.motifChangement || "Changement de lieu de travail ou de résidence."}</em>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+
+          {data.typeDemande === "PERTE_CARTE" && (
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="N° Carte Abonné Perdue / Volée">
+                <Tag color="volcano" style={{ fontSize: 14, fontWeight: 700 }}>
+                  {data.numeroCarteAbonne || "CRT-2025-000310"}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Statut de la Carte d'Origine">
+                <Tag color="red">Désactivée & Bloquée aux Bornes</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Parking d'Attache">
+                <strong>{data.parkingNom}</strong>
+              </Descriptions.Item>
+              <Descriptions.Item label="Immatriculation Véhicule Associé">
+                <Tag color="cyan">{data.immatriculation}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Motif de la Déclaration" span={2}>
+                {data.motifPerte || "Perte accidentelle du badge physique d'abonné."}
+              </Descriptions.Item>
+              <Descriptions.Item label="Frais d'Émission du Duplicata RFID" span={2}>
+                <strong style={{ fontSize: 15, color: "#c2410c" }}>
+                  {data.fraisDuplicata || 50} MAD TTC
+                </strong>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+        </Card>
 
         {/* Enregistrement de Paiement */}
         {data.paiementInfo && (

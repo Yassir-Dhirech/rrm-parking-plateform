@@ -12,6 +12,8 @@ const mockAbonnements: AbonnementListItem[] = [
     parkingNom: "Parking Bab El Had",
     dateDebut: "15/01/2026",
     dateFin: "15/07/2026",
+    traiteParNom: "Agent Rachid",
+    dateTraitement: "15/01/2026 10:15",
   },
   {
     id: 2,
@@ -22,6 +24,8 @@ const mockAbonnements: AbonnementListItem[] = [
     parkingNom: "Parking Agdal Gare",
     dateDebut: "01/06/2025",
     dateFin: "01/06/2030",
+    traiteParNom: "M. Samir El Amrani (Superviseur)",
+    dateTraitement: "01/06/2025 14:30",
   },
   {
     id: 3,
@@ -32,6 +36,8 @@ const mockAbonnements: AbonnementListItem[] = [
     parkingNom: "Parking Bab El Had",
     dateDebut: "01/10/2025",
     dateFin: "01/04/2026",
+    traiteParNom: "Agent Hassan",
+    dateTraitement: "01/10/2025 09:45",
   },
   {
     id: 4,
@@ -42,6 +48,7 @@ const mockAbonnements: AbonnementListItem[] = [
     parkingNom: "Parking Agdal Gare",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
+    traiteParNom: undefined, // Non traité encore
   },
   {
     id: 5,
@@ -52,6 +59,18 @@ const mockAbonnements: AbonnementListItem[] = [
     parkingNom: "Parking Hassan II",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
+    traiteParNom: undefined, // Non traité encore
+  },
+  {
+    id: 6,
+    reference: "ABO-2026-000006",
+    type: "REGULIER",
+    statut: "EN_ATTENTE",
+    clientNom: "Nabil Berrada",
+    parkingNom: "Parking Bab El Had",
+    dateDebut: "23/08/2026",
+    dateFin: "23/02/2027",
+    traiteParNom: undefined, // Non traité encore
   },
 ];
 

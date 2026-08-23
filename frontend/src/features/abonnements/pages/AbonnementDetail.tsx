@@ -10,6 +10,8 @@ import {
   SafetyCertificateOutlined,
   HomeOutlined,
   StopOutlined,
+  ExclamationCircleOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -166,6 +168,19 @@ export function AbonnementDetail() {
 
           <Descriptions.Item label="Parking d'Attache">
             {data.parkingNom}
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Intervenant Traitant">
+            {data.traiteParNom ? (
+              <Tag color="cyan">
+                <UserOutlined style={{ marginRight: 4 }} />
+                {data.traiteParNom}
+              </Tag>
+            ) : (
+              <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
+                Non Traité Encore
+              </Tag>
+            )}
           </Descriptions.Item>
 
           <Descriptions.Item label="Date de Début">{formatDate(data.dateDebut)}</Descriptions.Item>

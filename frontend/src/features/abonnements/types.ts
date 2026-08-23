@@ -11,6 +11,8 @@ export interface AbonnementListItem {
   parkingNom: string;
   dateDebut: string;
   dateFin: string;
+  traiteParNom?: string; // Intervenant (Agent/Superviseur) ayant validé/traité l'abonnement
+  dateTraitement?: string;
 }
 
 export interface AbonnementDetail extends AbonnementListItem {

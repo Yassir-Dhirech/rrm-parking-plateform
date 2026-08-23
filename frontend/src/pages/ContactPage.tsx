@@ -1,4 +1,21 @@
-import { Card, Row, Col, Tag, Typography, Form, Input, Button, Select, Breadcrumb, Collapse, message } from "antd";
+import { useState } from "react";
+import {
+  Card,
+  Row,
+  Col,
+  Tag,
+  Typography,
+  Form,
+  Input,
+  Button,
+  Select,
+  Breadcrumb,
+  Collapse,
+  message,
+  Tabs,
+  Alert,
+  Result,
+} from "antd";
 import {
   PhoneOutlined,
   MailOutlined,
@@ -8,27 +25,63 @@ import {
   HomeOutlined,
   ClockCircleOutlined,
   CustomerServiceOutlined,
+  AlertOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
+import { getParkingsMock } from "../api/adminMock";
+import { creerReclamationMock } from "../api/reclamationsMock";
+import { CATEGORIES_RECLAMATION_LABELS, type CategorieReclamation, type PublicReclamationInput, type ReclamationItem } from "../features/reclamations/types";
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
 export function ContactPage() {
   const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactForm] = Form.useForm();
+  const [reclamationForm] = Form.useForm();
+  
+  const [activeTab, setActiveTab] = useState<"CONTACT" | "RECLAMATION">("CONTACT");
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [createdReclamation, setCreatedReclamation] = useState<ReclamationItem | null>(null);
 
-  const handleSubmit = (_values: any) => {
-    setIsSubmitting(true);
+  const { data: parkings = [] } = useQuery({
+    queryKey: ["admin_parkings"],
+    queryFn: getParkingsMock,
+  });
+
+  const reclamationMutation = useMutation({
+    mutationFn: (values: PublicReclamationInput) => creerReclamationMock(values),
+    onSuccess: (data) => {
+      setCreatedReclamation(data);
+      reclamationForm.resetFields();
+    },
+  });
+
+  const handleContactSubmit = (_values: any) => {
+    setIsSubmittingContact(true);
     setTimeout(() => {
-      setIsSubmitting(false);
-      message.success("Votre message a été transmis avec succès au service client RRM !");
-      form.resetFields();
-    }, 1000);
+      setIsSubmittingContact(false);
+      message.success("Votre message d'information a été transmis avec succès au service client RRM !");
+      contactForm.resetFields();
+    }, 800);
+  };
+
+  const handleReclamationSubmit = (values: any) => {
+    const selectedParking = parkings.find((p) => p.id === values.parkingId);
+    reclamationMutation.mutate({
+      nomPrenom: values.nomPrenom,
+      email: values.email,
+      telephone: values.telephone,
+      parkingId: values.parkingId,
+      parkingNom: selectedParking?.nom || "Parking Agdal Gare",
+      typeReclamation: values.typeReclamation as CategorieReclamation,
+      numeroTicketOuCarte: values.numeroTicketOuCarte,
+      immatriculation: values.immatriculation,
+      descriptionDetaillee: values.descriptionDetaillee,
+    });
   };
 
   return (
@@ -51,10 +104,10 @@ export function ContactPage() {
             <CustomerServiceOutlined style={{ marginRight: 6 }} /> Support & Assistance Client RRM
           </Tag>
           <h1 style={{ color: "#ffffff", fontSize: "1.75rem", fontWeight: 800, margin: "6px 0 8px", letterSpacing: "-0.5px" }}>
-            Contactez Rabat Région Mobilité
+            Contact & Service Réclamations Usagers
           </h1>
           <p style={{ color: "#cbd5e1", fontSize: "0.95rem", maxWidth: 660, margin: "0 auto", lineHeight: 1.5 }}>
-            Une question sur votre abonnement, votre badge RFID ou un paiement ? Nos équipes sont à votre écoute.
+            Posez une question générale ou déposez un signalement / réclamation sur un incident au niveau des parkings.
           </p>
         </div>
         <div
@@ -69,82 +122,235 @@ export function ContactPage() {
         />
       </div>
 
-      <div style={{ maxWidth: 1000, margin: "24px auto 0", padding: "0 20px" }}>
+      <div style={{ maxWidth: 1060, margin: "24px auto 0", padding: "0 20px" }}>
         {/* Breadcrumb */}
         <Breadcrumb
           style={{ marginBottom: 20 }}
           items={[
             { title: <a onClick={() => navigate("/")}><HomeOutlined /> Accueil</a> },
-            { title: "Contact & Assistance" },
+            { title: "Contact & Réclamation" },
           ]}
         />
 
         <Row gutter={[24, 24]}>
-          {/* Left Column: Form */}
-          <Col xs={24} md={14}>
+          {/* Left Column: Nav Tabs with Forms */}
+          <Col xs={24} md={15}>
             <Card
-              title={<span style={{ color: "#003566", fontWeight: 700 }}><SendOutlined style={{ marginRight: 8 }} /> Formulaire d'Assistance</span>}
               style={{
                 borderRadius: 16,
                 boxShadow: "0 4px 20px rgba(0, 53, 102, 0.05)",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #cbd5e1",
               }}
-              styles={{ body: { padding: 24 } }}
+              styles={{ body: { padding: "16px 24px 24px" } }}
             >
-              <Form form={form} layout="vertical" onFinish={handleSubmit} size="large">
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="nomComplet" label="Nom & Prénom" rules={[{ required: true, message: "Nom requis" }]}>
-                      <Input placeholder="Karim El Amrani" style={{ borderRadius: 8 }} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="telephone" label="Téléphone (Optionnel)">
-                      <Input placeholder="0661 12 34 56" style={{ borderRadius: 8 }} />
-                    </Form.Item>
-                  </Col>
-                </Row>
+              <Tabs
+                activeKey={activeTab}
+                onChange={(key) => {
+                  setActiveTab(key as "CONTACT" | "RECLAMATION");
+                  setCreatedReclamation(null);
+                }}
+                size="large"
+                items={[
+                  {
+                    key: "CONTACT",
+                    label: (
+                      <span>
+                        <MailOutlined style={{ marginRight: 6 }} />
+                        Message & Contact Général
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "RECLAMATION",
+                    label: (
+                      <span>
+                        <AlertOutlined style={{ marginRight: 6, color: "#ef4444" }} />
+                        Déposer une Réclamation
+                      </span>
+                    ),
+                  },
+                ]}
+              />
 
-                <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
-                  <Input placeholder="karim@exemple.ma" style={{ borderRadius: 8 }} />
-                </Form.Item>
+              {/* TAB 1: Contact Général Form */}
+              {activeTab === "CONTACT" && (
+                <Form form={contactForm} layout="vertical" onFinish={handleContactSubmit} size="large" style={{ marginTop: 12 }}>
+                  <Row gutter={16}>
+                    <Col xs={24} sm={12}>
+                      <Form.Item name="nomComplet" label="Nom & Prénom" rules={[{ required: true, message: "Nom requis" }]}>
+                        <Input placeholder="Ex: Karim El Amrani" style={{ borderRadius: 8 }} />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Form.Item name="telephone" label="Téléphone (GSM)">
+                        <Input placeholder="0661 12 34 56" style={{ borderRadius: 8 }} />
+                      </Form.Item>
+                    </Col>
+                  </Row>
 
-                <Form.Item name="sujet" label="Sujet de votre demande" rules={[{ required: true, message: "Sélectionnez un sujet" }]}>
-                  <Select placeholder="Choisir le motif de votre message" style={{ borderRadius: 8 }}>
-                    <Option value="renouvellement">Question sur un Renouvellement</Option>
-                    <Option value="changement_parking">Demande de Transfert de Parking</Option>
-                    <Option value="badge_rfid">Perte ou Dysfonctionnement de Badge RFID</Option>
-                    <Option value="facturation">Question sur une Facture / Paiement</Option>
-                    <Option value="autre">Autre Demande d'Information</Option>
-                  </Select>
-                </Form.Item>
+                  <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
+                    <Input placeholder="karim@exemple.ma" style={{ borderRadius: 8 }} />
+                  </Form.Item>
 
-                <Form.Item name="message" label="Votre Message" rules={[{ required: true, message: "Rédigez votre message" }]}>
-                  <TextArea rows={4} placeholder="Décrivez votre demande en détail..." style={{ borderRadius: 8 }} />
-                </Form.Item>
+                  <Form.Item name="sujet" label="Sujet de votre demande" rules={[{ required: true, message: "Sélectionnez un sujet" }]}>
+                    <Select placeholder="Choisir le motif de votre message" style={{ borderRadius: 8 }}>
+                      <Option value="renouvellement">Question sur un Renouvellement</Option>
+                      <Option value="changement_parking">Demande de Transfert de Parking</Option>
+                      <Option value="badge_rfid">Perte de Badge RFID / Question Carte</Option>
+                      <Option value="facturation">Demande de Reçu ou Facture</Option>
+                      <Option value="autre">Autre Demande d'Information</Option>
+                    </Select>
+                  </Form.Item>
 
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={isSubmitting}
-                  block
-                  icon={<SendOutlined />}
-                  style={{
-                    height: 44,
-                    fontWeight: 600,
-                    borderRadius: 10,
-                    backgroundColor: "#003566",
-                    borderColor: "#003566",
-                  }}
-                >
-                  Envoyer le Message
-                </Button>
-              </Form>
+                  <Form.Item name="message" label="Votre Message" rules={[{ required: true, message: "Rédigez votre message" }]}>
+                    <TextArea rows={4} placeholder="Décrivez votre demande d'information en détail..." style={{ borderRadius: 8 }} />
+                  </Form.Item>
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isSubmittingContact}
+                    block
+                    icon={<SendOutlined />}
+                    style={{
+                      height: 46,
+                      fontWeight: 600,
+                      borderRadius: 10,
+                      backgroundColor: "#003566",
+                      borderColor: "#003566",
+                    }}
+                  >
+                    Envoyer le Message
+                  </Button>
+                </Form>
+              )}
+
+              {/* TAB 2: Réclamation & Incident Form */}
+              {activeTab === "RECLAMATION" && (
+                <div style={{ marginTop: 12 }}>
+                  {createdReclamation ? (
+                    <Result
+                      status="success"
+                      title="Réclamation Transmise au Chef de Gare !"
+                      subTitle={
+                        <div>
+                          <Paragraph style={{ fontSize: 14 }}>
+                            Votre dossier a été enregistré sous le numéro de suivi officiel :
+                          </Paragraph>
+                          <Tag color="red" style={{ fontSize: 16, padding: "6px 14px", borderRadius: 8, fontWeight: 700, margin: "8px 0" }}>
+                            N° Suivi : {createdReclamation.reference}
+                          </Tag>
+                          <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 8 }}>
+                            Les agents d'exploitation du <strong>{createdReclamation.parkingNom}</strong> et le service client RRM ont été notifiés en priorité.
+                          </Paragraph>
+                        </div>
+                      }
+                      extra={[
+                        <Button type="primary" key="new" onClick={() => setCreatedReclamation(null)} style={{ backgroundColor: "#003566", borderRadius: 8 }}>
+                          Déposer un Autre Signalement
+                        </Button>,
+                      ]}
+                    />
+                  ) : (
+                    <>
+                      <Alert
+                        type="error"
+                        showIcon
+                        icon={<AlertOutlined />}
+                        message="Service Signalements & Incidents Usagers RRM"
+                        description="Veuillez sélectionner le cas exact de votre réclamation. Votre dossier sera transmis directement au chef de gare pour prise en charge immédiate."
+                        style={{ marginBottom: 16, borderRadius: 8 }}
+                      />
+
+                      <Form form={reclamationForm} layout="vertical" onFinish={handleReclamationSubmit} size="large">
+                        <Form.Item
+                          name="typeReclamation"
+                          label={<span style={{ fontWeight: 600 }}>Cas / Motif de la Réclamation :</span>}
+                          rules={[{ required: true, message: "Sélectionnez le motif exact." }]}
+                        >
+                          <Select placeholder="Choisir le cas de votre réclamation..." style={{ borderRadius: 8 }}>
+                            {Object.entries(CATEGORIES_RECLAMATION_LABELS).map(([key, item]) => (
+                              <Option key={key} value={key}>
+                                <strong>{item.label}</strong>
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                          name="parkingId"
+                          label={<span style={{ fontWeight: 600 }}>Parking Concerné :</span>}
+                          rules={[{ required: true, message: "Sélectionnez le parking concerné." }]}
+                        >
+                          <Select placeholder="Sélectionnez le parking..." style={{ borderRadius: 8 }}>
+                            {parkings.map((p) => (
+                              <Option key={p.id} value={p.id}>
+                                {p.nom} ({p.code})
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+
+                        <Row gutter={16}>
+                          <Col xs={24} sm={12}>
+                            <Form.Item name="nomPrenom" label="Nom & Prénom" rules={[{ required: true, message: "Nom requis" }]}>
+                              <Input placeholder="Karim El Amrani" style={{ borderRadius: 8 }} />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} sm={12}>
+                            <Form.Item name="telephone" label="Téléphone (GSM)" rules={[{ required: true, message: "Téléphone requis" }]}>
+                              <Input placeholder="06 61 12 34 56" style={{ borderRadius: 8 }} />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Form.Item name="email" label="Adresse Email" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
+                          <Input placeholder="karim@exemple.ma" style={{ borderRadius: 8 }} />
+                        </Form.Item>
+
+                        <Row gutter={16}>
+                          <Col xs={24} sm={12}>
+                            <Form.Item name="immatriculation" label="Plaque d'Immatriculation (Facultatif)">
+                              <Input placeholder="12345-A-6" style={{ borderRadius: 8 }} />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} sm={12}>
+                            <Form.Item name="numeroTicketOuCarte" label="N° Ticket / N° Carte (Facultatif)">
+                              <Input placeholder="TCK-991023 ou ABO-2026-001" style={{ borderRadius: 8 }} />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+
+                        <Form.Item name="descriptionDetaillee" label="Description de l'Incident" rules={[{ required: true, message: "Veuillez expliciter l'incident." }]}>
+                          <TextArea rows={4} placeholder="Explicitez l'incident (heure, borne, montant prélevé, barrière bloquée...)" style={{ borderRadius: 8 }} />
+                        </Form.Item>
+
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          loading={reclamationMutation.isPending}
+                          block
+                          icon={<AlertOutlined />}
+                          style={{
+                            height: 46,
+                            fontWeight: 600,
+                            borderRadius: 10,
+                            backgroundColor: "#ef4444",
+                            borderColor: "#ef4444",
+                          }}
+                        >
+                          Transmettre la Réclamation en Ligne
+                        </Button>
+                      </Form>
+                    </>
+                  )}
+                </div>
+              )}
             </Card>
           </Col>
 
           {/* Right Column: Contact Info Cards */}
-          <Col xs={24} md={10}>
+          <Col xs={24} md={9}>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <Card
                 style={{
@@ -220,6 +426,15 @@ export function ContactPage() {
             items={[
               {
                 key: "1",
+                label: "Comment suivre l'avancement de ma réclamation ?",
+                children: (
+                  <p style={{ color: "#475569", margin: 0 }}>
+                    Lorsque vous déposez une réclamation sous l'onglet <strong>Déposer une Réclamation</strong>, un numéro de suivi unique (ex: <code>RECL-2026-000083</code>) vous est attribué. Vous recevrez une réponse du chef de gare sous 24h à 48h.
+                  </p>
+                ),
+              },
+              {
+                key: "2",
                 label: "Comment fonctionne le renouvellement d'abonnement sans compte ?",
                 children: (
                   <p style={{ color: "#475569", margin: 0 }}>
@@ -228,20 +443,11 @@ export function ContactPage() {
                 ),
               },
               {
-                key: "2",
-                label: "Que faire en cas de perte de ma carte d'abonné RFID ?",
-                children: (
-                  <p style={{ color: "#475569", margin: 0 }}>
-                    Contactez immédiatement notre centre d'appel au <code>0537 00 11 22</code> ou présentez-vous au guichet de votre parking d'attache avec votre pièce d'identité pour bloquer l'ancienne carte et obtenir un duplicata.
-                  </p>
-                ),
-              },
-              {
                 key: "3",
-                label: "Puis-je changer d'immatriculation en cours d'abonnement ?",
+                label: "Que faire en cas de défaillance de la caméra LPR ou de la barrière ?",
                 children: (
                   <p style={{ color: "#475569", margin: 0 }}>
-                    Oui ! Utilisez la démarche <strong>Changement de Véhicule</strong> sur la plateforme. Saisissez votre CIN pour charger votre profil, puis indiquez la nouvelle plaque. La modification est prise en compte après validation.
+                    Sélectionnez la catégorie <strong>Problème de Lecture LPR / Barrière non ouverte</strong> sous l'onglet Réclamation de cette page ou appelez l'assistance d'urgence <code>0537 00 11 22</code>.
                   </p>
                 ),
               },

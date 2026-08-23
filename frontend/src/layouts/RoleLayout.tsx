@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, theme, Avatar, Tag, Dropdown, type MenuProps } from "antd";
+import { Layout, Menu, theme, Avatar, Tag, Dropdown, Badge, Button, type MenuProps } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig } from "../lib/roleConfig";
@@ -8,6 +8,7 @@ import { getNotificationsForRole } from "../api/notificationsMock";
 import { GlobalSearch } from "../components/ui/GlobalSearch";
 import { ProfileModal } from "../components/ui/ProfileModal";
 import { NotificationPopover } from "../components/ui/NotificationPopover";
+import { MessagerieDrawer } from "../components/messaging/MessagerieDrawer";
 import {
   DashboardOutlined,
   FileTextOutlined,
@@ -24,6 +25,7 @@ import {
   LogoutOutlined,
   DownOutlined,
   BellOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import "./RoleLayout.css";
 
@@ -49,6 +51,7 @@ export function RoleLayout() {
   const location = useLocation();
   const { role, userName, logout } = useAuth();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [messagerieOpen, setMessagerieOpen] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -135,6 +138,23 @@ export function RoleLayout() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Bouton Messagerie Interne */}
+          <Badge count={1} dot color="#0284c7">
+            <Button
+              shape="circle"
+              icon={<MessageOutlined style={{ fontSize: 18, color: "#003566" }} />}
+              title="Messagerie Interne Équipe"
+              onClick={() => setMessagerieOpen(true)}
+              style={{
+                borderColor: "#cbd5e1",
+                background: "#f8fafc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          </Badge>
+
           {/* Notification Popover Header Component */}
           <NotificationPopover />
 
@@ -190,6 +210,7 @@ export function RoleLayout() {
         </Layout>
       </Layout>
       <ProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
+      <MessagerieDrawer open={messagerieOpen} onClose={() => setMessagerieOpen(false)} />
     </Layout>
   );
 }
