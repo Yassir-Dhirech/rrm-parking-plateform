@@ -600,29 +600,29 @@ export function PublicQrForm() {
                               <Col xs={24} sm={12}>
                                 <Card
                                   hoverable
-                                  onClick={() => handleSelectType("CHANGEMENT_VEHICULE")}
+                                  onClick={() => handleSelectType("PERTE_CARTE")}
                                   style={{
                                     borderRadius: 14,
-                                    border: "1px solid #a5f3fc",
-                                    backgroundColor: "#ecfeff",
+                                    border: "1px solid #ffedd5",
+                                    backgroundColor: "#fff7ed",
                                     transition: "all 0.2s ease",
                                     height: "100%",
                                   }}
                                 >
                                   <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                    <div style={{ padding: 12, backgroundColor: "#cffaff", borderRadius: 12, display: "flex" }}>
-                                      <CarOutlined style={{ fontSize: 32, color: "#0891b2" }} />
+                                    <div style={{ padding: 12, backgroundColor: "#ffedd5", borderRadius: 12, display: "flex" }}>
+                                      <IdcardOutlined style={{ fontSize: 32, color: "#c2410c" }} />
                                     </div>
                                     <div style={{ flex: 1 }}>
                                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <h3 style={{ margin: 0, color: "#0e7490", fontSize: "1.15rem" }}>Changement de Véhicule</h3>
-                                        <Tag color="cyan">Véhicule</Tag>
+                                        <h3 style={{ margin: 0, color: "#9a3412", fontSize: "1.15rem" }}>Perte de Carte RFID</h3>
+                                        <Tag color="volcano">Duplicata</Tag>
                                       </div>
                                       <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
-                                        Mettre à jour la plaque d'immatriculation ou le véhicule associé à votre abonnement actif.
+                                        Déclaration de perte ou vol de carte d'abonné et demande d'émission d'un duplicata RFID.
                                       </p>
-                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#0891b2", borderColor: "#0891b2" }}>
-                                        Changer de Véhicule
+                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#c2410c", borderColor: "#c2410c" }}>
+                                        Déclarer Perte & Duplicata
                                       </Button>
                                     </div>
                                   </div>
@@ -1014,13 +1014,13 @@ export function PublicQrForm() {
                               style={{ marginBottom: 20, borderRadius: 10, border: "1px solid #bae6fd", backgroundColor: "#f0f9ff" }}
                             />
 
-                            {typeDemande === "CHANGEMENT_VEHICULE" && (
+                            {typeDemande === "PERTE_CARTE" && (
                               <Form.Item
                                 name="ancienneImmatriculation"
-                                label="Ancienne Immatriculation (Plaque Actuelle d'Abonné)"
-                                rules={[{ required: true, message: "Indiquez l'ancienne plaque" }]}
+                                label="N° de Carte d'Abonné Perdue ou Déclarée Volée"
+                                rules={[{ required: true, message: "Indiquez le numéro de carte perdue" }]}
                               >
-                                <Input placeholder="Ex: 98765-A-1" size="large" />
+                                <Input placeholder="Ex: CRT-2025-001099" size="large" />
                               </Form.Item>
                             )}
 
@@ -1028,7 +1028,7 @@ export function PublicQrForm() {
                               <Col xs={24} sm={12}>
                                 <Form.Item
                                   name="immatriculation"
-                                  label={typeDemande === "CHANGEMENT_VEHICULE" ? "Nouvelle Immatriculation du Véhicule" : "Immatriculation du véhicule"}
+                                  label={typeDemande === "PERTE_CARTE" ? "Immatriculation du Véhicule associé" : "Immatriculation du véhicule"}
                                   rules={[{ required: true, message: "Immatriculation requise" }]}
                                 >
                                   <Input placeholder="Ex: 12345-A-6" size="large" />

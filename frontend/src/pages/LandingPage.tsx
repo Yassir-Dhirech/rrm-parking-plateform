@@ -3,13 +3,13 @@ import {
   FileTextOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
-  CarOutlined,
   ArrowRightOutlined,
   SafetyCertificateOutlined,
   CheckCircleOutlined,
   PhoneOutlined,
   MailOutlined,
   BuildOutlined,
+  IdcardOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
@@ -277,7 +277,7 @@ export function LandingPage() {
               onClick={() => navigate("/demande-publique")}
               style={{
                 borderRadius: 16,
-                border: "1px solid #a5f3fc",
+                border: "1px solid #ffedd5",
                 backgroundColor: "#ffffff",
                 boxShadow: "0 4px 14px rgba(0, 53, 102, 0.05)",
                 textAlign: "center",
@@ -290,23 +290,23 @@ export function LandingPage() {
                   width: 56,
                   height: 56,
                   borderRadius: 16,
-                  backgroundColor: "#ecfeff",
+                  backgroundColor: "#fff7ed",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   margin: "0 auto 16px",
-                  border: "1px solid #a5f3fc",
+                  border: "1px solid #ffedd5",
                 }}
               >
-                <CarOutlined style={{ fontSize: 26, color: "#0891b2" }} />
+                <IdcardOutlined style={{ fontSize: 26, color: "#c2410c" }} />
               </div>
-              <Tag color="cyan" style={{ marginBottom: 10 }}>Véhicule</Tag>
-              <h3 style={{ margin: "4px 0 8px", color: "#0f172a", fontSize: "1.1rem" }}>Modifier Véhicule</h3>
+              <Tag color="volcano" style={{ marginBottom: 10 }}>Duplicata RFID</Tag>
+              <h3 style={{ margin: "4px 0 8px", color: "#0f172a", fontSize: "1.1rem" }}>Perte de Carte RFID</h3>
               <p style={{ color: "#64748b", fontSize: 13, minHeight: 48, lineHeight: 1.5 }}>
-                Mettre à jour la plaque d'immatriculation de votre carte d'abonné.
+                Déclarer la perte d'une carte d'abonné et solliciter l'émission d'un duplicata.
               </p>
-              <Button type="primary" size="small" block style={{ backgroundColor: "#0891b2", borderColor: "#0891b2", borderRadius: 8, marginTop: 12 }}>
-                Modifier Plaque →
+              <Button type="primary" size="small" block style={{ backgroundColor: "#c2410c", borderColor: "#c2410c", borderRadius: 8, marginTop: 12 }}>
+                Déclarer Perte →
               </Button>
             </Card>
           </Col>

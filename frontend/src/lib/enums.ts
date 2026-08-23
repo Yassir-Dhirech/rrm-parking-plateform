@@ -2,7 +2,7 @@ export type TypeClient = "PARTICULIER" | "ENTREPRISE" | "STAFF" ;
 
 export type TypeVehicule = "VOITURE" | "MOTO";
 
-export type TypeDemande = "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT" | "CHANGEMENT_PARKING" | "CHANGEMENT_VEHICULE";
+export type TypeDemande = "NOUVEL_ABONNEMENT" | "RENOUVELLEMENT" | "CHANGEMENT_PARKING" | "PERTE_CARTE";
 
 export type ModePaiement = "ESPECES" | "CHEQUE";
 
@@ -26,5 +26,5 @@ export const typeDemandeLabels: Record<TypeDemande, { label: string; color: stri
   NOUVEL_ABONNEMENT: { label: "Nouvel Abonnement", color: "blue" },
   RENOUVELLEMENT: { label: "Renouvellement", color: "purple" },
   CHANGEMENT_PARKING: { label: "Changement de Parking", color: "orange" },
-  CHANGEMENT_VEHICULE: { label: "Changement de Véhicule", color: "cyan" },
+  PERTE_CARTE: { label: "Perte de Carte / Duplicata RFID", color: "volcano" },
 };
