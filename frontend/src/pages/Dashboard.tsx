@@ -24,6 +24,7 @@ import { roleConfig, type Role } from "../lib/roleConfig";
 import { GlobalFilterBar, type GlobalFilters } from "../components/ui/GlobalFilterBar";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { RoleCharts } from "../components/charts/RoleCharts";
+import { RabatParkingsMap } from "../components/map/RabatParkingsMap";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
@@ -168,6 +169,9 @@ export function Dashboard() {
 
       {/* Graphiques Interactifs Personnalisés par Rôle */}
       <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} />
+
+      {/* Carte Interactive du Réseau & Emplacements Rabat */}
+      <RabatParkingsMap height={460} />
 
       {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
       {(role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") && (

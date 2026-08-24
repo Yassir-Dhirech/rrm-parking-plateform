@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
+import { RabatParkingsMap } from "../components/map/RabatParkingsMap";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -311,6 +312,25 @@ export function LandingPage() {
             </Card>
           </Col>
         </Row>
+      </section>
+
+      {/* Interactive Rabat Parkings Map Section */}
+      <section style={{ backgroundColor: "#f1f5f9", padding: "60px 24px 70px", borderTop: "1px solid #e2e8f0" }}>
+        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 36 }}>
+            <Tag color="cyan" style={{ fontSize: 12, padding: "2px 10px", borderRadius: 12, marginBottom: 8 }}>
+              Carte du Réseau & Emplacements Rabat
+            </Tag>
+            <Title level={2} style={{ color: "#0f172a", margin: 0, fontWeight: 700 }}>
+              Consultez la disponibilité des parkings en temps réel
+            </Title>
+            <Text type="secondary" style={{ fontSize: 15 }}>
+              Survolez les emplacements des parkings RRM sur la carte pour visualiser leur nombre de places libres et leurs caractéristiques.
+            </Text>
+          </div>
+
+          <RabatParkingsMap height={500} />
+        </div>
       </section>
 
       {/* About RRM Section */}
