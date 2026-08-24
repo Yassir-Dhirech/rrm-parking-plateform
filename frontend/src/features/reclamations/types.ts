@@ -1,10 +1,10 @@
 export type CategorieReclamation =
-  | "LPR_BARRIERE"          // 🚗 Problème de Lecture LPR / Barrière non ouverte
-  | "RFID_BADGE"            // 💳 Badge RFID non détecté / Carte endommagée
-  | "FACTURATION_SURCHARGE" // 💰 Contestation de Facturation / Erreur de Débit
-  | "DELAI_ACTIVATION"     // ⏱️ Retard d'Activation d'Abonnement / Erreur de Durée
-  | "BORNE_PAIEMENT"        // 🛠️ Panne Borne de Paiement Automatique / Ticket illisible
-  | "AUTRE_GENERAL";        // 📝 Autre Demande / Réclamation Générale
+  | "LPR_BARRIERE"          // Problème de Lecture LPR / Barrière non ouverte
+  | "RFID_BADGE"            // Badge RFID non détecté / Carte endommagée
+  | "FACTURATION_SURCHARGE" // Contestation de Facturation / Erreur de Débit
+  | "DELAI_ACTIVATION"     // Retard d'Activation d'Abonnement / Erreur de Durée
+  | "BORNE_PAIEMENT"        // Panne Borne de Paiement Automatique / Ticket illisible
+  | "AUTRE_GENERAL";        // Autre Demande / Réclamation Générale
 
 export const CATEGORIES_RECLAMATION_LABELS: Record<CategorieReclamation, { label: string; description: string; icon: string; color: string }> = {
   LPR_BARRIERE: {

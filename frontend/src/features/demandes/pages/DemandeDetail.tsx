@@ -407,11 +407,6 @@ export function DemandeDetail() {
               {data.paiementInfo.banque && (
                 <Descriptions.Item label="Banque">{data.paiementInfo.banque}</Descriptions.Item>
               )}
-              {data.paiementInfo.referenceVirement && (
-                <Descriptions.Item label="Réf. Virement">
-                  {data.paiementInfo.referenceVirement}
-                </Descriptions.Item>
-              )}
               {data.paiementInfo.datePaiement && (
                 <Descriptions.Item label="Date Enregistrement">
                   {data.paiementInfo.datePaiement}
@@ -489,7 +484,7 @@ export function DemandeDetail() {
                   <DollarOutlined /> Étape 1: Encaissement du Paiement (Agent / Superviseur)
                 </h5>
                 <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-                  Encaisser et saisir le règlement (Espèces, Chèque, Virement) au guichet.
+                  Encaisser et saisir le règlement (Espèces, Chèque) au guichet.
                 </p>
                 {isPaiementDone ? (
                   <Tag color="green" style={{ padding: "6px 12px", fontSize: 12 }}>
@@ -595,7 +590,6 @@ export function DemandeDetail() {
               options={[
                 { label: "Espèces (Guichet)", value: "ESPECES" },
                 { label: "Chèque Bancaire", value: "CHEQUE" },
-                { label: "Virement Bancaire", value: "VIREMENT" },
               ]}
             />
           </Form.Item>
@@ -621,28 +615,6 @@ export function DemandeDetail() {
               <Form.Item
                 name="banque"
                 label="Banque Émettrice"
-                rules={[{ required: true, message: "Nom de la banque requis" }]}
-              >
-                <Select
-                  placeholder="Sélectionner la banque..."
-                  options={BANK_OPTIONS}
-                />
-              </Form.Item>
-            </>
-          )}
-
-          {currentPaymentMode === "VIREMENT" && (
-            <>
-              <Form.Item
-                name="referenceVirement"
-                label="Référence du Virement"
-                rules={[{ required: true, message: "Référence de virement requise" }]}
-              >
-                <Input placeholder="Ex: VIR-2026-00123" />
-              </Form.Item>
-              <Form.Item
-                name="banque"
-                label="Banque d'origine"
                 rules={[{ required: true, message: "Nom de la banque requis" }]}
               >
                 <Select
@@ -685,7 +657,7 @@ export function DemandeDetail() {
         okButtonProps={{ danger: true }}
       >
         <p style={{ color: "#64748b", fontSize: 13 }}>
-          Veuillez justifier la raison du refus ({rejectType === "PAIEMENT" ? "erreur montant, chèque en bois, virement non reçu..." : "pièces manquantes, immatriculation incorrecte, non-conformité..."}).
+          Veuillez justifier la raison du refus ({rejectType === "PAIEMENT" ? "erreur montant, chèque rejeté..." : "pièces manquantes, immatriculation incorrecte, non-conformité..."}).
         </p>
         <Input.TextArea
           placeholder="Motif du refus..."

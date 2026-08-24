@@ -22,7 +22,6 @@ export interface RecetteJournee {
   montantEspeces: number;
   montantCarte: number;
   montantCheque: number;
-  montantVirement: number;
   totalJournee: number;
   nombreTransactions: number;
 }
@@ -39,7 +38,6 @@ export interface RecetteHebdoListItem {
   totalEspeces: number;
   totalCheques: number;
   totalCarte: number;
-  totalVirement: number;
   nombreCheques: number;
   statut: StatutRecette;
 }

@@ -50,6 +50,7 @@ import {
   SolutionOutlined,
   AuditOutlined,
   TeamOutlined,
+  MobileOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPublicParkings } from "../../../api/parkings";
@@ -357,6 +358,40 @@ export function PublicQrForm() {
       montantTotal: totalTTC,
       typeDemande,
       typeClient,
+    } as PublicDemandeInput;
+
+    mutation.mutate(fullData);
+  };
+
+  const handleInitiatePerteCarteOtp = () => {
+    if (!foundSubscriber) return;
+    setFormData({
+      telephone: foundSubscriber.telephone,
+      email: foundSubscriber.email,
+      nom: foundSubscriber.nom,
+      prenom: foundSubscriber.prenom,
+      cin: foundSubscriber.cin,
+    });
+    setIsOtpModalOpen(true);
+    message.info(`Un code SMS de sécurité (OTP) a été transmis au ${foundSubscriber.telephone} pour authentifier le titulaire du compte.`);
+  };
+
+  const handlePerteCarteSubmit = () => {
+    if (!foundSubscriber) return;
+    const fullData: PublicDemandeInput = {
+      nom: foundSubscriber.nom,
+      prenom: foundSubscriber.prenom,
+      cin: foundSubscriber.cin,
+      email: foundSubscriber.email,
+      telephone: foundSubscriber.telephone,
+      immatriculation: foundSubscriber.immatriculation,
+      typeVehicule: foundSubscriber.typeVehicule || "VOITURE",
+      parkingId: foundSubscriber.parkingId || 1,
+      numeroCarteAbonne: foundSubscriber.numeroCarteAbonne,
+      typeDemande: "PERTE_CARTE",
+      typeClient: "PARTICULIER",
+      montantTotal: 50,
+      motifChangement: "Déclaration de perte de carte RFID authentifiée par OTP SMS. Duplicata 50 DH à régler à la caisse du guichet sous 7 jours max.",
     } as PublicDemandeInput;
 
     mutation.mutate(fullData);
@@ -951,18 +986,73 @@ export function PublicQrForm() {
                                 </Space.Compact>
 
                                 {foundSubscriber ? (
-                                  <Alert
-                                    type="success"
-                                    showIcon
-                                    message={`Dossier Abonné Chargé : ${foundSubscriber.prenom} ${foundSubscriber.nom}`}
-                                    description={
-                                      <div style={{ marginTop: 6, lineHeight: 1.6 }}>
-                                        <div><strong>CIN :</strong> {foundSubscriber.cin} | <strong>Carte RFID :</strong> {foundSubscriber.numeroCarteAbonne}</div>
-                                        <div><strong>Contact :</strong> {foundSubscriber.email} | {foundSubscriber.telephone}</div>
-                                        <div><strong>Parking Actuel :</strong> {foundSubscriber.parkingNom} | <strong>Immatriculation :</strong> {foundSubscriber.immatriculation}</div>
-                                      </div>
-                                    }
-                                  />
+                                   typeDemande === "PERTE_CARTE" ? (
+                                     <Card
+                                       style={{
+                                         borderRadius: 12,
+                                         borderColor: "#f97316",
+                                         backgroundColor: "#fff7ed",
+                                         marginTop: 12,
+                                       }}
+                                     >
+                                       <Title level={4} style={{ color: "#c2410c", margin: "0 0 12px" }}>
+                                         <IdcardOutlined style={{ marginRight: 8 }} /> Déclaration de Perte de Carte — {foundSubscriber.prenom} {foundSubscriber.nom}
+                                       </Title>
+
+                                       <Row gutter={[16, 10]} style={{ fontSize: 13, color: "#334155" }}>
+                                         <Col xs={24} sm={12}>
+                                           <div><strong>Nom & Prénom :</strong> {foundSubscriber.prenom} {foundSubscriber.nom}</div>
+                                           <div><strong>N° CIN :</strong> {foundSubscriber.cin}</div>
+                                           <div><strong>N° Carte RFID Perdue :</strong> <Tag color="volcano">{foundSubscriber.numeroCarteAbonne}</Tag></div>
+                                         </Col>
+                                         <Col xs={24} sm={12}>
+                                           <div><strong>Parking d'Attache :</strong> {foundSubscriber.parkingNom}</div>
+                                           <div><strong>Immatriculation Rattachée :</strong> <Tag color="cyan">{foundSubscriber.immatriculation}</Tag></div>
+                                           <div><strong>N° GSM (pour SMS) :</strong> {foundSubscriber.telephone}</div>
+                                         </Col>
+                                       </Row>
+
+                                       <Alert
+                                         type="warning"
+                                         showIcon
+                                         message="Consignes Importantes pour la Déclaration & Retrait du Duplicata :"
+                                         description={
+                                           <div style={{ fontSize: 13, lineHeight: 1.6, marginTop: 6 }}>
+                                             <div><ClockCircleOutlined style={{ color: "#d97706", marginRight: 6 }} /> <strong>Délai de Confection (7 Jours Max) :</strong> Votre nouvelle carte d'abonné RFID sera fabriquée et disponible au guichet sous un délai de <strong>7 jours maximum</strong>.</div>
+                                             <div><DollarOutlined style={{ color: "#16a34a", marginRight: 6 }} /> <strong>Frais 50 DH à la Caisse :</strong> Vous devrez vous présenter à la caisse du guichet de votre parking (<strong>{foundSubscriber.parkingNom}</strong>) muni de votre pièce d'identité (CIN) et régler la somme de <strong>50 DH</strong> pour retirer votre nouveau badge.</div>
+                                             <div><MobileOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Notification SMS Instantanée :</strong> Un SMS de confirmation de déclaration contenant votre code de suivi sera envoyé à votre numéro <strong>{foundSubscriber.telephone}</strong>.</div>
+                                           </div>
+                                         }
+                                         style={{ margin: "16px 0 20px", borderRadius: 10, border: "1px solid #fed7aa", backgroundColor: "#ffffff" }}
+                                       />
+
+                                       <div style={{ textAlign: "right" }}>
+                                          <Button
+                                            type="primary"
+                                            danger
+                                            size="large"
+                                            loading={mutation.isPending}
+                                            onClick={handleInitiatePerteCarteOtp}
+                                            style={{ backgroundColor: "#ea580c", borderColor: "#ea580c", fontWeight: 600, borderRadius: 8 }}
+                                          >
+                                            Confirmer par Code SMS (OTP) & Solliciter le Duplicata →
+                                          </Button>
+                                       </div>
+                                     </Card>
+                                   ) : (
+                                     <Alert
+                                       type="success"
+                                       showIcon
+                                       message={`Dossier Abonné Chargé : ${foundSubscriber.prenom} ${foundSubscriber.nom}`}
+                                       description={
+                                         <div style={{ marginTop: 6, lineHeight: 1.6 }}>
+                                           <div><strong>CIN :</strong> {foundSubscriber.cin} | <strong>Carte RFID :</strong> {foundSubscriber.numeroCarteAbonne}</div>
+                                           <div><strong>Contact :</strong> {foundSubscriber.email} | {foundSubscriber.telephone}</div>
+                                           <div><strong>Parking Actuel :</strong> {foundSubscriber.parkingNom} | <strong>Immatriculation :</strong> {foundSubscriber.immatriculation}</div>
+                                         </div>
+                                       }
+                                     />
+                                   )
                                 ) : (
                                   <div style={{ padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #93c5fd", fontSize: 13, color: "#475569" }}>
                                     <BulbOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Comptes de démonstration prêts à tester :</strong>
@@ -1500,7 +1590,7 @@ export function PublicQrForm() {
                               Votre dossier est en cours de validation par un agent du parking RRM.
                             </li>
                             <li>
-                              <strong>Paiement accepté au guichet :</strong> Espèces, Chèque bancaire (à l'ordre de Rabat Région Mobilité), ou Virement.
+                              <strong>Paiement accepté au guichet :</strong> Espèces ou Chèque bancaire (à l'ordre de Rabat Région Mobilité).
                             </li>
                             <li>
                               Une fois validé, vous recevrez une notification pour <strong>récupérer votre carte RFID</strong> ainsi que votre <strong>reçu et facture</strong>.
@@ -1761,7 +1851,11 @@ export function PublicQrForm() {
         onClose={() => setIsOtpModalOpen(false)}
         onSuccess={() => {
           setIsOtpModalOpen(false);
-          handleFinalSubmit();
+          if (typeDemande === "PERTE_CARTE") {
+            handlePerteCarteSubmit();
+          } else {
+            handleFinalSubmit();
+          }
         }}
       />
     </div>

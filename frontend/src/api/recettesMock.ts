@@ -14,7 +14,6 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     totalEspeces: 20000,
     totalCheques: 18000,
     totalCarte: 9500,
-    totalVirement: 1000,
     nombreCheques: 3,
     statut: "RECEIVED",
     superviseurNom: "M. Samir El Amrani",
@@ -27,13 +26,13 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     quittanceNumero: "QUIT-2026-00481",
     commentaires: "Versement de 20 000 MAD en espèces et 3 chèques physiques (18 000 MAD) réceptionné et confirmé par la comptabilité.",
     detailJours: [
-      { date: "27/07/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 4000, montantVirement: 0, totalJournee: 7000, nombreTransactions: 24 },
-      { date: "28/07/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 3500, montantVirement: 0, totalJournee: 12000, nombreTransactions: 19 },
-      { date: "29/07/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 3000, montantVirement: 1000, totalJournee: 8000, nombreTransactions: 28 },
-      { date: "30/07/2026", montantEspeces: 2000, montantCheque: 7200, montantCarte: 5000, montantVirement: 0, totalJournee: 14200, nombreTransactions: 22 },
-      { date: "31/07/2026", montantEspeces: 3500, montantCheque: 4800, montantCarte: 4500, montantVirement: 0, totalJournee: 12800, nombreTransactions: 30 },
-      { date: "01/08/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 3500, montantVirement: 0, totalJournee: 6500, nombreTransactions: 21 },
-      { date: "02/08/2026", montantEspeces: 2000, montantCheque: 0, montantCarte: 4000, montantVirement: 0, totalJournee: 6000, nombreTransactions: 18 },
+      { date: "27/07/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 4000, totalJournee: 7000, nombreTransactions: 24 },
+      { date: "28/07/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 3500, totalJournee: 12000, nombreTransactions: 19 },
+      { date: "29/07/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 3000, totalJournee: 7000, nombreTransactions: 28 },
+      { date: "30/07/2026", montantEspeces: 2000, montantCheque: 7200, montantCarte: 5000, totalJournee: 14200, nombreTransactions: 22 },
+      { date: "31/07/2026", montantEspeces: 3500, montantCheque: 4800, montantCarte: 4500, totalJournee: 12800, nombreTransactions: 30 },
+      { date: "01/08/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 3500, totalJournee: 6500, nombreTransactions: 21 },
+      { date: "02/08/2026", montantEspeces: 2000, montantCheque: 0, montantCarte: 4000, totalJournee: 6000, nombreTransactions: 18 },
     ],
     chequesRemis: [
       { id: 1, referencePaiement: "PAI-2026-0812", numeroCheque: "CHQ-0019283", banque: "Attijariwafa Bank", emetteur: "Société Atlas Trans SARL", montant: 6000, datePaiement: "28/07/2026" },
@@ -52,8 +51,7 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     totalHebdo: 32400,
     totalEspeces: 12400,
     totalCheques: 12000,
-    totalCarte: 7200,
-    totalVirement: 800,
+    totalCarte: 8000,
     nombreCheques: 2,
     statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani",
@@ -63,11 +61,11 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     dateTransmission: "10/08/2026 09:15",
     commentaires: "Recette complétée par le superviseur et transmise au service financier. 12 400 DH liquide + 2 chèques physiques.",
     detailJours: [
-      { date: "03/08/2026", montantEspeces: 2200, montantCheque: 6000, montantCarte: 3800, montantVirement: 0, totalJournee: 12000, nombreTransactions: 20 },
-      { date: "04/08/2026", montantEspeces: 1800, montantCheque: 0, montantCarte: 4200, montantVirement: 0, totalJournee: 6000, nombreTransactions: 21 },
-      { date: "05/08/2026", montantEspeces: 3100, montantCheque: 0, montantCarte: 2900, montantVirement: 0, totalJournee: 6000, nombreTransactions: 19 },
-      { date: "06/08/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 3900, montantVirement: 800, totalJournee: 13200, nombreTransactions: 25 },
-      { date: "07/08/2026", montantEspeces: 2800, montantCheque: 0, montantCarte: 4400, montantVirement: 0, totalJournee: 7200, nombreTransactions: 26 },
+      { date: "03/08/2026", montantEspeces: 2200, montantCheque: 6000, montantCarte: 3800, totalJournee: 12000, nombreTransactions: 20 },
+      { date: "04/08/2026", montantEspeces: 1800, montantCheque: 0, montantCarte: 4200, totalJournee: 6000, nombreTransactions: 21 },
+      { date: "05/08/2026", montantEspeces: 3100, montantCheque: 0, montantCarte: 2900, totalJournee: 6000, nombreTransactions: 19 },
+      { date: "06/08/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 4700, totalJournee: 13200, nombreTransactions: 25 },
+      { date: "07/08/2026", montantEspeces: 2800, montantCheque: 0, montantCarte: 4400, totalJournee: 7200, nombreTransactions: 26 },
     ],
     chequesRemis: [
       { id: 10, referencePaiement: "PAI-2026-0888", numeroCheque: "CHQ-7712039", banque: "CIH Bank", emetteur: "Tech Solutions SARL", montant: 6000, datePaiement: "03/08/2026" },
@@ -86,14 +84,13 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     totalEspeces: 14500,
     totalCheques: 10000,
     totalCarte: 0,
-    totalVirement: 0,
     nombreCheques: 1,
     statut: "EN_COURS",
     superviseurNom: "M. Youssef Tazi",
     detailJours: [
-      { date: "10/08/2026", montantEspeces: 3500, montantCheque: 10000, montantCarte: 0, montantVirement: 0, totalJournee: 13500, nombreTransactions: 14 },
-      { date: "11/08/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 0, montantVirement: 0, totalJournee: 4000, nombreTransactions: 16 },
-      { date: "12/08/2026", montantEspeces: 7000, montantCheque: 0, montantCarte: 0, montantVirement: 0, totalJournee: 7000, nombreTransactions: 22 },
+      { date: "10/08/2026", montantEspeces: 3500, montantCheque: 10000, montantCarte: 0, totalJournee: 13500, nombreTransactions: 14 },
+      { date: "11/08/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 0, totalJournee: 4000, nombreTransactions: 16 },
+      { date: "12/08/2026", montantEspeces: 7000, montantCheque: 0, montantCarte: 0, totalJournee: 7000, nombreTransactions: 22 },
     ],
     chequesRemis: [
       { id: 20, referencePaiement: "PAI-2026-0910", numeroCheque: "CHQ-5591028", banque: "Attijariwafa Bank", emetteur: "Maroc Telecom Agency", montant: 10000, datePaiement: "10/08/2026" },
@@ -152,7 +149,7 @@ export interface PaiementAEncasserRecette {
   parkingId: number;
   parkingNom: string;
   clientNom: string;
-  modePaiement: "ESPECES" | "CHEQUE" | "VIREMENT" | "CARTE";
+  modePaiement: "ESPECES" | "CHEQUE" | "CARTE";
   montant: number;
   datePaiement: string;
   numeroCheque?: string;
@@ -204,7 +201,6 @@ export async function creerRecetteSupervisorMock(input: {
     totalEspeces,
     totalCheques,
     totalCarte: 0,
-    totalVirement: 0,
     nombreCheques: chequesPaiements.length,
     statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani (Superviseur)",
@@ -218,7 +214,6 @@ export async function creerRecetteSupervisorMock(input: {
         montantEspeces: totalEspeces,
         montantCheque: totalCheques,
         montantCarte: 0,
-        montantVirement: 0,
         totalJournee: totalHebdo,
         nombreTransactions: input.paiementsChoisis.length,
       }

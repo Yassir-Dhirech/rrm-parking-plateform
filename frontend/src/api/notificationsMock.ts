@@ -100,7 +100,7 @@ const initialNotifications: AppNotification[] = [
   {
     id: "notif-7",
     title: "Encaissement à Rapprocher",
-    message: "Un virement bancaire de 18 500 MAD n'a pas encore été associé à une facture.",
+    message: "Un règlement par chèque de 18 500 MAD n'a pas encore été associé à une facture.",
     timestamp: "Il y a 30 min",
     type: "danger",
     category: "PAIEMENT",

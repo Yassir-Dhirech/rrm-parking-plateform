@@ -256,9 +256,9 @@ function ResponsableCharts({ filters, contrats }: { filters: GlobalFilters; rece
 function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
   const total = recettes.reduce((acc, r) => acc + r.totalHebdo, 0) || 258700;
   const modesPaiement = [
-    { mode: "Carte Bancaire / TPE", montant: Math.round(total * 0.55), percent: 55, color: "#003566" },
-    { mode: "Espèces (Guichet)", montant: Math.round(total * 0.33), percent: 33, color: "#10b981" },
-    { mode: "Virement Bancaire (Entreprises)", montant: Math.round(total * 0.12), percent: 12, color: "#982B5E" },
+    { mode: "Carte Bancaire / TPE", montant: Math.round(total * 0.60), percent: 60, color: "#003566" },
+    { mode: "Espèces (Guichet)", montant: Math.round(total * 0.25), percent: 25, color: "#10b981" },
+    { mode: "Chèques Certifiés", montant: Math.round(total * 0.15), percent: 15, color: "#d97706" },
   ];
 
   return (
