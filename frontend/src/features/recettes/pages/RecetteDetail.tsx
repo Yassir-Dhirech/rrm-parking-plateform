@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert, Input, Tooltip } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, AuditOutlined, DollarOutlined, StopOutlined, LinkOutlined, UserOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, DollarOutlined, StopOutlined, LinkOutlined, UserOutlined } from "@ant-design/icons";
 import { getRecetteByIdMock, markRecetteAsCompletedMock, markRecetteAsReceivedMock, rejeterChequeEtSuspendreCarteMock } from "../../../api/recettesMock";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
