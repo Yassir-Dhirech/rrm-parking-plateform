@@ -66,11 +66,10 @@ export interface DemandeSubmissionResult {
 export type BankOption = "CIH" | "ATTIJARI" | "BMCE" | "SOCIETE GENERALE" | "BANQUE POPULAIRE" | "AL BARID" | "Autre";
 
 export interface PaymentInfoInput {
-  modePaiement: "ESPECES" | "CHEQUE" | "VIREMENT";
+  modePaiement: "ESPECES" | "CHEQUE";
   montant: number;
   numeroCheque?: string;
   banque?: BankOption;
-  referenceVirement?: string;
   remarques?: string;
 }
 

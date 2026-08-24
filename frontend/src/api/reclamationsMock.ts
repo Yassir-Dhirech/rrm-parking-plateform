@@ -57,7 +57,7 @@ export async function creerReclamationMock(input: PublicReclamationInput): Promi
 
   // Dispatch high-priority alert notification to Agents & Supervisors
   addNotificationMock({
-    title: `🚨 Nouvelle Réclamation Client (${newRef})`,
+    title: `Nouvelle Réclamation Client (${newRef})`,
     message: `Réclamation déposée par ${input.nomPrenom} pour ${input.parkingNom} - Motif : ${input.typeReclamation}.`,
     type: "warning",
     category: "DOSSIER",
@@ -66,7 +66,7 @@ export async function creerReclamationMock(input: PublicReclamationInput): Promi
   });
 
   addNotificationMock({
-    title: `🚨 Service Client : Réclamation (${newRef})`,
+    title: `Service Client : Réclamation (${newRef})`,
     message: `Incident signalé pour ${input.parkingNom} par ${input.nomPrenom} (${input.telephone}).`,
     type: "warning",
     category: "DOSSIER",

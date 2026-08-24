@@ -34,8 +34,6 @@ const roleBadgeColors: Record<Role, string> = {
   ADMIN_SI: "red",
 };
 
-const isDev = import.meta.env.DEV;
-
 export function LoginPage() {
   const { login: setAuth } = useAuth();
   const navigate = useNavigate();
@@ -178,36 +176,32 @@ export function LoginPage() {
           </Form.Item>
         </Form>
 
-        {isDev && (
-          <>
-            <Divider style={{ margin: "20px 0 14px 0", fontSize: 12, color: "#94a3b8" }}>
-              <KeyOutlined style={{ marginRight: 4 }} /> Accès Rapide Démo (Dev)
-            </Divider>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {(Object.keys(roleConfig) as Role[]).map((role) => (
-                <Button
-                  key={role}
-                  size="middle"
-                  style={{
-                    fontSize: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "6px 10px",
-                    borderRadius: 8,
-                    borderColor: "#e2e8f0",
-                  }}
-                  onClick={() => handleMockLogin(role)}
-                >
-                  <span style={{ fontWeight: 500 }}>{roleConfig[role].title.replace("Espace ", "")}</span>
-                  <Tag color={roleBadgeColors[role]} style={{ margin: 0, fontSize: 10, padding: "0 4px" }}>
-                    {role.substring(0, 3)}
-                  </Tag>
-                </Button>
-              ))}
-            </div>
-          </>
-        )}
+        <Divider style={{ margin: "20px 0 14px 0", fontSize: 12, color: "#94a3b8" }}>
+          <KeyOutlined style={{ marginRight: 4 }} /> Accès Rapide Démo — Espace Personnel
+        </Divider>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {(Object.keys(roleConfig) as Role[]).map((role) => (
+            <Button
+              key={role}
+              size="middle"
+              style={{
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 10px",
+                borderRadius: 8,
+                borderColor: "#cbd5e1",
+              }}
+              onClick={() => handleMockLogin(role)}
+            >
+              <span style={{ fontWeight: 600 }}>{roleConfig[role].title.replace("Espace ", "")}</span>
+              <Tag color={roleBadgeColors[role]} style={{ margin: 0, fontSize: 10, padding: "0 4px" }}>
+                {role.substring(0, 3)}
+              </Tag>
+            </Button>
+          ))}
+        </div>
       </Card>
 
       {/* Otp Verification Modal for 2FA Login */}

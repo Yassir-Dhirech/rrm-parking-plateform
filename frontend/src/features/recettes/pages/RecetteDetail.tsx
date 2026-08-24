@@ -87,12 +87,6 @@ export function RecetteDetail() {
       render: (v: number) => (v || 0).toLocaleString("fr-FR"),
     },
     {
-      title: "Virement (DH)",
-      dataIndex: "montantVirement",
-      key: "montantVirement",
-      render: (v: number) => (v || 0).toLocaleString("fr-FR"),
-    },
-    {
       title: "Total Journée (DH)",
       dataIndex: "totalJournee",
       key: "totalJournee",
@@ -261,28 +255,22 @@ export function RecetteDetail() {
 
         {/* Breakdown of Payment Methods */}
         <Row gutter={16} style={{ marginBottom: 20 }}>
-          <Col span={6}>
+          <Col span={8}>
             <Card size="small" style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}>
               <div style={{ fontSize: 12, color: "#166534" }}><BankOutlined /> Espèces Liquide :</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#15803d" }}>{(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH</div>
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={8}>
             <Card size="small" style={{ backgroundColor: "#faf5ff", borderColor: "#e9d5ff" }}>
               <div style={{ fontSize: 12, color: "#6b21a8" }}><FileTextOutlined /> Chèques Physiques ({recette.nombreCheques || 0}) :</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#7e22ce" }}>{(recette.totalCheques || 0).toLocaleString("fr-FR")} DH</div>
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={8}>
             <Card size="small" style={{ backgroundColor: "#f0f9ff", borderColor: "#bae6fd" }}>
               <div style={{ fontSize: 12, color: "#075985" }}><DollarOutlined /> TPE / Cartes :</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#0369a1" }}>{(recette.totalCarte || 0).toLocaleString("fr-FR")} DH</div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card size="small" style={{ backgroundColor: "#f8fafc", borderColor: "#cbd5e1" }}>
-              <div style={{ fontSize: 12, color: "#475569" }}><AuditOutlined /> Virements Bancaires :</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#334155" }}>{(recette.totalVirement || 0).toLocaleString("fr-FR")} DH</div>
             </Card>
           </Col>
         </Row>

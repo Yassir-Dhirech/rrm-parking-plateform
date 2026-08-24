@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Drawer, List, Input, Button, Avatar, Tag, Space, Typography, Badge, message as antMessage } from "antd";
-import { SendOutlined, MessageOutlined, LinkOutlined, CheckOutlined } from "@ant-design/icons";
+import { SendOutlined, MessageOutlined, LinkOutlined, CheckOutlined, PushpinOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getConversationsMock, getMessagesForConversationMock, envoyerMessageMock } from "../../api/messagingMock";
 import { useAuth } from "../../context/AuthContext";
@@ -160,7 +160,7 @@ export function MessagerieDrawer({ open, onClose, initialEntityRef }: Messagerie
                         {msg.contenu}
                         {msg.referenceEntite && (
                           <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.3)", fontSize: 11 }}>
-                            📌 Réf {msg.referenceEntite.type} : <strong>{msg.referenceEntite.reference}</strong>
+                            <PushpinOutlined style={{ marginRight: 4 }} /> Réf {msg.referenceEntite.type} : <strong>{msg.referenceEntite.reference}</strong>
                           </div>
                         )}
                       </div>

@@ -37,9 +37,6 @@ export function PaiementDetail() {
           <Descriptions.Item label="N° chèque">{data.numeroCheque}</Descriptions.Item>
         )}
         {data.banque && <Descriptions.Item label="Banque">{data.banque}</Descriptions.Item>}
-        {data.referenceVirement && (
-          <Descriptions.Item label="Réf. virement">{data.referenceVirement}</Descriptions.Item>
-        )}
       </Descriptions>
     </Card>
   );

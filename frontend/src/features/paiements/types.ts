@@ -14,7 +14,6 @@ export interface PaiementListItem {
 export interface PaiementDetail extends PaiementListItem {
   numeroCheque?: string;
   banque?: string;
-  referenceVirement?: string;
   abonnementReference: string;
   enregistrePar: string;
 }
