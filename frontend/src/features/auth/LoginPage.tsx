@@ -22,6 +22,7 @@ const roleHomeRoute: Record<string, string> = {
 };
 
 export function LoginPage() {
+  // Clean authentication handler without unused state variables
   const { login: setAuth } = useAuth();
   const navigate = useNavigate();
 
