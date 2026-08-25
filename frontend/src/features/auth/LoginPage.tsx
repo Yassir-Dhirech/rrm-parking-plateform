@@ -27,8 +27,6 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [require2fa, setRequire2fa] = useState<boolean>(false);
-  const [pendingLogin, setPendingLogin] = useState<{ token: string; role: Role; name?: string } | null>(null);
 
   const executeLogin = (token: string, role: Role, name?: string) => {
     setAuth(token, role, name ?? roleConfig[role].title);
@@ -43,11 +41,7 @@ export function LoginPage() {
     }
     try {
       const { token, role } = await login(email, password);
-      if (require2fa) {
-        setPendingLogin({ token, role: role as Role });
-      } else {
-        executeLogin(token, role as Role);
-      }
+      executeLogin(token, role as Role);
     } catch (err) {
       message.error("Email ou mot de passe incorrect");
     }
@@ -55,11 +49,7 @@ export function LoginPage() {
 
   const handleMockLogin = (role: Role) => {
     const { token } = mockLogin(role);
-    if (require2fa) {
-      setPendingLogin({ token, role, name: roleConfig[role].title });
-    } else {
-      executeLogin(token, role, roleConfig[role].title);
-    }
+    executeLogin(token, role, roleConfig[role].title);
   };
 
   return (
@@ -89,7 +79,7 @@ export function LoginPage() {
       <div className="z-10 w-full max-w-[460px]">
         {/* Glass Form Panel */}
         <div className="glass-panel rounded-2xl p-8 shadow-2xl">
-          {/* Header with Logo without background box */}
+          {/* Header with Logo */}
           <div className="flex items-center justify-center gap-3 mb-6 pb-4 border-b border-outline-variant/20">
             <img
               src="/pictures/logo-rrm.png"
@@ -147,8 +137,6 @@ export function LoginPage() {
               </div>
             </div>
 
-            
-
             {/* Authenticate Submit Button */}
             <button
               className="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md h-[48px] rounded-xl w-full flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98] mt-2 cursor-pointer"
@@ -184,8 +172,6 @@ export function LoginPage() {
           © {new Date().getFullYear()} Rabat Région Mobilité (RRM). Tous droits réservés.
         </div>
       </div>
-
-      
     </section>
   );
 }
