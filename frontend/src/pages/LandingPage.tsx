@@ -107,7 +107,7 @@ export function LandingPage() {
                   <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center mb-6 text-cyan-600 shadow-sm">
                     <EnvironmentOutlined className="text-3xl" />
                   </div>
-                  <Tag color="cyan" className="mb-3 font-semibold">Discovery Page</Tag>
+                  <Tag color="cyan" className="mb-3 font-semibold">Réseau des 17 Parkings</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Nos Parkings & Carte</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     Carte interactive en temps réel des 17 ouvrages de stationnement, capacités et taux d'occupation.
@@ -128,7 +128,7 @@ export function LandingPage() {
                   <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mb-6 text-emerald-600 shadow-sm">
                     <ClockCircleOutlined className="text-3xl" />
                   </div>
-                  <Tag color="green" className="mb-3 font-semibold">Evaluation Page</Tag>
+                  <Tag color="green" className="mb-3 font-semibold">Grille Tarifaire RRM</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Tarifs & Formules</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     Consultez l'ensemble des formules homologuées (Permanent 24h/7j, Diurne, Nocturne et Deux-roues).
@@ -149,7 +149,7 @@ export function LandingPage() {
                   <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mb-6 text-blue-600 shadow-sm">
                     <FileTextOutlined className="text-3xl" />
                   </div>
-                  <Tag color="blue" className="mb-3 font-semibold">Conversion Page</Tag>
+                  <Tag color="blue" className="mb-3 font-semibold">Formulaire en Ligne</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Abonnement & Démarches</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     Effectuez votre souscription, renouvellement, transfert ou demande de duplicata RFID sans compte.
