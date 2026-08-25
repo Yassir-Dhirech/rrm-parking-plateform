@@ -10,6 +10,7 @@ import {
   LoginOutlined,
   ArrowLeftOutlined,
   IdcardOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 
 const roleHomeRoute: Record<string, string> = {
@@ -54,7 +55,7 @@ export function LoginPage() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center p-md overflow-hidden">
+    <section className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden">
       {/* Atmospheric Background */}
       <div className="absolute inset-0 z-0">
         <div
@@ -76,8 +77,8 @@ export function LoginPage() {
         <span>Retour au Portail Public</span>
       </button>
 
-      {/* Main Glass Login Container */}
-      <div className="z-10 w-full max-w-[460px]">
+      {/* Main Glass Login Container - Perfectly Centered */}
+      <div className="z-10 w-full max-w-[460px] mx-auto my-auto flex flex-col justify-center">
         {/* Glass Form Panel */}
         <div className="glass-panel rounded-2xl p-8 shadow-2xl">
           {/* Header with Logo */}
@@ -152,7 +153,7 @@ export function LoginPage() {
               <p className="font-label-sm text-label-sm text-on-surface-variant mb-3 font-semibold">
                 Accès Rapide Démo — Espace Personnel
               </p>
-              <div className="grid grid-cols-2 gap-2 justify-center">
+              <div className="grid grid-cols-2 gap-2 justify-center items-center">
                 {(Object.keys(roleConfig) as Role[]).map((role) => (
                   <button
                     key={role}
@@ -160,8 +161,9 @@ export function LoginPage() {
                     onClick={() => handleMockLogin(role)}
                     type="button"
                   >
+                    
                     <span className="font-medium">{roleConfig[role].title.replace("Espace ", "")}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/70 font-bold">{role}</span>
+                  <span><RightOutlined style={{ fontSize: "16px" }} /></span>
                   </button>
                 ))}
               </div>

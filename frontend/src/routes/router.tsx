@@ -29,6 +29,8 @@ import { AuditLogsList } from "../features/admin/pages/AuditLogsList";
 import { NotificationsPage } from "../pages/NotificationsPage";
 import { AboutPage } from "../pages/AboutPage";
 import { ContactPage } from "../pages/ContactPage";
+import { PublicParkingsPage } from "../pages/PublicParkingsPage";
+import { PublicTarifsPage } from "../pages/PublicTarifsPage";
 import { ScrollToTop } from "../components/ui/ScrollToTop";
 
 function RootLayout() {
@@ -129,6 +131,8 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: "/", element: <LandingPage /> },
+      { path: "/parkings-public", element: <PublicParkingsPage /> },
+      { path: "/tarifs-public", element: <PublicTarifsPage /> },
       { path: "/about", element: <AboutPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/login", element: <LoginPage /> },

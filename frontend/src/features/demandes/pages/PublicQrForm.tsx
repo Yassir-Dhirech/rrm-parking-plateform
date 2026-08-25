@@ -440,50 +440,40 @@ export function PublicQrForm() {
   };
 
   return (
-    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", paddingBottom: 60 }}>
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen pb-16 relative overflow-x-hidden pt-20 lg:pt-24">
       <PublicNavbar />
 
-      {/* Top Banner */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #001E3D 0%, #003566 60%, #004D80 100%)",
-          color: "#ffffff",
-          padding: "24px 20px 32px",
-          textAlign: "center",
-          boxShadow: "0 4px 16px rgba(0, 53, 102, 0.15)",
-          position: "relative",
-        }}
-      >
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <Tag color="gold" style={{ fontSize: 12, padding: "2px 12px", borderRadius: 20, marginBottom: 8, fontWeight: 600 }}>
-            <QrcodeOutlined style={{ marginRight: 6 }} /> Service Abonné sans Compte — Rabat Région Mobilité
-          </Tag>
-          <h1 style={{ color: "#ffffff", fontSize: "1.65rem", fontWeight: 800, margin: "6px 0 8px", letterSpacing: "-0.5px" }}>
-            Portail des Démarches & Abonnements Parking
-          </h1>
-          <p style={{ color: "#cbd5e1", fontSize: "0.95rem", maxWidth: 660, margin: "0 auto", lineHeight: 1.5 }}>
-            Effectuez votre demande en ligne (Création, Renouvellement, Changement de Parking ou de Véhicule) en toute simplicité et suivez l'avancement de votre dossier avec votre code de suivi.
-          </p>
+      {/* Top Banner with Sunlit Rabat Backdrop & Stitch Glass Overlay */}
+      <div className="max-w-7xl mx-auto px-4 my-4">
+        <div className="relative rounded-3xl overflow-hidden bg-surface-container shadow-xl p-8 md:p-12 border border-white/60">
+          <div className="absolute inset-0 z-0">
+            <div
+              className="w-full h-full bg-cover bg-center"
+              style={{
+                backgroundImage:
+                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
+              }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-surface/95 via-surface/85 to-surface/40"></div>
+          </div>
+
+          <div className="relative z-10 max-w-3xl">
+            <Tag color="gold" className="px-3 py-1 rounded-full font-semibold mb-3 border-none shadow-sm text-xs">
+              <QrcodeOutlined className="mr-1.5" /> Service Abonné sans Compte — Rabat Région Mobilité
+            </Tag>
+            <h1 className="font-headline-lg-mobile md:font-headline-lg text-2xl md:text-3xl text-primary font-extrabold mb-2 leading-tight">
+              Portail des Démarches & Abonnements Parking
+            </h1>
+            <p className="font-body-md text-on-surface-variant text-sm md:text-base leading-relaxed">
+              Effectuez votre demande en ligne (Création, Renouvellement, Changement de Parking ou de Véhicule) en toute simplicité et suivez l'avancement de votre dossier avec votre code de suivi.
+            </p>
+          </div>
         </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: "linear-gradient(90deg, #982B5E 0%, #FFC300 50%, #0284C7 100%)",
-          }}
-        />
       </div>
 
-      <div style={{ maxWidth: 960, margin: "-16px auto 0", padding: "0 16px" }}>
+      <div className="max-w-7xl mx-auto px-4">
         <Card
-          style={{
-            borderRadius: 12,
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
-            border: "1px solid #e2e8f0",
-          }}
+          className="glass-card rounded-3xl shadow-2xl border border-white/80 p-2 md:p-6"
         >
           {/* Temporary BETA Dev Helper Button */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px dashed #e2e8f0" }}>
