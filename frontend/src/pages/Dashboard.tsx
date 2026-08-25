@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Row, Col, Card, Statistic, Table, Button, Space, Tag, Progress } from "antd";
+import { Row, Col, Card, Table, Space, Tag, Progress } from "antd";
 import {
   FileTextOutlined,
   CreditCardOutlined,
   DollarOutlined,
   CheckCircleOutlined,
-  ArrowRightOutlined,
   ClockCircleOutlined,
   SafetyCertificateOutlined,
   DashboardOutlined,
@@ -14,7 +13,6 @@ import {
   AuditOutlined,
   BankOutlined,
   ExclamationCircleOutlined,
-  ThunderboltOutlined,
   PieChartOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +27,8 @@ import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
 import { getParkingsMock } from "../api/adminMock";
+import { KpiCard } from "../components/ui/KpiCard";
+
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -141,28 +141,19 @@ export function Dashboard() {
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
       {/* Barre de Filtres Globaux */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />
-
       {/* Cartes KPIs Spécifiques au Rôle Connecté */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
         {kpis.map((kpi) => (
-          <Col key={kpi.title} xs={24} sm={12} lg={6}>
-            <Card
-              bordered={false}
-              style={{
-                borderLeft: `4px solid ${kpi.color}`,
-                boxShadow: "var(--shadow-sm)",
-                borderRadius: 12,
-              }}
-            >
-              <Statistic
+          <Col key={kpi.title} xs={24} sm={12} lg={6} style={{ display: "flex" }}>
+            <div style={{ width: "100%" }}>
+              <KpiCard
                 title={kpi.title}
                 value={kpi.value}
-                suffix={kpi.suffix}
-                precision={kpi.suffix === "%" ? 1 : 0}
-                valueStyle={{ color: kpi.color, fontWeight: 700 }}
                 prefix={kpi.prefix}
+                suffix={kpi.suffix}
+                color={kpi.color}
               />
-            </Card>
+            </div>
           </Col>
         ))}
       </Row>
@@ -172,6 +163,8 @@ export function Dashboard() {
 
       {/* Carte Interactive du Réseau & Emplacements Rabat */}
       <RabatParkingsMap height={460} />
+
+
 
       {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
       {(role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") && (
@@ -334,38 +327,7 @@ export function Dashboard() {
           </Card>
         </Col>
 
-        <Col xs={24} lg={8}>
-          <Card
-            title={
-              <Space>
-                <ThunderboltOutlined />
-                <span>Raccourcis Espace Métier</span>
-              </Space>
-            }
-            style={{ borderRadius: 12 }}
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {currentRoleConfig.menuItems.map((item) => (
-                <Button
-                  key={item.key}
-                  block
-                  type="default"
-                  icon={<ArrowRightOutlined />}
-                  style={{
-                    textAlign: "left",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderRadius: 8,
-                  }}
-                  onClick={() => navigate(item.path)}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </Space>
-          </Card>
-        </Col>
+        
       </Row>
     </Space>
   );
