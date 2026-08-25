@@ -4,10 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import { login } from "../../api/auth";
 import { mockLogin } from "./mockAuth";
 import { type Role, roleConfig } from "../../lib/roleConfig";
-import { OtpVerificationModal } from "../../components/ui/OtpVerificationModal";
 import { message } from "antd";
 import {
-  UserOutlined,
   LockOutlined,
   LoginOutlined,
   ArrowLeftOutlined,
@@ -30,7 +28,6 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [require2fa, setRequire2fa] = useState<boolean>(false);
-  const [isOtpOpen, setIsOtpOpen] = useState<boolean>(false);
   const [pendingLogin, setPendingLogin] = useState<{ token: string; role: Role; name?: string } | null>(null);
 
   const executeLogin = (token: string, role: Role, name?: string) => {
@@ -48,7 +45,6 @@ export function LoginPage() {
       const { token, role } = await login(email, password);
       if (require2fa) {
         setPendingLogin({ token, role: role as Role });
-        setIsOtpOpen(true);
       } else {
         executeLogin(token, role as Role);
       }
@@ -61,7 +57,6 @@ export function LoginPage() {
     const { token } = mockLogin(role);
     if (require2fa) {
       setPendingLogin({ token, role, name: roleConfig[role].title });
-      setIsOtpOpen(true);
     } else {
       executeLogin(token, role, roleConfig[role].title);
     }
@@ -152,20 +147,7 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* 2FA Option Checkbox */}
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  className="rounded border-outline-variant text-secondary focus:ring-secondary-container bg-white/60 w-5 h-5 transition-all cursor-pointer"
-                  type="checkbox"
-                  checked={require2fa}
-                  onChange={(e) => setRequire2fa(e.target.checked)}
-                />
-                <span className="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors">
-                  Exiger la vérification 2FA (OTP)
-                </span>
-              </label>
-            </div>
+            
 
             {/* Authenticate Submit Button */}
             <button
@@ -203,19 +185,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Otp Verification Modal for 2FA Login */}
-      <OtpVerificationModal
-        open={isOtpOpen}
-        title="Double Facteur (2FA) - Connexion Sécurisée"
-        subtitle="Entrez le code OTP envoyé par SMS ou Email pour valider votre connexion."
-        onClose={() => setIsOtpOpen(false)}
-        onSuccess={() => {
-          setIsOtpOpen(false);
-          if (pendingLogin) {
-            executeLogin(pendingLogin.token, pendingLogin.role, pendingLogin.name);
-          }
-        }}
-      />
+      
     </section>
   );
 }
