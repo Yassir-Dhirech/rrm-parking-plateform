@@ -1,1863 +1,1386 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  Steps,
   Form,
   Input,
   Select,
   Button,
-  Result,
-  Card,
   message,
-  Tabs,
-  Radio,
   Tag,
-  Divider,
   Row,
   Col,
-  Alert,
-  Modal,
-  Badge,
-  Space,
-  Typography,
-  Checkbox,
+  Collapse,
   Upload,
   InputNumber,
-  Segmented,
+  Radio,
+  Checkbox,
+  Card as AntCard,
 } from "antd";
 import {
-  QrcodeOutlined,
-  FileTextOutlined,
-  CarOutlined,
-  UserOutlined,
-  CheckCircleOutlined,
-  DollarOutlined,
-  PrinterOutlined,
-  SearchOutlined,
-  IdcardOutlined,
-  ClockCircleOutlined,
+  PlusCircleOutlined,
+  SyncOutlined,
+  SwapOutlined,
+  CopyOutlined,
+  BankOutlined,
   ArrowRightOutlined,
   ArrowLeftOutlined,
+  UserOutlined,
+  CarOutlined,
+  IdcardOutlined,
   SafetyCertificateOutlined,
-  BuildOutlined,
-  EnvironmentOutlined,
-  FilePdfOutlined,
+  SearchOutlined,
   UploadOutlined,
   FileImageOutlined,
-  PaperClipOutlined,
+  CheckCircleOutlined,
+  CheckOutlined,
   ThunderboltOutlined,
-  BulbOutlined,
-  BankOutlined,
-  SolutionOutlined,
-  AuditOutlined,
-  TeamOutlined,
-  MobileOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { PublicNavbar } from "../../../components/ui/PublicNavbar";
+import { PublicFooter } from "../../../components/ui/PublicFooter";
 import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
-import { searchDemandeByReferenceMock } from "../../../api/demandesMock";
-import { searchSubscriberByCinOrCardMock, type SubscriberRecord } from "../../../api/subscribersMock";
-import { reserverPlaceParkingMock } from "../../../api/adminMock";
-import { type PublicDemandeInput, type DemandeDetail } from "../types";
-import { type TypeClient, type TypeVehicule, type TypeDemande, typeVehiculeLabels, typeDemandeLabels } from "../../../lib/enums";
-import { PublicNavbar } from "../../../components/ui/PublicNavbar";
-import { formatDate } from "../../../lib/dateUtils";
+import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
 
 const { Option } = Select;
-const { Title, Text } = Typography;
 
-const FORFAITS_COURTE_DUREE = [
-  {
-    id: 1,
-    title: "Pass Permanent (24h / 7j)",
-    plage: "24h / 7j",
-    duree: "3 à 12 Mois",
-    priceTTC: 600,
-    badge: "Accès 24/7",
-    desc: "Accès permanent jour et nuit au parking sélectionné",
-  },
-  {
-    id: 2,
-    title: "Pass Journée (08:00 - 20:00)",
-    plage: "08:00 - 20:00",
-    duree: "3 à 12 Mois",
-    priceTTC: 420,
-    badge: "Diurne",
-    desc: "Accès de jour du lundi au samedi de 08:00 à 20:00",
-  },
-  {
-    id: 3,
-    title: "Pass Étendu (08:00 - 22:00)",
-    plage: "08:00 - 22:00",
-    duree: "3 à 12 Mois",
-    priceTTC: 500,
-    badge: "Jour + Soir",
-    desc: "Accès étendu de 08:00 à 22:00 du lundi au samedi",
-  },
-  {
-    id: 4,
-    title: "Pass Nuit (19:00 - 08:00)",
-    plage: "19:00 - 08:00",
-    duree: "3 à 12 Mois",
-    priceTTC: 300,
-    badge: "Nocturne",
-    desc: "Accès nocturne en soirée et la nuit de 19:00 à 08:00",
-  },
-  {
-    id: 5,
-    title: "Pass Deux-Roues / Moto",
-    plage: "24h / 7j",
-    duree: "3 à 12 Mois",
-    priceTTC: 200,
-    badge: "Deux-roues",
-    desc: "Abonnement dédié aux motos, scooters et deux-roues",
-  },
-];
+type TypeDemande = "NEW" | "RENEW" | "TRANSFER" | "DUPLICATE" | "CORPORATE";
 
-const FORFAITS_LONGUE_DUREE = [
-  {
-    id: 101,
-    title: "Formule Jour (08:00 - 20:00)",
-    plage: "08:00 - 20:00",
-    duree: "20 Ans (Longue Durée)",
-    priceTTC: 500,
-    badge: "500 DH / mois",
-    desc: "Contrat Longue Durée 20 Ans — Créneau diurne 08:00 à 20:00 (500 DH / mois / personne)",
-  },
-  {
-    id: 102,
-    title: "Formule Étendue (08:00 - 22:00)",
-    plage: "08:00 - 22:00",
-    duree: "20 Ans (Longue Durée)",
-    priceTTC: 550,
-    badge: "550 DH / mois",
-    desc: "Contrat Longue Durée 20 Ans — Créneau étendu 08:00 à 22:00 (550 DH / mois / personne)",
-  },
-  {
-    id: 103,
-    title: "Formule Permanence (24h / 7j)",
-    plage: "24h / 7j",
-    duree: "20 Ans (Longue Durée)",
-    priceTTC: 650,
-    badge: "650 DH / mois",
-    desc: "Contrat Longue Durée 20 Ans — Accès garanti 24h / 7j (650 DH / mois / personne)",
-  },
-];
+// Custom Scan Upload Cadre with File Attached State
+interface ScanUploadFieldProps {
+  name: string;
+  label: string;
+  tagText: string;
+  tagColor: string;
+  icon: React.ReactNode;
+  btnText: string;
+  isRequired?: boolean;
+  form: any;
+}
 
-const ALL_FORFAITS = [...FORFAITS_COURTE_DUREE, ...FORFAITS_LONGUE_DUREE];
+function ScanUploadField({
+  name,
+  label,
+  tagText,
+  tagColor,
+  icon,
+  btnText,
+  isRequired = true,
+  form,
+}: ScanUploadFieldProps) {
+  const fileValue = Form.useWatch(name, form);
+  const hasFile = Array.isArray(fileValue) && fileValue.length > 0;
+  const fileName = hasFile ? fileValue[0]?.name || "Scan_Document.pdf" : "";
+
+  return (
+    <Form.Item
+      name={name}
+      valuePropName="fileList"
+      getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+      rules={
+        isRequired
+          ? [{ required: true, message: `Le document (${label}) est obligatoire.` }]
+          : undefined
+      }
+      className="m-0"
+    >
+      <Upload
+        maxCount={1}
+        beforeUpload={() => false}
+        showUploadList={false}
+        className="w-full flex justify-center"
+      >
+        {hasFile ? (
+          <div className="scan-document-cadre w-full flex flex-col items-center justify-center p-5 text-center border-2 border-solid border-emerald-500 bg-emerald-50/70 shadow-md">
+            <Tag color="green" className="font-extrabold px-3 py-0.5 rounded-full text-xs mb-2 border-none shadow-2xs">
+              <CheckCircleOutlined /> Document Joint & Validé
+            </Tag>
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl mb-2 shadow-sm mx-auto">
+              <CheckCircleOutlined />
+            </div>
+            <h5 className="text-sm font-bold text-slate-900 mb-1 text-center">{label}</h5>
+            <p className="text-xs text-emerald-800 font-mono font-semibold truncate max-w-xs mb-3 text-center">
+              📄 {fileName}
+            </p>
+            <Button
+              icon={<SyncOutlined />}
+              size="small"
+              className="rounded-xl font-bold text-xs h-8 px-4 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-100 shadow-2xs"
+            >
+              Changer le document
+            </Button>
+          </div>
+        ) : (
+          <div className="scan-document-cadre w-full flex flex-col items-center justify-center p-5 text-center">
+            <Tag color={tagColor} className="font-extrabold px-3 py-0.5 rounded-full text-xs mb-3 border-none shadow-2xs">
+              {tagText} {isRequired ? "*" : ""}
+            </Tag>
+            <div className="w-14 h-14 rounded-2xl bg-secondary-container/20 text-secondary flex items-center justify-center text-2xl mb-3 shadow-xs mx-auto">
+              {icon}
+            </div>
+            <h5 className="text-sm font-bold text-slate-900 mb-3 text-center">{label}</h5>
+            <Button
+              icon={<UploadOutlined />}
+              className="rounded-xl font-bold text-xs h-9 px-5 bg-white/90 border-slate-300 hover:bg-white shadow-2xs"
+            >
+              {btnText}
+            </Button>
+          </div>
+        )}
+      </Upload>
+    </Form.Item>
+  );
+}
 
 export function PublicQrForm() {
-  const [activeTab, setActiveTab] = useState<string>("form");
-  const [currentStep, setCurrentStep] = useState(0);
-  const [selectedType, setSelectedType] = useState<TypeDemande | null>(null);
-  const [typeDemande, setTypeDemande] = useState<TypeDemande>("NOUVEL_ABONNEMENT");
-  const [typeClient, setTypeClient] = useState<TypeClient>("PARTICULIER");
-  const [selectedForfait, setSelectedForfait] = useState<number>(1);
-  const [formData, setFormData] = useState<Partial<PublicDemandeInput>>({});
-  const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
-  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
-  const [dureeMois, setDureeMois] = useState<number>(6);
-  const [categorieDuree, setCategorieDuree] = useState<"COURTE" | "LONGUE">("COURTE");
-  const [nombreAbonnements, setNombreAbonnements] = useState<number>(1);
-  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState<string>("");
-  const [isSearchingSubscriber, setIsSearchingSubscriber] = useState<boolean>(false);
-  const [foundSubscriber, setFoundSubscriber] = useState<SubscriberRecord | null>(null);
+  const [searchParams] = useSearchParams();
 
-  // Tracking state
-  const [searchRef, setSearchRef] = useState<string>("");
-  const [trackedDemande, setTrackedDemande] = useState<DemandeDetail | null>(null);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [receiptModalOpen, setReceiptModalOpen] = useState<boolean>(false);
-  const [invoiceModalOpen, setInvoiceModalOpen] = useState<boolean>(false);
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
-  const [cardModalOpen, setCardModalOpen] = useState<boolean>(false);
+  // Stepper & Type State
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [typeDemande, setTypeDemande] = useState<TypeDemande>("NEW");
 
-  const handleSelectType = (type: TypeDemande) => {
-    setSelectedType(type);
-    setTypeDemande(type);
-    setCurrentStep(0);
-    setFoundSubscriber(null);
-    setSubscriberSearchQuery("");
-    step1Form.resetFields();
-    step2Form.resetFields();
-  };
+  // Accordion Folding & Section Validation State
+  const [activeCollapseKeys, setActiveCollapseKeys] = useState<string[]>(["perso_particulier"]);
+  const [isPersoValid, setIsPersoValid] = useState<boolean>(false);
+  const [isVehiculeValid, setIsVehiculeValid] = useState<boolean>(false);
+  const [isCorporateValid, setIsCorporateValid] = useState<boolean>(false);
 
-  const handleBetaFillAndNext = () => {
-    if (!selectedType) {
-      handleSelectType("NOUVEL_ABONNEMENT");
-      message.success("[BETA] Choix 'Nouvel Abonnement' sélectionné !");
-      return;
-    }
+  // Corporate Fleet Count
+  const [nombreVehiculesCorporate, setNombreVehiculesCorporate] = useState<number>(3);
 
-    if (currentStep === 0) {
-      if (typeClient === "ENTREPRISE") {
-        step1Form.setFieldsValue({
-          raisonSociale: "Société Atlas Trans SARL",
-          ice: "001524389000045",
-          rcEntreprise: "RC 142850 Rabat",
-          ifEntreprise: "IF 40291823",
-          nomRepresentant: "M. Othmane Bennani",
-          fonctionRepresentant: "Responsable Flotte & Logistique",
-          email: "contact.flotte@atlastrans.ma",
-          telephone: "0537123456",
-        });
-        setFormData((prev) => ({
-          ...prev,
-          typeClient: "ENTREPRISE",
-          raisonSociale: "Société Atlas Trans SARL",
-          ice: "001524389000045",
-          rcEntreprise: "RC 142850 Rabat",
-          ifEntreprise: "IF 40291823",
-          nomRepresentant: "M. Othmane Bennani",
-          fonctionRepresentant: "Responsable Flotte & Logistique",
-          email: "contact.flotte@atlastrans.ma",
-          telephone: "0537123456",
-        }));
-      } else {
-        step1Form.setFieldsValue({
-          nom: "El Amrani",
-          prenom: "Karim",
-          cin: "AB123456",
-          email: "karim.demo@rrm.ma",
-          telephone: "0612345678",
-        });
-        setFormData((prev) => ({
-          ...prev,
-          typeClient: "PARTICULIER",
-          nom: "El Amrani",
-          prenom: "Karim",
-          cin: "AB123456",
-          email: "karim.demo@rrm.ma",
-          telephone: "0612345678",
-        }));
-      }
-      setCurrentStep(1);
-      message.success("[BETA] Étape 0 (Identité) auto-remplie & franchie");
-    } else if (currentStep === 1) {
-      step2Form.setFieldsValue({
-        immatriculation: "12345-A-6",
-        typeVehicule: "VOITURE",
-        marque: "Dacia",
-        modele: "Sandero",
-      });
-      setFormData((prev) => ({
-        ...prev,
-        immatriculation: "12345-A-6",
-        typeVehicule: "VOITURE",
-        marque: "Dacia",
-        modele: "Sandero",
-      }));
-      setCurrentStep(2);
-      message.success("[BETA] Étape 1 (Véhicule) auto-remplie & franchie");
-    } else if (currentStep === 2) {
-      setFormData((prev) => ({
-        ...prev,
-        parkingId: 1,
-        forfaitId: 1,
-        dureeMois: 6,
-      }));
-      setCurrentStep(3);
-      message.success("[BETA] Étape 2 (Parking & Forfait) auto-remplie & franchie");
-    } else if (currentStep === 3) {
-      setAcceptTerms(true);
-      setIsOtpModalOpen(true);
-      message.success("[BETA] Conditions acceptées & Ouverture de la modale OTP");
-    }
-  };
+  // Form Instance
+  const [form] = Form.useForm();
 
-  const { data: parkings, isLoading: parkingsLoading } = useQuery({
-    queryKey: ["public-parkings"],
+  // Account Lookup State for RENEW / TRANSFER / DUPLICATE
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [isSearchingLookup, setIsSearchingLookup] = useState(false);
+  const [hasFoundAccount, setHasFoundAccount] = useState(false);
+
+  // OTP Modal State
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [pendingValues, setPendingValues] = useState<any>(null);
+  const [submittedResult, setSubmittedResult] = useState<any>(null);
+
+  // Form Live Watchers for Summary Calculation
+  const watchedParkingId = Form.useWatch("parkingId", form);
+  const watchedFormuleCode = Form.useWatch("formuleCode", form);
+  const watchedDureeMois = Form.useWatch("dureeMois", form);
+
+  // Public Parkings List
+  const { data: parkings = [] } = useQuery({
+    queryKey: ["public_parkings"],
     queryFn: getPublicParkings,
   });
 
-  const mutation = useMutation({
-    mutationFn: submitPublicDemande,
-    onSuccess: (result) => {
-      setSubmittedReference(result.reference);
-      const targetType: "PARTICULIER" | "ENTREPRISE" = typeClient === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER";
-      reserverPlaceParkingMock(formData.parkingId || 1, targetType, nombreAbonnements);
-      message.success("Votre demande a été soumise avec succès !");
+  // Read URL parameters
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const clientParam = searchParams.get("typeClient");
+    const planParam = searchParams.get("plan");
+    const parkingParam = searchParams.get("parkingId");
+
+    if (tabParam) {
+      if (tabParam === "NEW") setTypeDemande("NEW");
+      if (tabParam === "RENEW") setTypeDemande("RENEW");
+      if (tabParam === "TRANSFER") setTypeDemande("TRANSFER");
+      if (tabParam === "DUPLICATE") setTypeDemande("DUPLICATE");
+    }
+
+    if (clientParam === "ENTREPRISE") {
+      setTypeDemande("CORPORATE");
+    }
+
+    if (planParam) {
+      form.setFieldValue("formuleCode", planParam);
+    }
+
+    if (parkingParam) {
+      form.setFieldValue("parkingId", Number(parkingParam));
+    }
+  }, [searchParams, form]);
+
+  // BETA Quick Test Autofill Handler
+  const handleBetaAutofill = () => {
+    const mockDocumentList = [
+      {
+        uid: "-1",
+        name: "scan_document_test_rrm.pdf",
+        status: "done",
+        url: "#",
+      },
+    ];
+
+    form.setFieldsValue({
+      nom: "BENNANI",
+      prenom: "Karim",
+      cin: "AB123456",
+      telephone: "0661234567",
+      email: "karim.bennani@gmail.com",
+      immatriculation: "12345-A-1",
+      marque: "Dacia Logan 2023",
+      photoCinRecto: mockDocumentList,
+      photoCinVerso: mockDocumentList,
+      photoCarteGriseRecto: mockDocumentList,
+      photoCarteGriseVerso: mockDocumentList,
+      raisonSociale: "Maroc Telecom SA",
+      ice: "001234567000089",
+      rc: "998877",
+      nomContact: "Karim BENNANI",
+      photoDocEntreprise: mockDocumentList,
+      parkingId: parkings[0]?.id || 1,
+      formuleCode: "24H7J",
+      dureeMois: 6,
+      modePaiement: "ESPECES",
+      acceptTerms: true,
+    });
+
+    setIsPersoValid(true);
+    setIsVehiculeValid(true);
+    setIsCorporateValid(true);
+
+    message.success("⚡ Mode BETA Test : Formulaire et documents pré-remplis avec succès !");
+  };
+
+  // Account search handler
+  const handleLookupSubscriber = async () => {
+    if (!lookupQuery.trim()) {
+      message.warning("Veuillez saisir votre CIN ou Numéro de Carte RFID.");
+      return;
+    }
+    setIsSearchingLookup(true);
+    try {
+      const res = await searchSubscriberByCinOrCardMock(lookupQuery.trim());
+      if (res) {
+        setHasFoundAccount(true);
+        form.setFieldsValue({
+          nom: res.nom,
+          prenom: res.prenom,
+          cin: res.cin,
+          email: res.email,
+          telephone: res.telephone,
+          immatriculation: res.immatriculation,
+          carteRfidActuelle: res.numeroCarteAbonne,
+          parkingId: res.parkingId,
+          formuleCode: res.forfaitNom.includes("24h") ? "24H7J" : "JOUR",
+        });
+        message.success("Compte abonné identifié avec succès !");
+      } else {
+        message.error("Aucun compte correspondant trouvé.");
+      }
+    } catch {
+      message.error("Erreur lors de la recherche de l'abonné.");
+    } finally {
+      setIsSearchingLookup(false);
+    }
+  };
+
+  // Section 1 Validation (Informations Personnelles) -> Folds Sec 1 & Unfolds Sec 2
+  const handleValidatePerso = async () => {
+    try {
+      await form.validateFields(["nom", "prenom", "cin", "telephone", "email", "photoCinRecto", "photoCinVerso"]);
+      setIsPersoValid(true);
+      message.success("Informations Personnelles & CIN validées !");
+      setActiveCollapseKeys(["vehicule_particulier"]);
+    } catch {
+      message.error("Veuillez remplir les informations et téléverser les photos CIN (Recto & Verso).");
+    }
+  };
+
+  // Section 2 Validation (Informations Véhicule) -> Advance to Step 2 (Tarification)
+  const handleValidateVehiculeAndNext = async () => {
+    try {
+      await form.validateFields(["immatriculation", "photoCarteGriseRecto", "photoCarteGriseVerso"]);
+      setIsVehiculeValid(true);
+      message.success("Informations Véhicule & Carte Grise validées !");
+      setCurrentStep(2);
+    } catch {
+      message.error("Veuillez remplir l'immatriculation et téléverser les photos de la Carte Grise.");
+    }
+  };
+
+  // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
+  const handleValidateParkingAndGoToRecap = async () => {
+    try {
+      await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+      setCurrentStep(3);
+      message.success("Choix du parking et formule validés ! Vérifiez votre récapitulatif.");
+    } catch {
+      message.error("Veuillez choisir un parking et une formule.");
+    }
+  };
+
+  // Corporate Section Validation
+  const handleValidateCorporateAndNext = async () => {
+    try {
+      await form.validateFields(["raisonSociale", "ice", "rc", "nomContact", "telephone", "email", "photoDocEntreprise"]);
+      setIsCorporateValid(true);
+      message.success("Informations Société validées !");
+      setCurrentStep(2);
+    } catch {
+      message.error("Veuillez remplir les informations et téléverser le document entreprise (ICE / RC).");
+    }
+  };
+
+  // Calculate pricing summary
+  const getMonthlyPrice = () => {
+    switch (watchedFormuleCode) {
+      case "24H7J":
+        return 600;
+      case "JOUR":
+        return 420;
+      case "NUIT":
+        return 350;
+      case "MOTO":
+        return 200;
+      default:
+        return 600;
+    }
+  };
+
+  const selectedParkingName =
+    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Mamounia (Rabat Hassan)";
+  const totalMonths = watchedDureeMois || 3;
+  const totalPrice = getMonthlyPrice() * totalMonths;
+
+  // Submit Mutation
+  const submitMutation = useMutation({
+    mutationFn: (values: any) => submitPublicDemande(values),
+    onSuccess: (data) => {
+      setSubmittedResult(data);
+      message.success("Demande enregistrée avec succès !");
     },
     onError: () => {
-      message.error("Une erreur est survenue lors de l'envoi de votre demande.");
+      message.error("Erreur lors de la soumission de la demande.");
     },
   });
 
-  const [step1Form] = Form.useForm();
-  const [step2Form] = Form.useForm();
-
-  const handleSearchSubscriber = async () => {
-    if (!subscriberSearchQuery.trim()) {
-      message.warning("Veuillez saisir votre N° CIN ou N° de carte d'abonné");
-      return;
-    }
-    setIsSearchingSubscriber(true);
+  const handleNextToOtp = async () => {
     try {
-      const sub = await searchSubscriberByCinOrCardMock(subscriberSearchQuery);
-      if (sub) {
-        setFoundSubscriber(sub);
-        step1Form.setFieldsValue({
-          nom: sub.nom,
-          prenom: sub.prenom,
-          cin: sub.cin,
-          email: sub.email,
-          telephone: sub.telephone,
-          numeroCarteAbonne: sub.numeroCarteAbonne,
-          raisonSociale: sub.nom.includes("Société") ? sub.nom : undefined,
-        });
-        step2Form.setFieldsValue({
-          immatriculation: sub.immatriculation,
-          typeVehicule: sub.typeVehicule,
-          marque: sub.marque,
-          modele: sub.modele,
-          ancienneImmatriculation: sub.immatriculation,
-        });
-        setSelectedForfait(sub.forfaitId);
-        setFormData((prev) => ({
-          ...prev,
-          parkingId: sub.parkingId,
-          numeroCarteAbonne: sub.numeroCarteAbonne,
-          forfaitId: sub.forfaitId,
-          forfaitNom: sub.forfaitNom,
-        }));
-        message.success(`Abonné identifié : ${sub.prenom} ${sub.nom} !`);
-      } else {
-        setFoundSubscriber(null);
-        message.error("Aucun abonné trouvé avec ces identifiants.");
-      }
-    } finally {
-      setIsSearchingSubscriber(false);
+      const values = await form.validateFields();
+      setPendingValues({
+        ...values,
+        typeDemande,
+        typeClient: typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER",
+      });
+      setIsOtpModalOpen(true);
+    } catch {
+      message.error("Veuillez remplir les champs obligatoires et accepter les conditions d'utilisation.");
     }
   };
 
-  const goNextFromStep1 = async (): Promise<void> => {
-    const values = await step1Form.validateFields();
-    setFormData((prev) => ({ ...prev, ...values, typeClient, typeDemande }));
-    setCurrentStep(1);
-  };
-
-  const goNextFromStep2 = async (): Promise<void> => {
-    const values = await step2Form.validateFields();
-    setFormData((prev) => ({ ...prev, ...values }));
-    setCurrentStep(2);
-  };
-
-  const handleFinalSubmit = () => {
-    const forfaitObj = ALL_FORFAITS.find((f) => f.id === selectedForfait);
-    const monthlyPrice = forfaitObj?.priceTTC || 500;
-    const totalTTC = Math.round(monthlyPrice * dureeMois * nombreAbonnements);
-
-    const fullData: PublicDemandeInput = {
-      ...formData,
-      forfaitId: selectedForfait,
-      forfaitNom: forfaitObj?.title,
-      dureeMois,
-      categorieDuree,
-      nombreAbonnements,
-      montantTotal: totalTTC,
-      typeDemande,
-      typeClient,
-    } as PublicDemandeInput;
-
-    mutation.mutate(fullData);
-  };
-
-  const handleInitiatePerteCarteOtp = () => {
-    if (!foundSubscriber) return;
-    setFormData({
-      telephone: foundSubscriber.telephone,
-      email: foundSubscriber.email,
-      nom: foundSubscriber.nom,
-      prenom: foundSubscriber.prenom,
-      cin: foundSubscriber.cin,
-    });
-    setIsOtpModalOpen(true);
-    message.info(`Un code SMS de sécurité (OTP) a été transmis au ${foundSubscriber.telephone} pour authentifier le titulaire du compte.`);
-  };
-
-  const handlePerteCarteSubmit = () => {
-    if (!foundSubscriber) return;
-    const fullData: PublicDemandeInput = {
-      nom: foundSubscriber.nom,
-      prenom: foundSubscriber.prenom,
-      cin: foundSubscriber.cin,
-      email: foundSubscriber.email,
-      telephone: foundSubscriber.telephone,
-      immatriculation: foundSubscriber.immatriculation,
-      typeVehicule: foundSubscriber.typeVehicule || "VOITURE",
-      parkingId: foundSubscriber.parkingId || 1,
-      numeroCarteAbonne: foundSubscriber.numeroCarteAbonne,
-      typeDemande: "PERTE_CARTE",
-      typeClient: "PARTICULIER",
-      montantTotal: 50,
-      motifChangement: "Déclaration de perte de carte RFID authentifiée par OTP SMS. Duplicata 50 DH à régler à la caisse du guichet sous 7 jours max.",
-    } as PublicDemandeInput;
-
-    mutation.mutate(fullData);
-  };
-
-  const handleTrackSearch = async () => {
-    if (!searchRef.trim()) {
-      message.warning("Veuillez saisir un numéro de référence (ex: DEM-2026-000001)");
-      return;
+  // Dynamic Stepper Titles
+  const getStepTitles = () => {
+    if (typeDemande === "DUPLICATE") {
+      return ["Type", "Recherche", "Vérification OTP", "Confirmation"];
     }
-    setIsSearching(true);
-    try {
-      const result = await searchDemandeByReferenceMock(searchRef);
-      if (result) {
-        setTrackedDemande(result);
-      } else {
-        setTrackedDemande(null);
-        message.error("Aucune demande trouvée pour cette référence.");
-      }
-    } finally {
-      setIsSearching(false);
+    if (typeDemande === "RENEW" || typeDemande === "TRANSFER") {
+      return ["Type", "Recherche", "Tarification", "Récapitulatif & OTP"];
     }
+    return ["1. Type de Demande", "2. Saisie Informations", "3. Tarification", "4. Récapitulatif & OTP"];
   };
 
-  const resetForm = () => {
-    setCurrentStep(0);
-    setSubmittedReference(null);
-    setFormData({});
-    step1Form.resetFields();
-    step2Form.resetFields();
-  };
-
-  const getStatusStepIndex = (statut: string) => {
-    switch (statut) {
-      case "SOUMISE":
-        return 0;
-      case "EN_COURS":
-        return 1;
-      case "VALIDEE":
-        return 2;
-      case "COMPLETEE":
-        return 3;
-      default:
-        return 0;
-    }
-  };
+  const STEP_TITLES = getStepTitles();
 
   return (
-    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", paddingBottom: 60 }}>
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 lg:pt-24 pb-0">
+      {/* Shared Desktop & Mobile Unified Glass Navbar */}
       <PublicNavbar />
 
-      {/* Top Banner */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #001E3D 0%, #003566 60%, #004D80 100%)",
-          color: "#ffffff",
-          padding: "24px 20px 32px",
-          textAlign: "center",
-          boxShadow: "0 4px 16px rgba(0, 53, 102, 0.15)",
-          position: "relative",
-        }}
-      >
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <Tag color="gold" style={{ fontSize: 12, padding: "2px 12px", borderRadius: 20, marginBottom: 8, fontWeight: 600 }}>
-            <QrcodeOutlined style={{ marginRight: 6 }} /> Service Abonné sans Compte — Rabat Région Mobilité
-          </Tag>
-          <h1 style={{ color: "#ffffff", fontSize: "1.65rem", fontWeight: 800, margin: "6px 0 8px", letterSpacing: "-0.5px" }}>
-            Portail des Démarches & Abonnements Parking
-          </h1>
-          <p style={{ color: "#cbd5e1", fontSize: "0.95rem", maxWidth: 660, margin: "0 auto", lineHeight: 1.5 }}>
-            Effectuez votre demande en ligne (Création, Renouvellement, Changement de Parking ou de Véhicule) en toute simplicité et suivez l'avancement de votre dossier avec votre code de suivi.
-          </p>
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: "linear-gradient(90deg, #982B5E 0%, #FFC300 50%, #0284C7 100%)",
-          }}
-        />
-      </div>
-
-      <div style={{ maxWidth: 960, margin: "-16px auto 0", padding: "0 16px" }}>
-        <Card
-          style={{
-            borderRadius: 12,
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          {/* Temporary BETA Dev Helper Button */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: "1px dashed #e2e8f0" }}>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              Portail Public de Demandes d'Abonnement
-            </span>
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
+        {/* Page Header with Beta Quick Test Action */}
+        <div className="mb-8 text-center flex flex-col items-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+            <Tag color="cyan" className="px-3.5 py-1 rounded-full font-semibold border-none shadow-sm text-xs inline-flex items-center gap-1.5 m-0">
+              <SafetyCertificateOutlined /> Portail Officiel des Démarches en Ligne
+            </Tag>
+            {/* BETA Quick Autofill Button */}
             <Button
-              type="dashed"
               size="small"
               icon={<ThunderboltOutlined />}
-              onClick={handleBetaFillAndNext}
-              style={{
-                fontWeight: 600,
-                borderRadius: 6,
-                borderColor: "#f97316",
-                color: "#ea580c",
-                backgroundColor: "#fff7ed",
-              }}
+              onClick={handleBetaAutofill}
+              className="bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-bold rounded-full px-3 text-xs shadow-sm inline-flex items-center gap-1"
             >
-              Passer cette Étape (BETA)
+              ⚡ Remplissage Rapide (BETA Test)
             </Button>
           </div>
 
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            size="large"
-            items={[
-              {
-                key: "form",
-                label: (
-                  <span>
-                    <FileTextOutlined /> Formulaire de Demande
-                  </span>
-                ),
-                children: (
-                  <div>
-                    {!submittedReference ? (
-                      <>
-                        {!selectedType ? (
-                          /* 4 Choice Cards Landing Selection Screen */
-                          <div>
-                            <div style={{ textAlign: "center", marginBottom: 28 }}>
-                              <Title level={3} style={{ color: "#0f172a", marginBottom: 6 }}>
-                                Bienvenue sur le Portail d'Abonnement Rabat Région Mobilité
-                              </Title>
-                              <Text type="secondary" style={{ fontSize: 15 }}>
-                                Sélectionnez la démarche que vous souhaitez effectuer :
-                              </Text>
-                            </div>
+          <h1 className="font-headline-lg-mobile md:font-headline-lg text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">
+            {typeDemande === "CORPORATE"
+              ? "Demande d'Abonnement Flotte Corporate"
+              : typeDemande === "DUPLICATE"
+              ? "Réclamation de Perte & Duplicata Carte RFID"
+              : "Demande d'Abonnement Parking"}
+          </h1>
+          <p className="text-slate-600 text-sm md:text-base max-w-xl mx-auto">
+            Sélectionnez votre démarche et renseignez les informations requises pour votre stationnement à Rabat.
+          </p>
+        </div>
 
-                            <Row gutter={[20, 20]}>
-                              <Col xs={24} sm={12}>
-                                <Card
-                                  hoverable
-                                  onClick={() => handleSelectType("NOUVEL_ABONNEMENT")}
-                                  style={{
-                                    borderRadius: 14,
-                                    border: "1px solid #bae6fd",
-                                    backgroundColor: "#f0f9ff",
-                                    transition: "all 0.2s ease",
-                                    height: "100%",
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                    <div style={{ padding: 12, backgroundColor: "#e0f2fe", borderRadius: 12, display: "flex" }}>
-                                      <FileTextOutlined style={{ fontSize: 32, color: "#0284c7" }} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <h3 style={{ margin: 0, color: "#0369a1", fontSize: "1.15rem" }}>Nouvel Abonnement</h3>
-                                        <Tag color="blue">Création</Tag>
-                                      </div>
-                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
-                                        Première souscription à un abonnement de stationnement dans les parkings de Rabat. Formulaire complet en 4 étapes.
-                                      </p>
-                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#0284c7" }}>
-                                        Commencer cette démarche
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </Card>
-                              </Col>
+        {/* Visual Stepper */}
+        <div className="glass-panel rounded-2xl p-6 mb-8 border border-white/80 shadow-md">
+          <div className="flex items-center justify-between relative max-w-4xl mx-auto">
+            <div className="absolute left-0 top-1/2 w-full h-1 bg-slate-200 -z-10 transform -translate-y-1/2 rounded-full"></div>
+            <div
+              className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-emerald-500 via-secondary to-primary -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500"
+              style={{ width: `${(currentStep / 3) * 100}%` }}
+            ></div>
 
-                              <Col xs={24} sm={12}>
-                                <Card
-                                  hoverable
-                                  onClick={() => handleSelectType("RENOUVELLEMENT")}
-                                  style={{
-                                    borderRadius: 14,
-                                    border: "1px solid #ddd6fe",
-                                    backgroundColor: "#f5f3ff",
-                                    transition: "all 0.2s ease",
-                                    height: "100%",
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                    <div style={{ padding: 12, backgroundColor: "#ede9fe", borderRadius: 12, display: "flex" }}>
-                                      <ClockCircleOutlined style={{ fontSize: 32, color: "#7c3aed" }} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <h3 style={{ margin: 0, color: "#6d28d9", fontSize: "1.15rem" }}>Renouvellement d'Abonnement</h3>
-                                        <Tag color="purple">Renouvellement</Tag>
-                                      </div>
-                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
-                                        Prolonger un abonnement existant sans rien ressaisir. Recherche automatique par CIN ou Carte.
-                                      </p>
-                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#7c3aed", borderColor: "#7c3aed" }}>
-                                        Rechercher & Renouveler
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </Card>
-                              </Col>
+            {STEP_TITLES.map((title, idx) => {
+              const isCompleted = idx < currentStep;
+              const isCurrent = idx === currentStep;
 
-                              <Col xs={24} sm={12}>
-                                <Card
-                                  hoverable
-                                  onClick={() => handleSelectType("CHANGEMENT_PARKING")}
-                                  style={{
-                                    borderRadius: 14,
-                                    border: "1px solid #fde68a",
-                                    backgroundColor: "#fffbeb",
-                                    transition: "all 0.2s ease",
-                                    height: "100%",
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                    <div style={{ padding: 12, backgroundColor: "#fef3c7", borderRadius: 12, display: "flex" }}>
-                                      <EnvironmentOutlined style={{ fontSize: 32, color: "#d97706" }} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <h3 style={{ margin: 0, color: "#b45309", fontSize: "1.15rem" }}>Changement de Parking</h3>
-                                        <Tag color="orange">Transfert</Tag>
-                                      </div>
-                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
-                                        Demander le transfert de votre abonnement vers un autre parking de Rabat (Agdal Gare, Bab El Had...).
-                                      </p>
-                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#d97706", borderColor: "#d97706" }}>
-                                        Demander un Transfert
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </Card>
-                              </Col>
-
-                              <Col xs={24} sm={12}>
-                                <Card
-                                  hoverable
-                                  onClick={() => handleSelectType("PERTE_CARTE")}
-                                  style={{
-                                    borderRadius: 14,
-                                    border: "1px solid #ffedd5",
-                                    backgroundColor: "#fff7ed",
-                                    transition: "all 0.2s ease",
-                                    height: "100%",
-                                  }}
-                                >
-                                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                    <div style={{ padding: 12, backgroundColor: "#ffedd5", borderRadius: 12, display: "flex" }}>
-                                      <IdcardOutlined style={{ fontSize: 32, color: "#c2410c" }} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <h3 style={{ margin: 0, color: "#9a3412", fontSize: "1.15rem" }}>Perte de Carte RFID</h3>
-                                        <Tag color="volcano">Duplicata</Tag>
-                                      </div>
-                                      <p style={{ color: "#475569", fontSize: 13, margin: "8px 0 14px", lineHeight: 1.5 }}>
-                                        Déclaration de perte ou vol de carte d'abonné et demande d'émission d'un duplicata RFID.
-                                      </p>
-                                      <Button type="primary" icon={<ArrowRightOutlined />} style={{ backgroundColor: "#c2410c", borderColor: "#c2410c" }}>
-                                        Déclarer Perte & Duplicata
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </Card>
-                              </Col>
-                            </Row>
-                          </div>
-                        ) : (
-                          /* Form Workflow for Selected Type */
-                          <div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #e2e8f0" }}>
-                              <Button icon={<ArrowLeftOutlined />} onClick={() => setSelectedType(null)}>
-                                Changer de démarche
-                              </Button>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <Text type="secondary">Démarche en cours :</Text>
-                                <Tag color={typeDemandeLabels[typeDemande].color} style={{ fontSize: 14, padding: "4px 12px", borderRadius: 6 }}>
-                                  {typeDemandeLabels[typeDemande].label}
-                                </Tag>
-                              </div>
-                            </div>
-
-                            {/* Steps Indicator */}
-                            <Steps
-                              current={currentStep}
-                              items={[
-                                { title: "Client", icon: <UserOutlined /> },
-                                { title: "Véhicule", icon: <CarOutlined /> },
-                                { title: "Parking & Forfait", icon: <BuildOutlined /> },
-                                { title: "Validation", icon: <CheckCircleOutlined /> },
-                              ]}
-                              style={{ marginBottom: 32 }}
-                            />
-
-                        {/* Step 0: Information Personnelles */}
-                        {currentStep === 0 && (
-                          <Form form={step1Form} layout="vertical">
-                            {typeDemande === "NOUVEL_ABONNEMENT" ? (
-                              <>
-                                <Alert
-                                   message={typeClient === "ENTREPRISE" ? "Dossier Corporate Entreprise — Formulaire Officiel Société & Flotte" : "Création d'un Nouvel Abonnement — Coordonnées Personnelles"}
-                                   type={typeClient === "ENTREPRISE" ? "warning" : "info"}
-                                   showIcon
-                                   style={{ marginBottom: 20 }}
-                                 />
-
-                                 {/* Type de Client Card Selector */}
-                                 <div style={{ marginBottom: 24 }}>
-                                   <Text style={{ fontWeight: 600, color: "#334155", display: "block", marginBottom: 10, fontSize: 14 }}>
-                                     Choisissez votre profil de souscription :
-                                   </Text>
-                                   <Row gutter={[16, 16]}>
-                                     <Col xs={24} sm={12}>
-                                       <div
-                                         onClick={() => setTypeClient("PARTICULIER")}
-                                         style={{
-                                           padding: "16px 20px",
-                                           borderRadius: 12,
-                                           border: typeClient === "PARTICULIER" ? "2px solid #0284c7" : "1px solid #cbd5e1",
-                                           backgroundColor: typeClient === "PARTICULIER" ? "#f0f9ff" : "#ffffff",
-                                           cursor: "pointer",
-                                           transition: "all 0.2s ease",
-                                           boxShadow: typeClient === "PARTICULIER" ? "0 4px 12px rgba(2,132,199,0.12)" : "none",
-                                         }}
-                                       >
-                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                           <div
-                                             style={{
-                                               width: 44,
-                                               height: 44,
-                                               borderRadius: "50%",
-                                               backgroundColor: typeClient === "PARTICULIER" ? "#0284c7" : "#e2e8f0",
-                                               color: typeClient === "PARTICULIER" ? "#ffffff" : "#64748b",
-                                               display: "flex",
-                                               alignItems: "center",
-                                               justifyContent: "center",
-                                               fontSize: 20,
-                                             }}
-                                           >
-                                             <UserOutlined />
-                                           </div>
-                                           <div>
-                                             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Client Particulier</div>
-                                             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Personne physique — Souscription personnelle & badge nominatif</div>
-                                           </div>
-                                         </div>
-                                       </div>
-                                     </Col>
-                                     <Col xs={24} sm={12}>
-                                       <div
-                                         onClick={() => setTypeClient("ENTREPRISE")}
-                                         style={{
-                                           padding: "16px 20px",
-                                           borderRadius: 12,
-                                           border: typeClient === "ENTREPRISE" ? "2px solid #0284c7" : "1px solid #cbd5e1",
-                                           backgroundColor: typeClient === "ENTREPRISE" ? "#f0f9ff" : "#ffffff",
-                                           cursor: "pointer",
-                                           transition: "all 0.2s ease",
-                                           boxShadow: typeClient === "ENTREPRISE" ? "0 4px 12px rgba(2,132,199,0.12)" : "none",
-                                         }}
-                                       >
-                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                           <div
-                                             style={{
-                                               width: 44,
-                                               height: 44,
-                                               borderRadius: "50%",
-                                               backgroundColor: typeClient === "ENTREPRISE" ? "#0284c7" : "#e2e8f0",
-                                               color: typeClient === "ENTREPRISE" ? "#ffffff" : "#64748b",
-                                               display: "flex",
-                                               alignItems: "center",
-                                               justifyContent: "center",
-                                               fontSize: 20,
-                                             }}
-                                           >
-                                             <BankOutlined />
-                                           </div>
-                                           <div>
-                                             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Entreprise & Flotte Corporate</div>
-                                             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Personne morale — Compte société, gestion de flotte & facturation centralisée</div>
-                                           </div>
-                                         </div>
-                                       </div>
-                                     </Col>
-                                   </Row>
-                                 </div>
-
-                                 {/* FORMULAIRE PARTICULIER */}
-                                 {typeClient === "PARTICULIER" ? (
-                                   <>
-                                     <Divider titlePlacement="left" style={{ margin: "20px 0 16px", fontSize: 13, color: "#0284c7" }}>
-                                       <UserOutlined style={{ marginRight: 6 }} /> Coordonnées du Souscripteur (Personne Physique)
-                                     </Divider>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={8}>
-                                         <Form.Item name="nom" label="Nom de famille" rules={[{ required: true, message: "Nom requis" }]}>
-                                           <Input placeholder="El Amrani" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={8}>
-                                         <Form.Item name="prenom" label="Prénom" rules={[{ required: true, message: "Prénom requis" }]}>
-                                           <Input placeholder="Karim" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={8}>
-                                         <Form.Item name="cin" label="N° CIN (Carte d'Identité)" rules={[{ required: true, message: "CIN requise" }]}>
-                                           <Input placeholder="AB123456" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="email" label="Adresse Email Personnel" rules={[{ required: true, type: "email", message: "Email valide requis" }]}>
-                                           <Input placeholder="karim.elamrani@gmail.com" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="telephone" label="Téléphone Mobile Direct" rules={[{ required: true, message: "Téléphone requis" }]}>
-                                           <Input placeholder="0661234567" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
-                                       <FileImageOutlined style={{ marginRight: 6 }} /> Pièce d'Identité CIN (Photos Recto / Verso)
-                                     </Divider>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="cinRecto" label="Photo CIN — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                           <Upload.Dragger name="cinRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                               <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                             </p>
-                                             <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                               Charger CIN Recto
-                                             </p>
-                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                           </Upload.Dragger>
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="cinVerso" label="Photo CIN — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                           <Upload.Dragger name="cinVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                               <UploadOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                             </p>
-                                             <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                               Charger CIN Verso
-                                             </p>
-                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                           </Upload.Dragger>
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-                                   </>
-                                 ) : (
-                                   /* FORMULAIRE ENTREPRISE & CORPORATE */
-                                   <div style={{ backgroundColor: "#f8fafc", padding: 20, borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                                     <Divider titlePlacement="left" style={{ margin: "0 0 16px", fontSize: 13, color: "#0284c7" }}>
-                                       <BankOutlined style={{ marginRight: 6 }} /> Informations Légales de la Société (Personne Morale)
-                                     </Divider>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={14}>
-                                         <Form.Item name="raisonSociale" label="Raison Sociale / Nom Officiel" rules={[{ required: true, message: "Raison sociale requise" }]}>
-                                           <Input placeholder="Ex: Société Atlas Trans SARL" size="large" prefix={<BankOutlined style={{ color: "#94a3b8" }} />} />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={10}>
-                                         <Form.Item name="ice" label="N° ICE (Identifiant Commun de l'Entreprise)" rules={[{ required: true, message: "ICE 15 chiffres requis" }]}>
-                                           <Input placeholder="Ex: 001524389000045" size="large" prefix={<AuditOutlined style={{ color: "#94a3b8" }} />} />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="rcEntreprise" label="N° Registre de Commerce (RC)">
-                                           <Input placeholder="Ex: RC 142850 Rabat" size="large" prefix={<FileTextOutlined style={{ color: "#94a3b8" }} />} />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="ifEntreprise" label="Identifiant Fiscal (IF) / Patente">
-                                           <Input placeholder="Ex: IF 40291823" size="large" prefix={<SolutionOutlined style={{ color: "#94a3b8" }} />} />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Divider titlePlacement="left" style={{ margin: "16px 0 16px", fontSize: 13, color: "#0284c7" }}>
-                                       <TeamOutlined style={{ marginRight: 6 }} /> Représentant Légal & Contact Flotte Entreprise
-                                     </Divider>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="nomRepresentant" label="Nom & Prénom du Représentant / Interlocuteur" rules={[{ required: true, message: "Nom du représentant requis" }]}>
-                                           <Input placeholder="Ex: M. Othmane Bennani" size="large" prefix={<UserOutlined style={{ color: "#94a3b8" }} />} />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="fonctionRepresentant" label="Fonction dans l'Entreprise">
-                                           <Input placeholder="Ex: Responsable Flotte & Moyens Généraux" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="email" label="Email Professionnel (Facturation & Alertes)" rules={[{ required: true, type: "email", message: "Email pro valide requis" }]}>
-                                           <Input placeholder="Ex: contact.flotte@atlastrans.ma" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="telephone" label="Téléphone Direct / Fixe Entreprise" rules={[{ required: true, message: "Téléphone direct requis" }]}>
-                                           <Input placeholder="Ex: 0537123456" size="large" />
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-
-                                     <Divider style={{ margin: "16px 0 14px", fontSize: 13, color: "#64748b" }}>
-                                       <PaperClipOutlined style={{ marginRight: 6 }} /> Justificatifs Légaux Société (Photos / Scans PDF)
-                                     </Divider>
-
-                                     <Row gutter={16}>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="rcDocument" label="Scan Extrait RC / Kbis Société" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                           <Upload.Dragger name="rcDocument" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 10, backgroundColor: "#ffffff" }}>
-                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                               <FilePdfOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                             </p>
-                                             <p style={{ margin: "4px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                               Charger Registre de Commerce (RC)
-                                             </p>
-                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Scan officiel (PDF, PNG, JPG)</p>
-                                           </Upload.Dragger>
-                                         </Form.Item>
-                                       </Col>
-                                       <Col xs={24} sm={12}>
-                                         <Form.Item name="iceDocument" label="Attestation ICE / Patente Société" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                           <Upload.Dragger name="iceDocument" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 10, backgroundColor: "#ffffff" }}>
-                                             <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                               <AuditOutlined style={{ fontSize: 24, color: "#0284c7" }} />
-                                             </p>
-                                             <p style={{ margin: "4px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                               Charger Attestation ICE / IF
-                                             </p>
-                                             <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Attestation fiscale (PDF, PNG, JPG)</p>
-                                           </Upload.Dragger>
-                                         </Form.Item>
-                                       </Col>
-                                     </Row>
-                                   </div>
-                                 )}
-                              </>
-                            ) : (
-                              /* Existing Subscriber Flow: Search by CIN / Card ID without manual typing */
-                              <div style={{ backgroundColor: "#f0f9ff", padding: 20, borderRadius: 12, border: "1px solid #bae6fd", marginBottom: 24 }}>
-                                <div style={{ fontWeight: 700, color: "#0369a1", marginBottom: 6, fontSize: 16 }}>
-                                  <SearchOutlined style={{ marginRight: 6 }} /> Identifier mon Dossier Abonné Existant :
-                                </div>
-                                <div style={{ color: "#475569", marginBottom: 16, fontSize: 13 }}>
-                                  Saisissez simplement votre N° CIN ou N° de Carte RFID pour charger automatiquement votre dossier sans rien ressaisir manuellement.
-                                </div>
-
-                                <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
-                                  <Input
-                                    size="large"
-                                    placeholder="Saisir votre N° CIN (ex: AB123456) ou N° Carte (ex: CRT-2025-001099)..."
-                                    value={subscriberSearchQuery}
-                                    onChange={(e) => setSubscriberSearchQuery(e.target.value)}
-                                    onPressEnter={handleSearchSubscriber}
-                                    prefix={<IdcardOutlined style={{ color: "#0284c7" }} />}
-                                    allowClear
-                                  />
-                                  <Button
-                                    type="primary"
-                                    size="large"
-                                    loading={isSearchingSubscriber}
-                                    onClick={handleSearchSubscriber}
-                                    style={{ backgroundColor: "#0284c7" }}
-                                  >
-                                    Rechercher Mon Profil
-                                  </Button>
-                                </Space.Compact>
-
-                                {foundSubscriber ? (
-                                   typeDemande === "PERTE_CARTE" ? (
-                                     <Card
-                                       style={{
-                                         borderRadius: 12,
-                                         borderColor: "#f97316",
-                                         backgroundColor: "#fff7ed",
-                                         marginTop: 12,
-                                       }}
-                                     >
-                                       <Title level={4} style={{ color: "#c2410c", margin: "0 0 12px" }}>
-                                         <IdcardOutlined style={{ marginRight: 8 }} /> Déclaration de Perte de Carte — {foundSubscriber.prenom} {foundSubscriber.nom}
-                                       </Title>
-
-                                       <Row gutter={[16, 10]} style={{ fontSize: 13, color: "#334155" }}>
-                                         <Col xs={24} sm={12}>
-                                           <div><strong>Nom & Prénom :</strong> {foundSubscriber.prenom} {foundSubscriber.nom}</div>
-                                           <div><strong>N° CIN :</strong> {foundSubscriber.cin}</div>
-                                           <div><strong>N° Carte RFID Perdue :</strong> <Tag color="volcano">{foundSubscriber.numeroCarteAbonne}</Tag></div>
-                                         </Col>
-                                         <Col xs={24} sm={12}>
-                                           <div><strong>Parking d'Attache :</strong> {foundSubscriber.parkingNom}</div>
-                                           <div><strong>Immatriculation Rattachée :</strong> <Tag color="cyan">{foundSubscriber.immatriculation}</Tag></div>
-                                           <div><strong>N° GSM (pour SMS) :</strong> {foundSubscriber.telephone}</div>
-                                         </Col>
-                                       </Row>
-
-                                       <Alert
-                                         type="warning"
-                                         showIcon
-                                         message="Consignes Importantes pour la Déclaration & Retrait du Duplicata :"
-                                         description={
-                                           <div style={{ fontSize: 13, lineHeight: 1.6, marginTop: 6 }}>
-                                             <div><ClockCircleOutlined style={{ color: "#d97706", marginRight: 6 }} /> <strong>Délai de Confection (7 Jours Max) :</strong> Votre nouvelle carte d'abonné RFID sera fabriquée et disponible au guichet sous un délai de <strong>7 jours maximum</strong>.</div>
-                                             <div><DollarOutlined style={{ color: "#16a34a", marginRight: 6 }} /> <strong>Frais 50 DH à la Caisse :</strong> Vous devrez vous présenter à la caisse du guichet de votre parking (<strong>{foundSubscriber.parkingNom}</strong>) muni de votre pièce d'identité (CIN) et régler la somme de <strong>50 DH</strong> pour retirer votre nouveau badge.</div>
-                                             <div><MobileOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Notification SMS Instantanée :</strong> Un SMS de confirmation de déclaration contenant votre code de suivi sera envoyé à votre numéro <strong>{foundSubscriber.telephone}</strong>.</div>
-                                           </div>
-                                         }
-                                         style={{ margin: "16px 0 20px", borderRadius: 10, border: "1px solid #fed7aa", backgroundColor: "#ffffff" }}
-                                       />
-
-                                       <div style={{ textAlign: "right" }}>
-                                          <Button
-                                            type="primary"
-                                            danger
-                                            size="large"
-                                            loading={mutation.isPending}
-                                            onClick={handleInitiatePerteCarteOtp}
-                                            style={{ backgroundColor: "#ea580c", borderColor: "#ea580c", fontWeight: 600, borderRadius: 8 }}
-                                          >
-                                            Confirmer par Code SMS (OTP) & Solliciter le Duplicata →
-                                          </Button>
-                                       </div>
-                                     </Card>
-                                   ) : (
-                                     <Alert
-                                       type="success"
-                                       showIcon
-                                       message={`Dossier Abonné Chargé : ${foundSubscriber.prenom} ${foundSubscriber.nom}`}
-                                       description={
-                                         <div style={{ marginTop: 6, lineHeight: 1.6 }}>
-                                           <div><strong>CIN :</strong> {foundSubscriber.cin} | <strong>Carte RFID :</strong> {foundSubscriber.numeroCarteAbonne}</div>
-                                           <div><strong>Contact :</strong> {foundSubscriber.email} | {foundSubscriber.telephone}</div>
-                                           <div><strong>Parking Actuel :</strong> {foundSubscriber.parkingNom} | <strong>Immatriculation :</strong> {foundSubscriber.immatriculation}</div>
-                                         </div>
-                                       }
-                                     />
-                                   )
-                                ) : (
-                                  <div style={{ padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #93c5fd", fontSize: 13, color: "#475569" }}>
-                                    <BulbOutlined style={{ color: "#0284c7", marginRight: 6 }} /> <strong>Comptes de démonstration prêts à tester :</strong>
-                                    <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
-                                      <li>CIN : <code>AB123456</code> (Karim El Amrani — Parking Agdal Gare)</li>
-                                      <li>N° Carte : <code>CRT-2025-003421</code> (Sara Bennis — Parking Bab El Had)</li>
-                                      <li>CIN : <code>EF556677</code> (Youssef Tazi — Parking Hassan II)</li>
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-                              <Button
-                                size="large"
-                                icon={<ArrowLeftOutlined />}
-                                onClick={() => setSelectedType(null)}
-                              >
-                                Retour aux démarches
-                              </Button>
-                              <Button
-                                type="primary"
-                                size="large"
-                                disabled={typeDemande !== "NOUVEL_ABONNEMENT" && !foundSubscriber}
-                                onClick={goNextFromStep1}
-                              >
-                                Continuer <ArrowRightOutlined />
-                              </Button>
-                            </div>
-                          </Form>
-                        )}
-
-                        {/* Step 1: Information Véhicule */}
-                        {currentStep === 1 && (
-                          <Form form={step2Form} layout="vertical">
-                            <Alert
-                              type="info"
-                              showIcon
-                              icon={<IdcardOutlined style={{ color: "#0284c7" }} />}
-                              message="Abonnement Nominatif — Accès par Carte RFID"
-                              description={
-                                <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-                                  L'immatriculation est renseignée <strong>uniquement à titre informatif</strong>.
-                                  Vous pouvez accéder au parking <strong>directement grâce à votre carte d'abonné RFID</strong>.
-                                  Votre abonnement est nominatif (lié à la personne et non au véhicule).
-                                </div>
-                              }
-                              style={{ marginBottom: 20, borderRadius: 10, border: "1px solid #bae6fd", backgroundColor: "#f0f9ff" }}
-                            />
-
-                            {typeDemande === "PERTE_CARTE" && (
-                              <Form.Item
-                                name="ancienneImmatriculation"
-                                label="N° de Carte d'Abonné Perdue ou Déclarée Volée"
-                                rules={[{ required: true, message: "Indiquez le numéro de carte perdue" }]}
-                              >
-                                <Input placeholder="Ex: CRT-2025-001099" size="large" />
-                              </Form.Item>
-                            )}
-
-                            <Row gutter={16}>
-                              <Col xs={24} sm={12}>
-                                <Form.Item
-                                  name="immatriculation"
-                                  label={typeDemande === "PERTE_CARTE" ? "Immatriculation du Véhicule associé" : "Immatriculation du véhicule"}
-                                  rules={[{ required: true, message: "Immatriculation requise" }]}
-                                >
-                                  <Input placeholder="Ex: 12345-A-6" size="large" />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={24} sm={12}>
-                                <Form.Item
-                                  name="typeVehicule"
-                                  label="Type de véhicule"
-                                  rules={[{ required: true, message: "Sélectionnez un type" }]}
-                                  initialValue="VOITURE"
-                                >
-                                  <Select size="large">
-                                    {(Object.keys(typeVehiculeLabels) as TypeVehicule[]).map((key) => (
-                                      <Option key={key} value={key}>
-                                        {typeVehiculeLabels[key]}
-                                      </Option>
-                                    ))}
-                                  </Select>
-                                </Form.Item>
-                              </Col>
-                            </Row>
-
-                            <Row gutter={16}>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="marque" label="Marque (Optionnel)">
-                                  <Input placeholder="Dacia, Renault, Peugeot..." />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="modele" label="Modèle (Optionnel)">
-                                  <Input placeholder="Sandero, Clio, 208..." />
-                                </Form.Item>
-                              </Col>
-                            </Row>
-
-                            {/* Carte Grise Photos Upload Section */}
-                            <Divider style={{ margin: "20px 0 16px", fontSize: 13, color: "#64748b" }}>
-                              <FileImageOutlined style={{ marginRight: 6 }} /> Carte Grise du Véhicule (Photos Recto / Verso)
-                            </Divider>
-
-                            <Row gutter={16}>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="carteGriseRecto" label="Photo Carte Grise — Recto (Face Avant)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                  <Upload.Dragger name="carteGriseRecto" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
-                                    </p>
-                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                      Charger Carte Grise Recto
-                                    </p>
-                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                  </Upload.Dragger>
-                                </Form.Item>
-                              </Col>
-                              <Col xs={24} sm={12}>
-                                <Form.Item name="carteGriseVerso" label="Photo Carte Grise — Verso (Face Arrière)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}>
-                                  <Upload.Dragger name="carteGriseVerso" maxCount={1} beforeUpload={() => false} accept="image/*,.pdf" style={{ padding: 12, backgroundColor: "#ffffff" }}>
-                                    <p className="ant-upload-drag-icon" style={{ margin: 0 }}>
-                                      <UploadOutlined style={{ fontSize: 24, color: "#0891b2" }} />
-                                    </p>
-                                    <p style={{ margin: "6px 0 2px", fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                                      Charger Carte Grise Verso
-                                    </p>
-                                    <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>Photo ou Scan (PNG, JPG, PDF)</p>
-                                  </Upload.Dragger>
-                                </Form.Item>
-                              </Col>
-                            </Row>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(0)}>
-                                Précédent
-                              </Button>
-                              <Button type="primary" size="large" onClick={goNextFromStep2}>
-                                Continuer <ArrowRightOutlined />
-                              </Button>
-                            </div>
-                          </Form>
-                        )}
-
-                        {/* Step 2: Choix Parking & Forfait */}
-                        {currentStep === 2 && (
-                          <div>
-                            <Form layout="vertical">
-                              <Form.Item label={typeDemande === "CHANGEMENT_PARKING" ? "Parking Actuel d'Attache" : "Parking de Rabat Souhaité"} required>
-                                <Select
-                                  size="large"
-                                  loading={parkingsLoading}
-                                  placeholder="Sélectionnez un parking de stationnement"
-                                  value={formData.parkingId}
-                                  onChange={(val) => setFormData((prev) => ({ ...prev, parkingId: val }))}
-                                >
-                                  {parkings?.map((p) => (
-                                    <Option key={p.id} value={p.id}>
-                                      <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
-                                    </Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
-
-                              {typeDemande === "CHANGEMENT_PARKING" && (
-                                <>
-                                  <Form.Item label="Nouveau Parking Souhaité (Transfert)" required>
-                                    <Select
-                                      size="large"
-                                      loading={parkingsLoading}
-                                      placeholder="Sélectionnez le nouveau parking Rabat"
-                                      value={formData.nouveauParkingId}
-                                      onChange={(val) => setFormData((prev) => ({ ...prev, nouveauParkingId: val }))}
-                                    >
-                                      {parkings?.filter((p) => p.id !== formData.parkingId).map((p) => (
-                                        <Option key={p.id} value={p.id}>
-                                          <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
-                                        </Option>
-                                      ))}
-                                    </Select>
-                                  </Form.Item>
-                                  <Form.Item label="Motif de la demande de transfert">
-                                    <Input.TextArea
-                                      rows={2}
-                                      placeholder="Ex: Changement de lieu de résidence ou de bureau à Agdal..."
-                                      value={formData.motifChangement}
-                                      onChange={(e) => setFormData((prev) => ({ ...prev, motifChangement: e.target.value }))}
-                                    />
-                                  </Form.Item>
-                                </>
-                              )}
-
-                               {/* Quantité d'Abonnements / Badges RFID */}
-                               <div style={{ backgroundColor: "#ffffff", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 16 }}>
-                                 <Row align="middle" justify="space-between" gutter={16}>
-                                   <Col xs={24} sm={15}>
-                                     <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14 }}>
-                                       <IdcardOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Nombre d'Abonnements / Badges RFID Souhaités :
-                                     </div>
-                                     <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                                       {typeClient === "ENTREPRISE"
-                                         ? "Commandez plusieurs abonnements ou badges RFID pour vos collaborateurs / flotte entreprise."
-                                         : "Quantité d'abonnements ou badges RFID à souscrire simultanément."}
-                                     </div>
-                                   </Col>
-                                   <Col xs={24} sm={9} style={{ textAlign: "right" }}>
-                                     <InputNumber
-                                       min={1}
-                                       max={100}
-                                       size="large"
-                                       value={nombreAbonnements}
-                                       onChange={(val) => setNombreAbonnements(val || 1)}
-                                       addonAfter="Abonnement(s)"
-                                       style={{ width: "100%" }}
-                                     />
-                                   </Col>
-                                 </Row>
-                               </div>
-
-                               <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #cbd5e1", marginTop: 16, marginBottom: 20 }}>
-                                <div style={{ fontWeight: 600, color: "#334155", marginBottom: 10 }}>
-                                  <ClockCircleOutlined style={{ color: "#0284c7", marginRight: 6 }} /> Choisir la Durée d'Engagement / Prolongation :
-                                </div>
-                                <Segmented
-                                   options={[
-                                     { label: "Courte Durée (3 à 12 Mois)", value: "COURTE" },
-                                     { label: "Longue Durée (20 Ans / Concession)", value: "LONGUE" },
-                                   ]}
-                                   value={categorieDuree}
-                                   onChange={(val) => {
-                                     const cat = val as "COURTE" | "LONGUE";
-                                     setCategorieDuree(cat);
-                                     if (cat === "LONGUE") {
-                                       setDureeMois(240);
-                                       setSelectedForfait(101);
-                                     } else {
-                                       setDureeMois(6);
-                                       setSelectedForfait(1);
-                                     }
-                                   }}
-                                   style={{ marginBottom: 14 }}
-                                 />
-
-                                 {categorieDuree === "COURTE" ? (
-                                   <Radio.Group
-                                     value={dureeMois}
-                                     onChange={(e) => setDureeMois(e.target.value)}
-                                     buttonStyle="solid"
-                                     size="large"
-                                     style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-                                   >
-                                     <Radio.Button value={3}>3 Mois</Radio.Button>
-                                     <Radio.Button value={6}>6 Mois</Radio.Button>
-                                     <Radio.Button value={9}>9 Mois</Radio.Button>
-                                     <Radio.Button value={12}>12 Mois (1 An)</Radio.Button>
-                                </Radio.Group>
-                                 ) : (
-                                   <div style={{ padding: "10px 14px", backgroundColor: "#e0f2fe", borderRadius: 8, border: "1px solid #7dd3fc", color: "#0369a1", fontWeight: 600, fontSize: 13 }}>
-                                     Abonnement Longue Durée fixe de <strong>20 Ans (240 Mois)</strong> — Droit d'usage privilégié et garantie de place réservée.
-                                   </div>
-                                 )}
-
-                                 {/* Section Formules d'Abonnement avec espacement */}
-                                 <Divider titlePlacement="left" style={{ margin: "28px 0 20px" }}>
-                                   Choisir la Formule d'Abonnement Souhaitée
-                                 </Divider>
-                                 
-                                 <Row gutter={[16, 16]} style={{ marginTop: 12 }}>
-                                 {(categorieDuree === "LONGUE" ? FORFAITS_LONGUE_DUREE : FORFAITS_COURTE_DUREE).map((f) => {
-                                   const isSelected = selectedForfait === f.id;
-                                   return (
-                                     <Col xs={24} sm={12} key={f.id}>
-                                       <Card
-                                         hoverable
-                                         onClick={() => setSelectedForfait(f.id)}
-                                         style={{
-                                           borderColor: isSelected ? "#0284c7" : "#e2e8f0",
-                                           backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
-                                           borderWidth: isSelected ? 2 : 1,
-                                           borderRadius: 10,
-                                           cursor: "pointer",
-                                           position: "relative",
-                                         }}
-                                       >
-                                         {f.badge && (
-                                           <Tag
-                                             color={isSelected ? "blue" : "default"}
-                                             style={{ position: "absolute", top: 12, right: 12 }}
-                                           >
-                                             {f.badge}
-                                           </Tag>
-                                         )}
-                                         <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem" }}>{f.title}</h4>
-                                         <div style={{ color: "#64748b", fontSize: 13, margin: "4px 0 6px" }}>{f.desc}</div>
-                                         <div style={{ marginBottom: 8 }}>
-                                           <Tag color="geekblue">
-                                             <ClockCircleOutlined style={{ marginRight: 4 }} />
-                                             {f.plage}
-                                           </Tag>
-                                         </div>
-                                         <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0369a1" }}>
-                                           {f.priceTTC.toLocaleString("fr-FR")} DH <span style={{ fontSize: 12, fontWeight: 400, color: "#475569" }}>TTC / mois / personne</span>
-                                         </div>
-                                       </Card>
-                                     </Col>
-                                   );
-                                 })}
-                                 </Row>
-                              </div>
-                            </Form>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(1)}>
-                                Précédent
-                              </Button>
-                              <Button
-                                type="primary"
-                                size="large"
-                                disabled={!formData.parkingId}
-                                onClick={() => setCurrentStep(3)}
-                              >
-                                Récapitulatif <ArrowRightOutlined />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Step 3: Recapitulatif & Envoyer Formulaire */}
-                        {currentStep === 3 && (
-                          <div>
-                            <Alert
-                              message="Vérification avant envoi de la demande d'abonnement"
-                              type="warning"
-                              showIcon
-                              style={{ marginBottom: 20 }}
-                            />
-
-                            <Card title="Récapitulatif de votre souscription" style={{ backgroundColor: "#f8fafc" }}>
-                              <Row gutter={[16, 12]}>
-                                <Col span={12}>
-                                  <strong>Type de Demande:</strong>{" "}
-                                  <Tag color={typeDemandeLabels[typeDemande].color}>
-                                    {typeDemandeLabels[typeDemande].label}
-                                  </Tag>
-                                </Col>
-                                {formData.numeroCarteAbonne && (
-                                  <Col span={12}>
-                                    <strong>N° Carte Abonné:</strong> <Tag color="gold">{formData.numeroCarteAbonne}</Tag>
-                                  </Col>
-                                )}
-                                 {typeClient === "PARTICULIER" ? (
-                                   <>
-                                     <Col span={12}>
-                                       <strong>Souscripteur (Particulier):</strong> {formData.prenom} {formData.nom}
-                                     </Col>
-                                     <Col span={12}>
-                                       <strong>N° CIN:</strong> <Tag color="blue">{formData.cin}</Tag>
-                                     </Col>
-                                     <Col span={12}>
-                                       <strong>Email & Tél:</strong> {formData.email} | {formData.telephone}
-                                     </Col>
-                                   </>
-                                 ) : (
-                                   <>
-                                     <Col span={12}>
-                                       <strong>Société / Raison Sociale:</strong> <Tag color="orange" style={{ fontWeight: 600 }}>{formData.raisonSociale}</Tag>
-                                     </Col>
-                                     <Col span={12}>
-                                       <strong>Identifiants Fiscaux:</strong> ICE: <code>{formData.ice}</code> {formData.rcEntreprise && `| ${formData.rcEntreprise}`}
-                                     </Col>
-                                     <Col span={12}>
-                                       <strong>Interlocuteur Flotte:</strong> {formData.nomRepresentant || "Responsable Flotte"} {formData.fonctionRepresentant && `(${formData.fonctionRepresentant})`}
-                                     </Col>
-                                     <Col span={12}>
-                                       <strong>Contact Pro:</strong> {formData.email} | {formData.telephone}
-                                     </Col>
-                                   </>
-                                 )}
-                                 <Col span={12}>
-                                   <strong>Véhicule / Flotte:</strong> {formData.immatriculation} ({typeVehiculeLabels[formData.typeVehicule || "VOITURE"]})
-                                   {formData.ancienneImmatriculation && (
-                                     <div style={{ fontSize: 12, color: "#64748b" }}>Ancienne plaque : {formData.ancienneImmatriculation}</div>
-                                   )}
-                                 </Col>
-                                 <Col span={12}>
-                                   <strong>Parking Sélectionné:</strong>{" "}
-                                   {parkings?.find((p) => p.id === formData.parkingId)?.nom || "Parking Agdal Gare"}
-                                   {formData.nouveauParkingId && (
-                                     <div style={{ color: "#d97706", fontWeight: 600 }}>
-                                       <ArrowRightOutlined style={{ marginRight: 4 }} /> Transfert vers : {parkings?.find((p) => p.id === formData.nouveauParkingId)?.nom}
-                                     </div>
-                                   )}
-                                 </Col>
-                                 <Col span={12}>
-                                   <strong>Nombre de Badges / Cartes:</strong>{" "}
-                                   <Tag color="purple">{nombreAbonnements} {nombreAbonnements > 1 ? "Badges RFID / Cartes Flotte" : "Badge RFID"}</Tag>
-                                 </Col>
-                                 <Col span={12}>
-                                   <strong>Forfait & Durée:</strong>{" "}
-                                   <Tag color="geekblue">
-                                     {ALL_FORFAITS.find((f) => f.id === selectedForfait)?.title} ({categorieDuree === "LONGUE" ? "20 Ans (Longue Durée)" : `${dureeMois} Mois`})
-                                   </Tag>
-                                 </Col>
-                                 <Col span={12}>
-                                   <strong>Montant Total TTC Calculé:</strong>{" "}
-                                   <strong style={{ fontSize: "1.2rem", color: "#16a34a" }}>
-                                     {Math.round((ALL_FORFAITS.find((f) => f.id === selectedForfait)?.priceTTC || 500) * dureeMois * nombreAbonnements).toLocaleString("fr-FR")} DH TTC
-                                   </strong>
-                                 </Col>
-                                 <Col span={24}>
-                                   <div style={{ marginTop: 8, padding: "10px 14px", backgroundColor: "#ffffff", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
-                                     <strong><PaperClipOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Pièces Justificatives Renseignées :</strong>
-                                     <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                                       {typeClient === "PARTICULIER" ? (
-                                         <>
-                                           <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Recto (Face Avant)</Tag>
-                                           <Tag color="blue"><FileImageOutlined style={{ marginRight: 4 }} /> CIN Verso (Face Arrière)</Tag>
-                                         </>
-                                       ) : (
-                                         <>
-                                           <Tag color="orange"><FilePdfOutlined style={{ marginRight: 4 }} /> Registre de Commerce (RC Société)</Tag>
-                                           <Tag color="orange"><AuditOutlined style={{ marginRight: 4 }} /> Attestation ICE / Patente Fiscale</Tag>
-                                         </>
-                                       )}
-                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Recto</Tag>
-                                       <Tag color="cyan"><FileImageOutlined style={{ marginRight: 4 }} /> Carte Grise Verso</Tag>
-                                     </div>
-                                   </div>
-                                 </Col>
-                              </Row>
-                            </Card>
-
-                            {/* Terms & Conditions Checkbox */}
-                            <div style={{ marginTop: 20, padding: "14px 18px", backgroundColor: "#ffffff", borderRadius: 10, border: "1px solid #cbd5e1" }}>
-                              <Checkbox
-                                checked={acceptTerms}
-                                onChange={(e) => setAcceptTerms(e.target.checked)}
-                              >
-                                <span style={{ fontSize: 13.5, color: "#334155" }}>
-                                  J'ai lu et j'accepte les{" "}
-                                  <a
-                                    href="/documents/conditions-generales-rrm.pdf"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={() => {
-                                      message.info("Ouverture des Conditions Générales d'Abonnement Rabat Région Mobilité (PDF)...");
-                                    }}
-                                    style={{ color: "#0284c7", textDecoration: "underline", fontWeight: 600 }}
-                                  >
-                                    <FilePdfOutlined style={{ marginRight: 4 }} />
-                                    Conditions Générales d'Abonnement Rabat Région Mobilité (Fichier PDF)
-                                  </a>
-                                </span>
-                              </Checkbox>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-                              <Button size="large" icon={<ArrowLeftOutlined />} onClick={() => setCurrentStep(2)}>
-                                Modifier les infos
-                              </Button>
-                              <Button
-                                type="primary"
-                                size="large"
-                                disabled={!acceptTerms || mutation.isPending}
-                                onClick={() => setIsOtpModalOpen(true)}
-                                icon={<CheckCircleOutlined />}
-                                style={{
-                                  backgroundColor: acceptTerms ? "#16a34a" : "#cbd5e1",
-                                  borderColor: acceptTerms ? "#16a34a" : "#cbd5e1",
-                                }}
-                              >
-                                Envoyer le formulaire & Valider OTP
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                      </>
-                    ) : (
-                      /* Success Confirmation Screen */
-                      <div style={{ textAlign: "center", padding: "20px 0" }}>
-                        <Result
-                          status="success"
-                          title="Demande d'Abonnement Soumise avec Succès !"
-                          subTitle={
-                            <div style={{ fontSize: "1.1rem", color: "#334155" }}>
-                              Votre référence de suivi unique :{" "}
-                              <strong style={{ color: "#0284c7", fontSize: "1.3rem" }}>{submittedReference}</strong>
-                            </div>
-                          }
-                          extra={[
-                            <Button
-                              key="copy"
-                              type="default"
-                              onClick={() => {
-                                if (submittedReference) {
-                                  navigator.clipboard.writeText(submittedReference);
-                                  message.success("Référence copiée !");
-                                }
-                              }}
-                            >
-                              Copier la référence
-                            </Button>,
-                            <Button
-                              key="track"
-                              type="primary"
-                              onClick={() => {
-                                if (submittedReference) {
-                                  setSearchRef(submittedReference);
-                                  setActiveTab("track");
-                                  handleTrackSearch();
-                                }
-                              }}
-                            >
-                              Suivre l'état de ma demande
-                            </Button>,
-                            <Button key="new" type="text" onClick={resetForm}>
-                              Soumettre une autre demande
-                            </Button>,
-                          ]}
-                        />
-
-                        <Divider />
-
-                        <Card style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", textAlign: "left", maxWidth: 650, margin: "0 auto" }}>
-                          <h4 style={{ color: "#166534", marginTop: 0 }}>
-                            <SafetyCertificateOutlined /> Prochaines étapes & Paiement :
-                          </h4>
-                          <ul style={{ color: "#15803d", paddingLeft: 20, margin: 0, lineHeight: 1.8 }}>
-                            <li>
-                              Votre dossier est en cours de validation par un agent du parking RRM.
-                            </li>
-                            <li>
-                              <strong>Paiement accepté au guichet :</strong> Espèces ou Chèque bancaire (à l'ordre de Rabat Région Mobilité).
-                            </li>
-                            <li>
-                              Une fois validé, vous recevrez une notification pour <strong>récupérer votre carte RFID</strong> ainsi que votre <strong>reçu et facture</strong>.
-                            </li>
-                          </ul>
-                        </Card>
-                      </div>
-                    )}
+              return (
+                <div key={idx} className="flex flex-col items-center gap-2 bg-white/95 p-2 rounded-2xl z-10 shadow-xs">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 scale-110"
+                        : isCurrent
+                        ? "bg-secondary text-white shadow-xl ring-4 ring-secondary/25 scale-105"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}
+                  >
+                    {isCompleted ? <CheckOutlined style={{ fontSize: "16px", fontWeight: "bold" }} /> : idx + 1}
                   </div>
-                ),
-              },
-              {
-                key: "track",
-                label: (
-                  <span>
-                    <SearchOutlined /> Suivi de Ma Demande & Retrait Document
+                  <span
+                    className={`text-xs font-bold hidden md:block transition-colors ${
+                      isCompleted
+                        ? "text-emerald-700 font-extrabold"
+                        : isCurrent
+                        ? "text-secondary font-black"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {title}
                   </span>
-                ),
-                children: (
-                  <div style={{ paddingTop: 10 }}>
-                    <Alert
-                      message="Espace Suivi Abonné (Sans Compte)"
-                      description="Saisissez votre numéro de référence (ex: DEM-2026-000001) pour consulter l'avancement, effectuer votre paiement et récupérer votre carte ou facture."
-                      type="info"
-                      showIcon
-                      style={{ marginBottom: 24 }}
-                    />
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-                    <Row gutter={12} style={{ marginBottom: 24 }}>
-                      <Col flex="auto">
-                        <Input
-                          size="large"
-                          prefix={<SearchOutlined />}
-                          placeholder="Entrez votre référence (ex: DEM-2026-000001, DEM-2026-000003 ou Email)"
-                          value={searchRef}
-                          onChange={(e) => setSearchRef(e.target.value)}
-                          onPressEnter={handleTrackSearch}
-                        />
-                      </Col>
-                      <Col>
-                        <Button type="primary" size="large" onClick={handleTrackSearch} loading={isSearching}>
-                          Rechercher
-                        </Button>
-                      </Col>
-                    </Row>
+        {/* STEP 0: Select Request Type */}
+        {currentStep === 0 && (
+          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/70">
+            <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-6">
+              Sélectionnez le Type de Demande
+            </h2>
 
-                    {trackedDemande && (
-                      <Card
-                        title={
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span>Dossier N° {trackedDemande.reference}</span>
-                            <Tag
-                              color={
-                                trackedDemande.statut === "VALIDEE"
-                                  ? "green"
-                                  : trackedDemande.statut === "EN_COURS"
-                                  ? "blue"
-                                  : trackedDemande.statut === "REJETEE"
-                                  ? "red"
-                                  : "gold"
-                              }
-                            >
-                              {trackedDemande.statut}
-                            </Tag>
-                          </div>
-                        }
-                        style={{ borderColor: "#cbd5e1" }}
-                      >
-                        <Steps
-                          current={getStatusStepIndex(trackedDemande.statut)}
-                          items={[
-                            { title: "Demande Soumise", icon: <ClockCircleOutlined /> },
-                            { title: "Traitement Guichet", icon: <UserOutlined /> },
-                            { title: "Paiement Validé", icon: <DollarOutlined /> },
-                            { title: "Carte Prête", icon: <IdcardOutlined /> },
-                          ]}
-                          style={{ marginBottom: 30 }}
-                        />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option 1: Nouvel Abonnement Particulier */}
+              <div
+                onClick={() => setTypeDemande("NEW")}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  typeDemande === "NEW"
+                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
+                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center text-xl shrink-0">
+                  <PlusCircleOutlined />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Nouvel Abonnement</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Créer une nouvelle souscription pour votre véhicule (Particulier).
+                  </p>
+                </div>
+              </div>
 
-                        <Row gutter={[16, 16]}>
-                          <Col xs={24} sm={12}>
-                            <div><strong>Client:</strong> {trackedDemande.clientNom}</div>
-                            <div><strong>Email:</strong> {trackedDemande.email}</div>
-                            <div><strong>Téléphone:</strong> {trackedDemande.telephone}</div>
-                          </Col>
-                          <Col xs={24} sm={12}>
-                            <div><strong>Parking:</strong> {trackedDemande.parkingNom}</div>
-                            <div><strong>Immatriculation:</strong> {trackedDemande.immatriculation}</div>
-                            <div><strong>Date de création:</strong> {trackedDemande.dateCreation}</div>
-                          </Col>
-                        </Row>
+              {/* Option 2: Renouvellement */}
+              <div
+                onClick={() => setTypeDemande("RENEW")}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  typeDemande === "RENEW"
+                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
+                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                  <SyncOutlined />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Renouvellement</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Prolonger un abonnement existant (Recherche CIN/RFID + Choix Durée).
+                  </p>
+                </div>
+              </div>
 
-                        <Divider />
+              {/* Option 3: Transfert / Changement */}
+              <div
+                onClick={() => setTypeDemande("TRANSFER")}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  typeDemande === "TRANSFER"
+                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
+                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                  <SwapOutlined />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Transfert & Changement de Parking</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Changer de parking d'affectation ou mettre à jour votre abonnement actif.
+                  </p>
+                </div>
+              </div>
 
-                        {trackedDemande.statut === "VALIDEE" ? (
-                          <div style={{ backgroundColor: "#f0fdf4", padding: 16, borderRadius: 8, border: "1px solid #bbf7d0" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                              <span style={{ fontWeight: 600, color: "#166534", fontSize: "1.05rem" }}>
-                                <CheckCircleOutlined style={{ color: "#16a34a", marginRight: 6 }} />
-                                Votre demande est validée ! Carte & Documents disponibles
-                              </span>
-                              <Badge status="processing" text="Carte prête au guichet" />
-                            </div>
+              {/* Option 4: Duplicata / Réclamation Perte */}
+              <div
+                onClick={() => setTypeDemande("DUPLICATE")}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  typeDemande === "DUPLICATE"
+                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
+                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl shrink-0">
+                  <CopyOutlined />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Duplicata RFID (Réclamation Perte)</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Déclarer la perte d'une carte RFID et demander l'édition d’un duplicata via OTP.
+                  </p>
+                </div>
+              </div>
 
-                            <Space wrap>
-                              <Button
-                                type="primary"
-                                icon={<IdcardOutlined />}
-                                onClick={() => setCardModalOpen(true)}
-                                style={{ backgroundColor: "#0284c7" }}
-                              >
-                                Récupérer la carte d'abonnement
-                              </Button>
-                              <Button icon={<DollarOutlined />} onClick={() => setReceiptModalOpen(true)}>
-                                Récupérer le reçu de paiement
-                              </Button>
-                              <Button icon={<PrinterOutlined />} onClick={() => setInvoiceModalOpen(true)}>
-                                Récupérer la facture
-                              </Button>
-                            </Space>
-                          </div>
-                        ) : (
-                          <Alert
-                            message="Dossier en cours de traitement au guichet"
-                            description="Dès que l'agent RRM aura validé le paiement et édité la carte RFID, vos documents de retrait apparaîtront ici."
-                            type="info"
-                            showIcon
-                          />
-                        )}
-                      </Card>
-                    )}
+              {/* Option 5: Abonnement Long Terme Corporate */}
+              <div
+                onClick={() => setTypeDemande("CORPORATE")}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 md:col-span-2 ${
+                  typeDemande === "CORPORATE"
+                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
+                    : "border-amber-200 bg-amber-50/50 hover:bg-amber-100/60"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
+                  <BankOutlined />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base font-extrabold text-slate-900 m-0">Abonnement Long Terme (Entreprises & Flottes)</h3>
+                    <Tag color="gold" className="font-bold border-none">Flottes Multi-Véhicules</Tag>
                   </div>
-                ),
-              },
-            ]}
-          />
-        </Card>
-      </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Formulaire dédié aux sociétés pour saisir le responsable, les documents entreprise et la liste des véhicules de la flotte.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      {/* Modal: Carte d'abonnement */}
-      <Modal
-        title="Carte d'Abonnement de Stationnement RFID — RRM"
-        open={cardModalOpen}
-        onCancel={() => setCardModalOpen(false)}
-        footer={[
-          <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={() => window.print()}>
-            Imprimer l'Attestation Carte
-          </Button>,
-          <Button key="close" onClick={() => setCardModalOpen(false)}>
-            Fermer
-          </Button>,
-        ]}
-      >
-        {trackedDemande && (
-          <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <Card
-              style={{
-                background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
-                color: "#ffffff",
-                borderRadius: 16,
-                maxWidth: 400,
-                margin: "0 auto",
-                boxShadow: "0 10px 20px rgba(0,0,0,0.2)",
-                textAlign: "left",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong>RABAT RÉGION MOBILITÉ</strong>
-                <Tag color="gold">RFID PASS</Tag>
-              </div>
-              <h3 style={{ color: "#ffffff", margin: "16px 0 4px" }}>{trackedDemande.clientNom}</h3>
-              <div style={{ fontSize: 13, color: "#dbeafe" }}>Immatriculation: {trackedDemande.immatriculation}</div>
-              <Divider style={{ borderColor: "rgba(255,255,255,0.2)", margin: "12px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#bfdbfe" }}>
-                <span>Parking: {trackedDemande.parkingNom}</span>
-                <span>Réf: {trackedDemande.reference}</span>
-              </div>
-            </Card>
-            <div style={{ marginTop: 16, color: "#475569", fontSize: 13 }}>
-              Présentez ce reçu au guichet du <strong>{trackedDemande.parkingNom}</strong> pour retirer votre badge physique.
+            <div className="mt-8 flex justify-end">
+              <Button
+                type="primary"
+                size="large"
+                icon={<ArrowRightOutlined />}
+                onClick={() => setCurrentStep(1)}
+                className="bg-primary rounded-xl font-bold h-12 px-8 shadow-md"
+              >
+                Continuer →
+              </Button>
             </div>
           </div>
         )}
-      </Modal>
 
-      {/* Modal: Reçu de paiement */}
-      <Modal
-        title="Reçu de Paiement — Rabat Région Mobilité"
-        open={receiptModalOpen}
-        onCancel={() => setReceiptModalOpen(false)}
-        footer={[
-          <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={() => window.print()}>
-            Imprimer le Reçu
-          </Button>,
-          <Button key="close" onClick={() => setReceiptModalOpen(false)}>
-            Fermer
-          </Button>,
-        ]}
-      >
-        {trackedDemande && (
-          <div style={{ padding: 10 }}>
-            <h3>Reçu de Paiement N° REC-{trackedDemande.id}</h3>
-            <p><strong>Référence Demande:</strong> {trackedDemande.reference}</p>
-            <p><strong>Client:</strong> {trackedDemande.clientNom}</p>
-            <p><strong>Montant Régler:</strong> {trackedDemande.paiementInfo?.montant ?? 600} MAD</p>
-            <p><strong>Mode de Paiement:</strong> {trackedDemande.paiementInfo?.modePaiement ?? "ESPECES"}</p>
-            <p><strong>Date de Paiement:</strong> {formatDate(trackedDemande.paiementInfo?.datePaiement || trackedDemande.dateCreation)}</p>
-            <p><strong>Validé Par:</strong> {trackedDemande.paiementInfo?.validePar ?? "Agent Guichet RRM"}</p>
+        {/* STEP 1: Dynamic Form based on TypeDemande */}
+        {currentStep === 1 && (
+          <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
+            {/* FLOW 1: RENOUVELLEMENT / TRANSFERT / DUPLICATE -> SEARCH ACCOUNT ONLY */}
+            {["RENEW", "TRANSFER", "DUPLICATE"].includes(typeDemande) ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-extrabold text-slate-900 m-0">
+                      {typeDemande === "DUPLICATE"
+                        ? "Identification pour Déclaration de Perte Carte RFID"
+                        : "Recherche de votre Compte Abonné"}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Saisissez votre CIN ou numéro de carte RFID pour retrouver automatiquement vos informations.
+                    </p>
+                  </div>
+                  <Tag color="blue" className="font-bold px-3 py-1 rounded-full">
+                    {typeDemande === "DUPLICATE" ? "Duplicata RFID" : "Recherche Rapide"}
+                  </Tag>
+                </div>
+
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <Input
+                      size="large"
+                      placeholder="Ex: CIN (AB123456) ou N° Carte RFID (RFID-9988)"
+                      value={lookupQuery}
+                      onChange={(e) => setLookupQuery(e.target.value)}
+                      className="rounded-xl"
+                    />
+                    <Button
+                      type="primary"
+                      size="large"
+                      loading={isSearchingLookup}
+                      onClick={handleLookupSubscriber}
+                      icon={<SearchOutlined />}
+                      className="rounded-xl bg-secondary px-8 font-bold"
+                    >
+                      Identifier Mon Compte
+                    </Button>
+                  </div>
+                </div>
+
+                {hasFoundAccount && (
+                  <Form form={form} layout="vertical" className="space-y-4">
+                    <AntCard className="rounded-2xl border-emerald-200 bg-emerald-50/50 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Tag color="green" className="font-bold">Abonné Validé</Tag>
+                        <span className="font-bold text-slate-900 text-sm">Informations Récupérées</span>
+                      </div>
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item name="nom" label="Nom & Prénom">
+                            <Input readOnly className="rounded-xl bg-white font-semibold" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item name="cin" label="CIN">
+                            <Input readOnly className="rounded-xl bg-white font-semibold" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item name="telephone" label="Téléphone Mobile">
+                            <Input readOnly className="rounded-xl bg-white font-semibold" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item name="immatriculation" label="Véhicule Immatriculation">
+                            <Input readOnly className="rounded-xl bg-white font-semibold" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </AntCard>
+                  </Form>
+                )}
+
+                <div className="mt-8 flex justify-between">
+                  <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => setCurrentStep(0)}
+                    className="rounded-xl h-11 px-6 font-semibold"
+                  >
+                    Retour
+                  </Button>
+
+                  {typeDemande === "DUPLICATE" ? (
+                    <Button
+                      type="primary"
+                      disabled={!hasFoundAccount}
+                      onClick={handleNextToOtp}
+                      className="bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md"
+                    >
+                      Valider & Recevoir Code OTP →
+                    </Button>
+                  ) : (
+                    <Button
+                      type="primary"
+                      disabled={!hasFoundAccount}
+                      onClick={() => setCurrentStep(2)}
+                      className="bg-primary rounded-xl h-11 px-8 font-bold"
+                    >
+                      Étape Suivante (Parking & Durée) →
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : typeDemande === "CORPORATE" ? (
+              /* FLOW 2: CORPORATE (ENTREPRISE & FLOTTE) */
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-extrabold text-slate-900 m-0">
+                      Souscription Corporate — Entreprise & Flotte
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Renseignez les informations de la société, le document officiel et les véhicules de la flotte.
+                    </p>
+                  </div>
+                  <Tag color="gold" className="font-bold px-3 py-1 rounded-full">
+                    Formulaire Flotte
+                  </Tag>
+                </div>
+
+                <Form form={form} layout="vertical" className="space-y-4">
+                  <Collapse defaultActiveKey={["societe", "vehicules_flotte", "docs_entreprise"]} className="bg-transparent border-none space-y-4">
+                    {/* Panel 1: Société & Responsable */}
+                    <Collapse.Panel
+                      header={
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isCorporateValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+                                1
+                              </div>
+                            )}
+                            <span className={`text-base ${isCorporateValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Société & Responsable Flotte
+                            </span>
+                          </div>
+                          {isCorporateValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="gold" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              À Remplir
+                            </Tag>
+                          )}
+                        </div>
+                      }
+                      key="societe"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isCorporateValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
+                    >
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="raisonSociale"
+                            label="Raison Sociale de l'Entreprise"
+                            rules={[{ required: true, message: "La raison sociale est requise." }]}
+                          >
+                            <Input placeholder="ex: Maroc Telecom SA" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={6}>
+                          <Form.Item
+                            name="ice"
+                            label="Identifiant Commun (ICE)"
+                            rules={[{ required: true, message: "L'ICE est requis." }]}
+                          >
+                            <Input placeholder="001234567000089" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={6}>
+                          <Form.Item
+                            name="rc"
+                            label="Registre de Commerce (RC)"
+                            rules={[{ required: true, message: "Le RC est requis." }]}
+                          >
+                            <Input placeholder="12345" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="nomContact"
+                            label="Nom & Prénom du Responsable Flotte"
+                            rules={[{ required: true, message: "Le nom du responsable est requis." }]}
+                          >
+                            <Input placeholder="ex: Karim BENNANI" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="telephone"
+                            label="Téléphone Professionnel"
+                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                          >
+                            <Input placeholder="06 61 00 00 00" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Form.Item
+                        name="email"
+                        label="Email Professionnel pour Facturation"
+                        rules={[
+                          { required: true, message: "L'email est requis." },
+                          { type: "email", message: "Email invalide." },
+                        ]}
+                      >
+                        <Input placeholder="flotte@entreprise.ma" className="rounded-xl py-2" />
+                      </Form.Item>
+                    </Collapse.Panel>
+
+                    {/* Panel 2: Dynamic Fleet Vehicles count */}
+                    <Collapse.Panel
+                      header={
+                        <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                          <CarOutlined className="text-secondary text-lg" />
+                          <span>2. Nombre de Cartes RFID & Liste des Véhicules de la Flotte</span>
+                        </div>
+                      }
+                      key="vehicules_flotte"
+                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
+                    >
+                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                          <label className="font-bold text-slate-900 text-sm block mb-1">
+                            Combien de cartes RFID / abonnements souhaitez-vous ?
+                          </label>
+                        </div>
+                        <InputNumber
+                          min={1}
+                          max={50}
+                          value={nombreVehiculesCorporate}
+                          onChange={(val) => setNombreVehiculesCorporate(val || 1)}
+                          size="large"
+                          className="rounded-xl font-bold w-36"
+                          addonAfter="Cartes"
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        {Array.from({ length: nombreVehiculesCorporate }).map((_, idx) => (
+                          <div key={idx} className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                            <Tag color="gold" className="mb-2 font-bold">Véhicule #{idx + 1}</Tag>
+                            <Row gutter={16}>
+                              <Col xs={24} md={12}>
+                                <Form.Item
+                                  name={["flotteVehicules", idx, "immatriculation"]}
+                                  label={`Matricule Véhicule #${idx + 1}`}
+                                  rules={[{ required: true, message: "Immatriculation requise." }]}
+                                >
+                                  <Input prefix={<CarOutlined />} placeholder="12345-A-1" className="rounded-xl py-2" />
+                                </Form.Item>
+                              </Col>
+                              <Col xs={24} md={12}>
+                                <Form.Item
+                                  name={["flotteVehicules", idx, "marque"]}
+                                  label={`Marque & Modèle Véhicule #${idx + 1}`}
+                                >
+                                  <Input placeholder="ex: Dacia / Renault / Peugeot" className="rounded-xl py-2" />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+                          </div>
+                        ))}
+                      </div>
+                    </Collapse.Panel>
+
+                    {/* Panel 3: Corporate Documents Upload (Required with Clean Custom Cadre State) */}
+                    <Collapse.Panel
+                      header={
+                        <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
+                          <FileImageOutlined className="text-amber-600 text-lg" />
+                          <span>3. Document Entreprise (Attestation ICE / Registre de Commerce)</span>
+                        </div>
+                      }
+                      key="docs_entreprise"
+                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
+                    >
+                      <ScanUploadField
+                        name="photoDocEntreprise"
+                        label="Attestation ICE ou Registre de Commerce (RC)"
+                        tagText="Document Entreprise Officiel"
+                        tagColor="gold"
+                        icon={<BankOutlined />}
+                        btnText="Scanner Document Entreprise"
+                        isRequired={true}
+                        form={form}
+                      />
+                    </Collapse.Panel>
+                  </Collapse>
+                </Form>
+
+                <div className="mt-8 flex justify-between">
+                  <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => setCurrentStep(0)}
+                    className="rounded-xl h-11 px-6 font-semibold"
+                  >
+                    Retour
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<ArrowRightOutlined />}
+                    onClick={handleValidateCorporateAndNext}
+                    className="bg-primary rounded-xl h-11 px-8 font-bold"
+                  >
+                    Étape Suivante (Choix Parking) →
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* FLOW 3: NOUVEL ABONNEMENT PARTICULIER (ESTHETIQUE SEQUENTIAL ACCORDION VALIDATION) */
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-extrabold text-slate-900 m-0">
+                      Informations du Souscripteur Particulier
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Remplissez et validez chaque section pour poursuivre votre souscription.
+                    </p>
+                  </div>
+                  <Tag color="blue" className="font-bold px-3 py-1 rounded-full">
+                    Compte Particulier
+                  </Tag>
+                </div>
+
+                <Form form={form} layout="vertical" className="space-y-4">
+                  <Collapse
+                    activeKey={activeCollapseKeys}
+                    onChange={(keys) => setActiveCollapseKeys(typeof keys === "string" ? [keys] : (keys as string[]))}
+                    className="bg-transparent border-none space-y-4"
+                  >
+                    {/* Panel 1: Informations Personnelles & CIN */}
+                    <Collapse.Panel
+                      header={
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isPersoValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                                1
+                              </div>
+                            )}
+                            <span className={`text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Personnelles & Pièce d'Identité (CIN)
+                            </span>
+                          </div>
+                          {isPersoValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              En Cours de Saisie
+                            </Tag>
+                          )}
+                        </div>
+                      }
+                      key="perso_particulier"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isPersoValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
+                    >
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="nom"
+                            label="Nom de famille"
+                            rules={[{ required: true, message: "Le nom est requis." }]}
+                          >
+                            <Input prefix={<UserOutlined />} placeholder="BENNANI" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="prenom"
+                            label="Prénom"
+                            rules={[{ required: true, message: "Le prénom est requis." }]}
+                          >
+                            <Input prefix={<UserOutlined />} placeholder="Karim" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="cin"
+                            label="Carte d'Identité Nationale (CIN)"
+                            rules={[{ required: true, message: "La CIN est requise." }]}
+                          >
+                            <Input prefix={<IdcardOutlined />} placeholder="AB123456" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="telephone"
+                            label="Numéro de Téléphone Mobile"
+                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                          >
+                            <Input placeholder="0661234567" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Form.Item
+                        name="email"
+                        label="Adresse Email de confirmation"
+                        rules={[
+                          { required: true, message: "L'email est requis." },
+                          { type: "email", message: "Email invalide." },
+                        ]}
+                      >
+                        <Input placeholder="contact@example.ma" className="rounded-xl py-2" />
+                      </Form.Item>
+
+                      {/* Photo CIN Upload Fields (Required Scan Cadres Recto & Verso) */}
+                      <div className="mt-4 border-t border-slate-200/80 pt-4">
+                        <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <IdcardOutlined className="text-secondary" /> Scan & Téléversement Carte CIN (Obligatoire *)
+                        </h4>
+                        <Row gutter={16}>
+                          <Col xs={24} md={12}>
+                            <ScanUploadField
+                              name="photoCinRecto"
+                              label="Photo CIN — Recto"
+                              tagText="Face Recto"
+                              tagColor="cyan"
+                              icon={<IdcardOutlined />}
+                              btnText="Scanner CIN Recto"
+                              isRequired={true}
+                              form={form}
+                            />
+                          </Col>
+                          <Col xs={24} md={12}>
+                            <ScanUploadField
+                              name="photoCinVerso"
+                              label="Photo CIN — Verso"
+                              tagText="Face Verso"
+                              tagColor="cyan"
+                              icon={<IdcardOutlined />}
+                              btnText="Scanner CIN Verso"
+                              isRequired={true}
+                              form={form}
+                            />
+                          </Col>
+                        </Row>
+                      </div>
+
+                      {/* Validation Action for Section 1 */}
+                      <div className="mt-6 flex justify-end">
+                        <Button
+                          type="primary"
+                          onClick={handleValidatePerso}
+                          className="bg-secondary hover:bg-secondary-dark rounded-xl font-bold h-10 px-6 shadow-sm"
+                        >
+                          Valider Section 1 & Passer au Véhicule ↓
+                        </Button>
+                      </div>
+                    </Collapse.Panel>
+
+                    {/* Panel 2: Informations du Véhicule & Carte Grise */}
+                    <Collapse.Panel
+                      header={
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isVehiculeValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                                2
+                              </div>
+                            )}
+                            <span className={`text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              2. Informations du Véhicule & Carte Grise (Recto / Verso)
+                            </span>
+                          </div>
+                          {isVehiculeValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              À Remplir
+                            </Tag>
+                          )}
+                        </div>
+                      }
+                      key="vehicule_particulier"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isVehiculeValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
+                    >
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="immatriculation"
+                            label="Matricule du Véhicule"
+                            rules={[{ required: true, message: "L'immatriculation est requise." }]}
+                          >
+                            <Input prefix={<CarOutlined />} placeholder="12345-A-1" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item name="marque" label="Marque & Modèle (Optionnel)">
+                            <Input placeholder="ex: Dacia Logan / Golf 8" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      {/* Photo Carte Grise Upload Fields (Required Scan Cadres Recto & Verso) */}
+                      <div className="mt-4 border-t border-slate-200/80 pt-4">
+                        <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <FileImageOutlined className="text-emerald-600" /> Scan & Téléversement Carte Grise (Obligatoire *)
+                        </h4>
+                        <Row gutter={16}>
+                          <Col xs={24} md={12}>
+                            <ScanUploadField
+                              name="photoCarteGriseRecto"
+                              label="Carte Grise — Recto"
+                              tagText="Face Recto"
+                              tagColor="green"
+                              icon={<FileImageOutlined />}
+                              btnText="Scanner Carte Grise Recto"
+                              isRequired={true}
+                              form={form}
+                            />
+                          </Col>
+                          <Col xs={24} md={12}>
+                            <ScanUploadField
+                              name="photoCarteGriseVerso"
+                              label="Carte Grise — Verso"
+                              tagText="Face Verso"
+                              tagColor="green"
+                              icon={<FileImageOutlined />}
+                              btnText="Scanner Carte Grise Verso"
+                              isRequired={true}
+                              form={form}
+                            />
+                          </Col>
+                        </Row>
+                      </div>
+                    </Collapse.Panel>
+                  </Collapse>
+                </Form>
+
+                <div className="mt-8 flex justify-between">
+                  <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => setCurrentStep(0)}
+                    className="rounded-xl h-11 px-6 font-semibold"
+                  >
+                    Retour
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<ArrowRightOutlined />}
+                    onClick={handleValidateVehiculeAndNext}
+                    className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+                  >
+                    Valider & Passer à la Tarification →
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </Modal>
 
-      {/* Modal: Facture */}
-      <Modal
-        title="Facture d'Abonnement — Rabat Région Mobilité"
-        open={invoiceModalOpen}
-        onCancel={() => setInvoiceModalOpen(false)}
-        footer={[
-          <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={() => window.print()}>
-            Imprimer la Facture
-          </Button>,
-          <Button key="close" onClick={() => setInvoiceModalOpen(false)}>
-            Fermer
-          </Button>,
-        ]}
-      >
-        {trackedDemande && (
-          <div style={{ padding: 10 }}>
-            <h2 style={{ color: "#0f172a", marginBottom: 4 }}>RABAT RÉGION MOBILITÉ</h2>
-            <div style={{ color: "#64748b", marginBottom: 16 }}>Société de Développement Local — Rabat</div>
-            <Divider style={{ margin: "8px 0 16px" }} />
-            <p><strong>Facture N°:</strong> FAC-2026-{String(trackedDemande.id).padStart(5, "0")}</p>
-            <p><strong>Client:</strong> {trackedDemande.clientNom}</p>
-            <p><strong>Parking:</strong> {trackedDemande.parkingNom}</p>
-            <Divider />
-            <Row justify="space-between">
-              <span>Montant Hors Taxe (HT):</span>
-              <span>500.00 MAD</span>
-            </Row>
-            <Row justify="space-between">
-              <span>TVA (20%):</span>
-              <span>100.00 MAD</span>
-            </Row>
-            <Divider style={{ margin: "8px 0" }} />
-            <Row justify="space-between" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#16a34a" }}>
-              <span>Total TTC Réglé:</span>
-              <span>600.00 MAD</span>
-            </Row>
+        {/* STEP 2: Select Parking, Formula & Duration */}
+        {currentStep === 2 && (
+          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/80">
+            <h2 className="text-xl font-extrabold text-slate-900 mb-6">
+              Choix du Parking & Tarification Souhaitée
+            </h2>
+
+            <Form form={form} layout="vertical" className="space-y-4">
+              <Form.Item
+                name="parkingId"
+                label="Sélectionnez le Parking Souhaité à Rabat"
+                rules={[{ required: true, message: "Veuillez choisir un parking." }]}
+              >
+                <Select placeholder="Choisir un ouvrage..." size="large" className="rounded-xl">
+                  {parkings.map((p: any) => (
+                    <Option key={p.id} value={p.id}>
+                      {p.nom} — {p.placesLibresAbst ?? p.placesTotal} places libres disponibles
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="formuleCode"
+                label="Sélectionnez la Formule Tarifaire"
+                rules={[{ required: true, message: "Veuillez sélectionner une formule." }]}
+              >
+                <Select placeholder="Choisir une formule..." size="large" className="rounded-xl">
+                  <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
+                  <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
+                  <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
+                  <Option value="MOTO">Tarif Spécial Deux-roues — 200 DH / mois</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="dureeMois"
+                label="Durée de Souscription Souhaitée (Mois)"
+                initialValue={3}
+                rules={[{ required: true, message: "Choisissez la durée." }]}
+              >
+                <Select size="large" className="rounded-xl">
+                  <Option value={3}>3 Mois</Option>
+                  <Option value={6}>6 Mois</Option>
+                  <Option value={9}>9 Mois</Option>
+                  <Option value={12}>12 Mois (1 An)</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="modePaiement"
+                label="Mode de Règlement Homologué"
+                initialValue="ESPECES"
+                rules={[{ required: true }]}
+              >
+                <Radio.Group buttonStyle="solid">
+                  <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
+                  <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </Form>
+
+            <div className="mt-8 flex justify-between">
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setCurrentStep(1)}
+                className="rounded-xl h-11 px-6 font-semibold"
+              >
+                Retour
+              </Button>
+              <Button
+                type="primary"
+                icon={<ArrowRightOutlined />}
+                onClick={handleValidateParkingAndGoToRecap}
+                className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+              >
+                Valider & Passer au Récapitulatif →
+              </Button>
+            </div>
           </div>
         )}
-      </Modal>
 
-      {/* Otp Verification Modal */}
+        {/* STEP 3: Final Step - Récapitulatif, CGU & Confirmation OTP */}
+        {currentStep === 3 && (
+          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/90">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 m-0">
+                  Récapitulatif Final & Validation par SMS OTP
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Vérifiez le détail de votre souscription avant d'effectuer la validation sécurisée.
+                </p>
+              </div>
+              <Tag color="cyan" className="font-bold px-3 py-1 rounded-full">
+                Étape Finale 4 / 4
+              </Tag>
+            </div>
+
+            <Form form={form} layout="vertical">
+              {/* Dynamic Live Subscription Summary Card */}
+              <div className="glass-panel rounded-2xl p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
+                <div className="flex items-center justify-between mb-4 border-b border-slate-200/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <SafetyCertificateOutlined className="text-secondary text-xl" />
+                    <h3 className="text-base md:text-lg font-extrabold text-slate-900 m-0">Récapitulatif de votre Souscription</h3>
+                  </div>
+                  <Tag color="blue" className="font-bold border-none px-3 py-1 rounded-full">Dossier RRM</Tag>
+                </div>
+
+                <Row gutter={[16, 16]}>
+                  <Col xs={12} md={6}>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
+                    <span className="text-sm font-bold text-slate-900">
+                      {form.getFieldValue("nom") ? `${form.getFieldValue("nom")} ${form.getFieldValue("prenom") || ""}` : form.getFieldValue("raisonSociale") || "Particulier"}
+                    </span>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant (CIN/ICE)</span>
+                    <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || form.getFieldValue("ice") || "AB123456"}</span>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
+                    <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "12345-A-1"}</span>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
+                    <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
+                  </Col>
+                </Row>
+
+                <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div>
+                    <span className="text-xs text-slate-500 block font-semibold">Formule Tarifaire & Durée :</span>
+                    <span className="text-sm font-extrabold text-slate-900">
+                      {watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : watchedFormuleCode === "NUIT" ? "Pass Nocturne 19h-08h (350 DH/mois)" : "Tarif Deux-roues (200 DH/mois)"} — {totalMonths} Mois
+                    </span>
+                  </div>
+                  <div className="bg-secondary/10 px-4 py-2 rounded-xl text-right">
+                    <span className="text-xs text-slate-500 block font-semibold">Montant Total Estimé</span>
+                    <span className="text-lg font-black text-secondary">
+                      {totalPrice.toLocaleString()} DH TTC
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mandatory Terms & Conditions Checkbox */}
+              <Form.Item
+                name="acceptTerms"
+                valuePropName="checked"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value ? Promise.resolve() : Promise.reject("Vous devez accepter les conditions générales d'utilisation pour soumettre votre demande."),
+                  },
+                ]}
+                className="mt-6 mb-4"
+              >
+                <Checkbox className="text-xs text-slate-700 font-semibold">
+                  J'ai lu et j'accepte les{" "}
+                  <a href="#terms" onClick={(e) => e.preventDefault()} className="text-secondary underline font-bold">
+                    conditions générales d'utilisation (CGU)
+                  </a>{" "}
+                  des parkings sous la gestion de Rabat Région Mobilité (RRM) ainsi que la politique de traitement des données personnelles (Loi 09-08).
+                </Checkbox>
+              </Form.Item>
+            </Form>
+
+            <div className="mt-8 flex justify-between">
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setCurrentStep(2)}
+                className="rounded-xl h-11 px-6 font-semibold"
+              >
+                Retour
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleNextToOtp}
+                className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-8 font-extrabold shadow-md"
+              >
+                Confirmer Ma Demande & Recevoir Code OTP par SMS →
+              </Button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* OTP Verification Modal with In-Popup Loading & Confirmation Transitions */}
       <OtpVerificationModal
         open={isOtpModalOpen}
-        phone={formData.telephone || "0612345678"}
-        email={formData.email || "client@example.ma"}
         onClose={() => setIsOtpModalOpen(false)}
-        onSuccess={() => {
-          setIsOtpModalOpen(false);
-          if (typeDemande === "PERTE_CARTE") {
-            handlePerteCarteSubmit();
-          } else {
-            handleFinalSubmit();
-          }
+        onSuccessSubmit={async () => {
+          const res = await submitMutation.mutateAsync(pendingValues);
+          setSubmittedResult(res);
+          return res;
         }}
+        phone={pendingValues?.telephone || "0661234567"}
+        referenceNumber={submittedResult?.reference}
       />
+
+      <PublicFooter />
     </div>
   );
 }
