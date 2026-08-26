@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
+import { PublicFooter } from "../components/ui/PublicFooter";
 import {
   StarOutlined,
   SunOutlined,
@@ -97,7 +98,7 @@ export function PublicTarifsPage() {
   const [formules] = useState(FORMULES_DATA);
 
   return (
-    <div className="bg-background text-on-background font-body-md min-h-screen pb-24 md:pb-12 relative overflow-x-hidden pt-20 lg:pt-24">
+    <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col justify-between relative overflow-x-hidden pt-20 lg:pt-24 pb-0">
       {/* Shared Unified Glass Header Navigation */}
       <PublicNavbar />
 
@@ -105,7 +106,7 @@ export function PublicTarifsPage() {
       <div className="fixed inset-0 z-[-1] pointer-events-none bg-gradient-mesh opacity-70"></div>
 
       {/* Main Content Canvas */}
-      <main className="w-full max-w-7xl mx-auto px-container-margin md:px-lg pt-4 pb-lg">
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 pt-4 pb-lg">
         {/* Header Title Section */}
         <div className="mb-12 text-center md:text-left max-w-3xl">
           <Tag color="gold" className="px-3.5 py-1 rounded-full font-semibold mb-3 border-none shadow-sm text-xs inline-flex items-center gap-1.5">
@@ -248,6 +249,8 @@ export function PublicTarifsPage() {
           </div>
         </section>
       </main>
+
+      <PublicFooter />
     </div>
   );
 }

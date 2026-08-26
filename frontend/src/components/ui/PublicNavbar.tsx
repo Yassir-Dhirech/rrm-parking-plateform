@@ -102,7 +102,7 @@ export function PublicNavbar() {
 
   return (
     <header className="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-white/40 shadow-sm hidden md:block">
-      <div className="flex items-center justify-between px-md lg:px-lg h-20 w-full max-w-7xl mx-auto">
+      <div className="flex items-center justify-between px-4 md:px-8 h-20 w-full max-w-[1500px] mx-auto">
         {/* Brand Logo */}
         <div
           className="flex items-center cursor-pointer"

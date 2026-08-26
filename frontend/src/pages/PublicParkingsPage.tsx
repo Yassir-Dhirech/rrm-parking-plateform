@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
+import { PublicFooter } from "../components/ui/PublicFooter";
 import { RabatParkingsMap } from "../components/map/RabatParkingsMap";
 import {
   EnvironmentOutlined,
@@ -20,11 +21,11 @@ export function PublicParkingsPage() {
   ];
 
   return (
-    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden pt-20 lg:pt-24 pb-16">
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 lg:pt-24 pb-0">
       <PublicNavbar />
 
       {/* Hero Section for Nos Parkings */}
-      <div className="max-w-7xl mx-auto px-container-margin my-6">
+      <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6">
         <div className="relative rounded-3xl overflow-hidden bg-surface-container shadow-xl p-8 md:p-12 border border-white/60">
           <div className="absolute inset-0 z-0">
             <div
@@ -51,7 +52,7 @@ export function PublicParkingsPage() {
         </div>
       </div>
 
-      <main className="w-full max-w-7xl mx-auto px-container-margin space-y-12">
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 space-y-12">
         {/* Interactive Map Section */}
         <section className="space-y-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -114,6 +115,8 @@ export function PublicParkingsPage() {
           </Row>
         </section>
       </main>
+
+      <PublicFooter />
     </div>
   );
 }

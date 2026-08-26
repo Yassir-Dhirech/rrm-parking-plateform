@@ -1,12 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
+import { PublicFooter } from "../components/ui/PublicFooter";
 import {
   FileTextOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
   CheckCircleOutlined,
-  PhoneOutlined,
-  MailOutlined,
   BuildOutlined,
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
@@ -16,12 +15,12 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden pt-20 lg:pt-24 pb-16">
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 lg:pt-24 pb-0">
       {/* Shared Desktop & Mobile Unified Navigation Bar */}
       <PublicNavbar />
 
       {/* Hero Section — General Operator Overview */}
-      <div className="max-w-7xl mx-auto px-container-margin my-6">
+      <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6">
         <div className="relative rounded-3xl overflow-hidden bg-surface-container shadow-xl p-8 md:p-14 border border-white/60">
           <div className="absolute inset-0 z-0">
             <div
@@ -62,7 +61,7 @@ export function LandingPage() {
         </div>
       </div>
 
-      <main className="w-full max-w-7xl mx-auto px-container-margin space-y-16">
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 space-y-16">
         {/* Quick General Statistics Section */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
@@ -203,28 +202,8 @@ export function LandingPage() {
         </section>
       </main>
 
-      {/* Official Footer */}
-      <footer id="contact" className="bg-primary-container text-on-primary py-12 px-container-margin md:px-lg border-t border-white/10 mt-16">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-lg">
-          <div className="flex items-center gap-sm">
-            <img src="/pictures/logo-rrm-icon.png" alt="RRM" className="h-10 w-auto filter brightness-0 invert" />
-            <div>
-              <p className="font-headline-md text-headline-md font-bold text-on-primary leading-none">Rabat Région Mobilité</p>
-              <p className="font-label-sm text-label-sm text-on-primary-container mt-1">Société de Développement Local — Rabat</p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-md sm:gap-lg font-label-md text-label-md text-on-primary-container text-center sm:text-left">
-            <span><PhoneOutlined className="mr-2 text-amber-400" /> Centre d'appel : 0537 00 11 22</span>
-            <span><MailOutlined className="mr-2 text-amber-400" /> Support : contact@rrm.ma</span>
-            <button
-              onClick={() => navigate("/login")}
-              className="text-secondary-container hover:underline cursor-pointer font-bold"
-            >
-              Connexion Personnel RRM →
-            </button>
-          </div>
-        </div>
-      </footer>
+      {/* Official Unified Public Footer */}
+      <PublicFooter />
     </div>
   );
 }

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Form,
   Input,
   Select,
   Button,
-  Result,
   message,
   Tag,
   Row,
@@ -25,7 +24,6 @@ import {
   BankOutlined,
   ArrowRightOutlined,
   ArrowLeftOutlined,
-  FilePdfOutlined,
   UserOutlined,
   CarOutlined,
   IdcardOutlined,
@@ -34,10 +32,12 @@ import {
   UploadOutlined,
   FileImageOutlined,
   CheckCircleOutlined,
+  CheckOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
+import { PublicFooter } from "../../../components/ui/PublicFooter";
 import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
@@ -135,7 +135,6 @@ function ScanUploadField({
 
 export function PublicQrForm() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Stepper & Type State
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -288,7 +287,7 @@ export function PublicQrForm() {
     }
   };
 
-  // Section 2 Validation (Informations Véhicule) -> Advance to Step 2
+  // Section 2 Validation (Informations Véhicule) -> Advance to Step 2 (Tarification)
   const handleValidateVehiculeAndNext = async () => {
     try {
       await form.validateFields(["immatriculation", "photoCarteGriseRecto", "photoCarteGriseVerso"]);
@@ -297,6 +296,17 @@ export function PublicQrForm() {
       setCurrentStep(2);
     } catch {
       message.error("Veuillez remplir l'immatriculation et téléverser les photos de la Carte Grise.");
+    }
+  };
+
+  // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
+  const handleValidateParkingAndGoToRecap = async () => {
+    try {
+      await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+      setCurrentStep(3);
+      message.success("Choix du parking et formule validés ! Vérifiez votre récapitulatif.");
+    } catch {
+      message.error("Veuillez choisir un parking et une formule.");
     }
   };
 
@@ -338,7 +348,6 @@ export function PublicQrForm() {
     mutationFn: (values: any) => submitPublicDemande(values),
     onSuccess: (data) => {
       setSubmittedResult(data);
-      setCurrentStep(3);
       message.success("Demande enregistrée avec succès !");
     },
     onError: () => {
@@ -360,32 +369,25 @@ export function PublicQrForm() {
     }
   };
 
-  const handleOtpVerified = () => {
-    setIsOtpModalOpen(false);
-    if (pendingValues) {
-      submitMutation.mutate(pendingValues);
-    }
-  };
-
   // Dynamic Stepper Titles
   const getStepTitles = () => {
     if (typeDemande === "DUPLICATE") {
-      return ["Type", "Recherche Compte", "Vérification OTP", "Confirmation"];
+      return ["Type", "Recherche", "Vérification OTP", "Confirmation"];
     }
     if (typeDemande === "RENEW" || typeDemande === "TRANSFER") {
-      return ["Type", "Recherche Compte", "Choix Parking & Récapitulatif", "Confirmation"];
+      return ["Type", "Recherche", "Tarification", "Récapitulatif & OTP"];
     }
-    return ["Type de Demande", "Informations", "Parking & Récapitulatif", "Confirmation"];
+    return ["1. Type de Demande", "2. Saisie Informations", "3. Tarification", "4. Récapitulatif & OTP"];
   };
 
   const STEP_TITLES = getStepTitles();
 
   return (
-    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden pt-20 lg:pt-24 pb-20">
+    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 lg:pt-24 pb-0">
       {/* Shared Desktop & Mobile Unified Glass Navbar */}
       <PublicNavbar />
 
-      <main className="w-full max-w-4xl mx-auto px-container-margin md:px-lg my-6">
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
         {/* Page Header with Beta Quick Test Action */}
         <div className="mb-8 text-center flex flex-col items-center">
           <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
@@ -417,33 +419,44 @@ export function PublicQrForm() {
 
         {/* Visual Stepper */}
         <div className="glass-panel rounded-2xl p-6 mb-8 border border-white/80 shadow-md">
-          <div className="flex items-center justify-between relative max-w-2xl mx-auto">
+          <div className="flex items-center justify-between relative max-w-4xl mx-auto">
             <div className="absolute left-0 top-1/2 w-full h-1 bg-slate-200 -z-10 transform -translate-y-1/2 rounded-full"></div>
             <div
-              className="absolute left-0 top-1/2 h-1 bg-secondary -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500"
+              className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-emerald-500 via-secondary to-primary -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500"
               style={{ width: `${(currentStep / 3) * 100}%` }}
             ></div>
 
-            {STEP_TITLES.map((title, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-2 bg-white/90 p-2 rounded-full z-10 shadow-xs">
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                    idx <= currentStep
-                      ? "bg-secondary text-white shadow-md scale-105"
-                      : "bg-slate-100 text-slate-400"
-                  }`}
-                >
-                  {idx + 1}
+            {STEP_TITLES.map((title, idx) => {
+              const isCompleted = idx < currentStep;
+              const isCurrent = idx === currentStep;
+
+              return (
+                <div key={idx} className="flex flex-col items-center gap-2 bg-white/95 p-2 rounded-2xl z-10 shadow-xs">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 scale-110"
+                        : isCurrent
+                        ? "bg-secondary text-white shadow-xl ring-4 ring-secondary/25 scale-105"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}
+                  >
+                    {isCompleted ? <CheckOutlined style={{ fontSize: "16px", fontWeight: "bold" }} /> : idx + 1}
+                  </div>
+                  <span
+                    className={`text-xs font-bold hidden md:block transition-colors ${
+                      isCompleted
+                        ? "text-emerald-700 font-extrabold"
+                        : isCurrent
+                        ? "text-secondary font-black"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {title}
+                  </span>
                 </div>
-                <span
-                  className={`text-xs font-semibold hidden md:block ${
-                    idx <= currentStep ? "text-slate-900" : "text-slate-400"
-                  }`}
-                >
-                  {title}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -702,20 +715,38 @@ export function PublicQrForm() {
                     {/* Panel 1: Société & Responsable */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                            <BankOutlined className="text-amber-600 text-lg" />
-                            <span>1. Informations Société & Responsable Flotte</span>
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isCorporateValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+                                1
+                              </div>
+                            )}
+                            <span className={`text-base ${isCorporateValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Société & Responsable Flotte
+                            </span>
                           </div>
-                          {isCorporateValid && (
-                            <Tag color="green" className="font-bold border-none px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                              <CheckCircleOutlined /> Validé
+                          {isCorporateValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="gold" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              À Remplir
                             </Tag>
                           )}
                         </div>
                       }
                       key="societe"
-                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isCorporateValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
                     >
                       <Row gutter={16}>
                         <Col xs={24} md={12}>
@@ -880,7 +911,7 @@ export function PublicQrForm() {
                 </div>
               </div>
             ) : (
-              /* FLOW 3: NOUVEL ABONNEMENT PARTICULIER (SEQUENTIAL ACCORDION VALIDATION WITH REQUIRED SCANS) */
+              /* FLOW 3: NOUVEL ABONNEMENT PARTICULIER (ESTHETIQUE SEQUENTIAL ACCORDION VALIDATION) */
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
@@ -905,20 +936,38 @@ export function PublicQrForm() {
                     {/* Panel 1: Informations Personnelles & CIN */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                            <UserOutlined className="text-secondary text-lg" />
-                            <span>1. Informations Personnelles & Pièce d'Identité (CIN)</span>
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isPersoValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                                1
+                              </div>
+                            )}
+                            <span className={`text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Personnelles & Pièce d'Identité (CIN)
+                            </span>
                           </div>
-                          {isPersoValid && (
-                            <Tag color="green" className="font-bold border-none px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                              <CheckCircleOutlined /> Validé
+                          {isPersoValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              En Cours de Saisie
                             </Tag>
                           )}
                         </div>
                       }
                       key="perso_particulier"
-                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isPersoValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
                     >
                       <Row gutter={16}>
                         <Col xs={24} md={12}>
@@ -1011,7 +1060,7 @@ export function PublicQrForm() {
                         <Button
                           type="primary"
                           onClick={handleValidatePerso}
-                          className="bg-secondary hover:bg-secondary-dark rounded-xl font-bold h-10 px-6"
+                          className="bg-secondary hover:bg-secondary-dark rounded-xl font-bold h-10 px-6 shadow-sm"
                         >
                           Valider Section 1 & Passer au Véhicule ↓
                         </Button>
@@ -1021,20 +1070,38 @@ export function PublicQrForm() {
                     {/* Panel 2: Informations du Véhicule & Carte Grise */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                            <CarOutlined className="text-secondary text-lg" />
-                            <span>2. Informations du Véhicule & Carte Grise (Recto / Verso)</span>
+                        <div className="flex items-center justify-between w-full pr-4 py-1">
+                          <div className="flex items-center gap-3">
+                            {isVehiculeValid ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                                <CheckOutlined />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                                2
+                              </div>
+                            )}
+                            <span className={`text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              2. Informations du Véhicule & Carte Grise (Recto / Verso)
+                            </span>
                           </div>
-                          {isVehiculeValid && (
-                            <Tag color="green" className="font-bold border-none px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                              <CheckCircleOutlined /> Validé
+                          {isVehiculeValid ? (
+                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+                              <CheckCircleOutlined /> Étape Validée & Confirmée
+                            </Tag>
+                          ) : (
+                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
+                              À Remplir
                             </Tag>
                           )}
                         </div>
                       }
                       key="vehicule_particulier"
-                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
+                      className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden shadow-xs ${
+                        isVehiculeValid
+                          ? "bg-emerald-50/90 border-2 border-emerald-500 shadow-emerald-100/50"
+                          : "bg-white/80 border border-slate-200"
+                      }`}
                     >
                       <Row gutter={16}>
                         <Col xs={24} md={12}>
@@ -1103,7 +1170,7 @@ export function PublicQrForm() {
                     onClick={handleValidateVehiculeAndNext}
                     className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
                   >
-                    Valider & Passer au Choix du Parking →
+                    Valider & Passer à la Tarification →
                   </Button>
                 </div>
               </div>
@@ -1111,11 +1178,11 @@ export function PublicQrForm() {
           </div>
         )}
 
-        {/* STEP 2: Select Parking, Formula & Live Summary Breakdown */}
+        {/* STEP 2: Select Parking, Formula & Duration */}
         {currentStep === 2 && (
           <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/80">
             <h2 className="text-xl font-extrabold text-slate-900 mb-6">
-              Choix du Parking, Formule & Récapitulatif
+              Choix du Parking & Tarification Souhaitée
             </h2>
 
             <Form form={form} layout="vertical" className="space-y-4">
@@ -1171,9 +1238,48 @@ export function PublicQrForm() {
                   <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
                 </Radio.Group>
               </Form.Item>
+            </Form>
 
+            <div className="mt-8 flex justify-between">
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setCurrentStep(1)}
+                className="rounded-xl h-11 px-6 font-semibold"
+              >
+                Retour
+              </Button>
+              <Button
+                type="primary"
+                icon={<ArrowRightOutlined />}
+                onClick={handleValidateParkingAndGoToRecap}
+                className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+              >
+                Valider & Passer au Récapitulatif →
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Final Step - Récapitulatif, CGU & Confirmation OTP */}
+        {currentStep === 3 && (
+          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/90">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 m-0">
+                  Récapitulatif Final & Validation par SMS OTP
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Vérifiez le détail de votre souscription avant d'effectuer la validation sécurisée.
+                </p>
+              </div>
+              <Tag color="cyan" className="font-bold px-3 py-1 rounded-full">
+                Étape Finale 4 / 4
+              </Tag>
+            </div>
+
+            <Form form={form} layout="vertical">
               {/* Dynamic Live Subscription Summary Card */}
-              <div className="glass-panel rounded-2xl p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 my-6 shadow-md">
+              <div className="glass-panel rounded-2xl p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
                 <div className="flex items-center justify-between mb-4 border-b border-slate-200/80 pb-3">
                   <div className="flex items-center gap-2">
                     <SafetyCertificateOutlined className="text-secondary text-xl" />
@@ -1244,7 +1350,7 @@ export function PublicQrForm() {
             <div className="mt-8 flex justify-between">
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => setCurrentStep(1)}
+                onClick={() => setCurrentStep(2)}
                 className="rounded-xl h-11 px-6 font-semibold"
               >
                 Retour
@@ -1252,67 +1358,29 @@ export function PublicQrForm() {
               <Button
                 type="primary"
                 onClick={handleNextToOtp}
-                className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-11 px-8 font-bold shadow-md"
+                className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-8 font-extrabold shadow-md"
               >
-                Valider & Recevoir Code OTP par SMS →
+                Confirmer Ma Demande & Recevoir Code OTP par SMS →
               </Button>
             </div>
           </div>
         )}
-
-        {/* STEP 3: Confirmation & Receipt Voucher */}
-        {currentStep === 3 && submittedResult && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/90 text-center">
-            <Result
-              status="success"
-              title={
-                typeDemande === "DUPLICATE"
-                  ? "Réclamation de Perte & Duplicata Enregistré !"
-                  : "Demande d'Abonnement Enregistrée avec Succès !"
-              }
-              subTitle={
-                <div className="space-y-3 text-slate-700">
-                  <p>
-                    Votre référence de dossier est :{" "}
-                    <strong className="text-secondary text-lg font-mono">{submittedResult.reference}</strong>
-                  </p>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">
-                    {typeDemande === "DUPLICATE"
-                      ? "Présentez ce reçu au guichet RRM avec votre CIN pour retirer votre carte RFID de remplacement."
-                      : "Présentez ce reçu au guichet du parking choisi pour effectuer votre règlement en espèces ou chèque et récupérer votre badge RFID."}
-                  </p>
-                </div>
-              }
-              extra={[
-                <Button
-                  type="primary"
-                  key="print"
-                  icon={<FilePdfOutlined />}
-                  onClick={() => window.print()}
-                  className="bg-primary rounded-xl h-11 px-6 font-bold"
-                >
-                  Télécharger le Reçu PDF
-                </Button>,
-                <Button
-                  key="home"
-                  onClick={() => navigate("/")}
-                  className="rounded-xl h-11 px-6 font-semibold"
-                >
-                  Retour à l'Accueil
-                </Button>,
-              ]}
-            />
-          </div>
-        )}
       </main>
 
-      {/* OTP Verification Modal */}
+      {/* OTP Verification Modal with In-Popup Loading & Confirmation Transitions */}
       <OtpVerificationModal
         open={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
-        onSuccess={handleOtpVerified}
+        onSuccessSubmit={async () => {
+          const res = await submitMutation.mutateAsync(pendingValues);
+          setSubmittedResult(res);
+          return res;
+        }}
         phone={pendingValues?.telephone || "0661234567"}
+        referenceNumber={submittedResult?.reference}
       />
+
+      <PublicFooter />
     </div>
   );
 }
