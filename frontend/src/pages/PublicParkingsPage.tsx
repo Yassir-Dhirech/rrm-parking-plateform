@@ -233,6 +233,19 @@ export function PublicParkingsPage() {
     }
   };
 
+  // Handler to switch to TARIFS tab and open/scroll to requested parking
+  const handleViewParkingTarifs = (parkingId: number) => {
+    setActiveTab("TARIFS");
+    setExpandedParkingIds(new Set([parkingId]));
+    window.history.replaceState(null, "", `/parkings-public#tarifs-parking-${parkingId}`);
+    setTimeout(() => {
+      const el = document.getElementById(`parking-tarif-card-${parkingId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
+  };
+
   return (
     <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 pb-0">
       {/* 1. SHARED FIXED TOP NAVBAR (Height 80px) */}
@@ -458,16 +471,16 @@ export function PublicParkingsPage() {
               <Tag color="gold" className="font-extrabold text-xs m-0">Formule 2026</Tag>
             </div>
 
-            {/* Direct Action Button */}
+            {/* Direct Action Button to View Parking Tariffs */}
             <Button
               type="primary"
               block
               size="large"
-              icon={<ArrowRightOutlined />}
-              onClick={() => navigate(`/demande-publique?parkingId=${activeParking.id}`)}
-              className="bg-primary hover:bg-slate-900 text-white rounded-2xl py-3 font-extrabold text-xs h-12 shadow-xl flex justify-center items-center gap-2 border-none mt-2"
+              icon={<DollarOutlined />}
+              onClick={() => handleViewParkingTarifs(activeParking.id)}
+              className="bg-secondary hover:bg-slate-900 text-white rounded-2xl py-3 font-extrabold text-xs h-12 shadow-xl flex justify-center items-center gap-2 border-none mt-2"
             >
-              Souscrire sur ce Parking →
+              Consulter les Tarifs & Formules de ce Parking →
             </Button>
           </aside>
         )}
@@ -509,6 +522,7 @@ export function PublicParkingsPage() {
               return (
                 <div
                   key={parking.id}
+                  id={`parking-tarif-card-${parking.id}`}
                   className={`glass-card rounded-3xl border transition-all duration-300 overflow-hidden shadow-md ${
                     isExpanded
                       ? "border-secondary/60 bg-white/95 ring-2 ring-secondary/15"

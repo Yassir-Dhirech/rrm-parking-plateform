@@ -24,6 +24,7 @@ export function LandingPage() {
       {/* Hero Section — General Operator Overview */}
       <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6 w-full">
         <div className="relative rounded-3xl overflow-hidden shadow-2xl p-8 md:p-14 border border-white/60 group">
+          {/* Clean Light White Shadow Overlay */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div
               className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
@@ -32,7 +33,7 @@ export function LandingPage() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/50 backdrop-blur-[2px]"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/40 shadow-inner"></div>
           </div>
 
           <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -40,7 +41,7 @@ export function LandingPage() {
               <Tag color="gold" className="px-3.5 py-1 rounded-full font-extrabold mb-4 border-none shadow-md text-xs inline-flex items-center gap-1.5">
                 <SafetyCertificateOutlined /> Opérateur Public Officiel — Rabat Région Mobilité
               </Tag>
-              <h1 className="text-3xl md:text-5xl text-slate-900 font-black mb-4 leading-tight tracking-tight drop-shadow-xs">
+              <h1 className="text-3xl md:text-5xl text-slate-900 font-black mb-4 leading-tight tracking-tight">
                 Plateforme Régionale du Stationnement à Rabat
               </h1>
               <p className="text-slate-700 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-medium">
@@ -49,14 +50,14 @@ export function LandingPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => navigate("/demande-publique")}
-                  className="bg-secondary hover:bg-secondary-dark text-white px-7 py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-secondary/30 transition-all cursor-pointer border-none flex items-center gap-2"
+                  className="bg-secondary hover:bg-secondary-dark text-white px-7 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-secondary/25 transition-all cursor-pointer border-none flex items-center gap-2 hover:scale-105"
                 >
                   <span>Souscrire un Abonnement En Ligne</span>
                   <ArrowRightOutlined />
                 </button>
                 <button
                   onClick={() => navigate("/parkings-public")}
-                  className="bg-white/90 hover:bg-white text-slate-900 px-7 py-3.5 rounded-xl font-bold text-sm backdrop-blur-md border border-slate-300 shadow-md transition-all cursor-pointer"
+                  className="bg-white/90 hover:bg-white text-slate-900 px-7 py-3.5 rounded-2xl font-bold text-sm border border-slate-300 shadow-md transition-all cursor-pointer"
                 >
                   Explorer les 17 Parkings & Tarifs
                 </button>
@@ -64,28 +65,28 @@ export function LandingPage() {
             </div>
 
             {/* Right side floating glass highlights card */}
-            <div className="w-full lg:w-80 glass-panel p-6 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-md text-slate-900 space-y-4 shadow-xl shrink-0">
+            <div className="w-full lg:w-80 glass-panel p-6 rounded-3xl border border-slate-200/90 bg-white/90 text-slate-900 space-y-4 shadow-xl shrink-0">
               <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
-                <div className="w-10 h-10 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center text-xl font-bold">
+                <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center text-xl font-black">
                   <CheckCircleOutlined />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 m-0">Infrastructures Certifiées</h4>
-                  <span className="text-[11px] text-secondary font-extrabold">Capitale Rabat-Salé</span>
+                  <h4 className="text-sm font-black text-slate-900 m-0">Infrastructures Certifiées</h4>
+                  <span className="text-[11px] text-secondary font-extrabold uppercase tracking-wider">Capitale Rabat-Salé</span>
                 </div>
               </div>
-              <div className="space-y-2.5 text-xs text-slate-700">
+              <div className="space-y-3 text-xs text-slate-700 font-medium">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-medium">Ouvrages Ouverts :</span>
-                  <span className="font-extrabold text-emerald-700">17 Parkings 24/7</span>
+                  <span className="text-slate-600">Ouvrages Ouverts :</span>
+                  <span className="font-black text-emerald-700 text-sm">17 Parkings 24/7</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-medium">Capacité Totale :</span>
-                  <span className="font-extrabold text-secondary">5 000+ Places</span>
+                  <span className="text-slate-600">Capacité Totale :</span>
+                  <span className="font-black text-secondary text-sm">5 000+ Places</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-medium">Contrôle Accès :</span>
-                  <span className="font-extrabold text-amber-700">LPR & RFID</span>
+                  <span className="text-slate-600">Contrôle Accès :</span>
+                  <span className="font-black text-amber-700 text-sm">LPR & RFID</span>
                 </div>
               </div>
             </div>
