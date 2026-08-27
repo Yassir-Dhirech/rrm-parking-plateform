@@ -131,9 +131,9 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: "/", element: <LandingPage /> },
+      { path: "/about", element: <AboutPage /> },
       { path: "/parkings-public", element: <PublicParkingsPage /> },
       { path: "/tarifs-public", element: <PublicTarifsPage /> },
-      { path: "/about", element: <AboutPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/login", element: <LoginPage /> },
       { path: "/unauthorized", element: <Unauthorized /> },

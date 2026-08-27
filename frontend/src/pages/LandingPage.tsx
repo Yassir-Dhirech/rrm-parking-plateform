@@ -193,7 +193,7 @@ export function LandingPage() {
                 <p className="text-slate-600 text-sm leading-relaxed mb-4">
                   Nos ouvrages sont implantés à proximité immédiate des gares et centres névralgiques de la capitale pour garantir une intermodalité fluide avec le réseau de tramway et de train.
                 </p>
-                <Button block onClick={() => navigate("/about")} className="rounded-xl font-bold">
+                <Button block onClick={() => navigate("/public-about")} className="rounded-xl font-bold">
                   En savoir plus sur l'Opérateur RRM →
                 </Button>
               </Card>
