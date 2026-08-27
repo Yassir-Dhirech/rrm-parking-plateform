@@ -41,17 +41,9 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
     );
   });
 
-  const getPinColor = (statut: RabatParkingMapItem["statutSaturation"]) => {
-    switch (statut) {
-      case "FLUIDE":
-        return "#16a34a"; // Green
-      case "MODERE":
-        return "#d97706"; // Amber / Orange
-      case "PRESQUE_COMPLET":
-        return "#dc2626"; // Red
-      default:
-        return "#0284c7";
-    }
+  // Pin Color Helper — Strictly Brand RRM Blue (#006398)
+  const getPinColor = (_statut?: any) => {
+    return "#006398";
   };
 
   const getStatusTag = (statut: RabatParkingMapItem["statutSaturation"]) => {

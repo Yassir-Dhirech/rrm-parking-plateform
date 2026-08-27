@@ -12,12 +12,12 @@ export function PublicNavbar() {
   const parkingsMenuItems: MenuProps["items"] = [
     {
       key: "page-parkings",
-      label: "Tous les 17 Parkings (Carte Interactive)",
+      label: "Carte des Parkings",
       onClick: () => navigate("/parkings-public"),
     },
     {
       key: "page-tarifs-section",
-      label: "Grille Tarifaire & Formules 2026",
+      label: "Grille Tarifaire",
       onClick: () => {
         if (location.pathname === "/parkings-public") {
           const el = document.getElementById("tarifs");

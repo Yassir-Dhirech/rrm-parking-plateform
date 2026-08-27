@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
+import { RabatParkingsMap } from "../components/map/RabatParkingsMap";
 import {
   FileTextOutlined,
   ClockCircleOutlined,
@@ -31,7 +32,7 @@ export function LandingPage() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-900/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/50 backdrop-blur-[2px]"></div>
           </div>
 
           <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -39,10 +40,10 @@ export function LandingPage() {
               <Tag color="gold" className="px-3.5 py-1 rounded-full font-extrabold mb-4 border-none shadow-md text-xs inline-flex items-center gap-1.5">
                 <SafetyCertificateOutlined /> Opérateur Public Officiel — Rabat Région Mobilité
               </Tag>
-              <h1 className="text-3xl md:text-5xl text-white font-black mb-4 leading-tight tracking-tight">
+              <h1 className="text-3xl md:text-5xl text-slate-900 font-black mb-4 leading-tight tracking-tight drop-shadow-xs">
                 Plateforme Régionale du Stationnement à Rabat
               </h1>
-              <p className="text-slate-300 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-normal">
+              <p className="text-slate-700 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-medium">
                 Bienvenue sur le portail officiel de souscription et d'information de Rabat Région Mobilité. Gérez vos abonnements, consultez la carte des 17 ouvrages et facilitez votre stationnement quotidien.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -55,7 +56,7 @@ export function LandingPage() {
                 </button>
                 <button
                   onClick={() => navigate("/parkings-public")}
-                  className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-xl font-bold text-sm backdrop-blur-md border border-white/30 transition-all cursor-pointer"
+                  className="bg-white/90 hover:bg-white text-slate-900 px-7 py-3.5 rounded-xl font-bold text-sm backdrop-blur-md border border-slate-300 shadow-md transition-all cursor-pointer"
                 >
                   Explorer les 17 Parkings & Tarifs
                 </button>
@@ -63,28 +64,28 @@ export function LandingPage() {
             </div>
 
             {/* Right side floating glass highlights card */}
-            <div className="w-full lg:w-80 glass-panel p-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md text-white space-y-4 shadow-xl shrink-0">
-              <div className="flex items-center gap-3 border-b border-white/15 pb-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xl font-bold">
+            <div className="w-full lg:w-80 glass-panel p-6 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-md text-slate-900 space-y-4 shadow-xl shrink-0">
+              <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                <div className="w-10 h-10 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center text-xl font-bold">
                   <CheckCircleOutlined />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white m-0">Infrastructures Certifiées</h4>
-                  <span className="text-[11px] text-cyan-300 font-medium">Capitale Rabat-Salé</span>
+                  <h4 className="text-sm font-bold text-slate-900 m-0">Infrastructures Certifiées</h4>
+                  <span className="text-[11px] text-secondary font-extrabold">Capitale Rabat-Salé</span>
                 </div>
               </div>
-              <div className="space-y-2.5 text-xs text-slate-200">
+              <div className="space-y-2.5 text-xs text-slate-700">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Ouvrages Ouverts :</span>
-                  <span className="font-bold text-emerald-400">17 Parkings 24/7</span>
+                  <span className="text-slate-600 font-medium">Ouvrages Ouverts :</span>
+                  <span className="font-extrabold text-emerald-700">17 Parkings 24/7</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Capacité Totale :</span>
-                  <span className="font-bold text-cyan-300">5 000+ Places</span>
+                  <span className="text-slate-600 font-medium">Capacité Totale :</span>
+                  <span className="font-extrabold text-secondary">5 000+ Places</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Contrôle Accès :</span>
-                  <span className="font-bold text-amber-300">LPR & RFID</span>
+                  <span className="text-slate-600 font-medium">Contrôle Accès :</span>
+                  <span className="font-extrabold text-amber-700">LPR & RFID</span>
                 </div>
               </div>
             </div>
@@ -191,6 +192,29 @@ export function LandingPage() {
               </div>
             </Col>
           </Row>
+        </section>
+
+        {/* Interactive Map Section on Landing Page */}
+        <section id="map" className="space-y-4 pt-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <Tag color="cyan" className="px-3.5 py-1 rounded-full font-bold border-none shadow-sm text-xs mb-2">
+                <EnvironmentOutlined /> Localisation en Temps Réel
+              </Tag>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 17 Parkings Régionaux</h2>
+              <p className="text-slate-600 text-sm mt-1">Consultez la carte interactive de Rabat pour repérer les ouvrages de stationnement et leurs places libres.</p>
+            </div>
+            <Button
+              type="primary"
+              onClick={() => navigate("/parkings-public")}
+              className="bg-secondary rounded-xl font-bold h-11 px-6 shadow-md"
+            >
+              Explorer Tous les Parkings →
+            </Button>
+          </div>
+          <div className="glass-card p-3 rounded-3xl shadow-xl border border-white/80">
+            <RabatParkingsMap height={500} />
+          </div>
         </section>
 
         {/* General Information about Operator RRM */}

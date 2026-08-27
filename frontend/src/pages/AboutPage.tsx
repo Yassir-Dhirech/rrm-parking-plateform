@@ -32,17 +32,17 @@ export function AboutPage() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCQODW1HZ_NvXiKKSVVOX5SH4sgu1igMSmxOS0XoVaKgtYo2ucrDd6Ueetov0TP_AlBopE6PeMq_wZVHHV9oGO40DQjm3O_5yolQKuqZfxbX2km9XEgpI9tufvXXTc-43WjkPe0ybXaoCBh-MmAYGPm-m8W62T_GnnfYm7jj9o0-l-5y1LrB2N9SrI1hHsaZ4cPz660VvXRzfKVodhyW_gDO7berdjNLIBDxm0W5gLrOq-5H3q5atj')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-surface/95 via-surface/85 to-surface/50"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/50 backdrop-blur-[2px]"></div>
           </div>
 
           <div className="relative z-10 max-w-3xl">
             <Tag color="cyan" className="px-3.5 py-1 rounded-full font-semibold mb-3 border-none shadow-sm text-xs inline-flex items-center gap-1.5">
               <SafetyCertificateOutlined /> Société de Développement Local (SDL) — Rabat
             </Tag>
-            <h1 className="font-headline-lg-mobile md:font-headline-lg text-3xl md:text-5xl text-primary font-extrabold mb-3 leading-tight">
+            <h1 className="font-headline-lg-mobile md:font-headline-lg text-3xl md:text-5xl text-slate-900 font-extrabold mb-3 leading-tight drop-shadow-xs">
               À Propos de Rabat Région Mobilité
             </h1>
-            <p className="font-body-md text-on-surface-variant text-base md:text-lg leading-relaxed">
+            <p className="font-body-md text-slate-700 text-base md:text-lg leading-relaxed font-medium">
               Acteur majeur et opérateur public délégué de la mobilité urbaine moderne dans la métropole de Rabat-Salé-Kénitra.
             </p>
           </div>
