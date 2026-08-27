@@ -79,6 +79,8 @@ export function Dashboard() {
   });
 
   const filteredDemandes = demandes.filter((d) => {
+    // STRICT DOMAIN RULE: Agents do NOT handle ENTREPRISE demandes (managed directly by RESPONSABLE)
+    if (role === "AGENT" && (d as any).typeClient === "ENTREPRISE") return false;
     if (filters.parkingId) {
       const selectedParking = parkingsList.find((p) => p.id === filters.parkingId);
       if (selectedParking && !d.parkingNom.toLowerCase().includes(selectedParking.nom.toLowerCase())) return false;

@@ -88,15 +88,6 @@ export function RoleLayout() {
 
         {/* Right Side: Trailing Action Controls */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Quick Parking Map Access */}
-          <Button
-            type="primary"
-            icon={<EnvironmentOutlined style={{ fontSize: 14 }} />}
-            onClick={() => navigate(`${config.homePath}/carte-parkings`)}
-            className="bg-secondary hover:bg-secondary/90 text-white font-extrabold border-none rounded-xl shadow-2xs text-xs flex items-center gap-1.5"
-          >
-            <span className="hidden sm:inline">Carte des Parkings</span>
-          </Button>
 
           {/* Internal Team Messaging */}
           <Badge count={1} dot color="#0284c7">

@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { Table, Input, Tag } from "antd";
+import { Table, Input, Tag, Select, Button } from "antd";
 import {
   SearchOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
   SafetyCertificateOutlined,
   CheckCircleOutlined,
+  ReloadOutlined,
+  EnvironmentOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { getDemandesMock } from "../../../api/demandesMock";
+import { getParkingsMock } from "../../../api/adminMock";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -23,6 +27,7 @@ export function DemandesList() {
 
   const [mainView, setMainView] = useState<"LIST" | "SLA_AUDIT">("LIST");
   const [activeTab, setActiveTab] = useState<string>("ALL");
+  const [selectedParking, setSelectedParking] = useState<string>("ALL");
   const [searchText, setSearchText] = useState<string>("");
 
   const { data = [], isLoading } = useQuery({
@@ -30,8 +35,27 @@ export function DemandesList() {
     queryFn: getDemandesMock,
   });
 
-  // Filter demandes by tab and search text
-  const filteredData = data.filter((item) => {
+  const { data: parkingsList = [] } = useQuery({
+    queryKey: ["admin_parkings"],
+    queryFn: getParkingsMock,
+  });
+
+  // Base dataset scoped by role (AGENT strictly handles Particuliers only — Corporate requests go directly to Responsable)
+  const roleBaseData = data.filter((item) => {
+    if (role === "AGENT" && (item as any).typeClient === "ENTREPRISE") return false;
+    return true;
+  });
+
+  // Parking-scoped dataset for top KPI summary cards (recalculates when parking filter changes)
+  const parkingScopedData = roleBaseData.filter((item) => {
+    if (selectedParking !== "ALL" && !item.parkingNom.toLowerCase().includes(selectedParking.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
+  // Filter demandes for table view by tab, parking, and search text
+  const filteredData = parkingScopedData.filter((item) => {
     if (activeTab === "SOUMISE" && item.statut !== "SOUMISE") return false;
     if (activeTab === "PAIEMENT_ENREGISTRE" && item.statut !== "PAIEMENT_ENREGISTRE") return false;
     if (activeTab === "EN_COURS" && item.statut !== "EN_COURS") return false;
@@ -45,15 +69,18 @@ export function DemandesList() {
       const matchParking = item.parkingNom.toLowerCase().includes(q);
       const matchAgent = item.traiteParNom?.toLowerCase().includes(q);
       const matchImmat = (item as any).immatriculation?.toLowerCase().includes(q);
-      return matchRef || matchClient || matchParking || matchAgent || matchImmat;
+      const matchCin = (item as any).cin?.toLowerCase().includes(q);
+      const matchIce = (item as any).ice?.toLowerCase().includes(q);
+      return matchRef || matchClient || matchParking || matchAgent || matchImmat || matchCin || matchIce;
     }
 
     return true;
   });
 
-  const countSoumises = data.filter((d) => d.statut === "SOUMISE").length;
-  const countPaiementEnregistre = data.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
-  const countValidees = data.filter((d) => d.statut === "VALIDEE").length;
+  const totalSouscriptions = parkingScopedData.length;
+  const countSoumises = parkingScopedData.filter((d) => d.statut === "SOUMISE").length;
+  const countPaiementEnregistre = parkingScopedData.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
+  const countValidees = parkingScopedData.filter((d) => d.statut === "VALIDEE").length;
 
   const columns = [
     {
@@ -207,7 +234,7 @@ export function DemandesList() {
               Total Souscriptions
             </span>
             <span className="text-2xl font-black text-slate-900 leading-none">
-              {data.length}
+              {totalSouscriptions}
             </span>
           </div>
         </div>
@@ -260,75 +287,67 @@ export function DemandesList() {
       ) : (
         /* Master Data View (Glass Card) */
         <div className="glass-panel rounded-2xl border border-white/80 shadow-xl flex flex-col flex-1 overflow-hidden relative bg-white/70">
-          {/* Status Tabs & Contextual Search */}
-          <div className="p-5 border-b border-slate-200/80 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center bg-white/50 backdrop-blur-md">
-            {/* Status Tabs */}
-            <div className="flex gap-2 overflow-x-auto w-full lg:w-auto pb-1 lg:pb-0 custom-scrollbar">
-              <button
-                onClick={() => setActiveTab("ALL")}
-                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all cursor-pointer border-none ${
-                  activeTab === "ALL"
-                    ? "bg-secondary text-white shadow-md"
-                    : "bg-white/80 text-slate-600 hover:bg-white border border-slate-200"
-                }`}
-              >
-                Toutes ({data.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("SOUMISE")}
-                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all cursor-pointer flex items-center gap-1.5 border-none ${
-                  activeTab === "SOUMISE"
-                    ? "bg-amber-500 text-white shadow-md"
-                    : "bg-white/80 text-slate-600 hover:bg-white border border-slate-200"
-                }`}
-              >
-                <span>EN_ATTENTE</span>
-                <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-black">
-                  {countSoumises}
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab("PAIEMENT_ENREGISTRE")}
-                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all cursor-pointer border-none ${
-                  activeTab === "PAIEMENT_ENREGISTRE"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white/80 text-slate-600 hover:bg-white border border-slate-200"
-                }`}
-              >
-                DOCS_VALIDES ({countPaiementEnregistre})
-              </button>
-              <button
-                onClick={() => setActiveTab("VALIDEE")}
-                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all cursor-pointer border-none ${
-                  activeTab === "VALIDEE"
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-white/80 text-slate-600 hover:bg-white border border-slate-200"
-                }`}
-              >
-                PAYEE / VALIDEE ({countValidees})
-              </button>
-              <button
-                onClick={() => setActiveTab("REJETEE")}
-                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all cursor-pointer border-none ${
-                  activeTab === "REJETEE"
-                    ? "bg-rose-600 text-white shadow-md"
-                    : "bg-white/80 text-slate-600 hover:bg-white border border-slate-200"
-                }`}
-              >
-                REJETEE
-              </button>
-            </div>
+          {/* Toolbar: 2 Dropdowns (Parking & Statut) + 1 Instant Search Bar */}
+          <div className="p-5 border-b border-slate-200/80 bg-white/50 backdrop-blur-md">
+            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+              <div className="flex flex-wrap items-center gap-3 flex-1">
+                {/* 1. Dropdown Parking / Gare */}
+                <Select
+                  value={selectedParking}
+                  onChange={setSelectedParking}
+                  suffixIcon={<EnvironmentOutlined className="text-secondary" />}
+                  className="w-full md:w-60 font-bold"
+                  size="middle"
+                  options={[
+                    { value: "ALL", label: "Tous les Parkings" },
+                    ...parkingsList.map((p) => ({ value: p.nom, label: p.nom })),
+                  ]}
+                />
 
-            {/* Contextual Search */}
-            <div className="relative w-full lg:w-80">
-              <Input
-                prefix={<SearchOutlined className="text-slate-400" />}
-                placeholder="Filtrer par nom, plaque, réf..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="rounded-xl py-2 px-3 border-slate-200 bg-white/90 text-xs font-semibold shadow-2xs"
-                allowClear
-              />
+                {/* 2. Dropdown Statut Traitement */}
+                <Select
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  suffixIcon={<FilterOutlined className="text-amber-600" />}
+                  className="w-full md:w-60 font-bold"
+                  size="middle"
+                  options={[
+                    { value: "ALL", label: `Tous les Statuts (${parkingScopedData.length})` },
+                    { value: "SOUMISE", label: `En Attente Paiement (${countSoumises})` },
+                    { value: "PAIEMENT_ENREGISTRE", label: `Paiements Enregistrés (${countPaiementEnregistre})` },
+                    { value: "VALIDEE", label: `Validées (${countValidees})` },
+                    { value: "REJETEE", label: "Rejetées" },
+                  ]}
+                />
+
+                {/* Reset Filters Button */}
+                {(selectedParking !== "ALL" || searchText || activeTab !== "ALL") && (
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      setActiveTab("ALL");
+                      setSelectedParking("ALL");
+                      setSearchText("");
+                    }}
+                    className="font-bold rounded-xl text-xs"
+                    size="middle"
+                  >
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+
+              {/* 3. Instant Search Bar */}
+              <div className="relative w-full md:w-72">
+                <Input
+                  prefix={<SearchOutlined className="text-slate-400" />}
+                  placeholder="Client, Immatriculation, Réf, CIN..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="rounded-xl py-1.5 px-3 border-slate-200 bg-white/90 text-xs font-semibold shadow-2xs"
+                  allowClear
+                />
+              </div>
             </div>
           </div>
 
