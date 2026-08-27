@@ -138,7 +138,7 @@ export function Dashboard() {
   const kpis = getRoleKpis(role);
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <div className="space-y-6">
       {/* Barre de Filtres Globaux */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />
       {/* Cartes KPIs Spécifiques au Rôle Connecté */}
@@ -163,8 +163,6 @@ export function Dashboard() {
 
       {/* Carte Interactive du Réseau & Emplacements Rabat */}
       <RabatParkingsMap height={460} />
-
-
 
       {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
       {(role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") && (
@@ -326,9 +324,7 @@ export function Dashboard() {
             )}
           </Card>
         </Col>
-
-        
       </Row>
-    </Space>
+    </div>
   );
 }
