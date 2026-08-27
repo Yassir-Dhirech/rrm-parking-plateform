@@ -387,36 +387,59 @@ export function PublicQrForm() {
       {/* Shared Desktop & Mobile Unified Glass Navbar */}
       <PublicNavbar />
 
-      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
-        {/* Page Header with Beta Quick Test Action */}
-        <div className="mb-8 text-center flex flex-col items-center">
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-            <Tag color="cyan" className="px-3.5 py-1 rounded-full font-semibold border-none shadow-sm text-xs inline-flex items-center gap-1.5 m-0">
-              <SafetyCertificateOutlined /> Portail Officiel des Démarches en Ligne
-            </Tag>
-            {/* BETA Quick Autofill Button */}
-            <Button
-              size="small"
-              icon={<ThunderboltOutlined />}
-              onClick={handleBetaAutofill}
-              className="bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-bold rounded-full px-3 text-xs shadow-sm inline-flex items-center gap-1"
-            >
-              ⚡ Remplissage Rapide (BETA Test)
-            </Button>
+      {/* Hero Section Banner for Abonnement Page */}
+      <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6 w-full">
+        <div className="relative rounded-3xl overflow-hidden shadow-xl p-8 md:p-12 border border-white/60 group">
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <div
+              className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
+              style={{
+                backgroundImage:
+                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCQODW1HZ_NvXiKKSVVOX5SH4sgu1igMSmxOS0XoVaKgtYo2ucrDd6Ueetov0TP_AlBopE6PeMq_wZVHHV9oGO40DQjm3O_5yolQKuqZfxbX2km9XEgpI9tufvXXTc-43WjkPe0ybXaoCBh-MmAYGPm-m8W62T_GnnfYm7jj9o0-l-5y1LrB2N9SrI1hHsaZ4cPz660VvXRzfKVodhyW_gDO7berdjNLIBDxm0W5gLrOq-5H3q5atj')",
+              }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/80 to-slate-900/40"></div>
           </div>
 
-          <h1 className="font-headline-lg-mobile md:font-headline-lg text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">
-            {typeDemande === "CORPORATE"
-              ? "Demande d'Abonnement Flotte Corporate"
-              : typeDemande === "DUPLICATE"
-              ? "Réclamation de Perte & Duplicata Carte RFID"
-              : "Demande d'Abonnement Parking"}
-          </h1>
-          <p className="text-slate-600 text-sm md:text-base max-w-xl mx-auto">
-            Sélectionnez votre démarche et renseignez les informations requises pour votre stationnement à Rabat.
-          </p>
-        </div>
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Tag color="cyan" className="px-3 py-1 rounded-full font-extrabold border-none shadow-md text-xs inline-flex items-center gap-1.5 m-0">
+                  <SafetyCertificateOutlined /> Portail Officiel des Démarches en Ligne
+                </Tag>
+                <Tag color="gold" className="px-3 py-1 rounded-full font-extrabold border-none shadow-md text-xs m-0">
+                  Rabat Région Mobilité
+                </Tag>
+              </div>
 
+              <h1 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">
+                {typeDemande === "CORPORATE"
+                  ? "Demande d'Abonnement Flotte Corporate"
+                  : typeDemande === "DUPLICATE"
+                  ? "Réclamation de Perte & Duplicata Carte RFID"
+                  : "Demande d'Abonnement Parking"}
+              </h1>
+              <p className="text-slate-300 text-xs md:text-sm leading-relaxed max-w-xl">
+                Souscrivez, renouvelez ou transférez votre abonnement parking en ligne en 4 étapes simples avec validation sécurisée.
+              </p>
+            </div>
+
+            {/* BETA Test Autofill Action */}
+            <div className="shrink-0">
+              <Button
+                size="large"
+                icon={<ThunderboltOutlined />}
+                onClick={handleBetaAutofill}
+                className="bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center gap-2 h-12 text-xs"
+              >
+                ⚡ Mode Remplissage Rapide (BETA Test)
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
         {/* Visual Stepper */}
         <div className="glass-panel rounded-2xl p-6 mb-8 border border-white/80 shadow-md">
           <div className="flex items-center justify-between relative max-w-4xl mx-auto">

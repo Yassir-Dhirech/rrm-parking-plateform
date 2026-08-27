@@ -8,6 +8,7 @@ import {
   CheckCircleOutlined,
   BuildOutlined,
   SafetyCertificateOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import { Tag, Button, Row, Col, Card } from "antd";
 
@@ -20,42 +21,72 @@ export function LandingPage() {
       <PublicNavbar />
 
       {/* Hero Section — General Operator Overview */}
-      <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6">
-        <div className="relative rounded-3xl overflow-hidden bg-surface-container shadow-xl p-8 md:p-14 border border-white/60">
-          <div className="absolute inset-0 z-0">
+      <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6 w-full">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl p-8 md:p-14 border border-white/60 group">
+          <div className="absolute inset-0 z-0 overflow-hidden">
             <div
-              className="w-full h-full bg-cover bg-center"
+              className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
               style={{
                 backgroundImage:
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-surface/95 via-surface/85 to-surface/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-900/40"></div>
           </div>
 
-          <div className="relative z-10 max-w-3xl">
-            <Tag color="gold" className="px-3.5 py-1 rounded-full font-semibold mb-4 border-none shadow-sm text-xs">
-              <SafetyCertificateOutlined className="mr-1.5" /> Opérateur Public Officiel — Rabat Région Mobilité
-            </Tag>
-            <h1 className="font-headline-lg-mobile md:font-headline-lg text-3xl md:text-5xl text-primary font-extrabold mb-4 leading-tight">
-              Plateforme Régionale du Stationnement à Rabat
-            </h1>
-            <p className="font-body-lg text-on-surface-variant text-base md:text-lg mb-6 leading-relaxed">
-              Bienvenue sur le portail d'information et de démarches en ligne de Rabat Région Mobilité. Gérez votre mobilité, découvrez le réseau des 17 parkings et souscrivez votre abonnement en toute sérénité.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => navigate("/demande-publique")}
-                className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95 cursor-pointer"
-              >
-                Accéder au Portail des Démarches →
-              </button>
-              <button
-                onClick={() => navigate("/parkings-public")}
-                className="bg-white/80 text-on-secondary-container px-6 py-3 rounded-xl font-bold text-sm glass-card transition-all active:scale-95 cursor-pointer"
-              >
-                Explorer la Carte des Parkings
-              </button>
+          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+            <div className="max-w-3xl">
+              <Tag color="gold" className="px-3.5 py-1 rounded-full font-extrabold mb-4 border-none shadow-md text-xs inline-flex items-center gap-1.5">
+                <SafetyCertificateOutlined /> Opérateur Public Officiel — Rabat Région Mobilité
+              </Tag>
+              <h1 className="text-3xl md:text-5xl text-white font-black mb-4 leading-tight tracking-tight">
+                Plateforme Régionale du Stationnement à Rabat
+              </h1>
+              <p className="text-slate-300 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-normal">
+                Bienvenue sur le portail officiel de souscription et d'information de Rabat Région Mobilité. Gérez vos abonnements, consultez la carte des 17 ouvrages et facilitez votre stationnement quotidien.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => navigate("/demande-publique")}
+                  className="bg-secondary hover:bg-secondary-dark text-white px-7 py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-secondary/30 transition-all cursor-pointer border-none flex items-center gap-2"
+                >
+                  <span>Souscrire un Abonnement En Ligne</span>
+                  <ArrowRightOutlined />
+                </button>
+                <button
+                  onClick={() => navigate("/parkings-public")}
+                  className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-xl font-bold text-sm backdrop-blur-md border border-white/30 transition-all cursor-pointer"
+                >
+                  Explorer les 17 Parkings & Tarifs
+                </button>
+              </div>
+            </div>
+
+            {/* Right side floating glass highlights card */}
+            <div className="w-full lg:w-80 glass-panel p-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md text-white space-y-4 shadow-xl shrink-0">
+              <div className="flex items-center gap-3 border-b border-white/15 pb-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xl font-bold">
+                  <CheckCircleOutlined />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white m-0">Infrastructures Certifiées</h4>
+                  <span className="text-[11px] text-cyan-300 font-medium">Capitale Rabat-Salé</span>
+                </div>
+              </div>
+              <div className="space-y-2.5 text-xs text-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Ouvrages Ouverts :</span>
+                  <span className="font-bold text-emerald-400">17 Parkings 24/7</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Capacité Totale :</span>
+                  <span className="font-bold text-cyan-300">5 000+ Places</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Contrôle Accès :</span>
+                  <span className="font-bold text-amber-300">LPR & RFID</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -193,7 +224,7 @@ export function LandingPage() {
                 <p className="text-slate-600 text-sm leading-relaxed mb-4">
                   Nos ouvrages sont implantés à proximité immédiate des gares et centres névralgiques de la capitale pour garantir une intermodalité fluide avec le réseau de tramway et de train.
                 </p>
-                <Button block onClick={() => navigate("/about")} className="rounded-xl font-bold">
+                <Button block onClick={() => navigate("/public-about")} className="rounded-xl font-bold">
                   En savoir plus sur l'Opérateur RRM →
                 </Button>
               </Card>
