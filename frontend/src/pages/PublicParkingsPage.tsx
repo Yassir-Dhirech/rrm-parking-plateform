@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
-import { PublicFooter } from "../components/ui/PublicFooter";
 import { RABAT_PARKINGS_MAP_DATA, type RabatParkingMapItem } from "../features/parkings/data/parkingsMapData";
 import {
   EnvironmentOutlined,

@@ -398,7 +398,7 @@ export function PublicQrForm() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCQODW1HZ_NvXiKKSVVOX5SH4sgu1igMSmxOS0XoVaKgtYo2ucrDd6Ueetov0TP_AlBopE6PeMq_wZVHHV9oGO40DQjm3O_5yolQKuqZfxbX2km9XEgpI9tufvXXTc-43WjkPe0ybXaoCBh-MmAYGPm-m8W62T_GnnfYm7jj9o0-l-5y1LrB2N9SrI1hHsaZ4cPz660VvXRzfKVodhyW_gDO7berdjNLIBDxm0W5gLrOq-5H3q5atj')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/80 to-slate-900/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/50 backdrop-blur-[2px]"></div>
           </div>
 
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -412,14 +412,14 @@ export function PublicQrForm() {
                 </Tag>
               </div>
 
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight drop-shadow-xs">
                 {typeDemande === "CORPORATE"
                   ? "Demande d'Abonnement Flotte Corporate"
                   : typeDemande === "DUPLICATE"
                   ? "Réclamation de Perte & Duplicata Carte RFID"
                   : "Demande d'Abonnement Parking"}
               </h1>
-              <p className="text-slate-300 text-xs md:text-sm leading-relaxed max-w-xl">
+              <p className="text-slate-700 text-xs md:text-sm font-medium leading-relaxed max-w-xl">
                 Souscrivez, renouvelez ou transférez votre abonnement parking en ligne en 4 étapes simples avec validation sécurisée.
               </p>
             </div>
@@ -440,43 +440,57 @@ export function PublicQrForm() {
       </div>
 
       <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
-        {/* Visual Stepper */}
-        <div className="glass-panel rounded-2xl p-6 mb-8 border border-white/80 shadow-md">
-          <div className="flex items-center justify-between relative max-w-4xl mx-auto">
-            <div className="absolute left-0 top-1/2 w-full h-1 bg-slate-200 -z-10 transform -translate-y-1/2 rounded-full"></div>
-            <div
-              className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-emerald-500 via-secondary to-primary -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500"
-              style={{ width: `${(currentStep / 3) * 100}%` }}
-            ></div>
-
+        {/* Visual Stepper — Persistent Fixed Floating Compact Glass Capsule */}
+        <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-50 pointer-events-none flex justify-center">
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-2xl flex items-center gap-2 max-w-fit">
             {STEP_TITLES.map((title, idx) => {
               const isCompleted = idx < currentStep;
               const isCurrent = idx === currentStep;
 
               return (
-                <div key={idx} className="flex flex-col items-center gap-2 bg-white/95 p-2 rounded-2xl z-10 shadow-xs">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm transition-all duration-300 ${
-                      isCompleted
-                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200 scale-110"
-                        : isCurrent
-                        ? "bg-secondary text-white shadow-xl ring-4 ring-secondary/25 scale-105"
-                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                <div key={idx} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCompleted) setCurrentStep(idx);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black transition-all duration-300 border-none ${
+                      isCurrent
+                        ? "bg-secondary text-white shadow-md scale-105"
+                        : isCompleted
+                        ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
                     }`}
+                    title={title}
                   >
-                    {isCompleted ? <CheckOutlined style={{ fontSize: "16px", fontWeight: "bold" }} /> : idx + 1}
-                  </div>
-                  <span
-                    className={`text-xs font-bold hidden md:block transition-colors ${
-                      isCompleted
-                        ? "text-emerald-700 font-extrabold"
-                        : isCurrent
-                        ? "text-secondary font-black"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {title}
-                  </span>
+                    <span
+                      className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
+                        isCurrent
+                          ? "bg-white text-secondary"
+                          : isCompleted
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-300 text-slate-600"
+                      }`}
+                    >
+                      {isCompleted ? <CheckOutlined style={{ fontSize: "11px", fontWeight: "bold" }} /> : idx + 1}
+                    </span>
+
+                    {/* ONLY SHOW TEXT TITLE FOR THE ACTIVE STEP */}
+                    {isCurrent && (
+                      <span className="font-extrabold tracking-tight whitespace-nowrap animate-fade-in pr-1">
+                        {title}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Connecting Line between step pills */}
+                  {idx < STEP_TITLES.length - 1 && (
+                    <div
+                      className={`w-3 h-0.5 rounded-full transition-colors ${
+                        idx < currentStep ? "bg-emerald-400" : "bg-slate-200"
+                      }`}
+                    />
+                  )}
                 </div>
               );
             })}
