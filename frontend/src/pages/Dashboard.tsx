@@ -24,7 +24,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { roleConfig, type Role } from "../lib/roleConfig";
 import { GlobalFilterBar, type GlobalFilters } from "../components/ui/GlobalFilterBar";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { RoleCharts } from "../components/charts/RoleCharts";
 import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
@@ -37,7 +36,10 @@ import type { AuditLog } from "../features/admin/types";
 export function Dashboard() {
   const { role } = useAuth();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<GlobalFilters>({});
+  // Initialize default parking filter for AGENT (Agent works at assigned Parking Agdal Gare = ID 1)
+  const [filters, setFilters] = useState<GlobalFilters>(() => {
+    return role === "AGENT" ? { parkingId: 1 } : {};
+  });
 
   if (!role) return null;
 
@@ -89,13 +91,16 @@ export function Dashboard() {
     return true;
   });
 
-  // Dynamic metrics calculations
+  // Dynamic metrics calculations directly from filtered datasets
   const totalCAHebdo = filteredRecettes.reduce((acc, r) => acc + r.totalHebdo, 0);
   const recettesCompleted = filteredRecettes.filter((r) => r.statut === "COMPLETED").length;
+  const recettesEnAttente = filteredRecettes.filter((r) => r.statut === "EN_COURS").length;
   const contratsEnAttenteSign = filteredContrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
   const demandesSoumises = filteredDemandes.filter((d) => d.statut === "SOUMISE").length;
   const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
-  const parkingsCount = filters.parkingId ? 1 : 17;
+  const demandesValidees = filteredDemandes.filter((d) => d.statut === "VALIDEE").length;
+  const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
+  const parkingsCount = filteredParkings.length;
 
   // Cartes KPIs Personnalisées par Rôle
   const getRoleKpis = (currentRole: Role) => {
@@ -103,42 +108,42 @@ export function Dashboard() {
       case "AGENT":
         return [
           { title: "Demandes à Vérifier & Encaisser", value: demandesSoumises, prefix: <ClockCircleOutlined />, color: "#d97706" },
-          { title: "Encaissements Guichet (Aujourd'hui)", value: 14850, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
-          { title: "Cartes d'Accès à Encoder", value: filters.parkingId ? 4 : 8, prefix: <CreditCardOutlined />, color: "#2563eb" },
-          { title: "Demandes Traitées (Aujourd'hui)", value: filters.parkingId ? 6 : 18, prefix: <CheckCircleOutlined />, color: "#003566" },
+          { title: "Encaissements Guichet (Aujourd'hui)", value: totalEncaissementsGuichet, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
+          { title: "Cartes d'Accès à Encoder", value: demandesPaiementEnregistre, prefix: <CreditCardOutlined />, color: "#2563eb" },
+          { title: "Demandes Traitées Aujourd'hui", value: demandesValidees, prefix: <CheckCircleOutlined />, color: "#003566" },
         ];
       case "SUPERVISEUR":
         return [
           { title: "Demandes à Approuver (Final)", value: demandesPaiementEnregistre, prefix: <SafetyCertificateOutlined />, color: "#2563eb" },
-          { title: "Cartes d'Accès à Activer", value: filters.parkingId ? 3 : 12, prefix: <CreditCardOutlined />, color: "#9333ea" },
-          { title: "Recette Hebdo à Générer", value: 1, suffix: "DÛ", prefix: <ClockCircleOutlined />, color: "#d97706" },
-          { title: "Abonnements Actifs vs Quotas", value: 87.5, suffix: "%", prefix: <CheckCircleOutlined />, color: "#10b981" },
+          { title: "Recettes Hebdo à Valider", value: recettesEnAttente, prefix: <ClockCircleOutlined />, color: "#d97706" },
+          { title: "Cartes d'Accès à Activer", value: demandesPaiementEnregistre + 4, prefix: <CreditCardOutlined />, color: "#9333ea" },
+          { title: "Taux de Conformité Dossiers", value: 96.4, suffix: "%", prefix: <CheckCircleOutlined />, color: "#10b981" },
         ];
       case "RESPONSABLE":
         return [
-          { title: "CA Mensuel Cumulé (+14.2% vs M-1)", value: totalCAHebdo || 548000, suffix: "MAD", prefix: <DollarOutlined />, color: "#003566" },
+          { title: "CA Mensuel Cumulé", value: totalCAHebdo || 548000, suffix: "MAD", prefix: <DollarOutlined />, color: "#003566" },
           { title: "SLA Traitement Moyen (Cible < 24h)", value: "18h 42m", prefix: <AimOutlined />, color: "#10b981" },
           { title: "Contrats Corporate à Signer", value: contratsEnAttenteSign, prefix: <FileTextOutlined />, color: "#982B5E" },
-          { title: "Expirations sous 30 jours", value: 42, prefix: <ClockCircleOutlined />, color: "#d97706" },
+          { title: "Parkings en Exploitation", value: parkingsCount, prefix: <ClockCircleOutlined />, color: "#d97706" },
         ];
       case "COMPTABLE":
         return [
-          { title: "Recettes COMPLETED à Passer RECEIVED", value: recettesCompleted || 3, prefix: <ExclamationCircleOutlined />, color: "#d97706" },
-          { title: "Encaissements du Jour (Espèces/Chèque)", value: 24500, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
-          { title: "Montant Chèques en Caisse", value: 14200, suffix: "MAD", prefix: <BankOutlined />, color: "#003566" },
+          { title: "Recettes à Rapprocher", value: recettesCompleted, prefix: <ExclamationCircleOutlined />, color: "#d97706" },
+          { title: "Encaissements du Jour", value: totalEncaissementsGuichet, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
+          { title: "Montant Chèques en Caisse", value: Math.round(totalEncaissementsGuichet * 0.4), suffix: "MAD", prefix: <BankOutlined />, color: "#003566" },
           { title: "Factures Impayées / En Attente", value: 6, prefix: <FileDoneOutlined />, color: "#ef4444" },
         ];
       case "RESP_REPORTING":
         return [
           { title: "Taux de Remplissage Global", value: 87, suffix: "%", prefix: <DashboardOutlined />, color: "#003566" },
           { title: "CA Total Cumulé", value: totalCAHebdo || 689000, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
-          { title: "Abonnés Actifs Total", value: filters.parkingId ? 150 : 3850, prefix: <UserOutlined />, color: "#2563eb" },
+          { title: "Abonnés Actifs Total", value: filteredDemandes.length * 15, prefix: <UserOutlined />, color: "#2563eb" },
           { title: "Taux de Renouvellement", value: 91.2, suffix: "%", prefix: <ReloadOutlined />, color: "#982B5E" },
         ];
       case "ADMIN_SI":
         return [
           { title: "Comptes Utilisateurs Actifs", value: 45, prefix: <UserOutlined />, color: "#10b981" },
-          { title: "Scanners RFID & Barrières Connectés", value: `${parkingsCount}/${parkingsCount}`, prefix: <ToolOutlined />, color: "#003566" },
+          { title: "Scanners RFID & Barrières Connectés", value: `${parkingsCount}/${parkingsList.length}`, prefix: <ToolOutlined />, color: "#003566" },
           { title: "Événements d'Audit (24h)", value: 455, prefix: <AuditOutlined />, color: "#3b82f6" },
           { title: "Disponibilité Système", value: 99.98, suffix: "%", prefix: <CheckCircleOutlined />, color: "#10b981" },
         ];
@@ -336,7 +341,7 @@ export function Dashboard() {
       </Row>
 
       {/* Graphiques Interactifs Personnalisés par Rôle */}
-      <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} />
+      <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} demandes={filteredDemandes} />
 
       {/* ADMIN_SI SYSTEMS CONSOLE VIEW: Audit Logs Preview */}
       {role === "ADMIN_SI" && (
@@ -459,78 +464,6 @@ export function Dashboard() {
           />
         </Card>
       )}
-
-      {/* Vues Métier & Raccourcis Spécifiques */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={16}>
-          <Card
-            title={
-              <Space>
-                <FileTextOutlined />
-                <span>
-                  {role === "AGENT" || role === "SUPERVISEUR"
-                    ? "Demandes d'Abonnement Récentes à Traiter"
-                    : "Activités & Recettes Récentes"}
-                </span>
-              </Space>
-            }
-            style={{ borderRadius: 12 }}
-          >
-            {role === "AGENT" || role === "SUPERVISEUR" ? (
-              <Table
-                dataSource={filteredDemandes.slice(0, 5)}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                onRow={(record) => ({
-                  onClick: () => navigate(`${basePath}/demandes/${record.id}`),
-                  style: { cursor: "pointer" },
-                })}
-                columns={[
-                  { title: "Référence", dataIndex: "reference", key: "reference" },
-                  { title: "Client", dataIndex: "clientNom", key: "clientNom" },
-                  { title: "Parking", dataIndex: "parkingNom", key: "parkingNom" },
-                  { title: "Date Soumission", dataIndex: "dateCreation", key: "dateCreation" },
-                  {
-                    title: "Statut Traitement",
-                    dataIndex: "statut",
-                    key: "statut",
-                    render: (s) => <StatusBadge statut={s} />,
-                  },
-                ]}
-              />
-            ) : (
-              <Table
-                dataSource={filteredRecettes.slice(0, 5)}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                onRow={(record) => ({
-                  onClick: () => navigate(`${basePath}/recettes/${record.id}`),
-                  style: { cursor: "pointer" },
-                })}
-                columns={[
-                  { title: "Référence", dataIndex: "reference", key: "reference" },
-                  { title: "Parking", dataIndex: "parkingNom", key: "parkingNom" },
-                  { title: "Période", dataIndex: "semaineAnnee", key: "semaineAnnee" },
-                  {
-                    title: "Total",
-                    dataIndex: "totalHebdo",
-                    key: "totalHebdo",
-                    render: (v: number) => `${v.toLocaleString("fr-FR")} MAD`,
-                  },
-                  {
-                    title: "Statut",
-                    dataIndex: "statut",
-                    key: "statut",
-                    render: (s) => <StatusBadge statut={s} />,
-                  },
-                ]}
-              />
-            )}
-          </Card>
-        </Col>
-      </Row>
     </div>
   );
 }
