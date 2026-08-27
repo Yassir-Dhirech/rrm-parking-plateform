@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
+import { RabatParkingsMap } from "../components/map/RabatParkingsMap";
 import {
   FileTextOutlined,
   ClockCircleOutlined,
@@ -31,7 +32,7 @@ export function LandingPage() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-900/40"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 via-slate-900/65 to-slate-900/40"></div>
           </div>
 
           <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -191,6 +192,29 @@ export function LandingPage() {
               </div>
             </Col>
           </Row>
+        </section>
+
+        {/* Interactive Map Section on Landing Page */}
+        <section id="map" className="space-y-4 pt-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <Tag color="cyan" className="px-3.5 py-1 rounded-full font-bold border-none shadow-sm text-xs mb-2">
+                <EnvironmentOutlined /> Localisation en Temps Réel
+              </Tag>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 17 Parkings Régionaux</h2>
+              <p className="text-slate-600 text-sm mt-1">Consultez la carte interactive de Rabat pour repérer les ouvrages de stationnement et leurs places libres.</p>
+            </div>
+            <Button
+              type="primary"
+              onClick={() => navigate("/parkings-public")}
+              className="bg-secondary rounded-xl font-bold h-11 px-6 shadow-md"
+            >
+              Explorer Tous les Parkings →
+            </Button>
+          </div>
+          <div className="glass-card p-3 rounded-3xl shadow-xl border border-white/80">
+            <RabatParkingsMap height={500} />
+          </div>
         </section>
 
         {/* General Information about Operator RRM */}
