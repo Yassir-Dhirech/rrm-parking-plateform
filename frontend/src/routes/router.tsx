@@ -30,6 +30,7 @@ import { NotificationsPage } from "../pages/NotificationsPage";
 import { AboutPage } from "../pages/AboutPage";
 import { ContactPage } from "../pages/ContactPage";
 import { PublicParkingsPage } from "../pages/PublicParkingsPage";
+import { InternalParkingsMapPage } from "../features/parkings/pages/InternalParkingsMapPage";
 import { PublicTarifsPage } from "../pages/PublicTarifsPage";
 import { ScrollToTop } from "../components/ui/ScrollToTop";
 
@@ -46,6 +47,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes = [
     { path: "/notifications", element: <NotificationsPage /> },
     { path: `${roleConfig[role].homePath}/notifications`, element: <NotificationsPage /> },
+    { path: `${roleConfig[role].homePath}/carte-parkings`, element: <InternalParkingsMapPage /> },
   ];
 
   if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {

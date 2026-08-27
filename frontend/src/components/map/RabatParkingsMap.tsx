@@ -11,6 +11,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { RABAT_PARKINGS_MAP_DATA, type RabatParkingMapItem } from "../../features/parkings/data/parkingsMapData";
@@ -23,6 +24,7 @@ interface RabatParkingsMapProps {
 
 export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Record<number, L.Marker>>({});
@@ -338,29 +340,125 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
                 </div>
               </div>
 
+              {/* Role-Tailored Custom Details Box */}
+              {role === "SUPERVISEUR" && (
+                <div style={{ backgroundColor: "#faf5ff", padding: 12, borderRadius: 10, border: "1px solid #e9d5ff", marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", marginBottom: 4 }}>
+                    Répartition Quotas & Capacité (Supervision) :
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#3b0764", fontWeight: 600 }}>
+                    <span>Particuliers: 40% (180/450)</span>
+                    <span>Corporate: 60% (270/450)</span>
+                  </div>
+                </div>
+              )}
+
+              {role === "COMPTABLE" && (
+                <div style={{ backgroundColor: "#fffbeb", padding: 12, borderRadius: 10, border: "1px solid #fde68a", marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#b45309", marginBottom: 4 }}>
+                    Suivi Financier & Recettes (Comptabilité) :
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e" }}>
+                    CA Hebdo Collecté: 34 500 MAD (Espèces + Chèques)
+                  </div>
+                </div>
+              )}
+
+              {role === "ADMIN_SI" && (
+                <div style={{ backgroundColor: "#f0fdf4", padding: 12, borderRadius: 10, border: "1px solid #bbf7d0", marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>
+                    Configuration Matérielle & Scanners RFID :
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#166534" }}>
+                    Terminal RFID: 192.168.1.52 (ONLINE 🟢) | Barrière d'Accès: OK
+                  </div>
+                </div>
+              )}
+
               <div style={{ fontSize: 12, color: "#334155" }}>
                 <strong>Tarif Mensuel :</strong> {activeParking.tarifsAbonnementMensuel}
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Role-Specific Action Buttons */}
             <Space direction="vertical" style={{ width: "100%" }}>
-              <Button
-                type="primary"
-                block
-                size="large"
-                icon={<ArrowRightOutlined />}
-                onClick={() => navigate(`/demande-publique?parkingId=${activeParking.id}`)}
-                style={{
-                  backgroundColor: "#003566",
-                  borderColor: "#003566",
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  height: 44,
-                }}
-              >
-                Souscrire un Abonnement pour ce Parking
-              </Button>
+              {role === "AGENT" && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/agent/demandes?parkingId=${activeParking.id}`)}
+                  style={{ backgroundColor: "#003566", borderColor: "#003566", fontWeight: 700, borderRadius: 8, height: 44 }}
+                >
+                  Traitement Guichet pour ce Parking
+                </Button>
+              )}
+
+              {role === "SUPERVISEUR" && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/superviseur/recettes?parkingId=${activeParking.id}`)}
+                  style={{ backgroundColor: "#9333ea", borderColor: "#9333ea", fontWeight: 700, borderRadius: 8, height: 44 }}
+                >
+                  Superviser Recettes & Quotas
+                </Button>
+              )}
+
+              {role === "COMPTABLE" && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/comptable/recettes?parkingId=${activeParking.id}`)}
+                  style={{ backgroundColor: "#d97706", borderColor: "#d97706", fontWeight: 700, borderRadius: 8, height: 44 }}
+                >
+                  Rapprocher Recettes de ce Parking
+                </Button>
+              )}
+
+              {role === "RESPONSABLE" && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/responsable/parkings`)}
+                  style={{ backgroundColor: "#003566", borderColor: "#003566", fontWeight: 700, borderRadius: 8, height: 44 }}
+                >
+                  Gérer Tarifs & Contrats
+                </Button>
+              )}
+
+              {role === "ADMIN_SI" && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/admin/parkings`)}
+                  style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", fontWeight: 700, borderRadius: 8, height: 44 }}
+                >
+                  Configurer Endpoints Matériel
+                </Button>
+              )}
+
+              {(!role || role === "RESP_REPORTING") && (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => navigate(`/demande-publique?parkingId=${activeParking.id}`)}
+                  style={{ backgroundColor: "#003566", borderColor: "#003566", fontWeight: 600, borderRadius: 8, height: 44 }}
+                >
+                  Souscrire un Abonnement pour ce Parking
+                </Button>
+              )}
 
               <Button
                 block

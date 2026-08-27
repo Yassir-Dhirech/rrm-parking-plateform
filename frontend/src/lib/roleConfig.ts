@@ -1,4 +1,3 @@
-
 export type Role = "AGENT"
   | "SUPERVISEUR" | "RESPONSABLE" |
   "COMPTABLE" | "RESP_REPORTING" |
@@ -28,15 +27,19 @@ export const roleConfig: Record<Role, RoleConfig> = {
   AGENT: {
     homePath: "/agent",
     title: "Espace Agent",
-    kpis: [ { key: "demandesSoumises", title: "Demandes à Encaisser Guichet", color: "#d97706" },
+    kpis: [
+      { key: "demandesSoumises", title: "Demandes à Encaisser Guichet", color: "#d97706" },
       { key: "encaissementsJour", title: "Encaissements Guichet (Aujourd'hui)", color: "#10b981", suffix: "DH" },
       { key: "cartesADelivrer", title: "Cartes d'Accès à Délivrer", color: "#2563eb" },
-      { key: "demandesTraitees", title: "Demandes Traitées Aujourd'hui", color: "#003566" },],
+      { key: "demandesTraitees", title: "Demandes Traitées Aujourd'hui", color: "#003566" },
+    ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/agent" },
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/agent/carte-parkings" },
       { key: "demandes", label: "Demandes", path: "/agent/demandes" },
       { key: "paiements", label: "Paiements", path: "/agent/paiements" },
-      { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" }],
+      { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" },
+    ],
   },
   SUPERVISEUR: {
     homePath: "/superviseur",
@@ -49,6 +52,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/superviseur" },
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/superviseur/carte-parkings" },
       { key: "demandes", label: "Demandes", path: "/superviseur/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/superviseur/abonnements" },
       { key: "paiements", label: "Paiements", path: "/superviseur/paiements" },
@@ -69,6 +73,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/responsable" },
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/responsable/carte-parkings" },
       { key: "parkings", label: "Gestion Parkings", path: "/responsable/parkings" },
       { key: "tarifs", label: "Plans Tarifaires", path: "/responsable/tarifs" },
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
@@ -89,6 +94,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
       { key: "recettes", label: "Recettes Hebdo (Versement)", path: "/comptable/recettes" },
       { key: "paiements", label: "Paiements", path: "/comptable/paiements" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
@@ -105,6 +111,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Statistiques", path: "/reporting" },
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/reporting/carte-parkings" },
     ],
   },
   ADMIN_SI: {
@@ -117,6 +124,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "disponibiliteSysteme", title: "Disponibilité Système", color: "#10b981", suffix: "%" },
     ],
     menuItems: [
+      { key: "carte-parkings", label: "Carte des Parkings", path: "/admin/carte-parkings" },
       { key: "utilisateurs", label: "Utilisateurs", path: "/admin/utilisateurs" },
       { key: "parkings", label: "Parkings", path: "/admin/parkings" },
       { key: "tarifs", label: "Plans tarifaires", path: "/admin/tarifs" },
