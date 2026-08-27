@@ -398,7 +398,8 @@ export function PublicQrForm() {
                   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCQODW1HZ_NvXiKKSVVOX5SH4sgu1igMSmxOS0XoVaKgtYo2ucrDd6Ueetov0TP_AlBopE6PeMq_wZVHHV9oGO40DQjm3O_5yolQKuqZfxbX2km9XEgpI9tufvXXTc-43WjkPe0ybXaoCBh-MmAYGPm-m8W62T_GnnfYm7jj9o0-l-5y1LrB2N9SrI1hHsaZ4cPz660VvXRzfKVodhyW_gDO7berdjNLIBDxm0W5gLrOq-5H3q5atj')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/50 backdrop-blur-[2px]"></div>
+            {/* Clean Light White Shadow Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/40 shadow-inner"></div>
           </div>
 
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -412,7 +413,7 @@ export function PublicQrForm() {
                 </Tag>
               </div>
 
-              <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight drop-shadow-xs">
+              <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight">
                 {typeDemande === "CORPORATE"
                   ? "Demande d'Abonnement Flotte Corporate"
                   : typeDemande === "DUPLICATE"
@@ -440,9 +441,9 @@ export function PublicQrForm() {
       </div>
 
       <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
-        {/* Visual Stepper — Persistent Fixed Floating Compact Glass Capsule */}
-        <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-50 pointer-events-none flex justify-center">
-          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-2xl flex items-center gap-2 max-w-fit">
+        {/* Visual Stepper — Positioned initially between Hero Header & Form Choice, becoming Sticky on scroll */}
+        <div className="sticky top-24 z-40 flex justify-center mb-8">
+          <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-fit">
             {STEP_TITLES.map((title, idx) => {
               const isCompleted = idx < currentStep;
               const isCurrent = idx === currentStep;
