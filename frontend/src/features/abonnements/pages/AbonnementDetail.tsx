@@ -12,6 +12,9 @@ import {
   StopOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
+  DollarOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -136,7 +139,7 @@ export function AbonnementDetail() {
               <div>
                 <div><strong>Motif de suspension :</strong> {data.motifSuspension || "Suspension administrative"}</div>
                 <div style={{ fontSize: 12, marginTop: 4, color: "#b45309" }}>
-                  L'accès aux barrières automatiques RFID / LPR de tous les parkings est temporairement bloqué pour cet abonné.
+                  L'abonnement et la carte RFID sont marqués comme suspendus dans le registre d'information RRM.
                 </div>
               </div>
             }
@@ -207,6 +210,83 @@ export function AbonnementDetail() {
               <Text type="danger"><StopOutlined style={{ marginRight: 4 }} /> {data.motifSuspension}</Text>
             </Descriptions.Item>
           )}
+        </Descriptions>
+      </Card>
+
+      {/* Dynamic Payment Details & Settlement Card */}
+      <Card
+        style={{ marginTop: 20 }}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <DollarOutlined style={{ color: "#16a34a", fontSize: 20 }} />
+            <span style={{ fontSize: "1rem", fontWeight: 700, color: "#003566" }}>
+              Détails du Règlement & Encaissement Associe
+            </span>
+          </div>
+        }
+      >
+        <Descriptions column={2} bordered size="small">
+          <Descriptions.Item label="Mode de Règlement">
+            <Tag color={data.type === "ENTREPRISE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
+              {data.type === "ENTREPRISE" ? "Chèque Bancaire (Certifié)" : "Espèces (Guichet RRM)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Statut du Paiement">
+            <Tag color="green" style={{ fontWeight: 700 }}>
+              <CheckCircleOutlined style={{ marginRight: 4 }} />
+              Règlement Encaissé & Quittancé
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Montant Total Réglé">
+            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: data.type === "STAFF" ? "#0284c7" : "#16a34a" }}>
+              {data.montantTotal} MAD TTC
+            </span>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Date d'Encaissement">
+            {formatDate(data.dateDebut)}
+          </Descriptions.Item>
+
+          {data.type === "ENTREPRISE" && (
+            <>
+              <Descriptions.Item label="Numéro de Chèque">
+                <Tag color="purple" style={{ fontFamily: "monospace", fontWeight: 700 }}>
+                  CHQ-998877
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Banque Émettrice">
+                Attijariwafa Bank (Agence Agdal)
+              </Descriptions.Item>
+              <Descriptions.Item label="Engagement Contractuel" span={2}>
+                <Tag color="purple" style={{ fontWeight: 700 }}>
+                  <FileTextOutlined style={{ marginRight: 4 }} />
+                  Contrat Corporate 20 Ans Signé & Légalisé (Obligatoire)
+                </Tag>
+              </Descriptions.Item>
+            </>
+          )}
+
+          <Descriptions.Item label="Paiement Encaissé Par (Agent Guichet)">
+            <Tag color="cyan" style={{ fontWeight: 600 }}>
+              <UserOutlined style={{ marginRight: 4 }} />
+              {data.traiteParNom || "Agent Rachid (Guichet Agdal)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Paiement Confirme Par (Validation Recette)">
+            <Tag color="blue" style={{ fontWeight: 600 }}>
+              <CheckCircleOutlined style={{ marginRight: 4 }} />
+              {data.type === "ENTREPRISE"
+                ? "Mme. Leila Benali (Responsable RRM)"
+                : "M. Samir El Amrani (Superviseur RRM)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Reçu / Quittance de Caisse" span={2}>
+            <span style={{ fontFamily: "monospace", fontWeight: 600 }}>QUIT-2026-ABN-{data.id}</span> (Encaissement guichet confirmé par la caisse RRM)
+          </Descriptions.Item>
         </Descriptions>
       </Card>
 

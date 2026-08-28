@@ -76,7 +76,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
       { path: `${roleConfig[role].homePath}/cartes/:id`, element: <CarteDetail /> },
     );
   }
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  if (role === "RESPONSABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
       { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },

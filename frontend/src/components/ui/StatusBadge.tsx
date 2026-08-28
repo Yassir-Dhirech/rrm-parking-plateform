@@ -4,8 +4,8 @@ type StatutDemande = "SOUMISE" | "EN_COURS" | "PAIEMENT_ENREGISTRE" | "VALIDEE" 
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
-type StatutCarte = "A_PREPARER" | "A_ACTIVER" | "ACTIVE" | "EXPIREE" | "DESACTIVEE";
- type StatutContrat = 'EN_ATTENTE_SIGNATURE' | 'SIGNE' | 'RESILIE' | 'EXPIRE';
+type StatutCarte = "EN_ATTENTE_IMPRESSION" | "IMPRIMEE_NON_TESTEE" | "TESTEE_PRET_A_RECUPERER" | "DELIVREE_ACTIVE" | "A_PREPARER" | "A_ACTIVER" | "ACTIVE" | "EXPIREE" | "DESACTIVEE";
+type StatutContrat = 'EN_ATTENTE_SIGNATURE' | 'SIGNE' | 'RESILIE' | 'EXPIRE';
 type StatutRecette = 
   | "EN_COURS"
   | "COMPLETED" 
@@ -35,6 +35,10 @@ const colorMap: Record<AnyStatut, string> = {
   EMISE: "blue",
   SIGNEE: "green",
   ANNULEE: "red",
+  EN_ATTENTE_IMPRESSION: "gold",
+  IMPRIMEE_NON_TESTEE: "blue",
+  TESTEE_PRET_A_RECUPERER: "cyan",
+  DELIVREE_ACTIVE: "green",
   A_PREPARER: "default",
   A_ACTIVER: "gold",
   DESACTIVEE: "red",
@@ -65,6 +69,10 @@ const labelMap: Record<AnyStatut, string> = {
   EMISE: "Émise",
   SIGNEE: "Signée",
   ANNULEE: "Annulée",
+  EN_ATTENTE_IMPRESSION: "Payé — En attente d'impression",
+  IMPRIMEE_NON_TESTEE: "Imprimée — Non testée",
+  TESTEE_PRET_A_RECUPERER: "Testée — Prête à récupérer",
+  DELIVREE_ACTIVE: "Délivrée au guichet (Active)",
   A_PREPARER: "À préparer",
   A_ACTIVER: "À activer",
   DESACTIVEE: "Désactivée",

@@ -57,7 +57,6 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "recettes", label: "Recettes Hebdo", path: "/superviseur/recettes" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
       { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
-      { key: "contrats", label: "Contrats", path: "/superviseur/contrats" },
     ],
   },
   RESPONSABLE: {
