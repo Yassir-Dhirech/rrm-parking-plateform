@@ -33,6 +33,7 @@ import {
   ArrowRightOutlined,
   ClockCircleOutlined,
   AlertOutlined,
+  NotificationOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -43,6 +44,7 @@ import {
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { type TypeDemande, typeDemandeLabels } from "../../../lib/enums";
 import { formatDate } from "../../../lib/dateUtils";
 import { type PaymentInfoInput } from "../types";
@@ -85,6 +87,15 @@ export function DemandeDetail() {
       enregistrerPaiementAgentMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
     onSuccess: () => {
       message.success("Paiement encaissé et confirmé avec succès. Le dossier est prêt pour validation.");
+      sendClientNotificationMock({
+        channel: "BOTH",
+        typeEvenement: "PAIEMENT_CONFIRME",
+        destinataireNom: data?.clientNom || "Client Souscripteur",
+        destinataireEmail: data?.email || "client.rrm@example.com",
+        destinataireTelephone: data?.telephone || "0612345678",
+        sujet: "RRM - Confirmation de réception de paiement",
+        contenu: `Bonjour ${data?.clientNom || "Client"}, nous vous confirmons la réception et le quittancement de votre paiement pour la demande ${data?.reference}.`,
+      });
       setPaymentModalOpen(false);
       paymentForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -110,6 +121,15 @@ export function DemandeDetail() {
     mutationFn: () => rejeterDemandeMock(demandeId, `[Refus ${rejectType}] ${raison}`),
     onSuccess: () => {
       message.success(`Demande rejetée (${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier non conforme"})`);
+      sendClientNotificationMock({
+        channel: "BOTH",
+        typeEvenement: rejectType === "PAIEMENT" ? "CHEQUE_REFUSE" : "CHEQUE_REFUSE",
+        destinataireNom: data?.clientNom || "Client Souscripteur",
+        destinataireEmail: data?.email || "client.rrm@example.com",
+        destinataireTelephone: data?.telephone || "0612345678",
+        sujet: `RRM - Information urgente : ${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier incomplet"}`,
+        contenu: `Bonjour ${data?.clientNom || "Client"}, votre dossier ${data?.reference} nécessite une régularisation. Motif : ${raison}.`,
+      });
       setRejectModalOpen(false);
       setRaison("");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -434,21 +454,21 @@ export function DemandeDetail() {
                     <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
                   </Tag>
                 ) : (
-                  <Space wrap>
+                  <Space size="middle">
                     <Button
                       type="primary"
                       icon={<DollarOutlined />}
-                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
                       onClick={handleOpenPaymentModal}
                     >
                       Encaisser Paiement
                     </Button>
                     <Button
                       danger
-                      size="small"
                       onClick={() => handleOpenRejectModal("PAIEMENT")}
+                      style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
                     >
-                      Refuser
+                      Refuser Paiement
                     </Button>
                   </Space>
                 )}
@@ -601,7 +621,7 @@ export function DemandeDetail() {
         onCancel={() => setRejectModalOpen(false)}
         onOk={() => rejeterMutation.mutate()}
         confirmLoading={rejeterMutation.isPending}
-        okText="Confirmer le Refus"
+        okText="Confirmer le Refus & Notifier Client"
         okButtonProps={{ danger: true }}
       >
         <p style={{ color: "#64748b", fontSize: 13, marginBottom: 8 }}>
@@ -613,6 +633,15 @@ export function DemandeDetail() {
           onChange={(e) => setRaison(e.target.value)}
           rows={3}
         />
+        <div style={{ marginTop: 16, padding: 12, backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+          <div style={{ fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "#475569" }}>
+            <NotificationOutlined style={{ color: "#d97706" }} />
+            Notification Automatique Client (SMS & Email)
+          </div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+            Le souscripteur recevra immédiatement une notification SMS et un Email détaillant le motif du refus.
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, Space, message, Breadcrumb, Typography } from "antd";
+import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography } from "antd";
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
@@ -17,6 +17,7 @@ import {
   FileTextOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
+import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -66,6 +67,15 @@ export function AbonnementDetail() {
   const handleSuspendSubmit = (values: { motif: string; motifAutre?: string }) => {
     const finalMotif = values.motif === "AUTRE" ? values.motifAutre || "Autre motif administratif" : values.motif;
     suspendMutation.mutate(finalMotif);
+    sendClientNotificationMock({
+      channel: "BOTH",
+      typeEvenement: "SUSPENSION",
+      destinataireNom: data?.clientNom || "Client Souscripteur",
+      destinataireEmail: data?.clientNom ? `${data.clientNom.toLowerCase().replace(/\s+/g, ".")}@example.com` : "client.rrm@example.com",
+      destinataireTelephone: "0612345678",
+      sujet: `RRM - Suspension de l'abonnement de ${data?.clientNom || "Client"}`,
+      contenu: `Bonjour ${data?.clientNom || "Client"}, votre abonnement ${data?.reference} et badge RFID ont été suspendus. Motif : ${finalMotif}.`,
+    });
   };
 
   if (isLoading || !data) {
@@ -87,12 +97,16 @@ export function AbonnementDetail() {
 
       <Card
         title={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${basePath}/abonnements`)}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${basePath}/abonnements`)} style={{ fontWeight: 500 }}>
                 Retour
               </Button>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#003566" }}>
+              
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "#003566" }}>
                 Abonnement {data.reference}
               </span>
               <StatusBadge statut={data.statut} />
@@ -101,18 +115,14 @@ export function AbonnementDetail() {
                   <SafetyCertificateOutlined style={{ marginRight: 4 }} /> Staff RRM
                 </Tag>
               )}
-            </div>
-
-            {/* Supervisor & Responsable Action Buttons */}
-            {isAuthorizedToSuspend && (
-              <Space>
-                {!isSuspended ? (
+              {isAuthorizedToSuspend && (
+                !isSuspended ? (
                   <Button
                     type="primary"
                     danger
                     icon={<PauseCircleOutlined />}
                     onClick={() => setIsSuspendModalOpen(true)}
-                    style={{ fontWeight: 600 }}
+                    style={{ fontWeight: 600, borderRadius: 8 }}
                   >
                     Suspendre l'Abonnement
                   </Button>
@@ -122,13 +132,13 @@ export function AbonnementDetail() {
                     icon={<PlayCircleOutlined />}
                     loading={reactivateMutation.isPending}
                     onClick={() => reactivateMutation.mutate()}
-                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600 }}
+                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8 }}
                   >
                     Réactiver l'Abonnement
                   </Button>
-                )}
-              </Space>
-            )}
+                )
+              )}
+            </div>
           </div>
         }
       >

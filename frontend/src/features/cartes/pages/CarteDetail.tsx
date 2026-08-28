@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Descriptions, Button, message, Tag, Space, Alert, Divider, Steps } from "antd";
 import { PrinterOutlined, SafetyCertificateOutlined, ArrowLeftOutlined, IdcardOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { getCarteByIdMock, toggleCarteStepMock } from "../../../api/cartesMock";
+import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -22,10 +23,23 @@ export function CarteDetail() {
 
   const toggleStepMutation = useMutation({
     mutationFn: (step: "IMPRESSION" | "TEST" | "DELIVRANCE") => toggleCarteStepMock(carteId, step),
-    onSuccess: (updatedCard) => {
+    onSuccess: (updatedCard, step) => {
       queryClient.setQueryData(["carte", carteId], updatedCard);
       queryClient.invalidateQueries({ queryKey: ["cartes"] });
-      message.success("Étape du cycle de vie de la carte mise à jour avec succès !");
+      message.success(`Étape mise à jour : Statut "${updatedCard.statut}"`);
+
+      // Trigger automatic SMS & Email notification when card is confirmed ready for pickup
+      if (step === "TEST" && updatedCard.estTestee) {
+        sendClientNotificationMock({
+          channel: "BOTH",
+          typeEvenement: "CARTE_PRETE",
+          destinataireNom: updatedCard.clientNom,
+          destinataireEmail: `${updatedCard.clientNom.toLowerCase().replace(/\s+/g, ".")}@example.com`,
+          destinataireTelephone: "0612345678",
+          sujet: `RRM - Carte RFID disponible pour ${updatedCard.clientNom}`,
+          contenu: `Bonjour ${updatedCard.clientNom}, votre carte RFID pour l'abonnement ${updatedCard.abonnementReference} est testée et disponible au guichet RRM.`,
+        });
+      }
     },
   });
 
@@ -159,12 +173,13 @@ export function CarteDetail() {
         />
 
         {canManage && (
-          <Space wrap style={{ marginTop: 16 }}>
+          <Space wrap size="middle" style={{ marginTop: 16 }}>
             <Button
               type={!data.estImprimee ? "primary" : "default"}
               icon={<PrinterOutlined />}
               loading={toggleStepMutation.isPending}
               onClick={() => toggleStepMutation.mutate("IMPRESSION")}
+              style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
             >
               {!data.estImprimee ? "Étape 2 : Confirmer Impression physique" : "Annuler statut Impression"}
             </Button>
@@ -172,21 +187,21 @@ export function CarteDetail() {
             <Button
               type={data.estImprimee && !data.estTestee ? "primary" : "default"}
               icon={<CheckCircleOutlined />}
-              style={data.estImprimee && !data.estTestee ? { backgroundColor: "#d97706", borderColor: "#d97706" } : {}}
+              style={data.estImprimee && !data.estTestee ? { backgroundColor: "#d97706", borderColor: "#d97706", fontWeight: 600, borderRadius: 8, padding: "6px 16px" } : { fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
               loading={toggleStepMutation.isPending}
               onClick={() => toggleStepMutation.mutate("TEST")}
             >
-              {!data.estTestee ? "Étape 3 : Confirmer Test RFID (Prête à récupérer)" : "Annuler statut Test"}
+              {!data.estTestee ? "Étape 3 : Confirmer Test RFID (Notifier Client)" : "Annuler statut Test"}
             </Button>
 
             <Button
               type={data.estTestee && !data.estDelivree ? "primary" : "default"}
               icon={<SafetyCertificateOutlined />}
-              style={data.estTestee && !data.estDelivree ? { backgroundColor: "#16a34a", borderColor: "#16a34a" } : {}}
+              style={data.estTestee && !data.estDelivree ? { backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" } : { fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
               loading={toggleStepMutation.isPending}
               onClick={() => toggleStepMutation.mutate("DELIVRANCE")}
             >
-              {!data.estDelivree ? "Étape 4 : Confirmer Remise & Délivrance Client" : "Annuler statut Délivrance"}
+              {!data.estDelivree ? "Étape 4 : Confirmer Remise Client" : "Annuler statut Délivrance"}
             </Button>
           </Space>
         )}
