@@ -43,23 +43,25 @@ const mockAbonnements: AbonnementListItem[] = [
     id: 4,
     reference: "ABO-STF-2026-000101",
     type: "STAFF",
-    statut: "ACTIF",
+    statut: "EN_ATTENTE", // Créé par Responsable, en attente d'impression & activation de carte RFID
     clientNom: "Youssef Tazi (Agent RRM)",
     parkingNom: "Parking Agdal Gare",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
-    traiteParNom: undefined, // Non traité encore
+    traiteParNom: "Mme. Leila Benali (Responsable)",
+    dateTraitement: "01/01/2026 09:00",
   },
   {
     id: 5,
     reference: "ABO-STF-2026-000102",
     type: "STAFF",
-    statut: "ACTIF",
+    statut: "EN_ATTENTE", // Créé par Responsable, en attente d'impression & activation de carte RFID
     clientNom: "Meriem Filali (Superviseur RRM)",
     parkingNom: "Parking Hassan II",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
-    traiteParNom: undefined, // Non traité encore
+    traiteParNom: "Mme. Leila Benali (Responsable)",
+    dateTraitement: "01/01/2026 09:30",
   },
   {
     id: 6,
@@ -108,11 +110,13 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
     id: newId,
     reference,
     type: input.type,
-    statut: "ACTIF",
+    statut: "EN_ATTENTE", // En attente d'impression & activation de la carte RFID
     clientNom: isStaff ? `${input.clientNom} (Staff RRM)` : input.clientNom,
     parkingNom: input.parkingNom,
     dateDebut,
     dateFin,
+    traiteParNom: "Mme. Leila Benali (Responsable)", // Créé directement par la Responsable (Sans traitement guichet)
+    dateTraitement: dateDebut,
   };
 
   const typeClientTarget = input.type === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER";

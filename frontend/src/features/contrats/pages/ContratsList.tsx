@@ -24,32 +24,52 @@ export function ContratsList() {
       title: "Référence",
       dataIndex: "reference",
       key: "reference",
+      sorter: (a: ContratListItem, b: ContratListItem) => a.reference.localeCompare(b.reference),
     },
     {
       title: "Entreprise",
       dataIndex: "entrepriseNom",
       key: "entrepriseNom",
+      sorter: (a: ContratListItem, b: ContratListItem) => a.entrepriseNom.localeCompare(b.entrepriseNom),
     },
     {
       title: "Parking",
       dataIndex: "parkingNom",
       key: "parkingNom",
+      filters: [
+        { text: "Parking Agdal Gare", value: "Parking Agdal Gare" },
+        { text: "Parking Bab El Had", value: "Parking Bab El Had" },
+        { text: "Parking Hassan II", value: "Parking Hassan II" },
+        { text: "Parking Chellah", value: "Parking Chellah" },
+      ],
+      onFilter: (value: any, record: ContratListItem) => record.parkingNom.includes(value as string),
+      filterSearch: true,
+      sorter: (a: ContratListItem, b: ContratListItem) => a.parkingNom.localeCompare(b.parkingNom),
     },
     {
       title: "Places",
       dataIndex: "nombrePlaces",
       key: "nombrePlaces",
+      sorter: (a: ContratListItem, b: ContratListItem) => a.nombrePlaces - b.nombrePlaces,
     },
     {
       title: "Montant TTC / mois",
       dataIndex: "montantMensuelTTC",
       key: "montantMensuelTTC",
+      sorter: (a: ContratListItem, b: ContratListItem) => a.montantMensuelTTC - b.montantMensuelTTC,
       render: (value: number) => `${value.toLocaleString("fr-FR")} MAD`,
     },
     {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
+      filters: [
+        { text: "Signé", value: "SIGNE" },
+        { text: "En attente de signature", value: "EN_ATTENTE_SIGNATURE" },
+        { text: "Résilié", value: "RESILIE" },
+        { text: "Expiré", value: "EXPIRE" },
+      ],
+      onFilter: (value: any, record: ContratListItem) => record.statut === value,
       render: (statut: ContratListItem["statut"]) => (
         <StatusBadge statut={statut} />
       ),

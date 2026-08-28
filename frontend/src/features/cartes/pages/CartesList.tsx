@@ -47,24 +47,39 @@ export function CartesList() {
       title: "N° Carte RFID",
       dataIndex: "numeroCarte",
       key: "numeroCarte",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.numeroCarte.localeCompare(b.numeroCarte),
       render: (num: string) => <Tag color="blue" style={{ fontWeight: 600 }}>{num}</Tag>,
     },
     {
       title: "Titulaire Client",
       dataIndex: "clientNom",
       key: "clientNom",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.clientNom.localeCompare(b.clientNom),
       render: (name: string) => <strong>{name}</strong>,
     },
     {
       title: "Référence Abonnement",
       dataIndex: "abonnementReference",
       key: "abonnementReference",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.abonnementReference.localeCompare(b.abonnementReference),
     },
     {
       title: "Statut Système Barrières",
       dataIndex: "statut",
       key: "statut",
-      render: (statut: CarteListItem["statut"]) => <StatusBadge statut={statut} />,
+      filters: [
+        { text: "À préparer", value: "A_PREPARER" },
+        { text: "À activer", value: "A_ACTIVER" },
+        { text: "Active", value: "ACTIVE" },
+        { text: "Désactivée", value: "DESACTIVEE" },
+      ],
+      onFilter: (value: any, record: CarteListItem) => record.statut === value,
+      render: (statut: CarteListItem["statut"]) => {
+        if (statut === "A_ACTIVER" || statut === "A_PREPARER") {
+          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente d'activation (Non Traitée)</Tag>;
+        }
+        return <StatusBadge statut={statut} />;
+      },
     },
   ];
 

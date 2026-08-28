@@ -86,6 +86,7 @@ export function DemandesList() {
     {
       title: "CANDIDAT & RÉFÉRENCE",
       key: "applicantInfo",
+      sorter: (a: DemandeListItem, b: DemandeListItem) => a.clientNom.localeCompare(b.clientNom),
       render: (_: unknown, record: DemandeListItem) => {
         const initials = record.clientNom
           ? record.clientNom.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
@@ -109,6 +110,7 @@ export function DemandesList() {
       title: "IMMATRICULATION",
       dataIndex: "immatriculation",
       key: "immatriculation",
+      sorter: (a: DemandeListItem, b: DemandeListItem) => ((a as any).immatriculation || "").localeCompare((b as any).immatriculation || ""),
       render: (immat?: string) => (
         <div className="inline-flex items-center px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-100 font-mono text-[12px] font-bold text-slate-800 tracking-wider shadow-2xs">
           {immat || "12345 | A | 1"}
@@ -119,6 +121,13 @@ export function DemandesList() {
       title: "STATUT TRAITEMENT",
       dataIndex: "statut",
       key: "statut",
+      filters: [
+        { text: "En Attente Paiement", value: "SOUMISE" },
+        { text: "Paiement Enregistré", value: "PAIEMENT_ENREGISTRE" },
+        { text: "Validée (Actif)", value: "VALIDEE" },
+        { text: "Rejetée", value: "REJETEE" },
+      ],
+      onFilter: (value: any, record: DemandeListItem) => record.statut === value,
       render: (statut: string) => {
         if (statut === "SOUMISE") {
           return (
@@ -155,6 +164,10 @@ export function DemandesList() {
       title: "PARKING SOUHAITÉ",
       dataIndex: "parkingNom",
       key: "parkingNom",
+      filters: parkingsList.map((p) => ({ text: p.nom, value: p.nom })),
+      onFilter: (value: any, record: DemandeListItem) => record.parkingNom.includes(value as string),
+      filterSearch: true,
+      sorter: (a: DemandeListItem, b: DemandeListItem) => a.parkingNom.localeCompare(b.parkingNom),
       render: (nom: string) => (
         <div>
           <p className="font-bold text-xs text-slate-800 m-0">{nom}</p>
@@ -166,6 +179,7 @@ export function DemandesList() {
       title: "DATE SOUMISSION",
       dataIndex: "dateCreation",
       key: "dateCreation",
+      sorter: (a: DemandeListItem, b: DemandeListItem) => new Date(a.dateCreation).getTime() - new Date(b.dateCreation).getTime(),
       render: (d: string) => (
         <span className="font-bold text-xs text-slate-700">{formatDate(d)}</span>
       ),

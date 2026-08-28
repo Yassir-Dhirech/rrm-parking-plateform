@@ -16,6 +16,7 @@ import {
   Checkbox,
   Card as AntCard,
 } from "antd";
+import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import {
   PlusCircleOutlined,
   SyncOutlined,
@@ -34,6 +35,7 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ThunderboltOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
@@ -187,8 +189,9 @@ export function PublicQrForm() {
       if (tabParam === "DUPLICATE") setTypeDemande("DUPLICATE");
     }
 
-    if (clientParam === "ENTREPRISE") {
+    if (clientParam === "ENTREPRISE" || typeDemande === "CORPORATE") {
       setTypeDemande("CORPORATE");
+      form.setFieldValue("dureeMois", 240);
     }
 
     if (planParam) {
@@ -198,7 +201,7 @@ export function PublicQrForm() {
     if (parkingParam) {
       form.setFieldValue("parkingId", Number(parkingParam));
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, typeDemande]);
 
   // BETA Quick Test Autofill Handler
   const handleBetaAutofill = () => {
@@ -324,6 +327,18 @@ export function PublicQrForm() {
 
   // Calculate pricing summary
   const getMonthlyPrice = () => {
+    if (typeDemande === "CORPORATE") {
+      switch (watchedFormuleCode) {
+        case "CORP_8_20":
+          return 500;
+        case "CORP_8_22":
+          return 550;
+        case "CORP_24_7":
+        default:
+          return 650;
+      }
+    }
+
     switch (watchedFormuleCode) {
       case "24H7J":
         return 600;
@@ -331,17 +346,16 @@ export function PublicQrForm() {
         return 420;
       case "NUIT":
         return 350;
-      case "MOTO":
-        return 200;
       default:
         return 600;
     }
   };
 
   const selectedParkingName =
-    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Mamounia (Rabat Hassan)";
-  const totalMonths = watchedDureeMois || 3;
-  const totalPrice = getMonthlyPrice() * totalMonths;
+    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Agdal Gare (Rabat)";
+  const totalMonths = typeDemande === "CORPORATE" ? 240 : (watchedDureeMois || 3);
+  const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
+  const totalPrice = getMonthlyPrice() * totalMonths * cardMultiplier;
 
   // Submit Mutation
   const submitMutation = useMutation({
@@ -1141,19 +1155,24 @@ export function PublicQrForm() {
                           : "bg-white/80 border border-slate-200"
                       }`}
                     >
+                      {/* Independent Full-Width Row 1: Moroccan License Plate Input */}
                       <Row gutter={16}>
-                        <Col xs={24} md={12}>
+                        <Col span={24}>
                           <Form.Item
                             name="immatriculation"
-                            label="Matricule du Véhicule"
+                            label="Matricule du Véhicule (Plaque Marocaine LPR)"
                             rules={[{ required: true, message: "L'immatriculation est requise." }]}
                           >
-                            <Input prefix={<CarOutlined />} placeholder="12345-A-1" className="rounded-xl py-2" />
+                            <MoroccanPlateInput />
                           </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
-                          <Form.Item name="marque" label="Marque & Modèle (Optionnel)">
-                            <Input placeholder="ex: Dacia Logan / Golf 8" className="rounded-xl py-2" />
+                      </Row>
+
+                      {/* Independent Full-Width Row 2: Marque & Modèle */}
+                      <Row gutter={16}>
+                        <Col span={24}>
+                          <Form.Item name="marque" label="Marque & Modèle du Véhicule (Optionnel)">
+                            <Input placeholder="ex: Dacia Logan / Golf 8 / Renault Clio" className="rounded-xl py-2" />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -1241,41 +1260,98 @@ export function PublicQrForm() {
               <Form.Item
                 name="formuleCode"
                 label="Sélectionnez la Formule Tarifaire"
+                initialValue={typeDemande === "CORPORATE" ? "CORP_24_7" : "24H7J"}
                 rules={[{ required: true, message: "Veuillez sélectionner une formule." }]}
               >
                 <Select placeholder="Choisir une formule..." size="large" className="rounded-xl">
-                  <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
-                  <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
-                  <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
-                  <Option value="MOTO">Tarif Spécial Deux-roues — 200 DH / mois</Option>
+                  {typeDemande === "CORPORATE" ? (
+                    <>
+                      <Option value="CORP_8_20">Pass Diurne 08:00 - 20:00 — 500 DH / mois / place</Option>
+                      <Option value="CORP_8_22">Pass Étendu 08:00 - 22:00 — 550 DH / mois / place</Option>
+                      <Option value="CORP_24_7">Pass Permanent 24h / 7j — 650 DH / mois / place</Option>
+                    </>
+                  ) : (
+                    <>
+                      <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
+                      <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
+                      <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
+                    </>
+                  )}
                 </Select>
               </Form.Item>
 
-              <Form.Item
-                name="dureeMois"
-                label="Durée de Souscription Souhaitée (Mois)"
-                initialValue={3}
-                rules={[{ required: true, message: "Choisissez la durée." }]}
-              >
-                <Select size="large" className="rounded-xl">
-                  <Option value={3}>3 Mois</Option>
-                  <Option value={6}>6 Mois</Option>
-                  <Option value={9}>9 Mois</Option>
-                  <Option value={12}>12 Mois (1 An)</Option>
-                </Select>
-              </Form.Item>
+              {typeDemande === "CORPORATE" ? (
+                <div className="max-w-[260px]">
+                  <Form.Item
+                    name="dureeMois"
+                    label="Durée de Contrat Entreprise"
+                    initialValue={240}
+                  >
+                    <Input
+                      readOnly
+                      value="20 Ans (240 Mois)"
+                      size="large"
+                      className="rounded-xl bg-purple-50 text-purple-800 border-purple-200 font-bold"
+                      suffix={<Tag color="purple" className="font-extrabold m-0">20 Ans</Tag>}
+                    />
+                  </Form.Item>
+                </div>
+              ) : (
+                <div className="max-w-[260px]">
+                  <Form.Item
+                    name="dureeMois"
+                    label="Durée de Souscription Souhaitée"
+                    initialValue={3}
+                    rules={[{ required: true, message: "Choisissez la durée." }]}
+                  >
+                    <Select size="large" className="rounded-xl">
+                      <Option value={3}>3 Mois</Option>
+                      <Option value={6}>6 Mois</Option>
+                      <Option value={9}>9 Mois</Option>
+                      <Option value={12}>12 Mois (1 An)</Option>
+                    </Select>
+                  </Form.Item>
+                </div>
+              )}
 
-              <Form.Item
-                name="modePaiement"
-                label="Mode de Règlement Homologué"
-                initialValue="ESPECES"
-                rules={[{ required: true }]}
-              >
-                <Radio.Group buttonStyle="solid">
-                  <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
-                  <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
-                </Radio.Group>
-              </Form.Item>
+              {typeDemande === "CORPORATE" ? (
+                <Form.Item
+                  name="modePaiement"
+                  label="Mode de Règlement Entreprise & Engagement Contractuel"
+                  initialValue="CHEQUE"
+                >
+                  <div className="p-4 rounded-2xl border border-purple-200 bg-purple-50/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                        <FileTextOutlined />
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-sm text-purple-950 block">
+                          Chèque Bancaire & Contrat Signé Légalisé
+                        </span>
+                        <span className="text-xs text-purple-700 block">
+                          Mode officiel Entreprise (Chèque certifié + Contrat 20 ans légalisé)
+                        </span>
+                      </div>
+                    </div>
+                    <Tag color="purple" className="font-extrabold px-3 py-1 rounded-full text-xs m-0 shrink-0">
+                      Règlement par Chèque Obligatoire
+                    </Tag>
+                  </div>
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="modePaiement"
+                  label="Mode de Règlement Homologué"
+                  initialValue="ESPECES"
+                  rules={[{ required: true }]}
+                >
+                  <Radio.Group buttonStyle="solid">
+                    <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
+                    <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              )}
             </Form>
 
             <div className="mt-8 flex justify-between">
@@ -1326,38 +1402,69 @@ export function PublicQrForm() {
                   <Tag color="blue" className="font-bold border-none px-3 py-1 rounded-full">Dossier RRM</Tag>
                 </div>
 
-                <Row gutter={[16, 16]}>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
-                    <span className="text-sm font-bold text-slate-900">
-                      {form.getFieldValue("nom") ? `${form.getFieldValue("nom")} ${form.getFieldValue("prenom") || ""}` : form.getFieldValue("raisonSociale") || "Particulier"}
-                    </span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant (CIN/ICE)</span>
-                    <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || form.getFieldValue("ice") || "AB123456"}</span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
-                    <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "12345-A-1"}</span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
-                    <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
-                  </Col>
-                </Row>
+                {typeDemande === "CORPORATE" ? (
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Société / Entreprise</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("raisonSociale") || "Entreprise Souscripte"}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiants (ICE & RC)</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        ICE: {form.getFieldValue("ice") || "-"} | RC: {form.getFieldValue("rc") || "-"}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Responsable Flotte</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("nomContact") || "Contact Flotte"} ({form.getFieldValue("telephone") || ""})
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Nombre de Cartes RFID</span>
+                      <Tag color="purple" className="font-extrabold text-xs">
+                        {nombreVehiculesCorporate} Cartes Flotte
+                      </Tag>
+                    </Col>
+                  </Row>
+                ) : (
+                  <Row gutter={[16, 16]}>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("nom")} {form.getFieldValue("prenom") || ""}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant CIN</span>
+                      <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || "-"}</span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
+                      <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "-"}</span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
+                      <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
+                    </Col>
+                  </Row>
+                )}
 
                 <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div>
                     <span className="text-xs text-slate-500 block font-semibold">Formule Tarifaire & Durée :</span>
                     <span className="text-sm font-extrabold text-slate-900">
-                      {watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : watchedFormuleCode === "NUIT" ? "Pass Nocturne 19h-08h (350 DH/mois)" : "Tarif Deux-roues (200 DH/mois)"} — {totalMonths} Mois
+                      {typeDemande === "CORPORATE"
+                        ? `${watchedFormuleCode === "CORP_8_20" ? "Pass Diurne 08h-20h (500 DH/mois/place)" : watchedFormuleCode === "CORP_8_22" ? "Pass Étendu 08h-22h (550 DH/mois/place)" : "Pass Permanent 24h/7j (650 DH/mois/place)"} — 20 Ans (240 Mois)`
+                        : `${watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : "Pass Nocturne 19h-08h (350 DH/mois)"} — ${totalMonths} Mois`}
                     </span>
                   </div>
                   <div className="bg-secondary/10 px-4 py-2 rounded-xl text-right">
                     <span className="text-xs text-slate-500 block font-semibold">Montant Total Estimé</span>
                     <span className="text-lg font-black text-secondary">
-                      {totalPrice.toLocaleString()} DH TTC
+                      {totalPrice.toLocaleString("fr-FR")} DH TTC
                     </span>
                   </div>
                 </div>

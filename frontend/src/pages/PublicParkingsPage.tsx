@@ -570,7 +570,7 @@ export function PublicParkingsPage() {
                   {/* UNFOLDED CARD CONTENT (EXPANDED PRICING FORMULAS GRID) */}
                   {isExpanded && (
                     <div className="p-6 pt-2 border-t border-slate-100 bg-slate-50/50 space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Formula 1: 24h/7j */}
                         <div className="bg-white p-5 rounded-2xl border border-secondary/40 shadow-sm flex flex-col justify-between">
                           <div>
@@ -637,29 +637,6 @@ export function PublicParkingsPage() {
                             className="border-slate-300 text-slate-800 rounded-xl font-bold text-xs h-9 hover:bg-slate-50"
                           >
                             Souscrire Nocturne →
-                          </Button>
-                        </div>
-
-                        {/* Formula 4: Moto */}
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <CarOutlined className="text-emerald-600 text-lg" />
-                              <h4 className="font-extrabold text-slate-900 m-0 text-sm">Pass Deux-roues (Moto)</h4>
-                            </div>
-                            <p className="text-xs text-slate-500 mb-3">Emplacements réservés motocycles</p>
-                            <div className="text-2xl font-black text-emerald-700 mb-3">
-                              200 <span className="text-xs font-semibold text-slate-500">DH / mois</span>
-                            </div>
-                          </div>
-                          <Button
-                            type="default"
-                            block
-                            size="small"
-                            onClick={() => navigate(`/demande-publique?parkingId=${parking.id}&plan=MOTO`)}
-                            className="border-slate-300 text-slate-800 rounded-xl font-bold text-xs h-9 hover:bg-slate-50"
-                          >
-                            Souscrire Moto →
                           </Button>
                         </div>
                       </div>

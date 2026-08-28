@@ -523,15 +523,23 @@ export function DemandeDetail() {
         >
           <Form.Item
             name="modePaiement"
-            label="Mode de Paiement"
+            label="Mode de Règlement & Légalisation"
             rules={[{ required: true, message: "Veuillez choisir un mode de paiement" }]}
           >
-            <Select
-              options={[
-                { label: "Espèces (Guichet)", value: "ESPECES" },
-                { label: "Chèque Bancaire", value: "CHEQUE" },
-              ]}
-            />
+            {data.typeClient === "ENTREPRISE" ? (
+              <Input
+                readOnly
+                value="Chèque Bancaire & Contrat Signé Légalisé"
+                style={{ fontWeight: "bold", color: "#7e22ce", backgroundColor: "#f3e8ff", borderColor: "#d8b4fe" }}
+              />
+            ) : (
+              <Select
+                options={[
+                  { label: "Espèces (Guichet)", value: "ESPECES" },
+                  { label: "Chèque Bancaire", value: "CHEQUE" },
+                ]}
+              />
+            )}
           </Form.Item>
 
           <Form.Item
