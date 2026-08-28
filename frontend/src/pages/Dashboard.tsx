@@ -36,10 +36,8 @@ import type { AuditLog } from "../features/admin/types";
 export function Dashboard() {
   const { role } = useAuth();
   const navigate = useNavigate();
-  // Initialize default parking filter for AGENT (Agent works at assigned Parking Agdal Gare = ID 1)
-  const [filters, setFilters] = useState<GlobalFilters>(() => {
-    return role === "AGENT" ? { parkingId: 1 } : {};
-  });
+  // Initialize global filters (default: All Parkings for all roles)
+  const [filters, setFilters] = useState<GlobalFilters>({});
 
   if (!role) return null;
 
