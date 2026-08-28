@@ -84,6 +84,7 @@ export function ContratsList() {
         columns={columns}
         dataSource={data}
         loading={isLoading}
+        scroll={{ x: 1200 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/contrats/${record.id}`),
           style: { cursor: "pointer" },

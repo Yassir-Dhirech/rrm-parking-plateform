@@ -143,6 +143,7 @@ export function CartesList() {
           columns={columns}
           dataSource={filteredData}
           loading={isLoading}
+          scroll={{ x: 1200 }}
           pagination={{ pageSize: 8 }}
           onRow={(record) => ({
             onClick: () => navigate(`${basePath}/cartes/${record.id}`),

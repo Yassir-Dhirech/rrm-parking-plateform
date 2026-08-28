@@ -52,7 +52,7 @@ export interface DemandeListItem {
   // Performance & SLA Tracking
   agentAffecteNom?: string;
   traiteParNom?: string;
-  roleTraitePar?: "AGENT" | "SUPERVISEUR";
+  roleTraitePar?: "AGENT" | "SUPERVISEUR" | "RESPONSABLE";
   dateTraitement?: string;
   dureeTraitementJours?: number;
   slaRestantJours?: number;
@@ -81,6 +81,7 @@ export interface DemandeDetail extends DemandeListItem {
   typeClient?: TypeClient;
   cin?: string;
   ice?: string;
+  rc?: string;
   numeroCarteAbonne?: string;
   nouveauParkingNom?: string;
   ancienneImmatriculation?: string;

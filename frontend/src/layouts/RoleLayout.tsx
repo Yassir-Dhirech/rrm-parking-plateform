@@ -10,7 +10,6 @@ import { MessagerieDrawer } from "../components/messaging/MessagerieDrawer";
 import {
   DashboardOutlined,
   FileTextOutlined,
-  CreditCardOutlined,
   IdcardOutlined,
   SolutionOutlined,
   FileDoneOutlined,
@@ -30,7 +29,6 @@ const menuIconMap: Record<string, React.ReactNode> = {
   "carte-parkings": <EnvironmentOutlined />,
   demandes: <FileTextOutlined />,
   abonnements: <SolutionOutlined />,
-  paiements: <CreditCardOutlined />,
   factures: <FileDoneOutlined />,
   cartes: <IdcardOutlined />,
   contrats: <FileProtectOutlined />,

@@ -219,6 +219,7 @@ export function AbonnementsList() {
         columns={columns}
         dataSource={filteredData}
         loading={isLoading}
+        scroll={{ x: 1300 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/abonnements/${record.id}`),
           style: { cursor: "pointer" },
