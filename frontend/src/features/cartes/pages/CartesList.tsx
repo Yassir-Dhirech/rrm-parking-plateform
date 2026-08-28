@@ -47,24 +47,60 @@ export function CartesList() {
       title: "N° Carte RFID",
       dataIndex: "numeroCarte",
       key: "numeroCarte",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.numeroCarte.localeCompare(b.numeroCarte),
       render: (num: string) => <Tag color="blue" style={{ fontWeight: 600 }}>{num}</Tag>,
     },
     {
       title: "Titulaire Client",
       dataIndex: "clientNom",
       key: "clientNom",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.clientNom.localeCompare(b.clientNom),
       render: (name: string) => <strong>{name}</strong>,
     },
     {
       title: "Référence Abonnement",
       dataIndex: "abonnementReference",
       key: "abonnementReference",
+      sorter: (a: CarteListItem, b: CarteListItem) => a.abonnementReference.localeCompare(b.abonnementReference),
     },
     {
-      title: "Statut Système Barrières",
+      title: "Impression",
+      dataIndex: "estImprimee",
+      key: "estImprimee",
+      render: (_: any, record: CarteListItem) =>
+        record.estImprimee ? <Tag color="green">Imprimée</Tag> : <Tag color="orange">Non Imprimée</Tag>,
+    },
+    {
+      title: "Test & Valide",
+      dataIndex: "estTestee",
+      key: "estTestee",
+      render: (_: any, record: CarteListItem) =>
+        record.estTestee ? <Tag color="green">Testée</Tag> : <Tag color="volcano">Non Testée</Tag>,
+    },
+    {
+      title: "Délivrée Abonné",
+      dataIndex: "estDelivree",
+      key: "estDelivree",
+      render: (_: any, record: CarteListItem) =>
+        record.estDelivree ? <Tag color="purple">Délivrée</Tag> : <Tag color="gold">Au Guichet</Tag>,
+    },
+    {
+      title: "Statut Global Registre",
       dataIndex: "statut",
       key: "statut",
-      render: (statut: CarteListItem["statut"]) => <StatusBadge statut={statut} />,
+      filters: [
+        { text: "À préparer", value: "A_PREPARER" },
+        { text: "À activer", value: "A_ACTIVER" },
+        { text: "Active", value: "ACTIVE" },
+        { text: "Désactivée", value: "DESACTIVEE" },
+      ],
+      onFilter: (value: any, record: CarteListItem) => record.statut === value,
+      render: (statut: CarteListItem["statut"]) => {
+        if (statut === "A_ACTIVER" || statut === "A_PREPARER") {
+          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente activation (Non Traitée)</Tag>;
+        }
+        return <StatusBadge statut={statut} />;
+      },
     },
   ];
 
@@ -85,7 +121,7 @@ export function CartesList() {
         <Col xs={24} sm={12}>
           <Card size="small" style={{ borderRadius: 8, borderColor: "#e2e8f0" }}>
             <Statistic
-              title="Cartes RFID Active sur Barrières"
+              title="Cartes RFID Actives & Délivrées"
               value={countActive}
               prefix={<CheckCircleOutlined style={{ color: "#16a34a" }} />}
               valueStyle={{ color: "#16a34a" }}
@@ -97,10 +133,10 @@ export function CartesList() {
       <Card style={{ borderRadius: 10, borderColor: "#cbd5e1" }}>
         <div style={{ marginBottom: 16 }}>
           <Title level={4} style={{ margin: 0 }}>
-            <IdcardOutlined /> Gestion des Cartes d'Accès RFID (Barrières d'Accès)
+            <IdcardOutlined /> Registre & Information des Cartes d'Accès RFID
           </Title>
           <Text type="secondary">
-            Consultez les cartes d'accès, lancez l'impression RFID et synchronisez avec le système externe des barrières d'accès.
+            Consultez le registre des cartes d'accès, préparez l'impression et partagez les informations d'abonnement.
           </Text>
         </div>
 
@@ -128,6 +164,7 @@ export function CartesList() {
           columns={columns}
           dataSource={filteredData}
           loading={isLoading}
+          scroll={{ x: 1200 }}
           pagination={{ pageSize: 8 }}
           onRow={(record) => ({
             onClick: () => navigate(`${basePath}/cartes/${record.id}`),

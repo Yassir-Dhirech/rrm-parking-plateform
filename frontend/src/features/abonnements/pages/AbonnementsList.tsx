@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Table, Card, Typography, Tag, Button, Modal, Form, Input, Select, Radio, Checkbox, message, Segmented, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, CarOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { getAbonnementsMock, createStaffAbonnementMock, type CreateStaffAbonnementInput } from "../../../api/abonnementsMock";
 import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
+import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { formatDate } from "../../../lib/dateUtils";
@@ -22,6 +23,7 @@ export function AbonnementsList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<string>("ALL");
   const [form] = Form.useForm();
+  const selectedType = Form.useWatch("type", form);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["abonnements"],
@@ -43,7 +45,7 @@ export function AbonnementsList() {
       type: values.type as TypeAbonnement,
       clientNom: values.clientNom,
       parkingNom: values.parkingNom || "Parking Agdal Gare",
-      immatriculation: values.immatriculation || "STF-123",
+      immatriculation: values.immatriculation || "12345 | أ (A) | 1",
       numeroMatriculeStaff: values.numeroMatriculeStaff,
       dureeMois: values.dureeMois || 12,
       exonereStaff: values.type === "STAFF" ? true : values.exonereStaff,
@@ -61,12 +63,19 @@ export function AbonnementsList() {
       title: "Référence",
       dataIndex: "reference",
       key: "reference",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.reference.localeCompare(b.reference),
       render: (ref: string) => <strong>{ref}</strong>,
     },
     {
       title: "Type d'Abonnement",
       dataIndex: "type",
       key: "type",
+      filters: [
+        { text: "Staff RRM", value: "STAFF" },
+        { text: "Régulier", value: "REGULIER" },
+        { text: "Entreprise", value: "ENTREPRISE" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.type === value,
       render: (value: TypeAbonnement) => {
         if (value === "STAFF") {
           return (
@@ -81,32 +90,91 @@ export function AbonnementsList() {
         return <Tag color="blue">Régulier</Tag>;
       },
     },
-    { title: "Client / Bénéficiaire", dataIndex: "clientNom", key: "clientNom" },
-    { title: "Parking d'Attache", dataIndex: "parkingNom", key: "parkingNom" },
     {
-      title: "Traité Par",
+      title: "Client / Bénéficiaire",
+      dataIndex: "clientNom",
+      key: "clientNom",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.clientNom.localeCompare(b.clientNom),
+    },
+    {
+      title: "Parking d'Attache",
+      dataIndex: "parkingNom",
+      key: "parkingNom",
+      filters: [
+        { text: "Parking Agdal Gare", value: "Parking Agdal Gare" },
+        { text: "Parking Bab El Had", value: "Parking Bab El Had" },
+        { text: "Parking Hassan II", value: "Parking Hassan II" },
+        { text: "Parking Chellah", value: "Parking Chellah" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.parkingNom.includes(value as string),
+      filterSearch: true,
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.parkingNom.localeCompare(b.parkingNom),
+    },
+    {
+      title: "Créé / Traité Par",
       dataIndex: "traiteParNom",
       key: "traiteParNom",
-      render: (agentNom?: string) =>
-        agentNom ? (
+      filters: [
+        { text: "Créé par Responsable", value: "RESPONSABLE" },
+        { text: "Traité par Agent Guichet", value: "AGENT" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => {
+        if (value === "RESPONSABLE") return record.type === "ENTREPRISE" || record.type === "STAFF" || (record.traiteParNom || "").includes("Responsable");
+        return !!record.traiteParNom && !record.traiteParNom.includes("Responsable");
+      },
+      render: (agentNom?: string, record?: AbonnementListItem) => {
+        if (record?.type === "ENTREPRISE" || record?.type === "STAFF" || (agentNom || "").includes("Responsable")) {
+          return (
+            <Tag color="purple" style={{ fontWeight: 600 }}>
+              <UserOutlined style={{ marginRight: 4 }} />
+              Responsable (Direct)
+            </Tag>
+          );
+        }
+        return agentNom ? (
           <Tag color="cyan">
             <UserOutlined style={{ marginRight: 4 }} />
             {agentNom}
           </Tag>
         ) : (
           <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
-            Non Traité Encore
+            En attente validation
           </Tag>
-        ),
+        );
+      },
     },
     {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
-      render: (statut: AbonnementListItem["statut"]) => <StatusBadge statut={statut} />,
+      filters: [
+        { text: "Actif (Carte Prête)", value: "ACTIF" },
+        { text: "En Attente Carte RFID", value: "EN_ATTENTE" },
+        { text: "Expiré", value: "EXPIRE" },
+        { text: "Suspendu", value: "SUSPENDU" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.statut === value,
+      render: (statut: AbonnementListItem["statut"]) => {
+        if (statut === "EN_ATTENTE") {
+          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente impression & activation carte RFID</Tag>;
+        }
+        return <StatusBadge statut={statut} />;
+      },
     },
-    { title: "Date Début", dataIndex: "dateDebut", key: "dateDebut", render: (d: string) => formatDate(d) },
-    { title: "Date Expiration", dataIndex: "dateFin", key: "dateFin", render: (d: string) => formatDate(d) },
+    {
+      title: "Date Début",
+      dataIndex: "dateDebut",
+      key: "dateDebut",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateDebut).getTime() - new Date(b.dateDebut).getTime(),
+      render: (d: string) => formatDate(d),
+    },
+    {
+      title: "Date Expiration",
+      dataIndex: "dateFin",
+      key: "dateFin",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateFin).getTime() - new Date(b.dateFin).getTime(),
+      render: (d: string) => formatDate(d),
+    },
   ];
 
   return (
@@ -151,6 +219,7 @@ export function AbonnementsList() {
         columns={columns}
         dataSource={filteredData}
         loading={isLoading}
+        scroll={{ x: 1300 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/abonnements/${record.id}`),
           style: { cursor: "pointer" },
@@ -200,8 +269,9 @@ export function AbonnementsList() {
             </Col>
           </Row>
 
+          {/* Parking Selection Row */}
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="parkingNom" label="Parking d'Attache" rules={[{ required: true }]}>
                 <Select placeholder="Sélectionner le parking">
                   <Option value="Parking Agdal Gare">Parking Agdal Gare</Option>
@@ -212,24 +282,37 @@ export function AbonnementsList() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="immatriculation" label="Plaque Véhicule (LPR)" rules={[{ required: true, message: "Plaque requise" }]}>
-                <Input prefix={<CarOutlined style={{ color: "#94a3b8" }} />} placeholder="Ex: 12345-A-6" />
+          </Row>
+
+          {/* Independent Full-Width Row for Moroccan Plate Input */}
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="immatriculation" label="Matricule du Véhicule (Plaque Maroc LPR)" rules={[{ required: true, message: "L'immatriculation est requise." }]}>
+                <MoroccanPlateInput />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
-                <Select>
-                  <Option value={3}>3 Mois (Courte Durée)</Option>
-                  <Option value={6}>6 Mois (Courte Durée)</Option>
-                  <Option value={9}>9 Mois (Courte Durée)</Option>
-                  <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
-                  <Option value={240}>20 Ans (Longue Durée / Concession)</Option>
-                </Select>
-              </Form.Item>
+              {selectedType === "ENTREPRISE" ? (
+                <Form.Item name="dureeMois" label="Durée de Contrat Entreprise" initialValue={240}>
+                  <Input
+                    readOnly
+                    value="20 Ans (Longue Durée — 240 Mois)"
+                    style={{ fontWeight: "bold", color: "#7e22ce", backgroundColor: "#f3e8ff", borderColor: "#d8b4fe" }}
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
+                  <Select>
+                    <Option value={3}>3 Mois (Courte Durée)</Option>
+                    <Option value={6}>6 Mois (Courte Durée)</Option>
+                    <Option value={9}>9 Mois (Courte Durée)</Option>
+                    <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
+                  </Select>
+                </Form.Item>
+              )}
             </Col>
             <Col span={12}>
               <Form.Item name="exonereStaff" valuePropName="checked" label="Facturation / Exonération">

@@ -29,11 +29,11 @@ import {
   LockOutlined,
   UserOutlined,
   SafetyCertificateOutlined,
-  InfoCircleOutlined,
   CheckOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
   AlertOutlined,
+  NotificationOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -44,6 +44,7 @@ import {
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { type TypeDemande, typeDemandeLabels } from "../../../lib/enums";
 import { formatDate } from "../../../lib/dateUtils";
 import { type PaymentInfoInput } from "../types";
@@ -86,6 +87,15 @@ export function DemandeDetail() {
       enregistrerPaiementAgentMock(demandeId, payInput, `${userName ?? "Utilisateur"} (${role})`),
     onSuccess: () => {
       message.success("Paiement encaissé et confirmé avec succès. Le dossier est prêt pour validation.");
+      sendClientNotificationMock({
+        channel: "BOTH",
+        typeEvenement: "PAIEMENT_CONFIRME",
+        destinataireNom: data?.clientNom || "Client Souscripteur",
+        destinataireEmail: data?.email || "client.rrm@example.com",
+        destinataireTelephone: data?.telephone || "0612345678",
+        sujet: "RRM - Confirmation de réception de paiement",
+        contenu: `Bonjour ${data?.clientNom || "Client"}, nous vous confirmons la réception et le quittancement de votre paiement pour la demande ${data?.reference}.`,
+      });
       setPaymentModalOpen(false);
       paymentForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -111,6 +121,15 @@ export function DemandeDetail() {
     mutationFn: () => rejeterDemandeMock(demandeId, `[Refus ${rejectType}] ${raison}`),
     onSuccess: () => {
       message.success(`Demande rejetée (${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier non conforme"})`);
+      sendClientNotificationMock({
+        channel: "BOTH",
+        typeEvenement: rejectType === "PAIEMENT" ? "CHEQUE_REFUSE" : "CHEQUE_REFUSE",
+        destinataireNom: data?.clientNom || "Client Souscripteur",
+        destinataireEmail: data?.email || "client.rrm@example.com",
+        destinataireTelephone: data?.telephone || "0612345678",
+        sujet: `RRM - Information urgente : ${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier incomplet"}`,
+        contenu: `Bonjour ${data?.clientNom || "Client"}, votre dossier ${data?.reference} nécessite une régularisation. Motif : ${raison}.`,
+      });
       setRejectModalOpen(false);
       setRaison("");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
@@ -184,17 +203,6 @@ export function DemandeDetail() {
           />
         </div>
 
-        {data.typeDemande === "RENOUVELLEMENT" && (
-          <Alert
-            type="success"
-            showIcon
-            icon={<SafetyCertificateOutlined />}
-            message="Renouvellement d'Abonnement Existant — Validation Automatique"
-            description="Le dossier et l'éligibilité de ce client ont déjà été contrôlés lors de sa première souscription. L'encaissement du règlement valide et prolonge automatiquement l'abonnement sans nécessiter une seconde validation de dossier."
-            style={{ marginBottom: 20 }}
-          />
-        )}
-
         {data.statut === "REJETEE" && data.raisonRejet && (
           <Alert
             type="error"
@@ -218,23 +226,23 @@ export function DemandeDetail() {
             </Col>
 
             <Col xs={24} md={8}>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Durée de Traitement (SLA 7 Jours) :</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Durée Traitement (SLA 7 Jours) :</div>
               {data.dureeTraitementJours !== undefined ? (
                 <strong style={{ fontSize: 14, color: "#16a34a" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  {data.dureeTraitementJours} Jour(s) (Date : {data.dateTraitement})
+                  {data.dureeTraitementJours} Jours ({formatDate(data.dateTraitement ?? "")})
                 </strong>
               ) : (
                 <strong style={{ fontSize: 14, color: "#0284c7" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  En cours ({data.slaRestantJours ?? 5} jour(s) restant(s))
+                  En cours ({data.slaRestantJours ?? 5}j restants)
                 </strong>
               )}
             </Col>
 
             <Col xs={24} md={8} style={{ textAlign: "right" }}>
               {data.slaStatut === "ALERT_1_JOUR" && (
-                <Tag color="red" icon={<AlertOutlined />}>URGENT : 1 Jour Restant SLA</Tag>
+                <Tag color="red" icon={<AlertOutlined />}>URGENT : 1 Jour Restant</Tag>
               )}
               {data.slaStatut === "ALERT_3_JOURS" && (
                 <Tag color="warning" icon={<ClockCircleOutlined />}>Alerte : 3 Jours Restants</Tag>
@@ -243,7 +251,7 @@ export function DemandeDetail() {
                 <Tag color="red" icon={<AlertOutlined />}>Retard SLA (&gt;7 Jours)</Tag>
               )}
               {(!data.slaStatut || data.slaStatut === "DANS_LES_DELAIS") && (
-                <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais (7 Jours)</Tag>
+                <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais</Tag>
               )}
             </Col>
           </Row>
@@ -261,15 +269,15 @@ export function DemandeDetail() {
               {data.typeClient === "ENTREPRISE" ? "Entreprise" : "Particulier"}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Nom du Client / Souscripteur">
+          <Descriptions.Item label="Souscripteur">
             <strong>{data.clientNom}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label={data.typeClient === "ENTREPRISE" ? "ICE Entreprise" : "CIN Client"}>
+          <Descriptions.Item label={data.typeClient === "ENTREPRISE" ? "ICE" : "CIN"}>
             <strong>{data.ice || data.cin || "A748392"}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Email de Contact">{data.email}</Descriptions.Item>
-          <Descriptions.Item label="Numéro GSM">{data.telephone}</Descriptions.Item>
-          <Descriptions.Item label="Date de Soumission" span={2}>
+          <Descriptions.Item label="Email">{data.email}</Descriptions.Item>
+          <Descriptions.Item label="GSM">{data.telephone}</Descriptions.Item>
+          <Descriptions.Item label="Date Soumission" span={2}>
             {formatDate(data.dateCreation)}
           </Descriptions.Item>
         </Descriptions>
@@ -281,7 +289,7 @@ export function DemandeDetail() {
             <Space>
               <FolderOutlined style={{ color: "#0284c7" }} />
               <span style={{ color: "#003566", fontWeight: 700 }}>
-                Spécificités du Dossier : {typeDemandeLabels[data.typeDemande as TypeDemande]?.label}
+                Spécificités : {typeDemandeLabels[data.typeDemande as TypeDemande]?.label}
               </span>
             </Space>
           }
@@ -289,19 +297,19 @@ export function DemandeDetail() {
         >
           {data.typeDemande === "NOUVEL_ABONNEMENT" && (
             <Descriptions column={2} bordered size="small">
-              <Descriptions.Item label="Parking d'Attache Sollicité">
+              <Descriptions.Item label="Parking Sollicité">
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
-              <Descriptions.Item label="Formule Tarifaire Choisie">
+              <Descriptions.Item label="Formule Tarifaire">
                 <Tag color="blue">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Durée de Souscription">
+              <Descriptions.Item label="Durée Souscription">
                 {data.dureeMois || 6} Mois
               </Descriptions.Item>
-              <Descriptions.Item label="Immatriculation Véhicule (LPR)">
+              <Descriptions.Item label="Immatriculation">
                 <Tag color="cyan">{data.immatriculation}</Tag> ({data.typeVehicule || "Voiture"})
               </Descriptions.Item>
-              <Descriptions.Item label="Montant Tarifaire Total TTC" span={2}>
+              <Descriptions.Item label="Montant Total" span={2}>
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
                   {data.montantTotal || 3600} MAD TTC
                 </strong>
@@ -311,24 +319,24 @@ export function DemandeDetail() {
 
           {data.typeDemande === "RENOUVELLEMENT" && (
             <Descriptions column={2} bordered size="small">
-              <Descriptions.Item label="N° Carte Abonné RFID Actuel">
-                <Tag color="gold" style={{ fontSize: 14, fontWeight: 700 }}>
+              <Descriptions.Item label="Carte RFID">
+                <Tag color="gold" style={{ fontSize: 13, fontWeight: 700 }}>
                   {data.numeroCarteAbonne || "CRT-2025-001099"}
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Parking d'Attache">
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
-              <Descriptions.Item label="Formule à Prolonger">
+              <Descriptions.Item label="Formule">
                 <Tag color="purple">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Période de Prolongation">
+              <Descriptions.Item label="Période Prolongation">
                 {data.dureeMois || 12} Mois
               </Descriptions.Item>
-              <Descriptions.Item label="Immatriculation Véhicule Rattaché">
+              <Descriptions.Item label="Immatriculation">
                 <Tag color="cyan">{data.immatriculation}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Montant du Renouvellement">
+              <Descriptions.Item label="Montant Renouvellement">
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
                   {data.montantTotal || 6600} MAD TTC
                 </strong>
@@ -338,19 +346,19 @@ export function DemandeDetail() {
 
           {data.typeDemande === "CHANGEMENT_PARKING" && (
             <Descriptions column={2} bordered size="small">
-              <Descriptions.Item label="N° Carte Abonné Actif">
+              <Descriptions.Item label="Carte RFID">
                 <Tag color="gold">{data.numeroCarteAbonne || "CRT-2025-000844"}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Parking d'Origine Actuel">
+              <Descriptions.Item label="Parking Origine">
                 <Tag color="default">{data.parkingNom}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Nouveau Parking Demande (Destination)" span={2}>
-                <Tag color="orange" style={{ fontSize: 14, padding: "4px 12px" }}>
+              <Descriptions.Item label="Parking Destination" span={2}>
+                <Tag color="orange" style={{ fontSize: 13, padding: "2px 8px" }}>
                   <ArrowRightOutlined style={{ marginRight: 6 }} />
-                  Destination : {data.nouveauParkingNom || "Parking Agdal Gare"}
+                  {data.nouveauParkingNom || "Parking Agdal Gare"}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Motif du Transfert Demande" span={2}>
+              <Descriptions.Item label="Motif Transfert" span={2}>
                 <em>{data.motifChangement || "Changement de lieu de travail ou de résidence."}</em>
               </Descriptions.Item>
             </Descriptions>
@@ -358,24 +366,24 @@ export function DemandeDetail() {
 
           {data.typeDemande === "PERTE_CARTE" && (
             <Descriptions column={2} bordered size="small">
-              <Descriptions.Item label="N° Carte Abonné Perdue / Volée">
-                <Tag color="volcano" style={{ fontSize: 14, fontWeight: 700 }}>
+              <Descriptions.Item label="Carte Perdue">
+                <Tag color="volcano" style={{ fontSize: 13, fontWeight: 700 }}>
                   {data.numeroCarteAbonne || "CRT-2025-000310"}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Statut de la Carte d'Origine">
-                <Tag color="red">Désactivée & Bloquée aux Bornes</Tag>
+              <Descriptions.Item label="Statut Origine">
+                <Tag color="red">Désactivée & Bloquée</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Parking d'Attache">
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
-              <Descriptions.Item label="Immatriculation Véhicule Associé">
+              <Descriptions.Item label="Immatriculation">
                 <Tag color="cyan">{data.immatriculation}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Motif de la Déclaration" span={2}>
-                {data.motifPerte || "Perte accidentelle du badge physique d'abonné."}
+              <Descriptions.Item label="Motif Déclaration" span={2}>
+                {data.motifPerte || "Perte accidentelle du badge."}
               </Descriptions.Item>
-              <Descriptions.Item label="Frais d'Émission du Duplicata RFID" span={2}>
+              <Descriptions.Item label="Frais Duplicata" span={2}>
                 <strong style={{ fontSize: 15, color: "#c2410c" }}>
                   {data.fraisDuplicata || 50} MAD TTC
                 </strong>
@@ -388,10 +396,10 @@ export function DemandeDetail() {
         {data.paiementInfo && (
           <>
             <Divider titlePlacement="left" style={{ borderColor: "#cbd5e1" }}>
-              <DollarOutlined style={{ color: "#16a34a" }} /> Informations de Paiement Encaissé
+              <DollarOutlined style={{ color: "#16a34a" }} /> Informations de Paiement
             </Divider>
             <Descriptions column={2} bordered size="small" style={{ backgroundColor: "#f8fafc" }}>
-              <Descriptions.Item label="Mode de Paiement">
+              <Descriptions.Item label="Mode Paiement">
                 <Tag color="green">{data.paiementInfo.modePaiement}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Montant Réglé">
@@ -417,11 +425,6 @@ export function DemandeDetail() {
                   {data.paiementInfo.validePar}
                 </Descriptions.Item>
               )}
-              {data.paiementInfo.remarques && (
-                <Descriptions.Item label="Remarques">
-                  {data.paiementInfo.remarques}
-                </Descriptions.Item>
-              )}
             </Descriptions>
 
             <div style={{ marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
@@ -431,79 +434,39 @@ export function DemandeDetail() {
                 onClick={() => message.info("Génération du reçu de paiement client en cours...")}
                 style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
               >
-                Imprimer Reçu de Paiement (Livraison Client)
+                Imprimer Reçu de Paiement
               </Button>
-              {data.paiementInfo.modePaiement === "CHEQUE" && (
-                <Tag color="purple" style={{ padding: "6px 12px", fontSize: 12 }}>
-                  <InfoCircleOutlined style={{ marginRight: 4 }} />Chèque enregistré — Transmis au service comptable pour dépôt caisse
-                </Tag>
-              )}
             </div>
           </>
         )}
 
-        {/* Section Actions Métier & Séparation des Rôles */}
+        {/* Section Actions Métier */}
         {!isDossierValide && data.statut !== "REJETEE" && (
-          <div style={{ marginTop: 24, padding: "20px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-            <h4 style={{ margin: "0 0 16px 0", color: "#1e293b", fontSize: 15, fontWeight: 600 }}>
-              Séparation des Rôles dans le Workflow : Agent & Superviseur
-            </h4>
-
-            {/* Banner pour l'Agent */}
-            {isAgent && (
-              <Alert
-                type="info"
-                showIcon
-                icon={<UserOutlined />}
-                message="Rôle Agent (Guichet)"
-                description="En tant qu'Agent, votre rôle consiste à encaisser le paiement du client et à le confirmer. Une fois le paiement confirmé, le dossier est transmis au Superviseur pour la validation définitive de la conformité du dossier."
-                style={{ marginBottom: 16 }}
-              />
-            )}
-
-            {/* Banner pour le Superviseur */}
-            {isSuperviseur && (
-              <Alert
-                type="warning"
-                showIcon
-                icon={<SafetyCertificateOutlined />}
-                message="Rôle Superviseur"
-                description={
-                  isPaiementDone
-                    ? "Le règlement a été encaissé. Vous pouvez désormais vérifier les pièces et valider la conformité finale du dossier."
-                    : "Le règlement n'a pas encore été encaissé. Vous devez d'abord encaisser le paiement avant de pouvoir valider la conformité du dossier."
-                }
-                style={{ marginBottom: 16 }}
-              />
-            )}
-
+          <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {/* ÉTAPE 1: Encaisser / Valider le Paiement */}
+              {/* ÉTAPE 1: Encaissement */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
-                <h5 style={{ margin: "0 0 8px 0", color: "#16a34a", fontSize: 13, fontWeight: 600 }}>
-                  <DollarOutlined /> Étape 1: Encaissement du Paiement (Agent / Superviseur)
+                <h5 style={{ margin: "0 0 10px 0", color: "#16a34a", fontSize: 13, fontWeight: 700 }}>
+                  <DollarOutlined /> Étape 1: Encaissement (Agent / Superviseur)
                 </h5>
-                <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-                  Encaisser et saisir le règlement (Espèces, Chèque) au guichet.
-                </p>
                 {isPaiementDone ? (
-                  <Tag color="green" style={{ padding: "6px 12px", fontSize: 12 }}>
-                    <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé & confirmé
+                  <Tag color="green" style={{ padding: "4px 10px", fontSize: 12 }}>
+                    <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
                   </Tag>
                 ) : (
-                  <Space wrap>
+                  <Space size="middle">
                     <Button
                       type="primary"
                       icon={<DollarOutlined />}
-                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
                       onClick={handleOpenPaymentModal}
                     >
-                      Accepter & Encaisser Paiement
+                      Encaisser Paiement
                     </Button>
                     <Button
                       danger
-                      size="small"
                       onClick={() => handleOpenRejectModal("PAIEMENT")}
+                      style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
                     >
                       Refuser Paiement
                     </Button>
@@ -511,19 +474,16 @@ export function DemandeDetail() {
                 )}
               </div>
 
-              {/* ÉTAPE 2: Validation du Dossier (SUPERVISEUR UNIQUEMENT APRÈS PAIEMENT) */}
+              {/* ÉTAPE 2: Validation Dossier */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
-                <h5 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 13, fontWeight: 600 }}>
-                  <FolderOutlined /> Étape 2: Validation de Conformité du Dossier (Superviseur)
+                <h5 style={{ margin: "0 0 10px 0", color: "#2563eb", fontSize: 13, fontWeight: 700 }}>
+                  <FolderOutlined /> Étape 2: Validation Dossier (Superviseur)
                 </h5>
-                <p style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-                  Valider définitivement le dossier et activer l'abonnement (nécessite un paiement préalable).
-                </p>
                 
                 {isAgent && (
-                  <Tooltip title="Réservé au Superviseur après encaissement du paiement">
+                  <Tooltip title="Réservé au Superviseur après encaissement">
                     <Button disabled icon={<LockOutlined />}>
-                      Valider le Dossier (Réservé Superviseur)
+                      Réservé Superviseur
                     </Button>
                   </Tooltip>
                 )}
@@ -538,12 +498,12 @@ export function DemandeDetail() {
                         loading={validerDossierMutation.isPending}
                         style={{ backgroundColor: "#2563eb", borderColor: "#2563eb" }}
                       >
-                        Valider la Conformité & Activer le Dossier
+                        Valider & Activer Dossier
                       </Button>
                     ) : (
-                      <Tooltip title="Vous devez obligatoirement encaisser et enregistrer le paiement à l'Étape 1 avant de valider le dossier.">
+                      <Tooltip title="Encaissement préalable obligatoire à l'Étape 1.">
                         <Button disabled icon={<LockOutlined />}>
-                          Valider le Dossier (Encaissement Requis)
+                          Encaissement Requis
                         </Button>
                       </Tooltip>
                     )}
@@ -552,7 +512,7 @@ export function DemandeDetail() {
                       size="small"
                       onClick={() => handleOpenRejectModal("DOSSIER")}
                     >
-                      Refuser le Dossier
+                      Refuser Dossier
                     </Button>
                   </Space>
                 )}
@@ -583,15 +543,23 @@ export function DemandeDetail() {
         >
           <Form.Item
             name="modePaiement"
-            label="Mode de Paiement"
+            label="Mode de Règlement & Légalisation"
             rules={[{ required: true, message: "Veuillez choisir un mode de paiement" }]}
           >
-            <Select
-              options={[
-                { label: "Espèces (Guichet)", value: "ESPECES" },
-                { label: "Chèque Bancaire", value: "CHEQUE" },
-              ]}
-            />
+            {data.typeClient === "ENTREPRISE" ? (
+              <Input
+                readOnly
+                value="Chèque Bancaire & Contrat Signé Légalisé"
+                style={{ fontWeight: "bold", color: "#7e22ce", backgroundColor: "#f3e8ff", borderColor: "#d8b4fe" }}
+              />
+            ) : (
+              <Select
+                options={[
+                  { label: "Espèces (Guichet)", value: "ESPECES" },
+                  { label: "Chèque Bancaire", value: "CHEQUE" },
+                ]}
+              />
+            )}
           </Form.Item>
 
           <Form.Item
@@ -653,11 +621,11 @@ export function DemandeDetail() {
         onCancel={() => setRejectModalOpen(false)}
         onOk={() => rejeterMutation.mutate()}
         confirmLoading={rejeterMutation.isPending}
-        okText="Confirmer le Refus"
+        okText="Confirmer le Refus & Notifier Client"
         okButtonProps={{ danger: true }}
       >
-        <p style={{ color: "#64748b", fontSize: 13 }}>
-          Veuillez justifier la raison du refus ({rejectType === "PAIEMENT" ? "erreur montant, chèque rejeté..." : "pièces manquantes, immatriculation incorrecte, non-conformité..."}).
+        <p style={{ color: "#64748b", fontSize: 13, marginBottom: 8 }}>
+          Saisir le motif du refus :
         </p>
         <Input.TextArea
           placeholder="Motif du refus..."
@@ -665,6 +633,15 @@ export function DemandeDetail() {
           onChange={(e) => setRaison(e.target.value)}
           rows={3}
         />
+        <div style={{ marginTop: 16, padding: 12, backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+          <div style={{ fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "#475569" }}>
+            <NotificationOutlined style={{ color: "#d97706" }} />
+            Notification Automatique Client (SMS & Email)
+          </div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+            Le souscripteur recevra immédiatement une notification SMS et un Email détaillant le motif du refus.
+          </div>
+        </div>
       </Modal>
     </div>
   );

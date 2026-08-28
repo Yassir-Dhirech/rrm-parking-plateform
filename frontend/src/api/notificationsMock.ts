@@ -105,7 +105,7 @@ const initialNotifications: AppNotification[] = [
     type: "danger",
     category: "PAIEMENT",
     read: false,
-    link: "/comptable/paiements",
+    link: "/comptable/recettes",
     targetRole: "COMPTABLE",
   },
   {

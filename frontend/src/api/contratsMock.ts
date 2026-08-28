@@ -11,13 +11,13 @@ export const mockContrats: ContratDetail[] = [
     parkingNom: "Parking Agdal Gare",
     nombrePlaces: 5,
     vehicules: [
-      { id: 101, immatriculation: "12345-A-1", marque: "Dacia", modele: "Logan" },
-      { id: 102, immatriculation: "67890-B-1", marque: "Peugeot", modele: "208" },
+      { id: 101, immatriculation: "12345 | أ (A) | 1", marque: "Dacia", modele: "Logan" },
+      { id: 102, immatriculation: "67890 | ب (B) | 1", marque: "Peugeot", modele: "208" },
     ],
     dateDebut: "01/01/2026",
-    dateFin: "31/12/2026",
-    montantMensuelHT: 2500,
-    montantMensuelTTC: 3000,
+    dateFin: "31/12/2045", // Contrat 20 Ans fixe
+    montantMensuelHT: 2708,
+    montantMensuelTTC: 3250, // 5 places * 650 DH/mois
     statut: "EN_ATTENTE_SIGNATURE",
   },
   {
@@ -28,14 +28,16 @@ export const mockContrats: ContratDetail[] = [
     parkingId: 2,
     parkingNom: "Parking Hassan II",
     nombrePlaces: 10,
-    vehicules: [],
+    vehicules: [
+      { id: 103, immatriculation: "99887 | ب (B) | 1", marque: "Peugeot", modele: "Boxer" },
+    ],
     dateDebut: "01/02/2026",
-    dateFin: "31/01/2027",
-    montantMensuelHT: 6000,
-    montantMensuelTTC: 7200,
+    dateFin: "31/01/2046", // Contrat 20 Ans fixe
+    montantMensuelHT: 5416,
+    montantMensuelTTC: 6500, // 10 places * 650 DH/mois
     statut: "SIGNE",
     dateSignature: "28/01/2026",
-    signePar: "M. Le Responsable",
+    signePar: "Mme. Leila Benali (Responsable)",
   },
 ];
 

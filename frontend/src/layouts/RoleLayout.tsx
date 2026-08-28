@@ -10,7 +10,6 @@ import { MessagerieDrawer } from "../components/messaging/MessagerieDrawer";
 import {
   DashboardOutlined,
   FileTextOutlined,
-  CreditCardOutlined,
   IdcardOutlined,
   SolutionOutlined,
   FileDoneOutlined,
@@ -27,9 +26,9 @@ import "./RoleLayout.css";
 
 const menuIconMap: Record<string, React.ReactNode> = {
   dashboard: <DashboardOutlined />,
+  "carte-parkings": <EnvironmentOutlined />,
   demandes: <FileTextOutlined />,
   abonnements: <SolutionOutlined />,
-  paiements: <CreditCardOutlined />,
   factures: <FileDoneOutlined />,
   cartes: <IdcardOutlined />,
   contrats: <FileProtectOutlined />,
@@ -66,14 +65,14 @@ export function RoleLayout() {
       <div className="absolute top-0 left-[20%] w-[500px] h-[500px] rounded-full bg-sky-400/10 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 right-[10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl pointer-events-none"></div>
 
-      {/* 1. FULL-WIDTH TOP APP BAR (Positioned ABOVE sidebar across 100% viewport width) */}
-      <header className="fixed top-0 left-0 w-full h-[72px] border-b border-slate-200/80 shadow-xs flex justify-between items-center px-6 z-50 bg-white/85 backdrop-blur-3xl transition-all">
+      {/* 1. FULL-WIDTH TOP APP BAR (Simple, Clean, Fixed 64px Header) */}
+      <header className="fixed top-0 left-0 w-full h-[64px] border-b border-slate-200/80 shadow-2xs flex justify-between items-center px-6 z-50 bg-white/90 backdrop-blur-md transition-all">
         {/* Left Side: RRM Logo at Very Left */}
         <div className="flex items-center shrink-0">
           <img
             src="/pictures/logo-rrm.png"
             alt="Rabat Région Mobilité"
-            className="h-16 object-contain cursor-pointer"
+            className="h-9 object-contain cursor-pointer"
             onClick={() => navigate(config.homePath)}
           />
         </div>
@@ -87,6 +86,7 @@ export function RoleLayout() {
 
         {/* Right Side: Trailing Action Controls */}
         <div className="flex items-center gap-3 shrink-0">
+
           {/* Internal Team Messaging */}
           <Badge count={1} dot color="#0284c7">
             <Button
@@ -103,8 +103,8 @@ export function RoleLayout() {
         </div>
       </header>
 
-      {/* 2. SIDEBAR NAVIGATION (Starts BELOW top header at top-[72px]) */}
-      <aside className="hidden md:flex fixed left-0 top-[72px] h-[calc(100vh-72px)] w-[260px] border-r border-slate-200/80 shadow-xs flex-col py-6 z-40 bg-white/80 backdrop-blur-3xl">
+      {/* 2. SIDEBAR NAVIGATION (Starts BELOW top header at top-[64px]) */}
+      <aside className="hidden md:flex fixed left-0 top-[64px] h-[calc(100vh-64px)] w-[260px] border-r border-slate-200/80 shadow-2xs flex-col py-6 z-40 bg-white/85 backdrop-blur-3xl">
         {/* User Info Badge */}
         <div className="px-6 mb-6 flex items-center gap-3 cursor-pointer" onClick={() => navigate(config.homePath)}>
           <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary font-black text-sm shrink-0 shadow-2xs">
@@ -163,7 +163,7 @@ export function RoleLayout() {
       </aside>
 
       {/* Main Content Canvas */}
-      <main className="pt-[88px] pb-10 px-6 md:pl-[284px] md:pr-6 relative z-10 space-y-6">
+      <main className="pt-[80px] pb-10 px-6 md:pl-[284px] md:pr-6 relative z-10 space-y-6">
         <Outlet />
       </main>
 

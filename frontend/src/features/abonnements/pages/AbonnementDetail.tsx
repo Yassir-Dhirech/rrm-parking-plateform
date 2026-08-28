@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, Space, message, Breadcrumb, Typography } from "antd";
+import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography } from "antd";
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
@@ -12,8 +12,12 @@ import {
   StopOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
+  DollarOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
+import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -63,6 +67,15 @@ export function AbonnementDetail() {
   const handleSuspendSubmit = (values: { motif: string; motifAutre?: string }) => {
     const finalMotif = values.motif === "AUTRE" ? values.motifAutre || "Autre motif administratif" : values.motif;
     suspendMutation.mutate(finalMotif);
+    sendClientNotificationMock({
+      channel: "BOTH",
+      typeEvenement: "SUSPENSION",
+      destinataireNom: data?.clientNom || "Client Souscripteur",
+      destinataireEmail: data?.clientNom ? `${data.clientNom.toLowerCase().replace(/\s+/g, ".")}@example.com` : "client.rrm@example.com",
+      destinataireTelephone: "0612345678",
+      sujet: `RRM - Suspension de l'abonnement de ${data?.clientNom || "Client"}`,
+      contenu: `Bonjour ${data?.clientNom || "Client"}, votre abonnement ${data?.reference} et badge RFID ont été suspendus. Motif : ${finalMotif}.`,
+    });
   };
 
   if (isLoading || !data) {
@@ -84,12 +97,16 @@ export function AbonnementDetail() {
 
       <Card
         title={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${basePath}/abonnements`)}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${basePath}/abonnements`)} style={{ fontWeight: 500 }}>
                 Retour
               </Button>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#003566" }}>
+              
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "1.05rem", fontWeight: 700, color: "#003566" }}>
                 Abonnement {data.reference}
               </span>
               <StatusBadge statut={data.statut} />
@@ -98,18 +115,14 @@ export function AbonnementDetail() {
                   <SafetyCertificateOutlined style={{ marginRight: 4 }} /> Staff RRM
                 </Tag>
               )}
-            </div>
-
-            {/* Supervisor & Responsable Action Buttons */}
-            {isAuthorizedToSuspend && (
-              <Space>
-                {!isSuspended ? (
+              {isAuthorizedToSuspend && (
+                !isSuspended ? (
                   <Button
                     type="primary"
                     danger
                     icon={<PauseCircleOutlined />}
                     onClick={() => setIsSuspendModalOpen(true)}
-                    style={{ fontWeight: 600 }}
+                    style={{ fontWeight: 600, borderRadius: 8 }}
                   >
                     Suspendre l'Abonnement
                   </Button>
@@ -119,13 +132,13 @@ export function AbonnementDetail() {
                     icon={<PlayCircleOutlined />}
                     loading={reactivateMutation.isPending}
                     onClick={() => reactivateMutation.mutate()}
-                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600 }}
+                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8 }}
                   >
                     Réactiver l'Abonnement
                   </Button>
-                )}
-              </Space>
-            )}
+                )
+              )}
+            </div>
           </div>
         }
       >
@@ -136,7 +149,7 @@ export function AbonnementDetail() {
               <div>
                 <div><strong>Motif de suspension :</strong> {data.motifSuspension || "Suspension administrative"}</div>
                 <div style={{ fontSize: 12, marginTop: 4, color: "#b45309" }}>
-                  L'accès aux barrières automatiques RFID / LPR de tous les parkings est temporairement bloqué pour cet abonné.
+                  L'abonnement et la carte RFID sont marqués comme suspendus dans le registre d'information RRM.
                 </div>
               </div>
             }
@@ -207,6 +220,83 @@ export function AbonnementDetail() {
               <Text type="danger"><StopOutlined style={{ marginRight: 4 }} /> {data.motifSuspension}</Text>
             </Descriptions.Item>
           )}
+        </Descriptions>
+      </Card>
+
+      {/* Dynamic Payment Details & Settlement Card */}
+      <Card
+        style={{ marginTop: 20 }}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <DollarOutlined style={{ color: "#16a34a", fontSize: 20 }} />
+            <span style={{ fontSize: "1rem", fontWeight: 700, color: "#003566" }}>
+              Détails du Règlement & Encaissement Associe
+            </span>
+          </div>
+        }
+      >
+        <Descriptions column={2} bordered size="small">
+          <Descriptions.Item label="Mode de Règlement">
+            <Tag color={data.type === "ENTREPRISE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
+              {data.type === "ENTREPRISE" ? "Chèque Bancaire (Certifié)" : "Espèces (Guichet RRM)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Statut du Paiement">
+            <Tag color="green" style={{ fontWeight: 700 }}>
+              <CheckCircleOutlined style={{ marginRight: 4 }} />
+              Règlement Encaissé & Quittancé
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Montant Total Réglé">
+            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: data.type === "STAFF" ? "#0284c7" : "#16a34a" }}>
+              {data.montantTotal} MAD TTC
+            </span>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Date d'Encaissement">
+            {formatDate(data.dateDebut)}
+          </Descriptions.Item>
+
+          {data.type === "ENTREPRISE" && (
+            <>
+              <Descriptions.Item label="Numéro de Chèque">
+                <Tag color="purple" style={{ fontFamily: "monospace", fontWeight: 700 }}>
+                  CHQ-998877
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Banque Émettrice">
+                Attijariwafa Bank (Agence Agdal)
+              </Descriptions.Item>
+              <Descriptions.Item label="Engagement Contractuel" span={2}>
+                <Tag color="purple" style={{ fontWeight: 700 }}>
+                  <FileTextOutlined style={{ marginRight: 4 }} />
+                  Contrat Corporate 20 Ans Signé & Légalisé (Obligatoire)
+                </Tag>
+              </Descriptions.Item>
+            </>
+          )}
+
+          <Descriptions.Item label="Paiement Encaissé Par (Agent Guichet)">
+            <Tag color="cyan" style={{ fontWeight: 600 }}>
+              <UserOutlined style={{ marginRight: 4 }} />
+              {data.traiteParNom || "Agent Rachid (Guichet Agdal)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Paiement Confirme Par (Validation Recette)">
+            <Tag color="blue" style={{ fontWeight: 600 }}>
+              <CheckCircleOutlined style={{ marginRight: 4 }} />
+              {data.type === "ENTREPRISE"
+                ? "Mme. Leila Benali (Responsable RRM)"
+                : "M. Samir El Amrani (Superviseur RRM)"}
+            </Tag>
+          </Descriptions.Item>
+
+          <Descriptions.Item label="Reçu / Quittance de Caisse" span={2}>
+            <span style={{ fontFamily: "monospace", fontWeight: 600 }}>QUIT-2026-ABN-{data.id}</span> (Encaissement guichet confirmé par la caisse RRM)
+          </Descriptions.Item>
         </Descriptions>
       </Card>
 

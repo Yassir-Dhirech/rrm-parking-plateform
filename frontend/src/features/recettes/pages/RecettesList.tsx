@@ -125,20 +125,41 @@ export function RecettesList() {
       title: "Référence Bordereau",
       dataIndex: "reference",
       key: "reference",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.reference.localeCompare(b.reference),
       render: (ref: string) => <Tag color="blue" style={{ fontWeight: 600 }}>{ref}</Tag>,
     },
-    { title: "Parking / Gare", dataIndex: "parkingNom", key: "parkingNom" },
-    { title: "Période", dataIndex: "semaineAnnee", key: "semaineAnnee" },
+    {
+      title: "Parking / Gare",
+      dataIndex: "parkingNom",
+      key: "parkingNom",
+      filters: [
+        { text: "Parking Agdal Gare", value: "Parking Agdal Gare" },
+        { text: "Parking Bab El Had", value: "Parking Bab El Had" },
+        { text: "Parking Hassan II", value: "Parking Hassan II" },
+        { text: "Parking Chellah", value: "Parking Chellah" },
+      ],
+      onFilter: (value: any, record: RecetteHebdoListItem) => record.parkingNom.includes(value as string),
+      filterSearch: true,
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.parkingNom.localeCompare(b.parkingNom),
+    },
+    {
+      title: "Période",
+      dataIndex: "semaineAnnee",
+      key: "semaineAnnee",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.semaineAnnee.localeCompare(b.semaineAnnee),
+    },
     {
       title: "Total Espèces (Liquide)",
       dataIndex: "totalEspeces",
       key: "totalEspeces",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => (a.totalEspeces || 0) - (b.totalEspeces || 0),
       render: (val: number) => <span style={{ color: "#16a34a", fontWeight: 600 }}>{(val || 0).toLocaleString("fr-FR")} DH</span>,
     },
     {
       title: "Total Chèques",
       dataIndex: "totalCheques",
       key: "totalCheques",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => (a.totalCheques || 0) - (b.totalCheques || 0),
       render: (val: number, record: RecetteHebdoListItem) => (
         <span>
           {(val || 0).toLocaleString("fr-FR")} DH{" "}
@@ -150,12 +171,19 @@ export function RecettesList() {
       title: "Recette Totale Hebdo",
       dataIndex: "totalHebdo",
       key: "totalHebdo",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.totalHebdo - b.totalHebdo,
       render: (val: number) => <strong style={{ color: "#0369a1", fontSize: 14 }}>{val.toLocaleString("fr-FR")} DH TTC</strong>,
     },
     {
       title: "Statut Règlement",
       dataIndex: "statut",
       key: "statut",
+      filters: [
+        { text: "En cours", value: "EN_COURS" },
+        { text: "Completed (Générée par Superviseur)", value: "COMPLETED" },
+        { text: "Received (Reçue par Comptabilité)", value: "RECEIVED" },
+      ],
+      onFilter: (value: any, record: RecetteHebdoListItem) => record.statut === value,
       render: (statut: RecetteHebdoListItem["statut"]) => <StatusBadge statut={statut} />,
     },
   ];
@@ -231,6 +259,7 @@ export function RecettesList() {
         dataSource={data}
         loading={isLoading}
         rowKey="id"
+        scroll={{ x: 1200 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/recettes/${record.id}`),
           style: { cursor: "pointer" },
