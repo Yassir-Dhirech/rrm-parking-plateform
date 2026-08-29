@@ -413,7 +413,7 @@ export function ParkingsList() {
         Gérez les parkings de Rabat, configurez les quotas d'abonnés, géolocalisez sur Google Maps et verrouillez en cas de maintenance.
       </Text>
 
-      <Table columns={columns} dataSource={parkings} loading={isLoading} rowKey="id" pagination={{ pageSize: 8 }} />
+      <Table columns={columns} dataSource={parkings} loading={isLoading} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: "max-content" }} />
 
       {/* Modal 1: Ajouter un Parking */}
       <Modal

@@ -288,7 +288,7 @@ export function PlansTarifairesList() {
         </Row>
       </div>
 
-      <Table columns={columns} dataSource={filteredTarifs} loading={isLoading} rowKey="id" pagination={{ pageSize: 10 }} />
+      <Table columns={columns} dataSource={filteredTarifs} loading={isLoading} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: "max-content" }} />
 
       {/* Modal 1: Ajouter / Configurer un Tarif pour un Parking */}
       <Modal

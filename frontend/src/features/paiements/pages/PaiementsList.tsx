@@ -55,6 +55,7 @@ export function PaiementsList() {
         columns={columns}
         dataSource={data}
         loading={isLoading}
+        scroll={{ x: "max-content" }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/paiements/${record.id}`),
           style: { cursor: "pointer" },

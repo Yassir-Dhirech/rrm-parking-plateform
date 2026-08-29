@@ -46,6 +46,7 @@ export function FacturesList() {
         columns={columns}
         dataSource={data}
         loading={isLoading}
+        scroll={{ x: "max-content" }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/factures/${record.id}`),
           style: { cursor: "pointer" },

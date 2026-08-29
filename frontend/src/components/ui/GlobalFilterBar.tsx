@@ -27,7 +27,7 @@ export function GlobalFilterBar({ filters, onChange }: GlobalFilterBarProps) {
   };
 
   return (
-    <Card size="small" style={{ marginBottom: 20, background: "#fcfcfc" }}>
+    <Card size="small" style={{ marginBottom: 12, marginTop: 0, background: "#fcfcfc" }}>
       <Space wrap size="middle">
         <span style={{ fontWeight: 600, color: "#006666" }}>
           <FilterOutlined /> Filtres Globaux :
