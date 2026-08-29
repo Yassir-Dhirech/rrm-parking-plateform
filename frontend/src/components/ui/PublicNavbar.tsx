@@ -95,15 +95,24 @@ export function PublicNavbar() {
             </button>
           </nav>
 
-          {/* Action Button: Personnel RRM */}
-          <div className="flex items-center gap-2">
+          {/* Action Button: Personnel RRM (Desktop: Text + Icon, Mobile: Blue Icon Button Only) */}
+          <div className="flex items-center">
+            {/* Desktop Full Pill */}
             <button
               onClick={() => navigate("/login")}
-              className="bg-primary text-white px-3 md:px-4 py-2 rounded-xl text-xs font-semibold hover:bg-primary-variant transition-all shadow-xs cursor-pointer flex items-center gap-2"
+              className="hidden sm:flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-xs cursor-pointer border-none"
             >
               <UserOutlined style={{ fontSize: "14px" }} />
-              <span className="hidden sm:inline">Personnel RRM</span>
-              <span className="sm:hidden">Espace RRM</span>
+              <span>Personnel RRM</span>
+            </button>
+
+            {/* Mobile Phone: Blue Circle Icon Button Only */}
+            <button
+              onClick={() => navigate("/login")}
+              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-slate-900 text-white shadow-xs cursor-pointer border-none transition-all"
+              title="Connexion Espace RRM"
+            >
+              <UserOutlined style={{ fontSize: "16px" }} />
             </button>
           </div>
         </div>
