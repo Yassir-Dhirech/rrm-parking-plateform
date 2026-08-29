@@ -332,6 +332,7 @@ export function RecettesList() {
             rowKey="id"
             pagination={false}
             size="small"
+            scroll={{ x: "max-content" }}
             rowSelection={{
               selectedRowKeys: selectedPaiementIds,
               onChange: (keys) => setSelectedPaiementIds(keys),

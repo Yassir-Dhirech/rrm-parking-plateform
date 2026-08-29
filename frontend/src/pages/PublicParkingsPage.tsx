@@ -299,8 +299,8 @@ export function PublicParkingsPage() {
           style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
         />
 
-        {/* LEFT FLOATING GLASS SIDEBAR (PARKING NAMES ONLY — TOP LEFT POSITION) */}
-        <aside className="absolute top-6 left-6 z-20 w-full max-w-[320px] max-h-[calc(100vh-128px)] rounded-3xl border border-white/90 shadow-2xl p-5 backdrop-blur-md bg-white/80 flex flex-col custom-scrollbar">
+        {/* LEFT FLOATING GLASS SIDEBAR (DESKTOP ONLY — HIDDEN ON MOBILE TO FREE UP MAP) */}
+        <aside className="hidden md:flex absolute top-6 left-6 z-20 w-full max-w-[320px] max-h-[calc(100vh-128px)] rounded-3xl border border-white/90 shadow-2xl p-5 backdrop-blur-md bg-white/90 flex-col custom-scrollbar">
           <div className="mb-3">
             <h2 className="text-lg font-black text-slate-900 mb-1 flex items-center gap-2">
               <CarOutlined className="text-secondary" /> Parkings Rabat
@@ -368,16 +368,22 @@ export function PublicParkingsPage() {
           </div>
         </aside>
 
-        {/* RIGHT FLOATING GLASS PANEL: DETAILED PARKING INFORMATION CARD */}
+        {/* RIGHT FLOATING GLASS PANEL: COMPACT STREAMLINED PARKING INFO (BOTTOM SHEET ON MOBILE) */}
         {activeParking && (
-          <aside className="absolute top-6 right-6 z-20 w-full max-w-[390px] max-h-[calc(100vh-128px)] rounded-3xl border border-white/95 shadow-2xl p-6 glass-card bg-white/95 backdrop-blur-xl flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+          <aside className="absolute bottom-0 left-0 right-0 md:bottom-auto md:top-6 md:right-6 md:left-auto z-30 w-full md:max-w-[380px] max-h-[70vh] md:max-h-[calc(100vh-128px)] rounded-t-3xl md:rounded-3xl border-t md:border border-white/95 shadow-2xl p-4 md:p-6 glass-card bg-white/95 backdrop-blur-xl flex flex-col space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar">
+            {/* Mobile Drag Indicator */}
+            <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto md:hidden -mt-1 mb-1"></div>
+
             {/* Header & Controls */}
-            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-              <div>
-                <Tag color="cyan" className="font-extrabold border-none px-2.5 py-0.5 rounded-full text-[11px] mb-1.5">
-                  Pin #{activeParking.numeroPin} — {activeParking.code}
-                </Tag>
-                <h3 className="text-lg font-black text-slate-900 m-0 leading-tight">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-2.5">
+              <div className="pr-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Tag color="cyan" className="font-extrabold border-none px-2 py-0.5 rounded-full text-[11px] m-0">
+                    Pin #{activeParking.numeroPin}
+                  </Tag>
+                  <span className="text-[11px] text-slate-500 font-semibold">{activeParking.quartier}</span>
+                </div>
+                <h3 className="text-base md:text-lg font-black text-slate-900 m-0 leading-tight">
                   {activeParking.nomComplet}
                 </h3>
               </div>
@@ -402,8 +408,31 @@ export function PublicParkingsPage() {
               </div>
             </div>
 
-            {/* Address */}
-            <div className="space-y-1">
+            {/* Compact Key Stats Grid (Clean & Sleek on Mobile) */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80">
+                <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">Places Libres</span>
+                <span className="text-sm md:text-base font-black text-emerald-700">
+                  {activeParking.placesAbonnesLibres} <span className="text-xs font-semibold text-emerald-600">/ {activeParking.placesAbonnesTotal}</span>
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-secondary/5 border border-secondary/20">
+                <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Tarif Mensuel</span>
+                <span className="text-xs md:text-sm font-black text-secondary truncate block">
+                  {activeParking.tarifsAbonnementMensuel.split("/")[0]}
+                </span>
+              </div>
+            </div>
+
+            {/* Affluence Badge */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Affluence actuelle :</span>
+              {getStatusBadge(activeParking.statutSaturation)}
+            </div>
+
+            {/* Detailed Address (Desktop Only to save mobile space) */}
+            <div className="hidden md:block space-y-1">
               <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider block">
                 Emplacement
               </span>
@@ -413,26 +442,17 @@ export function PublicParkingsPage() {
               </p>
             </div>
 
-            {/* Saturation Status */}
-            <div className="space-y-1">
-              <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                Statut d'Affluence
-              </span>
-              <div>{getStatusBadge(activeParking.statutSaturation)}</div>
-            </div>
-
-            {/* Capacity Progress Box */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            {/* Capacity Progress Box (Desktop Only) */}
+            <div className="hidden md:block p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
               <div className="flex justify-between items-center text-xs font-bold">
                 <span className="text-slate-600 flex items-center gap-1.5">
-                  <CarOutlined className="text-slate-500" /> Capacity:
+                  <CarOutlined className="text-slate-500" /> Capacité Abonnés :
                 </span>
                 <span className="text-emerald-600 font-extrabold text-sm">
                   {activeParking.placesAbonnesLibres} / {activeParking.placesAbonnesTotal} places
                 </span>
               </div>
 
-              {/* Progress Bar */}
               {(() => {
                 const percentFull = Math.round(
                   ((activeParking.placesAbonnesTotal - activeParking.placesAbonnesLibres) /
@@ -451,37 +471,34 @@ export function PublicParkingsPage() {
                     </div>
                     <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                       <span>Taux d'occupation</span>
-                      <span className="font-extrabold text-slate-800">{percentFull}% Full</span>
+                      <span className="font-extrabold text-slate-800">{percentFull}%</span>
                     </div>
                   </div>
                 );
               })()}
             </div>
 
-            {/* Pricing Hint Box */}
-            <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/20 flex justify-between items-center">
-              <div>
-                <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block">
-                  Tarif Mensuel
-                </span>
-                <span className="text-sm font-black text-secondary">
-                  {activeParking.tarifsAbonnementMensuel}
-                </span>
-              </div>
-              <Tag color="gold" className="font-extrabold text-xs m-0">Formule 2026</Tag>
+            {/* Action Buttons: Direct Souscription & View Tarifs */}
+            <div className="flex flex-col gap-2 pt-1">
+              <Button
+                type="primary"
+                block
+                size="large"
+                icon={<ThunderboltOutlined />}
+                onClick={() => navigate(`/demande-publique?parkingId=${activeParking.id}&tab=particulier`)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs h-11 shadow-md border-none flex justify-center items-center gap-2"
+              >
+                Souscrire cet Ouvrage en Ligne →
+              </Button>
+              <Button
+                block
+                icon={<DollarOutlined />}
+                onClick={() => handleViewParkingTarifs(activeParking.id)}
+                className="rounded-xl font-bold text-xs h-10 border-slate-300 text-slate-700 hover:text-secondary hover:border-secondary"
+              >
+                Consulter les Tarifs & Formules
+              </Button>
             </div>
-
-            {/* Direct Action Button to View Parking Tariffs */}
-            <Button
-              type="primary"
-              block
-              size="large"
-              icon={<DollarOutlined />}
-              onClick={() => handleViewParkingTarifs(activeParking.id)}
-              className="bg-secondary hover:bg-slate-900 text-white rounded-2xl py-3 font-extrabold text-xs h-12 shadow-xl flex justify-center items-center gap-2 border-none mt-2"
-            >
-              Consulter les Tarifs & Formules de ce Parking →
-            </Button>
           </aside>
         )}
       </div>

@@ -364,6 +364,7 @@ export function Dashboard() {
             rowKey="id"
             pagination={false}
             size="small"
+            scroll={{ x: "max-content" }}
             columns={[
               { title: "Horodatage", dataIndex: "timestamp", key: "timestamp", render: (d: string) => formatDate(d) },
               { title: "Utilisateur / Acteur", dataIndex: "utilisateur", key: "utilisateur", render: (u: string) => <strong>{u}</strong> },
@@ -391,6 +392,7 @@ export function Dashboard() {
             rowKey="id"
             pagination={false}
             size="middle"
+            scroll={{ x: "max-content" }}
             columns={[
               {
                 title: "Parking & Code",

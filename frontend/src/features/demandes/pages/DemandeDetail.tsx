@@ -258,7 +258,7 @@ export function DemandeDetail() {
         </Card>
 
         {/* Informations Générales Souscripteur */}
-        <Descriptions title="Informations Souscripteur & Contact" column={2} bordered size="small" style={{ marginBottom: 20 }}>
+        <Descriptions title="Informations Souscripteur & Contact" column={{ xs: 1, sm: 2, md: 2 }} bordered size="small" style={{ marginBottom: 20 }}>
           <Descriptions.Item label="Type de Demande">
             <Tag color={typeDemandeLabels[data.typeDemande as TypeDemande]?.color || "blue"}>
               {typeDemandeLabels[data.typeDemande as TypeDemande]?.label || data.typeDemande}
@@ -296,7 +296,7 @@ export function DemandeDetail() {
           style={{ marginBottom: 20, borderRadius: 10, borderColor: "#cbd5e1" }}
         >
           {data.typeDemande === "NOUVEL_ABONNEMENT" && (
-            <Descriptions column={2} bordered size="small">
+            <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
               <Descriptions.Item label="Parking Sollicité">
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
@@ -318,7 +318,7 @@ export function DemandeDetail() {
           )}
 
           {data.typeDemande === "RENOUVELLEMENT" && (
-            <Descriptions column={2} bordered size="small">
+            <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
               <Descriptions.Item label="Carte RFID">
                 <Tag color="gold" style={{ fontSize: 13, fontWeight: 700 }}>
                   {data.numeroCarteAbonne || "CRT-2025-001099"}

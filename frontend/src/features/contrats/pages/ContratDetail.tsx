@@ -87,6 +87,7 @@ export function ContratDetail() {
           dataSource={contrat.vehicules}
           rowKey="id"
           pagination={false}
+          scroll={{ x: "max-content" }}
           columns={[
             { title: "Immatriculation", dataIndex: "immatriculation", key: "immatriculation" },
             { title: "Marque", dataIndex: "marque", key: "marque" },
