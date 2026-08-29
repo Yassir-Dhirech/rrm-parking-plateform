@@ -92,7 +92,7 @@ export function CarteDetail() {
           />
         </div>
 
-        <Descriptions column={2} bordered size="small">
+        <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
           <Descriptions.Item label="N° Badge RFID">
             <Tag color="blue" style={{ fontSize: 13, fontWeight: 600 }}>{data.numeroCarte}</Tag>
           </Descriptions.Item>

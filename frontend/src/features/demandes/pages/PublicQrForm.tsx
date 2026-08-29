@@ -456,8 +456,8 @@ export function PublicQrForm() {
 
       <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
         {/* Visual Stepper — Positioned initially between Hero Header & Form Choice, becoming Sticky on scroll */}
-        <div className="sticky top-24 z-40 flex justify-center mb-8">
-          <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-fit">
+        <div className="sticky top-20 md:top-24 z-40 flex justify-center mb-8 px-2 max-w-full overflow-x-auto">
+          <div className="bg-white/95 backdrop-blur-md px-3 md:px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-full shrink-0">
             {STEP_TITLES.map((title, idx) => {
               const isCompleted = idx < currentStep;
               const isCurrent = idx === currentStep;

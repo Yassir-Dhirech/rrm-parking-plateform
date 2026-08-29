@@ -160,7 +160,7 @@ export function AbonnementDetail() {
           />
         )}
 
-        <Descriptions column={2} bordered size="middle">
+        <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="middle">
           <Descriptions.Item label="Statut">
             <StatusBadge statut={data.statut} />
           </Descriptions.Item>
@@ -235,7 +235,7 @@ export function AbonnementDetail() {
           </div>
         }
       >
-        <Descriptions column={2} bordered size="small">
+        <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
           <Descriptions.Item label="Mode de Règlement">
             <Tag color={data.type === "ENTREPRISE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
               {data.type === "ENTREPRISE" ? "Chèque Bancaire (Certifié)" : "Espèces (Guichet RRM)"}

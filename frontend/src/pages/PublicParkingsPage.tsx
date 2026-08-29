@@ -299,8 +299,8 @@ export function PublicParkingsPage() {
           style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
         />
 
-        {/* LEFT FLOATING GLASS SIDEBAR (PARKING NAMES ONLY — TOP LEFT POSITION) */}
-        <aside className="absolute top-6 left-6 z-20 w-full max-w-[320px] max-h-[calc(100vh-128px)] rounded-3xl border border-white/90 shadow-2xl p-5 backdrop-blur-md bg-white/80 flex flex-col custom-scrollbar">
+        {/* LEFT FLOATING GLASS SIDEBAR (PARKING NAMES ONLY) */}
+        <aside className="absolute top-3 left-3 md:top-6 md:left-6 z-20 w-[calc(100%-24px)] md:w-full md:max-w-[320px] max-h-[180px] md:max-h-[calc(100vh-128px)] rounded-2xl md:rounded-3xl border border-white/90 shadow-2xl p-3 md:p-5 backdrop-blur-md bg-white/90 flex flex-col custom-scrollbar">
           <div className="mb-3">
             <h2 className="text-lg font-black text-slate-900 mb-1 flex items-center gap-2">
               <CarOutlined className="text-secondary" /> Parkings Rabat
@@ -370,7 +370,7 @@ export function PublicParkingsPage() {
 
         {/* RIGHT FLOATING GLASS PANEL: DETAILED PARKING INFORMATION CARD */}
         {activeParking && (
-          <aside className="absolute top-6 right-6 z-20 w-full max-w-[390px] max-h-[calc(100vh-128px)] rounded-3xl border border-white/95 shadow-2xl p-6 glass-card bg-white/95 backdrop-blur-xl flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+          <aside className="absolute bottom-3 left-3 right-3 md:top-6 md:right-6 md:left-auto md:bottom-auto z-20 w-[calc(100%-24px)] md:w-full md:max-w-[390px] max-h-[50vh] md:max-h-[calc(100vh-128px)] rounded-2xl md:rounded-3xl border border-white/95 shadow-2xl p-4 md:p-6 glass-card bg-white/95 backdrop-blur-xl flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
             {/* Header & Controls */}
             <div className="flex justify-between items-start border-b border-slate-100 pb-3">
               <div>
