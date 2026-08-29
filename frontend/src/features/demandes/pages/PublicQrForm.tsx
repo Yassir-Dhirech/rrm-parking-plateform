@@ -440,14 +440,14 @@ export function PublicQrForm() {
             </div>
 
             {/* BETA Test Autofill Action */}
-            <div className="shrink-0">
+            <div className="w-full sm:w-auto shrink-0">
               <Button
                 size="large"
                 icon={<ThunderboltOutlined />}
                 onClick={handleBetaAutofill}
-                className="bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center gap-2 h-12 text-xs"
+                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center justify-center gap-2 h-12 text-xs"
               >
-                ⚡ Mode Remplissage Rapide (BETA Test)
+                Mode Remplissage Rapide (BETA Test)
               </Button>
             </div>
           </div>
@@ -514,7 +514,7 @@ export function PublicQrForm() {
 
         {/* STEP 0: Select Request Type */}
         {currentStep === 0 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/70">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/70">
             <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-6">
               Sélectionnez le Type de Demande
             </h2>
@@ -624,13 +624,13 @@ export function PublicQrForm() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-6 md:mt-8 flex justify-end">
               <Button
                 type="primary"
                 size="large"
                 icon={<ArrowRightOutlined />}
                 onClick={() => setCurrentStep(1)}
-                className="bg-primary rounded-xl font-bold h-12 px-8 shadow-md"
+                className="w-full sm:w-auto bg-primary rounded-xl font-bold h-12 px-8 shadow-md flex items-center justify-center"
               >
                 Continuer →
               </Button>
@@ -640,7 +640,7 @@ export function PublicQrForm() {
 
         {/* STEP 1: Dynamic Form based on TypeDemande */}
         {currentStep === 1 && (
-          <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
             {/* FLOW 1: RENOUVELLEMENT / TRANSFERT / DUPLICATE -> SEARCH ACCOUNT ONLY */}
             {["RENEW", "TRANSFER", "DUPLICATE"].includes(typeDemande) ? (
               <div className="space-y-6">
@@ -715,11 +715,11 @@ export function PublicQrForm() {
                   </Form>
                 )}
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -729,7 +729,7 @@ export function PublicQrForm() {
                       type="primary"
                       disabled={!hasFoundAccount}
                       onClick={handleNextToOtp}
-                      className="bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md"
+                      className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
                     >
                       Valider & Recevoir Code OTP →
                     </Button>
@@ -738,7 +738,7 @@ export function PublicQrForm() {
                       type="primary"
                       disabled={!hasFoundAccount}
                       onClick={() => setCurrentStep(2)}
-                      className="bg-primary rounded-xl h-11 px-8 font-bold"
+                      className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                     >
                       Étape Suivante (Parking & Durée) →
                     </Button>
@@ -944,11 +944,11 @@ export function PublicQrForm() {
                   </Collapse>
                 </Form>
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -956,7 +956,7 @@ export function PublicQrForm() {
                     type="primary"
                     icon={<ArrowRightOutlined />}
                     onClick={handleValidateCorporateAndNext}
-                    className="bg-primary rounded-xl h-11 px-8 font-bold"
+                    className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                   >
                     Étape Suivante (Choix Parking) →
                   </Button>
@@ -988,30 +988,32 @@ export function PublicQrForm() {
                     {/* Panel 1: Informations Personnelles & CIN */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4 py-1">
-                          <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full pr-2 sm:pr-4 py-1 gap-2">
+                          <div className="flex items-center gap-2.5 sm:gap-3">
                             {isPersoValid ? (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm shrink-0">
                                 <CheckOutlined />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm shrink-0">
                                 1
                               </div>
                             )}
-                            <span className={`text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
-                              1. Informations Personnelles & Pièce d'Identité (CIN)
+                            <span className={`text-sm sm:text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Personnelles & CIN
                             </span>
                           </div>
-                          {isPersoValid ? (
-                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
-                              <CheckCircleOutlined /> Étape Validée & Confirmée
-                            </Tag>
-                          ) : (
-                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
-                              En Cours de Saisie
-                            </Tag>
-                          )}
+                          <div>
+                            {isPersoValid ? (
+                              <Tag color="green" className="font-extrabold border-none px-3 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5 m-0">
+                                <CheckCircleOutlined /> Validé
+                              </Tag>
+                            ) : (
+                              <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs m-0">
+                                En Cours
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       }
                       key="perso_particulier"
@@ -1122,30 +1124,32 @@ export function PublicQrForm() {
                     {/* Panel 2: Informations du Véhicule & Carte Grise */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4 py-1">
-                          <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full pr-2 sm:pr-4 py-1 gap-2">
+                          <div className="flex items-center gap-2.5 sm:gap-3">
                             {isVehiculeValid ? (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm shrink-0">
                                 <CheckOutlined />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm shrink-0">
                                 2
                               </div>
                             )}
-                            <span className={`text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
-                              2. Informations du Véhicule & Carte Grise (Recto / Verso)
+                            <span className={`text-sm sm:text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              2. Véhicule & Plaque Immatriculation
                             </span>
                           </div>
-                          {isVehiculeValid ? (
-                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
-                              <CheckCircleOutlined /> Étape Validée & Confirmée
-                            </Tag>
-                          ) : (
-                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
-                              À Remplir
-                            </Tag>
-                          )}
+                          <div>
+                            {isVehiculeValid ? (
+                              <Tag color="green" className="font-extrabold border-none px-3 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5 m-0">
+                                <CheckCircleOutlined /> Validé
+                              </Tag>
+                            ) : (
+                              <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs m-0">
+                                À Remplir
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       }
                       key="vehicule_particulier"
@@ -1213,11 +1217,11 @@ export function PublicQrForm() {
                   </Collapse>
                 </Form>
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -1225,7 +1229,7 @@ export function PublicQrForm() {
                     type="primary"
                     icon={<ArrowRightOutlined />}
                     onClick={handleValidateVehiculeAndNext}
-                    className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+                    className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
                   >
                     Valider & Passer à la Tarification →
                   </Button>
@@ -1237,7 +1241,7 @@ export function PublicQrForm() {
 
         {/* STEP 2: Select Parking, Formula & Duration */}
         {currentStep === 2 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/80">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
             <h2 className="text-xl font-extrabold text-slate-900 mb-6">
               Choix du Parking & Tarification Souhaitée
             </h2>
@@ -1354,11 +1358,11 @@ export function PublicQrForm() {
               )}
             </Form>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => setCurrentStep(1)}
-                className="rounded-xl h-11 px-6 font-semibold"
+                className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
               >
                 Retour
               </Button>
@@ -1366,7 +1370,7 @@ export function PublicQrForm() {
                 type="primary"
                 icon={<ArrowRightOutlined />}
                 onClick={handleValidateParkingAndGoToRecap}
-                className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+                className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
               >
                 Valider & Passer au Récapitulatif →
               </Button>
@@ -1376,8 +1380,8 @@ export function PublicQrForm() {
 
         {/* STEP 3: Final Step - Récapitulatif, CGU & Confirmation OTP */}
         {currentStep === 3 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/90">
-            <div className="flex justify-between items-center mb-6">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/90">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-6">
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 m-0">
                   Récapitulatif Final & Validation par SMS OTP
@@ -1492,20 +1496,20 @@ export function PublicQrForm() {
               </Form.Item>
             </Form>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => setCurrentStep(2)}
-                className="rounded-xl h-11 px-6 font-semibold"
+                className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
               >
                 Retour
               </Button>
               <Button
                 type="primary"
                 onClick={handleNextToOtp}
-                className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-8 font-extrabold shadow-md"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-6 sm:px-8 font-extrabold shadow-md flex items-center justify-center text-center"
               >
-                Confirmer Ma Demande & Recevoir Code OTP par SMS →
+                Confirmer Ma Demande (Code OTP) →
               </Button>
             </div>
           </div>

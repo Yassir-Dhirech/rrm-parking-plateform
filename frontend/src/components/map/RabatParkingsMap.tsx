@@ -369,8 +369,8 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
                   <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>
                     Configuration Matérielle & Scanners RFID :
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#166534" }}>
-                    Terminal RFID: 192.168.1.52 (ONLINE 🟢) | Barrière d'Accès: OK
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
+                    Terminal RFID: 192.168.1.52 (ONLINE <CheckCircleOutlined style={{ color: "#16a34a" }} />) | Barrière d'Accès: OK
                   </div>
                 </div>
               )}

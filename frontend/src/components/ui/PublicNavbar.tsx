@@ -34,19 +34,23 @@ export function PublicNavbar() {
   return (
     <>
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-        <div className="flex items-center justify-between px-4 md:px-8 h-16 md:h-20 w-full max-w-[1500px] mx-auto">
-          {/* Brand Logo & Mobile Toggle */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
+        <div className="relative flex items-center justify-between px-4 md:px-8 h-16 md:h-20 w-full max-w-[1500px] mx-auto">
+          {/* Mobile Hamburger Button (Left on phone) */}
+          <div className="flex items-center md:hidden">
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: 20, color: "#003566" }} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                setMobileDrawerOpen(true);
-              }}
-              className="md:hidden flex items-center justify-center p-1"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="flex items-center justify-center p-1"
             />
-            <img src="/pictures/logo-rrm.png" alt="RRM" className="h-10 md:h-16 w-auto" />
+          </div>
+
+          {/* Brand Logo — Centered on Mobile, Left-aligned on Desktop */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center cursor-pointer"
+            onClick={() => navigate("/")}
+          >
+            <img src="/pictures/logo-rrm.png" alt="RRM" className="h-10 md:h-16 w-auto object-contain" />
           </div>
 
           {/* Desktop Navigation Links */}

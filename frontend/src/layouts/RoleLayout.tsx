@@ -68,24 +68,30 @@ export function RoleLayout() {
       <div className="absolute bottom-0 right-[10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl pointer-events-none"></div>
 
       {/* 1. FULL-WIDTH TOP APP BAR */}
-      <header className="fixed top-0 left-0 w-full h-[64px] border-b border-slate-200/80 shadow-2xs flex justify-between items-center px-4 md:px-6 z-50 bg-white/90 backdrop-blur-md transition-all">
-        {/* Left Side: Mobile Menu Button + RRM Logo */}
-        <div className="flex items-center gap-2 shrink-0">
+      <header className="fixed top-0 left-0 w-full h-[64px] border-b border-slate-200/80 shadow-2xs flex justify-between items-center px-4 md:px-6 z-50 bg-white/90 backdrop-blur-md transition-all relative">
+        {/* Left Side: Mobile Menu Button */}
+        <div className="flex items-center shrink-0">
           <Button
             type="text"
             icon={<MenuOutlined style={{ fontSize: 20, color: "#003566" }} />}
             onClick={() => setMobileDrawerOpen(true)}
             className="md:hidden flex items-center justify-center p-1"
           />
+        </div>
+
+        {/* Center: RRM Logo (Centered on Mobile, Left-aligned on Desktop) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center cursor-pointer"
+          onClick={() => navigate(config.homePath)}
+        >
           <img
             src="/pictures/logo-rrm.png"
             alt="Rabat Région Mobilité"
-            className="h-8 md:h-9 object-contain cursor-pointer"
-            onClick={() => navigate(config.homePath)}
+            className="h-8 md:h-9 object-contain"
           />
         </div>
 
-        {/* Center: Search Bar Centered in Middle of Header */}
+        {/* Center: Search Bar Centered in Middle of Header (Desktop Only) */}
         <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-auto px-4">
           <div className="w-full">
             <GlobalSearch />
