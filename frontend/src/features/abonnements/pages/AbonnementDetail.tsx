@@ -15,6 +15,7 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
+  FileDoneOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
 import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
@@ -230,9 +231,19 @@ export function AbonnementDetail() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <DollarOutlined style={{ color: "#16a34a", fontSize: 20 }} />
             <span style={{ fontSize: "1rem", fontWeight: 700, color: "#003566" }}>
-              Détails du Règlement & Encaissement Associe
+              Détails du Règlement & Encaissement Associé
             </span>
           </div>
+        }
+        extra={
+          <Button
+            type="primary"
+            icon={<FileDoneOutlined />}
+            onClick={() => navigate(`${basePath}/factures/1`)}
+            style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 8 }}
+          >
+            Consulter / Générer la Facture
+          </Button>
         }
       >
         <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">

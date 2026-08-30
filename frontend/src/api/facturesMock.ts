@@ -46,6 +46,45 @@ export async function getFactureByIdMock(id: number): Promise<FactureDetail> {
   };
 }
 
+export interface CreerFacturePayload {
+  clientNom: string;
+  abonnementReference: string;
+  montantTtc: number;
+  genereePar?: string;
+  modePaiement?: string;
+}
+
+export async function creerFactureMock(payload: CreerFacturePayload): Promise<FactureDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const newId = mockFactures.length + 1;
+  const now = new Date();
+  const dateFormatted = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+  const numero = `FACT-RRM-${now.getFullYear()}-${String(newId).padStart(6, "0")}`;
+
+  const montantHt = Math.round((payload.montantTtc / 1.2) * 100) / 100;
+  const montantTva = Math.round((payload.montantTtc - montantHt) * 100) / 100;
+
+  const newFactureItem: FactureListItem = {
+    id: newId,
+    numero,
+    montantTtc: payload.montantTtc,
+    statut: "EMISE",
+    clientNom: payload.clientNom,
+    dateEmission: dateFormatted,
+  };
+
+  mockFactures.unshift(newFactureItem);
+
+  return {
+    ...newFactureItem,
+    montantHt,
+    tauxTva: 20,
+    montantTva,
+    abonnementReference: payload.abonnementReference,
+    genereePar: payload.genereePar || "Superviseur Exploitation",
+  };
+}
+
 export async function signerFactureMock(id: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = mockFactures.find((f) => f.id === id);
