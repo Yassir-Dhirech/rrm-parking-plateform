@@ -160,6 +160,15 @@ export function FactureDetail() {
                 {data.abonnementReference}
               </Tag>
             </Descriptions.Item>
+            <Descriptions.Item label="Règlement Quittancé">
+              <Button
+                type="link"
+                onClick={() => navigate(`${basePath}/paiements/${data.paiementId || data.id}`)}
+                style={{ padding: 0, fontWeight: 700, color: "#006398" }}
+              >
+                {data.paiementReference || `PAY-2026-00000${data.id}`}
+              </Button>
+            </Descriptions.Item>
             <Descriptions.Item label="Émise par">
               {data.genereePar}
             </Descriptions.Item>
@@ -173,11 +182,6 @@ export function FactureDetail() {
                   En Attente de Signature Directeur
                 </Tag>
               )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Mode de Paiement">
-              <Tag color="purple" className="font-bold">
-                Règlement Guichet RRM
-              </Tag>
             </Descriptions.Item>
           </Descriptions>
         </div>
@@ -195,6 +199,7 @@ export function FactureDetail() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">
+              {/* Line Item 1: Abonnement */}
               <tr>
                 <td className="p-3">
                   <div className="font-extrabold text-slate-900">
@@ -206,13 +211,50 @@ export function FactureDetail() {
                 </td>
                 <td className="p-3 text-center font-bold">1</td>
                 <td className="p-3 text-right font-medium">
-                  {data.montantHt.toLocaleString("fr-FR")} MAD
+                  {((data.montantAbonnementTtc || (data.montantTtc - (data.fraisCarteRfid || 0))) / 1.2).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
                 </td>
                 <td className="p-3 text-center">
                   <Tag color="blue" className="font-bold">{data.tauxTva}%</Tag>
                 </td>
                 <td className="p-3 text-right font-black text-slate-900">
-                  {data.montantTtc.toLocaleString("fr-FR")} MAD
+                  {(data.montantAbonnementTtc || (data.montantTtc - (data.fraisCarteRfid || 0))).toLocaleString("fr-FR")} MAD
+                </td>
+              </tr>
+
+              {/* Line Item 2: Carte RFID (+50 DH pour nouvelle carte ou 0 DH pour renouvellement) */}
+              <tr>
+                <td className="p-3">
+                  <div className="font-extrabold text-slate-900">
+                    {data.fraisCarteRfid && data.fraisCarteRfid > 0
+                      ? "Frais d'Émission Carte RFID Sans Contact (Badge Physique)"
+                      : "Carte RFID Sans Contact Physique Existante (Réactivée)"}
+                  </div>
+                  <div className="text-slate-500 text-[11px]">
+                    {data.fraisCarteRfid && data.fraisCarteRfid > 0
+                      ? "Support physique RFID normalisé RRM (Nouvel abonné ou remplacement badge perdu/endommagé)"
+                      : "Même support physique réutilisé lors du renouvellement (Exonéré de frais d'émission)"}
+                  </div>
+                </td>
+                <td className="p-3 text-center font-bold">
+                  {data.nombreCartes !== undefined ? data.nombreCartes : (data.fraisCarteRfid && data.fraisCarteRfid > 0 ? Math.floor(data.fraisCarteRfid / 50) || 1 : 1)}
+                </td>
+                <td className="p-3 text-right font-medium">
+                  {data.fraisCarteRfid && data.fraisCarteRfid > 0
+                    ? (data.fraisCarteRfid / 1.2).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    : "0,00"}{" "}
+                  MAD
+                </td>
+                <td className="p-3 text-center">
+                  <Tag color={data.fraisCarteRfid && data.fraisCarteRfid > 0 ? "blue" : "default"} className="font-bold">
+                    {data.fraisCarteRfid && data.fraisCarteRfid > 0 ? `${data.tauxTva}%` : "0%"}
+                  </Tag>
+                </td>
+                <td className="p-3 text-right font-black text-slate-900">
+                  {data.fraisCarteRfid && data.fraisCarteRfid > 0 ? (
+                    <span style={{ color: "#d97706" }}>+{data.fraisCarteRfid.toLocaleString("fr-FR")} MAD</span>
+                  ) : (
+                    <span style={{ color: "#16a34a" }}>0 MAD (Exonéré)</span>
+                  )}
                 </td>
               </tr>
             </tbody>

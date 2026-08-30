@@ -7,6 +7,10 @@ export interface FactureListItem {
   statut: StatutFacture;
   clientNom: string;
   dateEmission: string;
+  paiementId?: number;
+  paiementReference?: string;
+  fraisCarteRfid?: number;
+  montantAbonnementTtc?: number;
 }
 
 export interface FactureDetail extends FactureListItem {
@@ -17,4 +21,5 @@ export interface FactureDetail extends FactureListItem {
   genereePar: string;
   signeePar?: string;
   dateSignature?: string;
+  nombreCartes?: number;
 }
