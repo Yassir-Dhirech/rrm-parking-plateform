@@ -15,6 +15,7 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
+  FileDoneOutlined,
 } from "@ant-design/icons";
 import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
 import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
@@ -230,34 +231,82 @@ export function AbonnementDetail() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <DollarOutlined style={{ color: "#16a34a", fontSize: 20 }} />
             <span style={{ fontSize: "1rem", fontWeight: 700, color: "#003566" }}>
-              Détails du Règlement & Encaissement Associe
+              Détails du Règlement & Encaissement Associé
             </span>
           </div>
         }
-      >
-        <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
-          <Descriptions.Item label="Mode de Règlement">
-            <Tag color={data.type === "ENTREPRISE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
-              {data.type === "ENTREPRISE" ? "Chèque Bancaire (Certifié)" : "Espèces (Guichet RRM)"}
-            </Tag>
-          </Descriptions.Item>
+        extra={
+          <Button
+            type="primary"
+            icon={<FileDoneOutlined />}
+            onClick={() => navigate(`${basePath}/factures/${data.id}`)}
+            style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 8 }}
+          >
+            Consulter la Facture Officielle
+          </Button>
+        }
+    >
+      <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
+        <Descriptions.Item label="Facture Rattachée">
+          <Button
+            type="link"
+            icon={<FileDoneOutlined />}
+            onClick={() => navigate(`${basePath}/factures/${data.id}`)}
+            style={{ padding: 0, fontWeight: 700, color: "#006398" }}
+          >
+            {`FACT-${data.parkingNom?.includes("Agdal") ? "AGD" : "BEH"}-2026-${String(data.id).padStart(6, "0")}`}
+          </Button>
+        </Descriptions.Item>
 
-          <Descriptions.Item label="Statut du Paiement">
-            <Tag color="green" style={{ fontWeight: 700 }}>
-              <CheckCircleOutlined style={{ marginRight: 4 }} />
-              Règlement Encaissé & Quittancé
-            </Tag>
-          </Descriptions.Item>
+        <Descriptions.Item label="Règlement Encaissé">
+          <Button
+            type="link"
+            icon={<DollarOutlined />}
+            onClick={() => navigate(`${basePath}/paiements/${data.id}`)}
+            style={{ padding: 0, fontWeight: 700, color: "#16a34a" }}
+          >
+            {`PAY-2026-${String(data.id).padStart(6, "0")}`}
+          </Button>
+        </Descriptions.Item>
 
-          <Descriptions.Item label="Montant Total Réglé">
-            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: data.type === "STAFF" ? "#0284c7" : "#16a34a" }}>
-              {data.montantTotal} MAD TTC
+        <Descriptions.Item label="Mode de Règlement">
+          <Tag color={data.type === "ENTREPRISE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
+            {data.type === "ENTREPRISE" ? "Chèque Bancaire (Certifié)" : "Espèces (Guichet RRM)"}
+          </Tag>
+        </Descriptions.Item>
+
+        <Descriptions.Item label="Statut du Paiement">
+          <Tag color="green" style={{ fontWeight: 700 }}>
+            <CheckCircleOutlined style={{ marginRight: 4 }} />
+            Règlement Encaissé & Quittancé
+          </Tag>
+        </Descriptions.Item>
+
+        <Descriptions.Item label="Frais de Carte RFID">
+          {data.type === "ENTREPRISE" ? (
+            <span style={{ fontWeight: 700, color: "#d97706" }}>
+              +500 MAD (10 Badges RFID x 50 DH)
             </span>
-          </Descriptions.Item>
+          ) : data.statut === "EXPIRE" ? (
+            <span style={{ fontWeight: 700, color: "#16a34a" }}>
+              0 MAD (Badge physique conservé)
+            </span>
+          ) : (
+            <span style={{ fontWeight: 700, color: "#d97706" }}>
+              +50 MAD (Nouvelle Carte RFID)
+            </span>
+          )}
+        </Descriptions.Item>
 
-          <Descriptions.Item label="Date d'Encaissement">
-            {formatDate(data.dateDebut)}
-          </Descriptions.Item>
+        <Descriptions.Item label="Montant Total Réglé (TTC)">
+          <span style={{ fontSize: "1.1rem", fontWeight: 800, color: data.type === "STAFF" ? "#0284c7" : "#16a34a" }}>
+            {data.type === "ENTREPRISE" ? "54 500 MAD TTC" : data.statut === "EXPIRE" ? "3 600 MAD TTC" : "1 490 MAD TTC"}
+          </span>
+        </Descriptions.Item>
+
+        <Descriptions.Item label="Date d'Encaissement">
+          {formatDate(data.dateDebut)}
+        </Descriptions.Item>
 
           {data.type === "ENTREPRISE" && (
             <>

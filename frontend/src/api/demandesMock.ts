@@ -1,5 +1,6 @@
 import { type DemandeListItem, type DemandeDetail, type PaymentInfoInput, type PublicDemandeInput, type DemandeSubmissionResult } from "../features/demandes/types";
 import { formatDate } from "../lib/dateUtils";
+import { creerFactureMock } from "./facturesMock";
 
 const mockDemandesStore: Record<number, DemandeDetail> = {
   1: {
@@ -305,12 +306,27 @@ export const enregistrerPaiementAgentMock = submitPaiementGuichetMock;
 export async function submitPaiementGuichetMock(id: number, paymentInfo: PaymentInfoInput, actorName?: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 400));
   if (mockDemandesStore[id]) {
-    mockDemandesStore[id].statut = "PAIEMENT_ENREGISTRE";
-    mockDemandesStore[id].paiementInfo = {
+    const dem = mockDemandesStore[id];
+    dem.statut = "PAIEMENT_ENREGISTRE";
+    dem.paiementInfo = {
       ...paymentInfo,
       datePaiement: formatDate(new Date().toISOString()),
       validePar: actorName || "Agent Guichet (Agent)",
     };
+
+    // Automatic creation of official invoice for every recorded payment
+    const isNouvel = dem.typeDemande === "NOUVEL_ABONNEMENT";
+    const isPerte = dem.typeDemande === "PERTE_CARTE";
+    const fraisCarte = (isNouvel || isPerte) ? 50 : 0;
+
+    await creerFactureMock({
+      clientNom: dem.clientNom,
+      abonnementReference: `ABO-2026-${String(id).padStart(6, "0")}`,
+      montantTtc: paymentInfo.montant,
+      fraisCarteRfid: fraisCarte,
+      genereePar: actorName || "Agent Guichet (Agent)",
+      modePaiement: paymentInfo.modePaiement,
+    });
   }
 }
 

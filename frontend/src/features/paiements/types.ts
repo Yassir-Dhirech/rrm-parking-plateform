@@ -9,6 +9,10 @@ export interface PaiementListItem {
   statut: StatutPaiement;
   clientNom: string;
   datePaiement: string;
+  factureId?: number;
+  factureNumero?: string;
+  fraisCarteRfid?: number;
+  montantAbonnement?: number;
 }
 
 export interface PaiementDetail extends PaiementListItem {
