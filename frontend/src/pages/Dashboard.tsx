@@ -32,6 +32,7 @@ import { getParkingsMock, getLogsMock } from "../api/adminMock";
 import { KpiCard } from "../components/ui/KpiCard";
 import { formatDate } from "../lib/dateUtils";
 import type { AuditLog } from "../features/admin/types";
+import { ResponsableDashboardView } from "../components/dashboard/ResponsableDashboardView";
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -40,6 +41,10 @@ export function Dashboard() {
   const [filters, setFilters] = useState<GlobalFilters>({});
 
   if (!role) return null;
+
+  if (role === "RESPONSABLE") {
+    return <ResponsableDashboardView />;
+  }
 
   const currentRoleConfig = roleConfig[role];
   const basePath = currentRoleConfig.homePath;
@@ -377,7 +382,7 @@ export function Dashboard() {
       )}
 
       {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
-      {(role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") && (
+      {(role === "AGENT" || role === "SUPERVISEUR") && (
         <Card
           title={
             <Space>
