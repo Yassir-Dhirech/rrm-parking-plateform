@@ -36,6 +36,7 @@ import {
   CheckOutlined,
   ThunderboltOutlined,
   FileTextOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
@@ -355,7 +356,15 @@ export function PublicQrForm() {
     parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Agdal Gare (Rabat)";
   const totalMonths = typeDemande === "CORPORATE" ? 240 : (watchedDureeMois || 3);
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
-  const totalPrice = getMonthlyPrice() * totalMonths * cardMultiplier;
+  const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
+
+  // RRM Business Rule:
+  // - New subscriber (NEW / CORPORATE): requires new RFID card(s) => +50 DH per card
+  // - Damaged or lost card (DUPLICATE): replacement fee => 50 DH
+  // - Renewal with the same card (RENEW / TRANSFER): 0 DH (re-using existing card)
+  const fraisCarteUnitaire = (typeDemande === "NEW" || typeDemande === "CORPORATE" || typeDemande === "DUPLICATE") ? 50 : 0;
+  const totalFraisCarte = fraisCarteUnitaire * cardMultiplier;
+  const totalPrice = baseAbonnementPrice + totalFraisCarte;
 
   // Submit Mutation
   const submitMutation = useMutation({
@@ -376,6 +385,9 @@ export function PublicQrForm() {
         ...values,
         typeDemande,
         typeClient: typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER",
+        baseAbonnementPrice,
+        fraisCarte: totalFraisCarte,
+        montantTotal: totalPrice,
       });
       setIsOtpModalOpen(true);
     } catch {
@@ -1356,6 +1368,45 @@ export function PublicQrForm() {
                   </Radio.Group>
                 </Form.Item>
               )}
+
+              {/* RFID Card Fee Indicator Card */}
+              <div
+                className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                  totalFraisCarte > 0 ? "bg-amber-50/90 border-amber-200" : "bg-emerald-50/90 border-emerald-200"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${
+                      totalFraisCarte > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                    }`}
+                  >
+                    <CreditCardOutlined />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 block">
+                      {typeDemande === "NEW"
+                        ? "Frais d'Émission Carte RFID Neuve (+50 DH)"
+                        : typeDemande === "CORPORATE"
+                        ? `Frais d'Émission Cartes RFID Flotte (+50 DH x ${nombreVehiculesCorporate} Cartes)`
+                        : typeDemande === "DUPLICATE"
+                        ? "Frais de Duplicata / Remplacement Carte RFID (50 DH)"
+                        : "Conservation de la Carte RFID Actuelle (0 DH)"}
+                    </span>
+                    <span className="text-slate-600 block">
+                      {totalFraisCarte > 0
+                        ? "Tout nouvel abonné ou remplacement de carte perdue/endommagée est soumis au tarif réglementaire de 50 DH TTC par carte."
+                        : "En cas de renouvellement avec la même carte physique, aucun frais supplémentaire d'émission n'est appliqué."}
+                    </span>
+                  </div>
+                </div>
+                <Tag
+                  color={totalFraisCarte > 0 ? "orange" : "green"}
+                  className="font-black text-xs px-3 py-1 rounded-full m-0 shrink-0"
+                >
+                  {totalFraisCarte > 0 ? `+${totalFraisCarte} DH TTC` : "0 DH (Gratuit)"}
+                </Tag>
+              </div>
             </Form>
 
             <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
@@ -1456,18 +1507,45 @@ export function PublicQrForm() {
                   </Row>
                 )}
 
-                <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                  <div>
-                    <span className="text-xs text-slate-500 block font-semibold">Formule Tarifaire & Durée :</span>
-                    <span className="text-sm font-extrabold text-slate-900">
+                <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">Formule & Durée :</span>
+                    <span className="font-extrabold text-slate-900">
                       {typeDemande === "CORPORATE"
                         ? `${watchedFormuleCode === "CORP_8_20" ? "Pass Diurne 08h-20h (500 DH/mois/place)" : watchedFormuleCode === "CORP_8_22" ? "Pass Étendu 08h-22h (550 DH/mois/place)" : "Pass Permanent 24h/7j (650 DH/mois/place)"} — 20 Ans (240 Mois)`
                         : `${watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : "Pass Nocturne 19h-08h (350 DH/mois)"} — ${totalMonths} Mois`}
                     </span>
                   </div>
-                  <div className="bg-secondary/10 px-4 py-2 rounded-xl text-right">
-                    <span className="text-xs text-slate-500 block font-semibold">Montant Total Estimé</span>
-                    <span className="text-lg font-black text-secondary">
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">Coût de l'Abonnement Parking :</span>
+                    <span className="font-bold text-slate-800">
+                      {baseAbonnementPrice.toLocaleString("fr-FR")} DH TTC
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">
+                      Frais de Carte RFID Sans Contact :
+                      <span className="text-slate-400 font-normal ml-1">
+                        {totalFraisCarte > 0
+                          ? typeDemande === "DUPLICATE"
+                            ? "(Duplicata / Remplacement badge : 50 DH)"
+                            : `(Nouvel abonné : +50 DH${cardMultiplier > 1 ? ` x ${cardMultiplier} cartes` : ""})`
+                          : "(Renouvellement : même carte physique conservée)"}
+                      </span>
+                    </span>
+                    <span className={`font-bold ${totalFraisCarte > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                      {totalFraisCarte > 0 ? `+${totalFraisCarte.toLocaleString("fr-FR")} DH TTC` : "0 DH (Gratuit)"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-secondary/10 px-4 py-2.5 rounded-xl pt-3 border-t border-slate-200">
+                    <div>
+                      <span className="text-xs text-slate-700 font-bold block">Total Net à Régler au Guichet :</span>
+                      <span className="text-[11px] text-slate-500">Abonnement + Frais de carte RFID</span>
+                    </div>
+                    <span className="text-xl font-black text-secondary">
                       {totalPrice.toLocaleString("fr-FR")} DH TTC
                     </span>
                   </div>

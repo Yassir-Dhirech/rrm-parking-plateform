@@ -148,8 +148,19 @@ export function DemandeDetail() {
 
   const currentStep = isDossierValide ? 2 : isPaiementDone ? 1 : 0;
 
+  const isNouvelAbo = data.typeDemande === "NOUVEL_ABONNEMENT";
+  const isPerteCarte = data.typeDemande === "PERTE_CARTE";
+  const isRenouvellement = data.typeDemande === "RENOUVELLEMENT";
+  const fraisCarteRfid = (isNouvelAbo || isPerteCarte) ? 50 : 0;
+  const montantBaseAbo = isPerteCarte ? 0 : (data.montantTotal || (isRenouvellement ? 6600 : 3600));
+  const montantTotalExige = isPerteCarte ? 50 : (montantBaseAbo + (isNouvelAbo ? 50 : 0));
+
   const handleOpenPaymentModal = () => {
     paymentForm.resetFields();
+    paymentForm.setFieldsValue({
+      modePaiement: data.typeClient === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
+      montant: montantTotalExige,
+    });
     setPaymentModalOpen(true);
   };
 
@@ -309,17 +320,26 @@ export function DemandeDetail() {
               <Descriptions.Item label="Immatriculation">
                 <Tag color="cyan">{data.immatriculation}</Tag> ({data.typeVehicule || "Voiture"})
               </Descriptions.Item>
-              <Descriptions.Item label="Montant Total" span={2}>
+              <Descriptions.Item label="Frais d'Émission Carte RFID">
+                <Tag color="orange" style={{ fontWeight: 700 }}>+50 MAD TTC</Tag>
+                <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
+                  (Nouvelle carte obligatoire pour tout premier abonné)
+                </span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Montant Total Net à Encaisser" span={2}>
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
-                  {data.montantTotal || 3600} MAD TTC
+                  {montantTotalExige} MAD TTC
                 </strong>
+                <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
+                  (Abonnement : {montantBaseAbo} MAD + Badge RFID : 50 MAD)
+                </span>
               </Descriptions.Item>
             </Descriptions>
           )}
 
           {data.typeDemande === "RENOUVELLEMENT" && (
             <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="small">
-              <Descriptions.Item label="Carte RFID">
+              <Descriptions.Item label="Carte RFID Réutilisée">
                 <Tag color="gold" style={{ fontSize: 13, fontWeight: 700 }}>
                   {data.numeroCarteAbonne || "CRT-2025-001099"}
                 </Tag>
@@ -336,9 +356,15 @@ export function DemandeDetail() {
               <Descriptions.Item label="Immatriculation">
                 <Tag color="cyan">{data.immatriculation}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Montant Renouvellement">
+              <Descriptions.Item label="Frais de Carte RFID">
+                <Tag color="green" style={{ fontWeight: 700 }}>0 MAD (Exonéré)</Tag>
+                <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
+                  (Même carte physique conservée et réactivée)
+                </span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Montant Renouvellement Total" span={2}>
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
-                  {data.montantTotal || 6600} MAD TTC
+                  {montantTotalExige} MAD TTC
                 </strong>
               </Descriptions.Item>
             </Descriptions>
@@ -596,6 +622,36 @@ export function DemandeDetail() {
           <Form.Item name="remarques" label="Remarques / Observations">
             <Input.TextArea rows={2} placeholder="Observations éventuelles sur le paiement..." />
           </Form.Item>
+
+          {/* Card Fee Breakdown Information Box */}
+          <div
+            style={{
+              padding: 12,
+              borderRadius: 8,
+              backgroundColor: fraisCarteRfid > 0 ? "#fffbeb" : "#f0fdf4",
+              border: `1px solid ${fraisCarteRfid > 0 ? "#fde68a" : "#bbf7d0"}`,
+              marginBottom: 16,
+              fontSize: 12,
+            }}
+          >
+            <div style={{ fontWeight: 700, color: fraisCarteRfid > 0 ? "#92400e" : "#166534", marginBottom: 4 }}>
+              Détail du Montant Encaissé (Règle Tarifaire RRM) :
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+              <span style={{ color: "#475569" }}>Coût de l'Abonnement :</span>
+              <strong>{montantBaseAbo} MAD</strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ color: "#475569" }}>Frais d'Émission Carte RFID :</span>
+              <strong style={{ color: fraisCarteRfid > 0 ? "#b45309" : "#16a34a" }}>
+                {fraisCarteRfid > 0 ? `+${fraisCarteRfid} MAD (Nouvelle Carte / Duplicata)` : "0 MAD (Même Carte Conservée)"}
+              </strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #cbd5e1", paddingTop: 4, fontWeight: 800 }}>
+              <span style={{ color: "#0f172a" }}>Total Net Quittancé au Guichet :</span>
+              <span style={{ color: "#16a34a", fontSize: 14 }}>{montantTotalExige} MAD TTC</span>
+            </div>
+          </div>
 
           <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
             <Space>
