@@ -72,7 +72,6 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "dashboard", label: "Tableau de bord", path: "/responsable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/responsable/carte-parkings" },
       { key: "parkings", label: "Gestion Parkings", path: "/responsable/parkings" },
-      { key: "tarifs", label: "Plans Tarifaires", path: "/responsable/tarifs" },
       { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "recettes", label: "Recettes Hebdo", path: "/responsable/recettes" },

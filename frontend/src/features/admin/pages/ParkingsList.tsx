@@ -13,7 +13,6 @@ import {
   Alert,
   Row,
   Col,
-  Progress,
   Divider,
   Dropdown,
 } from "antd";
@@ -27,10 +26,6 @@ import {
   StopOutlined,
   SafetyCertificateOutlined,
   PieChartOutlined,
-  UserOutlined,
-  BankOutlined,
-  TagOutlined,
-  BarChartOutlined,
   TagsOutlined,
   SettingOutlined,
   DownOutlined,
@@ -45,7 +40,6 @@ export function ParkingsList() {
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<Parking | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -58,14 +52,6 @@ export function ParkingsList() {
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [quotaForm] = Form.useForm();
-
-  // Temporary state for live preview in Quota Modal
-  const [modalCapacite, setModalCapacite] = useState<number>(450);
-  const [modalPctTickets, setModalPctTickets] = useState<number>(50);
-  const [modalPctAbonnements, setModalPctAbonnements] = useState<number>(50);
-  const [modalPctCorporate, setModalPctCorporate] = useState<number>(60);
-  const [modalPctParticulier, setModalPctParticulier] = useState<number>(40);
 
   const { data: parkings = [], isLoading } = useQuery({
     queryKey: ["admin_parkings"],
@@ -126,34 +112,6 @@ export function ParkingsList() {
     },
   });
 
-  // Edit Quotas & Percentages Mutation (Responsable)
-  const quotaMutation = useMutation({
-    mutationFn: async (values: {
-      capaciteTotale: number;
-      pourcentageTickets: number;
-      pourcentageAbonnements: number;
-      pourcentageCorporate: number;
-      pourcentageParticulier: number;
-    }) => {
-      if (!selectedParking) return;
-      const targetIndex = mockParkings.findIndex((p) => p.id === selectedParking.id);
-      if (targetIndex !== -1) {
-        const p = mockParkings[targetIndex];
-        p.capaciteTotale = values.capaciteTotale;
-        p.pourcentageTickets = values.pourcentageTickets;
-        p.pourcentageAbonnements = values.pourcentageAbonnements;
-        p.pourcentageCorporate = values.pourcentageCorporate;
-        p.pourcentageParticulier = values.pourcentageParticulier;
-        mockParkings[targetIndex] = recalculerQuotasParking(p);
-      }
-    },
-    onSuccess: () => {
-      message.success(`Quotas et pourcentages du parking ${selectedParking?.nom} mis à jour par le Responsable !`);
-      queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
-      setIsQuotaModalOpen(false);
-    },
-  });
-
   // Lock / Unlock Parking Mutation
   const toggleLockMutation = useMutation({
     mutationFn: async ({ lock, reason }: { lock: boolean; reason?: string }) => {
@@ -198,24 +156,6 @@ export function ParkingsList() {
     setSelectedParking(record);
     editForm.setFieldsValue(record);
     setIsEditModalOpen(true);
-  };
-
-  const handleOpenQuotasModal = (record: Parking) => {
-    setSelectedParking(record);
-    setModalCapacite(record.capaciteTotale || 450);
-    setModalPctTickets(record.pourcentageTickets || 50);
-    setModalPctAbonnements(record.pourcentageAbonnements || 50);
-    setModalPctCorporate(record.pourcentageCorporate || 60);
-    setModalPctParticulier(record.pourcentageParticulier || 40);
-
-    quotaForm.setFieldsValue({
-      capaciteTotale: record.capaciteTotale || 450,
-      pourcentageTickets: record.pourcentageTickets || 50,
-      pourcentageAbonnements: record.pourcentageAbonnements || 50,
-      pourcentageCorporate: record.pourcentageCorporate || 60,
-      pourcentageParticulier: record.pourcentageParticulier || 40,
-    });
-    setIsQuotaModalOpen(true);
   };
 
   const handleOpenPlansModal = (record: Parking) => {
@@ -263,60 +203,14 @@ export function ParkingsList() {
       ),
     },
     {
-      title: "Capacité Totale & Tickets",
-      key: "capaciteTickets",
-      render: (_: unknown, record: Parking) => (
-        <div>
-          <Tag color="geekblue" style={{ fontWeight: 700, fontSize: 13 }}>{record.capaciteTotale} places</Tag>
-          <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>
-            <TagOutlined style={{ marginRight: 4 }} /> Tickets (Rotation): <strong>{record.pourcentageTickets}%</strong> ({record.quotaTickets} pl.)
-          </div>
-        </div>
+      title: "Capacité Globale",
+      dataIndex: "capaciteTotale",
+      key: "capaciteTotale",
+      render: (capaciteTotale: number) => (
+        <Tag color="geekblue" style={{ fontWeight: 700, fontSize: 13 }}>
+          {capaciteTotale} places
+        </Tag>
       ),
-    },
-    {
-      title: "Quota Abonnements Corporate (Flottes)",
-      key: "quotaCorporate",
-      render: (_: unknown, record: Parking) => {
-        const pctOccup = Math.round((record.abonnementsCorporateActifs / (record.quotaCorporate || 1)) * 100);
-        return (
-          <div style={{ minWidth: 160 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
-              <span style={{ fontWeight: 600, color: "#7e22ce" }}>
-                <BankOutlined /> Corporate ({record.pourcentageCorporate}%):
-              </span>
-              <span>{record.quotaCorporate} pl.</span>
-            </div>
-            <Progress percent={pctOccup} size="small" status={pctOccup > 90 ? "exception" : "normal"} strokeColor="#9333ea" />
-            <div style={{ fontSize: 11.5, display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-              <span style={{ color: "#475569" }}>Inscrits: <strong>{record.abonnementsCorporateActifs}</strong></span>
-              <span style={{ color: "#16a34a", fontWeight: 700 }}>Dispo: {record.placesRestantesCorporate}</span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Quota Abonnements Particuliers",
-      key: "quotaParticulier",
-      render: (_: unknown, record: Parking) => {
-        const pctOccup = Math.round((record.abonnementsParticulierActifs / (record.quotaParticulier || 1)) * 100);
-        return (
-          <div style={{ minWidth: 160 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
-              <span style={{ fontWeight: 600, color: "#0284c7" }}>
-                <UserOutlined /> Particuliers ({record.pourcentageParticulier}%):
-              </span>
-              <span>{record.quotaParticulier} pl.</span>
-            </div>
-            <Progress percent={pctOccup} size="small" status={pctOccup > 90 ? "exception" : "normal"} strokeColor="#0284c7" />
-            <div style={{ fontSize: 11.5, display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-              <span style={{ color: "#475569" }}>Inscrits: <strong>{record.abonnementsParticulierActifs}</strong></span>
-              <span style={{ color: "#16a34a", fontWeight: 700 }}>Dispo: {record.placesRestantesParticulier}</span>
-            </div>
-          </div>
-        );
-      },
     },
     {
       title: "Statut",
@@ -339,12 +233,6 @@ export function ParkingsList() {
             icon: <TagsOutlined style={{ color: "#006398" }} />,
             label: <span style={{ fontWeight: 700, color: "#006398" }}>Plans Tarifaires</span>,
             onClick: () => handleOpenPlansModal(record),
-          },
-          {
-            key: "quotas",
-            icon: <PieChartOutlined style={{ color: "#7c3aed" }} />,
-            label: <span>Quotas & Répartition %</span>,
-            onClick: () => handleOpenQuotasModal(record),
           },
           {
             key: "edit",
@@ -530,125 +418,6 @@ export function ParkingsList() {
               </Form.Item>
             </Col>
           </Row>
-        </Form>
-      </Modal>
-
-      {/* Modal Quotas & Pourcentages (Responsable) */}
-      <Modal
-        title={
-          <span>
-            <PieChartOutlined style={{ color: "#0284c7" }} /> Configuration des Quotas & Pourcentages: {selectedParking?.nom}
-          </span>
-        }
-        open={isQuotaModalOpen}
-        onCancel={() => setIsQuotaModalOpen(false)}
-        onOk={() => quotaForm.submit()}
-        confirmLoading={quotaMutation.isPending}
-        okText="Enregistrer & Recalculer les Quotas"
-        cancelText="Annuler"
-        width={650}
-      >
-        <Alert
-          message="Répartition Stratégique de la Capacité"
-          description="Fixez les pourcentages d'attribution du parking. Chaque nouvelle souscription décrémente automatiquement le nombre de places restantes."
-          type="info"
-          showIcon
-          style={{ marginBottom: 20 }}
-        />
-
-        <Form
-          form={quotaForm}
-          layout="vertical"
-          onFinish={(v) => quotaMutation.mutate(v)}
-          onValuesChange={(_, allValues) => {
-            if (allValues.capaciteTotale) setModalCapacite(allValues.capaciteTotale);
-            if (allValues.pourcentageTickets !== undefined) {
-              setModalPctTickets(allValues.pourcentageTickets);
-              setModalPctAbonnements(100 - allValues.pourcentageTickets);
-              quotaForm.setFieldsValue({ pourcentageAbonnements: 100 - allValues.pourcentageTickets });
-            }
-            if (allValues.pourcentageCorporate !== undefined) {
-              setModalPctCorporate(allValues.pourcentageCorporate);
-              setModalPctParticulier(100 - allValues.pourcentageCorporate);
-              quotaForm.setFieldsValue({ pourcentageParticulier: 100 - allValues.pourcentageCorporate });
-            }
-          }}
-        >
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="capaciteTotale"
-                label="Capacité Globale du Parking (Nombre Total de Places)"
-                rules={[{ required: true, message: "Capacité requise" }]}
-              >
-                <InputNumber style={{ width: "100%" }} min={10} max={5000} size="large" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: "12px 0 16px" }}>
-            1. Répartition Globale (Tickets vs Abonnements)
-          </Divider>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="pourcentageTickets" label="% Reserve Tickets" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="pourcentageAbonnements" label="% Réservé Abonnements Total" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" disabled />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: "12px 0 16px" }}>
-            2. Sous-Répartition des Abonnements (Corporate vs Particulier)
-          </Divider>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="pourcentageParticulier" label="% Quota Abonnements Particuliers" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" disabled />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          {/* Dynamic Preview Box inside Modal */}
-          {(() => {
-            const quotaTicketsCalc = Math.round(modalCapacite * (modalPctTickets / 100));
-            const quotaAbonnementCalc = Math.round(modalCapacite * (modalPctAbonnements / 100));
-            const quotaCorpCalc = Math.round(quotaAbonnementCalc * (modalPctCorporate / 100));
-            const quotaPartCalc = Math.round(quotaAbonnementCalc * (modalPctParticulier / 100));
-
-            return (
-              <div style={{ padding: 16, backgroundColor: "#f0f9ff", borderRadius: 10, border: "1px solid #bae6fd", marginTop: 16 }}>
-                <Text style={{ fontWeight: 700, color: "#0369a1", display: "block", marginBottom: 8 }}>
-                  <BarChartOutlined style={{ marginRight: 6 }} /> Prévisualisation des Quotas Calculés ({modalCapacite} places au total) :
-                </Text>
-                <Row gutter={[12, 12]}>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#334155" }}><TagOutlined style={{ marginRight: 4 }} /> Tickets (Rotation):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#0284c7" }}>{quotaTicketsCalc} places</div>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#6b21a8" }}><BankOutlined style={{ marginRight: 4 }} /> Corporate ({modalPctCorporate}%):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#7e22ce" }}>{quotaCorpCalc} places</div>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#166534" }}><UserOutlined style={{ marginRight: 4 }} /> Particuliers ({modalPctParticulier}%):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#15803d" }}>{quotaPartCalc} places</div>
-                  </Col>
-                </Row>
-              </div>
-            );
-          })()}
         </Form>
       </Modal>
 
