@@ -132,22 +132,29 @@ export function reserverPlaceParkingMock(
 }
 
 export const mockTarifs: PlanTarifaire[] = [
-  { id: 1, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 500, tarifTTC: 600, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  { id: 2, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 350, tarifTTC: 420, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  { id: 3, libelle: "Abonnement Nuit (Nocturne)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 250, tarifTTC: 300, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  { id: 4, libelle: "Abonnement Corporate (Flotte)", typeAbonnement: "CORPORATE", plageHoraire: "Sur mesure", dureeMois: 12, tarifHT: 4500, tarifTTC: 5400, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  
-  { id: 5, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 600, tarifTTC: 720, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
-  { id: 6, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 400, tarifTTC: 480, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
-  { id: 7, libelle: "Abonnement Nuit (Nocturne)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
-  { id: 8, libelle: "Abonnement Corporate (Flotte)", typeAbonnement: "CORPORATE", plageHoraire: "Sur mesure", dureeMois: 12, tarifHT: 5000, tarifTTC: 6000, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  // Parking 1: Agdal Gare
+  { id: 1, libelle: "Abonnement Particulier — Permanent (24h / 7j)", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 500, tarifTTC: 600, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 2, libelle: "Abonnement Particulier — Diurne (Jour 08:00 - 20:00)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 350, tarifTTC: 420, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 3, libelle: "Abonnement Particulier — Nocturne (Nuit 19:00 - 08:00)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 250, tarifTTC: 300, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 11, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 20:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416.67, tarifTTC: 500, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 12, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 22:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458.33, tarifTTC: 550, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  { id: 13, libelle: "Contrat Corporate 20 Ans — Formule 24h / 7j", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541.67, tarifTTC: 650, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
 
-  { id: 9, libelle: "Abonnement Permanent 24h/7j", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 450, tarifTTC: 540, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
-  { id: 10, libelle: "Abonnement Jour (Diurne)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  // Parking 2: Hassan II
+  { id: 5, libelle: "Abonnement Particulier — Permanent (24h / 7j)", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 600, tarifTTC: 720, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 6, libelle: "Abonnement Particulier — Diurne (Jour 08:00 - 20:00)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 400, tarifTTC: 480, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 7, libelle: "Abonnement Particulier — Nocturne (Nuit 19:00 - 08:00)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 21, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 20:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416.67, tarifTTC: 500, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 22, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 22:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458.33, tarifTTC: 550, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
+  { id: 23, libelle: "Contrat Corporate 20 Ans — Formule 24h / 7j", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541.67, tarifTTC: 650, parkingId: 2, parkingNom: "Parking Hassan II", actif: true },
 
-  { id: 11, libelle: "Longue Durée 20 Ans (08:00 - 20:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416, tarifTTC: 500, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  { id: 12, libelle: "Longue Durée 20 Ans (08:00 - 22:00)", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458, tarifTTC: 550, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
-  { id: 13, libelle: "Longue Durée 20 Ans (24h / 7j)", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541, tarifTTC: 650, parkingId: 1, parkingNom: "Parking Agdal Gare", actif: true },
+  // Parking 3: Bab El Had
+  { id: 9, libelle: "Abonnement Particulier — Permanent (24h / 7j)", typeAbonnement: "PERMANENT_24_7", plageHoraire: "24h / 7j", dureeMois: 1, tarifHT: 450, tarifTTC: 540, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 10, libelle: "Abonnement Particulier — Diurne (Jour 08:00 - 20:00)", typeAbonnement: "JOUR_8H_20H", plageHoraire: "08:00 - 20:00", dureeMois: 1, tarifHT: 300, tarifTTC: 360, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 30, libelle: "Abonnement Particulier — Nocturne (Nuit 19:00 - 08:00)", typeAbonnement: "NUIT_19H_8H", plageHoraire: "19:00 - 08:00", dureeMois: 1, tarifHT: 208.33, tarifTTC: 250, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 31, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 20:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 20:00", dureeMois: 240, tarifHT: 416.67, tarifTTC: 500, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 32, libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 22:00", typeAbonnement: "CORPORATE", plageHoraire: "08:00 - 22:00", dureeMois: 240, tarifHT: 458.33, tarifTTC: 550, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
+  { id: 33, libelle: "Contrat Corporate 20 Ans — Formule 24h / 7j", typeAbonnement: "CORPORATE", plageHoraire: "24h / 7j", dureeMois: 240, tarifHT: 541.67, tarifTTC: 650, parkingId: 3, parkingNom: "Parking Bab El Had", actif: true },
 ];
 
 export const mockLogs: AuditLog[] = [
@@ -166,6 +173,47 @@ export async function getParkingsMock(): Promise<Parking[]> {
 export async function getTarifsMock(): Promise<PlanTarifaire[]> {
   return new Promise((res) => setTimeout(() => res(mockTarifs), 300));
 }
+
+export async function updateTarifsParkingMock(
+  parkingId: number,
+  updatedTarifs: Array<{
+    id?: number;
+    typeAbonnement: string;
+    tarifTTC: number;
+    libelle?: string;
+    plageHoraire?: string;
+    dureeMois?: number;
+  }>
+): Promise<void> {
+  await new Promise((res) => setTimeout(res, 300));
+  const parkingObj = mockParkings.find((p) => p.id === parkingId);
+  const parkingNom = parkingObj ? parkingObj.nom : "Parking RRM";
+
+  // Remove existing tariffs for this parking
+  for (let i = mockTarifs.length - 1; i >= 0; i--) {
+    if (mockTarifs[i].parkingId === parkingId) {
+      mockTarifs.splice(i, 1);
+    }
+  }
+
+  // Insert all updated and newly added tariffs
+  updatedTarifs.forEach((u, idx) => {
+    const tarifHT = Math.round((u.tarifTTC / 1.2) * 100) / 100;
+    mockTarifs.push({
+      id: u.id && u.id > 0 ? u.id : Date.now() + idx,
+      libelle: u.libelle || `Abonnement ${u.typeAbonnement}`,
+      typeAbonnement: u.typeAbonnement,
+      plageHoraire: u.plageHoraire || "24h / 7j",
+      dureeMois: u.dureeMois || 1,
+      tarifHT,
+      tarifTTC: u.tarifTTC,
+      parkingId,
+      parkingNom,
+      actif: true,
+    });
+  });
+}
+
 export async function getLogsMock(): Promise<AuditLog[]> {
   return new Promise((res) => setTimeout(() => res(mockLogs.map((l) => ({ ...l, timestamp: formatDate(l.timestamp) }))), 300));
 }

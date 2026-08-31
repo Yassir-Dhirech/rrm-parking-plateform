@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table } from "antd";
+import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table, Dropdown } from "antd";
 import {
   RiseOutlined,
   FileTextOutlined,
@@ -10,15 +10,26 @@ import {
   FileDoneOutlined,
   IdcardOutlined,
   ApartmentOutlined,
+  TagsOutlined,
+  SettingOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
+import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
   const { userName } = useAuth();
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<number | null>(null);
+  const [plansModalOpen, setPlansModalOpen] = useState(false);
+  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<any | null>(null);
+
+  const handleOpenPlans = (parking: any) => {
+    setSelectedParkingForPlans(parking);
+    setPlansModalOpen(true);
+  };
 
   // Revenue Evolution Dataset (Monthly Stacked Multi-Segment)
   const monthlyRevenueData = [
@@ -190,6 +201,19 @@ export function ResponsableDashboardView() {
                 { value: 4, label: "Parking Chellah" },
               ]}
             />
+            <Button
+              icon={<TagsOutlined />}
+              onClick={() => {
+                const targetParking = selectedSiteFilter
+                  ? parkingsCapacityData.find((p) => p.id === selectedSiteFilter) || parkingsCapacityData[0]
+                  : parkingsCapacityData[0];
+                handleOpenPlans(targetParking);
+              }}
+              style={{ borderColor: "#006398", color: "#006398", fontWeight: 700 }}
+              className="rounded-xl"
+            >
+              Plans Tarifaires
+            </Button>
             <Button
               icon={<PrinterOutlined />}
               onClick={() => window.print()}
@@ -566,12 +590,43 @@ export function ResponsableDashboardView() {
               >
                 {/* Top Section: Info + Circular Dial */}
                 <div className="flex justify-between items-start gap-4 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-black text-slate-900 text-base">{p.nom}</span>
-                      <Tag color={isCritical ? "volcano" : p.tauxOccupation >= 85 ? "gold" : "green"} className="font-black text-xs m-0">
-                        {p.statutText}
-                      </Tag>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-900 text-base">{p.nom}</span>
+                        <Tag color={isCritical ? "volcano" : p.tauxOccupation >= 85 ? "gold" : "green"} className="font-black text-xs m-0">
+                          {p.statutText}
+                        </Tag>
+                      </div>
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: "plans",
+                              icon: <TagsOutlined style={{ color: "#006398" }} />,
+                              label: <span style={{ fontWeight: 700, color: "#006398" }}>Plans Tarifaires</span>,
+                              onClick: () => handleOpenPlans(p),
+                            },
+                            {
+                              key: "parkings",
+                              icon: <SettingOutlined style={{ color: "#7c3aed" }} />,
+                              label: <span>Gérer Quotas & Ouvrage</span>,
+                              onClick: () => navigate("/responsable/parkings"),
+                            },
+                          ],
+                        }}
+                        trigger={["click"]}
+                        placement="bottomRight"
+                      >
+                        <Button
+                          size="small"
+                          icon={<SettingOutlined />}
+                          style={{ fontWeight: 700, borderRadius: 8, borderColor: "#006398", color: "#006398" }}
+                          className="flex items-center gap-1"
+                        >
+                          Paramètres <DownOutlined style={{ fontSize: 9 }} />
+                        </Button>
+                      </Dropdown>
                     </div>
                     <span className="text-xs text-slate-500 font-semibold block mt-0.5">
                       Capacité Globale : <strong>{p.capaciteTotal} places</strong>
@@ -962,6 +1017,13 @@ export function ResponsableDashboardView() {
           </div>
         </div>
       </Card>
+
+      {/* Parking Plans Tarifaires Pre-filled Modal */}
+      <ParkingPlansTarifairesModal
+        open={plansModalOpen}
+        onClose={() => setPlansModalOpen(false)}
+        parking={selectedParkingForPlans}
+      />
     </div>
   );
 }

@@ -10,13 +10,12 @@ import {
   Input,
   InputNumber,
   message,
-  Space,
-  Tooltip,
   Alert,
   Row,
   Col,
-  Progress,
   Divider,
+  Dropdown,
+  Upload,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -28,13 +27,16 @@ import {
   StopOutlined,
   SafetyCertificateOutlined,
   PieChartOutlined,
-  UserOutlined,
-  BankOutlined,
-  TagOutlined,
-  BarChartOutlined,
+  TagsOutlined,
+  SettingOutlined,
+  DownOutlined,
+  FileProtectOutlined,
+  UploadOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { getParkingsMock, mockParkings, recalculerQuotasParking } from "../../../api/adminMock";
 import type { Parking } from "../types";
+import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
 
 const { Title, Text } = Typography;
 
@@ -42,7 +44,10 @@ export function ParkingsList() {
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
+  const [isEditModeActive, setIsEditModeActive] = useState(false);
+  const [attachedPvName, setAttachedPvName] = useState<string | null>(null);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<Parking | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -53,14 +58,6 @@ export function ParkingsList() {
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [quotaForm] = Form.useForm();
-
-  // Temporary state for live preview in Quota Modal
-  const [modalCapacite, setModalCapacite] = useState<number>(450);
-  const [modalPctTickets, setModalPctTickets] = useState<number>(50);
-  const [modalPctAbonnements, setModalPctAbonnements] = useState<number>(50);
-  const [modalPctCorporate, setModalPctCorporate] = useState<number>(60);
-  const [modalPctParticulier, setModalPctParticulier] = useState<number>(40);
 
   const { data: parkings = [], isLoading } = useQuery({
     queryKey: ["admin_parkings"],
@@ -106,8 +103,11 @@ export function ParkingsList() {
 
   // Edit Parking Basic Info
   const editMutation = useMutation({
-    mutationFn: async (values: Partial<Parking>) => {
+    mutationFn: async (values: Partial<Parking> & { motifModification?: string }) => {
       if (!selectedParking) return;
+      if (!values.motifModification?.trim()) {
+        throw new Error("Le motif officiel de la modification est obligatoire.");
+      }
       const targetIndex = mockParkings.findIndex((p) => p.id === selectedParking.id);
       if (targetIndex !== -1) {
         Object.assign(mockParkings[targetIndex], values);
@@ -115,37 +115,15 @@ export function ParkingsList() {
       }
     },
     onSuccess: () => {
-      message.success("Informations du parking mises à jour !");
+      message.success(
+        `Caractéristiques du parking mises à jour avec motif officiel enregistré${attachedPvName ? ` et PV "${attachedPvName}" associé` : ""} !`
+      );
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
+      setIsEditModeActive(false);
       setIsEditModalOpen(false);
     },
-  });
-
-  // Edit Quotas & Percentages Mutation (Responsable)
-  const quotaMutation = useMutation({
-    mutationFn: async (values: {
-      capaciteTotale: number;
-      pourcentageTickets: number;
-      pourcentageAbonnements: number;
-      pourcentageCorporate: number;
-      pourcentageParticulier: number;
-    }) => {
-      if (!selectedParking) return;
-      const targetIndex = mockParkings.findIndex((p) => p.id === selectedParking.id);
-      if (targetIndex !== -1) {
-        const p = mockParkings[targetIndex];
-        p.capaciteTotale = values.capaciteTotale;
-        p.pourcentageTickets = values.pourcentageTickets;
-        p.pourcentageAbonnements = values.pourcentageAbonnements;
-        p.pourcentageCorporate = values.pourcentageCorporate;
-        p.pourcentageParticulier = values.pourcentageParticulier;
-        mockParkings[targetIndex] = recalculerQuotasParking(p);
-      }
-    },
-    onSuccess: () => {
-      message.success(`Quotas et pourcentages du parking ${selectedParking?.nom} mis à jour par le Responsable !`);
-      queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
-      setIsQuotaModalOpen(false);
+    onError: (err: any) => {
+      message.error(err.message || "Erreur lors de la mise à jour");
     },
   });
 
@@ -191,26 +169,18 @@ export function ParkingsList() {
 
   const handleOpenEdit = (record: Parking) => {
     setSelectedParking(record);
-    editForm.setFieldsValue(record);
+    setIsEditModeActive(false);
+    setAttachedPvName(null);
+    editForm.setFieldsValue({
+      ...record,
+      motifModification: "",
+    });
     setIsEditModalOpen(true);
   };
 
-  const handleOpenQuotasModal = (record: Parking) => {
-    setSelectedParking(record);
-    setModalCapacite(record.capaciteTotale || 450);
-    setModalPctTickets(record.pourcentageTickets || 50);
-    setModalPctAbonnements(record.pourcentageAbonnements || 50);
-    setModalPctCorporate(record.pourcentageCorporate || 60);
-    setModalPctParticulier(record.pourcentageParticulier || 40);
-
-    quotaForm.setFieldsValue({
-      capaciteTotale: record.capaciteTotale || 450,
-      pourcentageTickets: record.pourcentageTickets || 50,
-      pourcentageAbonnements: record.pourcentageAbonnements || 50,
-      pourcentageCorporate: record.pourcentageCorporate || 60,
-      pourcentageParticulier: record.pourcentageParticulier || 40,
-    });
-    setIsQuotaModalOpen(true);
+  const handleOpenPlansModal = (record: Parking) => {
+    setSelectedParkingForPlans(record);
+    setIsPlansModalOpen(true);
   };
 
   const handleOpenLock = (record: Parking) => {
@@ -253,60 +223,14 @@ export function ParkingsList() {
       ),
     },
     {
-      title: "Capacité Totale & Tickets",
-      key: "capaciteTickets",
-      render: (_: unknown, record: Parking) => (
-        <div>
-          <Tag color="geekblue" style={{ fontWeight: 700, fontSize: 13 }}>{record.capaciteTotale} places</Tag>
-          <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>
-            <TagOutlined style={{ marginRight: 4 }} /> Tickets (Rotation): <strong>{record.pourcentageTickets}%</strong> ({record.quotaTickets} pl.)
-          </div>
-        </div>
+      title: "Capacité Globale",
+      dataIndex: "capaciteTotale",
+      key: "capaciteTotale",
+      render: (capaciteTotale: number) => (
+        <Tag color="geekblue" style={{ fontWeight: 700, fontSize: 13 }}>
+          {capaciteTotale} places
+        </Tag>
       ),
-    },
-    {
-      title: "Quota Abonnements Corporate (Flottes)",
-      key: "quotaCorporate",
-      render: (_: unknown, record: Parking) => {
-        const pctOccup = Math.round((record.abonnementsCorporateActifs / (record.quotaCorporate || 1)) * 100);
-        return (
-          <div style={{ minWidth: 160 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
-              <span style={{ fontWeight: 600, color: "#7e22ce" }}>
-                <BankOutlined /> Corporate ({record.pourcentageCorporate}%):
-              </span>
-              <span>{record.quotaCorporate} pl.</span>
-            </div>
-            <Progress percent={pctOccup} size="small" status={pctOccup > 90 ? "exception" : "normal"} strokeColor="#9333ea" />
-            <div style={{ fontSize: 11.5, display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-              <span style={{ color: "#475569" }}>Inscrits: <strong>{record.abonnementsCorporateActifs}</strong></span>
-              <span style={{ color: "#16a34a", fontWeight: 700 }}>Dispo: {record.placesRestantesCorporate}</span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Quota Abonnements Particuliers",
-      key: "quotaParticulier",
-      render: (_: unknown, record: Parking) => {
-        const pctOccup = Math.round((record.abonnementsParticulierActifs / (record.quotaParticulier || 1)) * 100);
-        return (
-          <div style={{ minWidth: 160 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
-              <span style={{ fontWeight: 600, color: "#0284c7" }}>
-                <UserOutlined /> Particuliers ({record.pourcentageParticulier}%):
-              </span>
-              <span>{record.quotaParticulier} pl.</span>
-            </div>
-            <Progress percent={pctOccup} size="small" status={pctOccup > 90 ? "exception" : "normal"} strokeColor="#0284c7" />
-            <div style={{ fontSize: 11.5, display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-              <span style={{ color: "#475569" }}>Inscrits: <strong>{record.abonnementsParticulierActifs}</strong></span>
-              <span style={{ color: "#16a34a", fontWeight: 700 }}>Dispo: {record.placesRestantesParticulier}</span>
-            </div>
-          </div>
-        );
-      },
     },
     {
       title: "Statut",
@@ -319,75 +243,74 @@ export function ParkingsList() {
       },
     },
     {
-      title: "Actions (Responsable)",
+      title: "Paramètres",
       key: "actions",
-      render: (_: unknown, record: Parking) => (
-        <Space wrap>
-          <Tooltip title="Configurer la répartition % & quotas de places (Responsable)">
-            <Button
-              size="small"
-              type="primary"
-              icon={<PieChartOutlined />}
-              onClick={() => handleOpenQuotasModal(record)}
-              style={{ backgroundColor: "#0284c7" }}
-            >
-              Quotas %
-            </Button>
-          </Tooltip>
-
-          <Tooltip title="Géolocalisation sur carte Google Maps">
-            <Button
-              size="small"
-              icon={<EnvironmentOutlined />}
-              onClick={() => handleOpenMap(record)}
-            />
-          </Tooltip>
-
-          <Tooltip title="Modifier les informations du parking">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </Tooltip>
-
-          {record.verrouille ? (
-            <Tooltip title="Déverrouiller le parking">
-              <Button
-                size="small"
-                type="primary"
-                icon={<UnlockOutlined />}
-                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
-                onClick={() => {
+      width: 150,
+      render: (_: unknown, record: Parking) => {
+        const menuItems = [
+          {
+            key: "plans",
+            icon: <TagsOutlined style={{ color: "#006398" }} />,
+            label: <span style={{ fontWeight: 700, color: "#006398" }}>Plans Tarifaires</span>,
+            onClick: () => handleOpenPlansModal(record),
+          },
+          {
+            key: "edit",
+            icon: <EditOutlined style={{ color: "#0284c7" }} />,
+            label: <span>Modifier Caractéristiques</span>,
+            onClick: () => handleOpenEdit(record),
+          },
+          {
+            key: "map",
+            icon: <EnvironmentOutlined style={{ color: "#16a34a" }} />,
+            label: <span>Localisation Google Maps</span>,
+            onClick: () => handleOpenMap(record),
+          },
+          {
+            type: "divider" as const,
+          },
+          record.verrouille
+            ? {
+                key: "unlock",
+                icon: <UnlockOutlined style={{ color: "#16a34a" }} />,
+                label: <span style={{ fontWeight: 700, color: "#16a34a" }}>Déverrouiller le Parking</span>,
+                onClick: () => {
                   setSelectedParking(record);
                   toggleLockMutation.mutate({ lock: false });
-                }}
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title="Verrouiller pour maintenance">
-              <Button
-                size="small"
-                danger
-                icon={<LockOutlined />}
-                onClick={() => handleOpenLock(record)}
-              />
-            </Tooltip>
-          )}
+                },
+              }
+            : {
+                key: "lock",
+                icon: <LockOutlined style={{ color: "#d97706" }} />,
+                label: <span style={{ color: "#d97706" }}>Verrouiller (Maintenance)</span>,
+                onClick: () => handleOpenLock(record),
+              },
+          ...(record.actif
+            ? [
+                {
+                  key: "deactivate",
+                  icon: <StopOutlined style={{ color: "#dc2626" }} />,
+                  label: <span style={{ fontWeight: 700, color: "#dc2626" }}>Désactiver le Parking</span>,
+                  danger: true,
+                  onClick: () => handleOpenDeactivate(record),
+                },
+              ]
+            : []),
+        ];
 
-          {record.actif && (
-            <Tooltip title="Désactiver le parking (Alternative de suppression)">
-              <Button
-                size="small"
-                type="text"
-                danger
-                icon={<StopOutlined />}
-                onClick={() => handleOpenDeactivate(record)}
-              />
-            </Tooltip>
-          )}
-        </Space>
-      ),
+        return (
+          <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+            <Button
+              type="primary"
+              icon={<SettingOutlined />}
+              style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 8 }}
+              className="flex items-center gap-1.5 shadow-2xs"
+            >
+              Paramètres <DownOutlined style={{ fontSize: 10 }} />
+            </Button>
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -518,141 +441,79 @@ export function ParkingsList() {
         </Form>
       </Modal>
 
-      {/* Modal Quotas & Pourcentages (Responsable) */}
-      <Modal
-        title={
-          <span>
-            <PieChartOutlined style={{ color: "#0284c7" }} /> Configuration des Quotas & Pourcentages: {selectedParking?.nom}
-          </span>
-        }
-        open={isQuotaModalOpen}
-        onCancel={() => setIsQuotaModalOpen(false)}
-        onOk={() => quotaForm.submit()}
-        confirmLoading={quotaMutation.isPending}
-        okText="Enregistrer & Recalculer les Quotas"
-        cancelText="Annuler"
-        width={650}
-      >
-        <Alert
-          message="Répartition Stratégique de la Capacité"
-          description="Fixez les pourcentages d'attribution du parking. Chaque nouvelle souscription décrémente automatiquement le nombre de places restantes."
-          type="info"
-          showIcon
-          style={{ marginBottom: 20 }}
-        />
-
-        <Form
-          form={quotaForm}
-          layout="vertical"
-          onFinish={(v) => quotaMutation.mutate(v)}
-          onValuesChange={(_, allValues) => {
-            if (allValues.capaciteTotale) setModalCapacite(allValues.capaciteTotale);
-            if (allValues.pourcentageTickets !== undefined) {
-              setModalPctTickets(allValues.pourcentageTickets);
-              setModalPctAbonnements(100 - allValues.pourcentageTickets);
-              quotaForm.setFieldsValue({ pourcentageAbonnements: 100 - allValues.pourcentageTickets });
-            }
-            if (allValues.pourcentageCorporate !== undefined) {
-              setModalPctCorporate(allValues.pourcentageCorporate);
-              setModalPctParticulier(100 - allValues.pourcentageCorporate);
-              quotaForm.setFieldsValue({ pourcentageParticulier: 100 - allValues.pourcentageCorporate });
-            }
-          }}
-        >
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="capaciteTotale"
-                label="Capacité Globale du Parking (Nombre Total de Places)"
-                rules={[{ required: true, message: "Capacité requise" }]}
-              >
-                <InputNumber style={{ width: "100%" }} min={10} max={5000} size="large" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: "12px 0 16px" }}>
-            1. Répartition Globale (Tickets vs Abonnements)
-          </Divider>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="pourcentageTickets" label="% Reserve Tickets" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="pourcentageAbonnements" label="% Réservé Abonnements Total" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" disabled />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: "12px 0 16px" }}>
-            2. Sous-Répartition des Abonnements (Corporate vs Particulier)
-          </Divider>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="pourcentageParticulier" label="% Quota Abonnements Particuliers" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" disabled />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          {/* Dynamic Preview Box inside Modal */}
-          {(() => {
-            const quotaTicketsCalc = Math.round(modalCapacite * (modalPctTickets / 100));
-            const quotaAbonnementCalc = Math.round(modalCapacite * (modalPctAbonnements / 100));
-            const quotaCorpCalc = Math.round(quotaAbonnementCalc * (modalPctCorporate / 100));
-            const quotaPartCalc = Math.round(quotaAbonnementCalc * (modalPctParticulier / 100));
-
-            return (
-              <div style={{ padding: 16, backgroundColor: "#f0f9ff", borderRadius: 10, border: "1px solid #bae6fd", marginTop: 16 }}>
-                <Text style={{ fontWeight: 700, color: "#0369a1", display: "block", marginBottom: 8 }}>
-                  <BarChartOutlined style={{ marginRight: 6 }} /> Prévisualisation des Quotas Calculés ({modalCapacite} places au total) :
-                </Text>
-                <Row gutter={[12, 12]}>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#334155" }}><TagOutlined style={{ marginRight: 4 }} /> Tickets (Rotation):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#0284c7" }}>{quotaTicketsCalc} places</div>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#6b21a8" }}><BankOutlined style={{ marginRight: 4 }} /> Corporate ({modalPctCorporate}%):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#7e22ce" }}>{quotaCorpCalc} places</div>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 12, color: "#166534" }}><UserOutlined style={{ marginRight: 4 }} /> Particuliers ({modalPctParticulier}%):</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#15803d" }}>{quotaPartCalc} places</div>
-                  </Col>
-                </Row>
-              </div>
-            );
-          })()}
-        </Form>
-      </Modal>
-
       {/* Modal 2: Modifier les Informations d'un Parking */}
       <Modal
         title={
-          <span>
-            <EditOutlined style={{ color: "#0284c7" }} /> Modifier les Caractéristiques du Parking: {selectedParking?.nom}
-          </span>
+          <div className="flex items-center justify-between gap-2 pr-6">
+            <span>
+              <EditOutlined style={{ color: "#0284c7" }} /> Caractéristiques & Paramètres : {selectedParking?.nom}
+            </span>
+            {isEditModeActive ? (
+              <Tag color="orange" icon={<UnlockOutlined />} className="font-bold text-xs m-0">
+                Mode Révision Actif
+              </Tag>
+            ) : (
+              <Tag color="default" icon={<LockOutlined />} className="font-bold text-xs m-0">
+                Lecture Seule (Grisé)
+              </Tag>
+            )}
+          </div>
         }
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
-        onOk={() => editForm.submit()}
-        confirmLoading={editMutation.isPending}
-        okText="Enregistrer les modifications"
-        cancelText="Annuler"
+        footer={
+          !isEditModeActive ? (
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setIsEditModalOpen(false)}>Fermer</Button>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => setIsEditModeActive(true)}
+                style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+              >
+                Débloquer la modification
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setIsEditModeActive(false)}>Annuler</Button>
+              <Button
+                type="primary"
+                onClick={() => editForm.submit()}
+                loading={editMutation.isPending}
+                icon={<SaveOutlined />}
+                style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+              >
+                Enregistrer & Valider avec Motif
+              </Button>
+            </div>
+          )
+        }
         width={680}
       >
         <Form form={editForm} layout="vertical" onFinish={(v) => editMutation.mutate(v)}>
+          {!isEditModeActive ? (
+            <Alert
+              type="warning"
+              showIcon
+              icon={<LockOutlined style={{ color: "#d97706" }} />}
+              message="Informations Verrouillées en Lecture Seule"
+              description="Toutes les caractéristiques sont grisées et protégées contre toute modification accidentelle. Pour modifier, cliquez sur 'Débloquer la modification' ci-dessous, renseignez le motif officiel et joignez le PV (optionnel)."
+              className="rounded-xl border-amber-200 bg-amber-50/70"
+              style={{ marginBottom: 16 }}
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              icon={<UnlockOutlined style={{ color: "#006398" }} />}
+              message="Mode Modification Débloqué"
+              description="Les champs sont modifiables. Vous devez renseigner le motif officiel justifiant cette modification (obligatoire) avant de valider."
+              className="rounded-xl border-blue-200 bg-blue-50/70"
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
           <Divider titlePlacement="left" style={{ margin: "4px 0 16px" }}>
             <EnvironmentOutlined style={{ color: "#0284c7" }} /> 1. Identification & Localisation GPS
           </Divider>
@@ -660,29 +521,29 @@ export function ParkingsList() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="code" label="Code Identifiant Unique" rules={[{ required: true }]}>
-                <Input />
+                <Input disabled={!isEditModeActive} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="nom" label="Nom Officiel du Parking" rules={[{ required: true }]}>
-                <Input />
+                <Input disabled={!isEditModeActive} />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item name="adresse" label="Adresse Physique Complète" rules={[{ required: true }]}>
-            <Input />
+            <Input disabled={!isEditModeActive} />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="latitude" label="Latitude GPS (Google Maps)">
-                <InputNumber style={{ width: "100%" }} step={0.0001} />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} step={0.0001} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="longitude" label="Longitude GPS (Google Maps)">
-                <InputNumber style={{ width: "100%" }} step={0.0001} />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} step={0.0001} />
               </Form.Item>
             </Col>
           </Row>
@@ -694,7 +555,7 @@ export function ParkingsList() {
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item name="capaciteTotale" label="Capacité Globale (Places)" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={10} max={5000} size="large" />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={10} max={5000} size="large" />
               </Form.Item>
             </Col>
           </Row>
@@ -702,12 +563,12 @@ export function ParkingsList() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="pourcentageTickets" label="% Reserve Tickets (Rotation Passagers)" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="pourcentageAbonnements" label="% Réservé Abonnements Total" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
           </Row>
@@ -715,15 +576,66 @@ export function ParkingsList() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="pourcentageCorporate" label="% Quota Abonnements Corporate (Flottes)" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="pourcentageParticulier" label="% Quota Abonnements Particuliers" rules={[{ required: true }]}>
-                <InputNumber style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={0} max={100} addonAfter="%" />
               </Form.Item>
             </Col>
           </Row>
+
+          {isEditModeActive && (
+            <>
+              <Divider titlePlacement="left" style={{ margin: "16px 0 16px" }}>
+                <FileProtectOutlined style={{ color: "#006398" }} /> 3. Justification Réglementaire & PV Officiel
+              </Divider>
+
+              <Form.Item
+                name="motifModification"
+                label={
+                  <span className="font-bold text-xs text-slate-800">
+                    Motif officiel de la modification <span className="text-red-500">*</span>
+                  </span>
+                }
+                rules={[{ required: true, message: "Le motif officiel est obligatoire pour enregistrer une modification" }]}
+              >
+                <Input.TextArea
+                  rows={2}
+                  placeholder="Ex: Décision du Conseil d'Administration du 15/08/2026, arrêté communal d'extension de capacité..."
+                  className="rounded-xl font-medium"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="font-bold text-xs text-slate-800">
+                    Pièce jointe du PV de délibération (Optionnel)
+                  </span>
+                }
+              >
+                <Upload
+                  beforeUpload={(file) => {
+                    message.success(`Document PV joint : ${file.name}`);
+                    setAttachedPvName(file.name);
+                    return false;
+                  }}
+                  maxCount={1}
+                  onRemove={() => setAttachedPvName(null)}
+                >
+                  <Button icon={<UploadOutlined />} className="rounded-xl font-semibold">
+                    {attachedPvName ? `PV Attaché : ${attachedPvName}` : "Joindre le document PV (PDF / Image - Optionnel)"}
+                  </Button>
+                </Upload>
+                {attachedPvName && (
+                  <div className="text-xs text-emerald-700 font-bold mt-1.5 flex items-center gap-1">
+                    <FileProtectOutlined /> Fichier prêt pour enregistrement : {attachedPvName}
+                  </div>
+                )}
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Modal>
 
@@ -833,6 +745,13 @@ export function ParkingsList() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Modal 6: Plans Tarifaires par Parking (Responsable) */}
+      <ParkingPlansTarifairesModal
+        open={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        parking={selectedParkingForPlans}
+      />
     </Card>
   );
 }

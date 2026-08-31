@@ -39,7 +39,6 @@ const TYPE_ABONNEMENT_LABELS: Record<string, { label: string; color: string; def
   JOUR_8H_20H: { label: "Jour (08:00 - 20:00)", color: "orange", defaultPlage: "08:00 - 20:00" },
   NUIT_19H_8H: { label: "Nuit (19:00 - 08:00)", color: "purple", defaultPlage: "19:00 - 08:00" },
   CORPORATE: { label: "Corporate (Entreprise)", color: "magenta", defaultPlage: "Sur mesure (Flotte)" },
-  DEUX_ROUES: { label: "Deux-Roues / Moto", color: "cyan", defaultPlage: "24h / 7j" },
   PARTICULIER: { label: "Particulier Standard", color: "geekblue", defaultPlage: "24h / 7j" },
 };
 
@@ -326,7 +325,6 @@ export function PlansTarifairesList() {
               <Option value="JOUR_8H_20H"><ClockCircleOutlined style={{ marginRight: 6 }} />Journée (08:00 - 20:00)</Option>
               <Option value="NUIT_19H_8H"><ClockCircleOutlined style={{ marginRight: 6 }} />Nuit (19:00 - 08:00)</Option>
               <Option value="CORPORATE"><TagOutlined style={{ marginRight: 6 }} />Corporate (Abonnement Flotte Entreprise)</Option>
-              <Option value="DEUX_ROUES"><TagOutlined style={{ marginRight: 6 }} />Deux-Roues / Moto</Option>
             </Select>
           </Form.Item>
 
