@@ -6,6 +6,9 @@ export const mockUtilisateurs: Utilisateur[] = [
   { id: 2, nom: "Benali", prenom: "Khadija", email: "k.benali@rrm.ma", role: "AGENT", parkingAssigneId: 1, parkingAssigneNom: "Parking Agdal Gare", actif: true, dateCreation: "15/01/2026" },
   { id: 3, nom: "Chraibi", prenom: "Omar", email: "o.chraibi@rrm.ma", role: "RESPONSABLE", actif: true, dateCreation: "05/01/2026" },
   { id: 4, nom: "Tazi", prenom: "Fatima", email: "f.tazi@rrm.ma", role: "COMPTABLE", actif: true, dateCreation: "20/01/2026" },
+  { id: 5, nom: "Alami", prenom: "Rachid", email: "r.alami@rrm.ma", role: "AGENT", actif: true, dateCreation: "25/01/2026" },
+  { id: 6, nom: "Bennani", prenom: "Mehdi", email: "m.bennani@rrm.ma", role: "SUPERVISEUR", actif: true, dateCreation: "01/02/2026" },
+  { id: 7, nom: "Daoudi", prenom: "Youssef", email: "y.daoudi@rrm.ma", role: "AGENT", actif: true, dateCreation: "10/02/2026" },
 ];
 
 // Helper to recalculate Quotas and Remaining Places for a Parking
