@@ -16,7 +16,6 @@ import {
   Divider,
   Alert,
   Steps,
-  Tooltip,
   Row,
   Col,
 } from "antd";
@@ -202,12 +201,12 @@ export function DemandeDetail() {
               },
               {
                 title: "2. Enregistrement Paiement",
-                description: isPaiementDone ? `Encaissé (${data.paiementInfo?.modePaiement ?? "Oui"})` : "Agent / Guichet",
+                description: isPaiementDone ? `Paiement reçu (${data.paiementInfo?.modePaiement ?? "Effectué"})` : "En attente",
                 icon: <DollarOutlined />,
               },
               {
                 title: "3. Validation Dossier",
-                description: isDossierValide ? "Validé et Activé" : "Superviseur uniquement",
+                description: isDossierValide ? "Validé et Activé" : "En attente",
                 icon: <SafetyCertificateOutlined />,
               },
             ]}
@@ -231,7 +230,7 @@ export function DemandeDetail() {
               <div style={{ fontSize: 12, color: "#64748b" }}>Intervenant Traitant :</div>
               <strong style={{ fontSize: 14, color: "#003566" }}>
                 <UserOutlined style={{ marginRight: 4 }} />
-                {data.traiteParNom || data.agentAffecteNom || "Agent Rachid (Guichet Agdal)"}
+                {data.traiteParNom || data.agentAffecteNom || "Agent d'Exploitation"}
               </strong>
               {data.roleTraitePar && <Tag color="blue" style={{ marginLeft: 6 }}>{data.roleTraitePar}</Tag>}
             </Col>
@@ -326,7 +325,7 @@ export function DemandeDetail() {
                   (Nouvelle carte obligatoire pour tout premier abonné)
                 </span>
               </Descriptions.Item>
-              <Descriptions.Item label="Montant Total Net à Encaisser" span={2}>
+              <Descriptions.Item label="Montant Total Net" span={2}>
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
                   {montantTotalExige} MAD TTC
                 </strong>
@@ -469,52 +468,52 @@ export function DemandeDetail() {
         {/* Section Actions Métier */}
         {!isDossierValide && data.statut !== "REJETEE" && (
           <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {/* ÉTAPE 1: Encaissement */}
-              <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
-                <h5 style={{ margin: "0 0 10px 0", color: "#16a34a", fontSize: 13, fontWeight: 700 }}>
-                  <DollarOutlined /> Étape 1: Encaissement (Agent / Superviseur)
-                </h5>
-                {isPaiementDone ? (
-                  <Tag color="green" style={{ padding: "4px 10px", fontSize: 12 }}>
-                    <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
-                  </Tag>
-                ) : (
-                  <Space size="middle">
-                    <Button
-                      type="primary"
-                      icon={<DollarOutlined />}
-                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
-                      onClick={handleOpenPaymentModal}
-                    >
-                      Encaisser Paiement
-                    </Button>
-                    <Button
-                      danger
-                      onClick={() => handleOpenRejectModal("PAIEMENT")}
-                      style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
-                    >
-                      Refuser Paiement
-                    </Button>
-                  </Space>
-                )}
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: role === "RESPONSABLE" ? "1fr" : "1fr 1fr", gap: 16 }}>
+              {/* ÉTAPE 1: Encaissement - strictly for AGENT and SUPERVISEUR, completely removed for RESPONSABLE */}
+              {role !== "RESPONSABLE" && (
+                <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                  <h5 style={{ margin: "0 0 10px 0", color: "#16a34a", fontSize: 13, fontWeight: 700 }}>
+                    <DollarOutlined /> Étape 1 : Encaissement
+                  </h5>
+                  {isPaiementDone ? (
+                    <Tag color="green" style={{ padding: "4px 10px", fontSize: 12 }}>
+                      <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
+                    </Tag>
+                  ) : (
+                    <Space size="middle">
+                      <Button
+                        type="primary"
+                        icon={<DollarOutlined />}
+                        style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
+                        onClick={handleOpenPaymentModal}
+                      >
+                        Encaisser Paiement
+                      </Button>
+                      <Button
+                        danger
+                        onClick={() => handleOpenRejectModal("PAIEMENT")}
+                        style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
+                      >
+                        Refuser Paiement
+                      </Button>
+                    </Space>
+                  )}
+                </div>
+              )}
 
               {/* ÉTAPE 2: Validation Dossier */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 10px 0", color: "#2563eb", fontSize: 13, fontWeight: 700 }}>
-                  <FolderOutlined /> Étape 2: Validation Dossier (Superviseur)
+                  <FolderOutlined /> {role === "RESPONSABLE" ? "Validation du Dossier" : "Étape 2 : Validation Dossier"}
                 </h5>
                 
                 {isAgent && (
-                  <Tooltip title="Réservé au Superviseur après encaissement">
-                    <Button disabled icon={<LockOutlined />}>
-                      Réservé Superviseur
-                    </Button>
-                  </Tooltip>
+                  <Button disabled icon={<LockOutlined />}>
+                    Validation en attente
+                  </Button>
                 )}
 
-                {isSuperviseur && (
+                {(isSuperviseur || role === "RESPONSABLE") && (
                   <Space wrap>
                     {isPaiementDone ? (
                       <Button
@@ -527,11 +526,9 @@ export function DemandeDetail() {
                         Valider & Activer Dossier
                       </Button>
                     ) : (
-                      <Tooltip title="Encaissement préalable obligatoire à l'Étape 1.">
-                        <Button disabled icon={<LockOutlined />}>
-                          Encaissement Requis
-                        </Button>
-                      </Tooltip>
+                      <Button disabled icon={<LockOutlined />}>
+                        En attente du paiement
+                      </Button>
                     )}
                     <Button
                       danger
@@ -548,12 +545,12 @@ export function DemandeDetail() {
         )}
       </Card>
 
-      {/* Modal: Saisir les infos de paiement (Validation Paiement) */}
+      {/* Modal: Saisir les infos de paiement */}
       <Modal
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <DollarOutlined style={{ color: "#16a34a" }} />
-            <span>Saisir les informations de paiement (Guichet)</span>
+            <span>Saisir les informations de paiement</span>
           </div>
         }
         open={paymentModalOpen}

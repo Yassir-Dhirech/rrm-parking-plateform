@@ -124,7 +124,7 @@ export function DemandesList() {
       filters: [
         { text: "En Attente Paiement", value: "SOUMISE" },
         { text: "Paiement Enregistré", value: "PAIEMENT_ENREGISTRE" },
-        { text: "Validée (Actif)", value: "VALIDEE" },
+        { text: "Validée", value: "VALIDEE" },
         { text: "Rejetée", value: "REJETEE" },
       ],
       onFilter: (value: any, record: DemandeListItem) => record.statut === value,
@@ -146,7 +146,7 @@ export function DemandesList() {
         if (statut === "VALIDEE") {
           return (
             <Tag color="green" className="font-extrabold px-2.5 py-0.5 rounded-full border-none shadow-2xs">
-              Validée (Actif)
+              Validée
             </Tag>
           );
         }
@@ -273,7 +273,7 @@ export function DemandesList() {
           </div>
           <div>
             <span className="text-[11px] text-blue-700 font-extrabold uppercase tracking-wider block">
-              À Valider (Paiement OK)
+              Dossiers à Valider
             </span>
             <span className="text-2xl font-black text-blue-600 leading-none">
               {countPaiementEnregistre}
