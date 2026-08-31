@@ -1,5 +1,19 @@
 import { useEffect, useState } from "react";
-import { Modal, Form, InputNumber, Row, Col, Tag, Button, Alert, message, Space, Card } from "antd";
+import {
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Col,
+  Tag,
+  Button,
+  Alert,
+  message,
+  Space,
+  Card,
+  Upload,
+} from "antd";
 import {
   TagsOutlined,
   SaveOutlined,
@@ -7,6 +21,11 @@ import {
   UserOutlined,
   IdcardOutlined,
   EnvironmentOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  EditOutlined,
+  UploadOutlined,
+  FileProtectOutlined,
 } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { mockTarifs, updateTarifsParkingMock } from "../../api/adminMock";
@@ -28,12 +47,18 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditModeActive, setIsEditModeActive] = useState(false);
+  const [attachedPvName, setAttachedPvName] = useState<string | null>(null);
 
   // Watch form values to display live HT & TVA calculations
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!parking || !open) return;
+
+    // Reset edit mode to locked (read-only grey) whenever modal opens
+    setIsEditModeActive(false);
+    setAttachedPvName(null);
 
     // Find actual tariffs for this parking from mockTarifs or set defaults
     const parkingTarifs = mockTarifs.filter((t) => t.parkingId === parking.id);
@@ -47,7 +72,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
     const tarifCorp247 = parkingTarifs.find((t) => t.libelle?.includes("24h / 7j") && t.dureeMois === 240)?.tarifTTC ?? 650;
     const tarifDeuxRoues = 150;
 
-    const initialValues = {
+    const initialPrices: Record<string, number> = {
       tarifPermanent,
       tarifJour,
       tarifNuit,
@@ -57,8 +82,11 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
       tarifDeuxRoues,
     };
 
-    form.setFieldsValue(initialValues);
-    setLivePrices(initialValues);
+    form.setFieldsValue({
+      ...initialPrices,
+      motifModification: "",
+    });
+    setLivePrices(initialPrices);
   }, [parking, open, form]);
 
   const handleValuesChange = (_: any, allValues: any) => {
@@ -67,6 +95,12 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
 
   const handleSubmit = async (values: any) => {
     if (!parking) return;
+
+    if (!values.motifModification?.trim()) {
+      message.error("Veuillez renseigner le motif officiel justifiant la révision tarifaire.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -122,9 +156,12 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
         },
       ]);
 
-      message.success(`Plans tarifaires pour ${parking.nom} mis à jour avec succès !`);
+      message.success(
+        `Plans tarifaires pour ${parking.nom} mis à jour avec motif officiel enregistré${attachedPvName ? ` et PV "${attachedPvName}" associé` : ""} !`
+      );
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       if (onSuccess) onSuccess();
+      setIsEditModeActive(false);
       onClose();
     } catch (err) {
       message.error("Erreur lors de la sauvegarde des tarifs.");
@@ -142,9 +179,20 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
   return (
     <Modal
       title={
-        <div className="flex items-center gap-2 text-slate-900 font-black text-lg">
-          <TagsOutlined style={{ color: "#006398" }} />
-          <span>Plans Tarifaires Applicables — {parking?.nom}</span>
+        <div className="flex items-center justify-between gap-2 text-slate-900 font-black text-lg pr-6">
+          <div className="flex items-center gap-2">
+            <TagsOutlined style={{ color: "#006398" }} />
+            <span>Plans Tarifaires Applicables — {parking?.nom}</span>
+          </div>
+          {isEditModeActive ? (
+            <Tag color="orange" icon={<UnlockOutlined />} className="font-bold text-xs m-0">
+              Mode Révision Actif
+            </Tag>
+          ) : (
+            <Tag color="default" icon={<LockOutlined />} className="font-bold text-xs m-0">
+              Lecture Seule (Grisé)
+            </Tag>
+          )}
         </div>
       }
       open={open}
@@ -182,13 +230,26 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
           )}
         </div>
 
-        <Alert
-          type="info"
-          showIcon
-          message="Grille Tarifaire Mensuelle Officielle par Parking"
-          description="Les tarifs ci-dessous sont préremplis avec les montants actuellement appliqués à cet ouvrage. Vous pouvez ajuster le tarif mensuel TTC de chaque formule. Les montants HT et TVA (20%) sont recalculés en temps réel."
-          className="rounded-xl border-blue-200"
-        />
+        {/* Lock / Unlock Banner Alert */}
+        {!isEditModeActive ? (
+          <Alert
+            type="warning"
+            showIcon
+            icon={<LockOutlined style={{ color: "#d97706" }} />}
+            message="Informations Verrouillées en Lecture Seule"
+            description="Toutes les valeurs tarifaires apparaissent en gris et sont protégées contre toute modification accidentelle. Pour réviser les tarifs, cliquez sur 'Débloquer la modification' ci-dessous, renseignez le motif officiel et joignez le PV de délibération (optionnel)."
+            className="rounded-xl border-amber-200 bg-amber-50/70"
+          />
+        ) : (
+          <Alert
+            type="info"
+            showIcon
+            icon={<UnlockOutlined style={{ color: "#006398" }} />}
+            message="Mode Modification Débloqué"
+            description="Vous pouvez ajuster les tarifs mensuels TTC. Conformément à la gouvernance RRM, la saisie du motif officiel est requise pour enregistrer les modifications."
+            className="rounded-xl border-blue-200 bg-blue-50/70"
+          />
+        )}
 
         <Form
           form={form}
@@ -209,7 +270,9 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                 </Tag>
               </Space>
             }
-            className="rounded-xl border border-slate-200/90 shadow-2xs"
+            className={`rounded-xl border shadow-2xs transition-all ${
+              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-white border-slate-200/90"
+            }`}
           >
             <Row gutter={[16, 12]}>
               {/* Permanent 24/7 */}
@@ -225,6 +288,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={50}
                     max={5000}
@@ -251,6 +315,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={50}
                     max={5000}
@@ -277,6 +342,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={50}
                     max={5000}
@@ -304,7 +370,9 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                 </Tag>
               </Space>
             }
-            className="rounded-xl border border-purple-200/90 bg-purple-50/20 shadow-2xs"
+            className={`rounded-xl border shadow-2xs transition-all ${
+              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-purple-50/20 border-purple-200/90"
+            }`}
           >
             <Row gutter={[16, 12]}>
               {/* Formule 1: 08:00 - 20:00 */}
@@ -320,6 +388,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={100}
                     max={5000}
@@ -346,6 +415,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={100}
                     max={5000}
@@ -372,6 +442,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={100}
                     max={5000}
@@ -396,7 +467,9 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                 <span className="font-bold text-slate-900">3. Deux-Roues & Frais Réglementaires de Carte RFID</span>
               </Space>
             }
-            className="rounded-xl border border-slate-200/90 shadow-2xs"
+            className={`rounded-xl border shadow-2xs transition-all ${
+              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-white border-slate-200/90"
+            }`}
           >
             <Row gutter={[16, 12]}>
               <Col xs={24} sm={12}>
@@ -411,6 +484,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                   className="mb-1"
                 >
                   <InputNumber
+                    disabled={!isEditModeActive}
                     style={{ width: "100%" }}
                     min={50}
                     max={1000}
@@ -439,21 +513,113 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
             </Row>
           </Card>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-200">
-            <Button onClick={onClose} disabled={isSubmitting} className="font-bold rounded-xl px-5">
-              Annuler
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isSubmitting}
-              icon={<SaveOutlined />}
-              style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
-              className="rounded-xl px-6 h-10 shadow-sm"
+          {/* SECTION 4: Mandatory Justification & Optional PV Upload (Visible when editing) */}
+          {isEditModeActive && (
+            <Card
+              size="small"
+              title={
+                <Space>
+                  <FileProtectOutlined style={{ color: "#006398" }} />
+                  <span className="font-bold text-slate-900">
+                    4. Justification Réglementaire & PV de Délibération
+                  </span>
+                  <Tag color="red" className="font-extrabold text-[10px]">
+                    OBLIGATOIRE
+                  </Tag>
+                </Space>
+              }
+              className="rounded-xl border border-blue-200 bg-blue-50/20 shadow-2xs"
             >
-              Enregistrer les Nouveaux Tarifs
-            </Button>
+              <Form.Item
+                name="motifModification"
+                label={
+                  <span className="font-bold text-xs text-slate-800">
+                    Motif officiel de la modification tarifaire <span className="text-red-500">*</span>
+                  </span>
+                }
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez spécifier la justification officielle de la révision",
+                  },
+                ]}
+                className="mb-3"
+              >
+                <Input.TextArea
+                  rows={2}
+                  placeholder="Ex: Décision du Conseil d'Administration du 15/08/2026, révision de la grille tarifaire communale..."
+                  className="rounded-xl font-medium"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="font-bold text-xs text-slate-800">
+                    Pièce jointe du PV de délibération (Optionnel)
+                  </span>
+                }
+                className="mb-0"
+              >
+                <Upload
+                  beforeUpload={(file) => {
+                    message.success(`PV joint : ${file.name}`);
+                    setAttachedPvName(file.name);
+                    return false;
+                  }}
+                  maxCount={1}
+                  onRemove={() => setAttachedPvName(null)}
+                >
+                  <Button icon={<UploadOutlined />} className="rounded-xl font-semibold">
+                    {attachedPvName ? `PV Attaché : ${attachedPvName}` : "Joindre le document PV (PDF / Image - Optionnel)"}
+                  </Button>
+                </Upload>
+                {attachedPvName && (
+                  <div className="text-xs text-emerald-700 font-bold mt-1.5 flex items-center gap-1">
+                    <FileProtectOutlined /> Fichier prêt pour enregistrement : {attachedPvName}
+                  </div>
+                )}
+              </Form.Item>
+            </Card>
+          )}
+
+          {/* Modal Action Buttons */}
+          <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-200">
+            {!isEditModeActive ? (
+              <>
+                <Button onClick={onClose} className="font-bold rounded-xl px-5">
+                  Fermer
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => setIsEditModeActive(true)}
+                  style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+                  className="rounded-xl px-5 shadow-xs"
+                >
+                  Débloquer la Modification
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={() => setIsEditModeActive(false)}
+                  disabled={isSubmitting}
+                  className="font-bold rounded-xl px-5"
+                >
+                  Annuler la modification
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isSubmitting}
+                  icon={<SaveOutlined />}
+                  style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+                  className="rounded-xl px-6 h-10 shadow-sm"
+                >
+                  Enregistrer & Valider avec Motif
+                </Button>
+              </>
+            )}
           </div>
         </Form>
       </div>
