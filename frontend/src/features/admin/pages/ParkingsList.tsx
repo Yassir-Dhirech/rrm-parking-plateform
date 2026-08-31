@@ -10,13 +10,12 @@ import {
   Input,
   InputNumber,
   message,
-  Space,
-  Tooltip,
   Alert,
   Row,
   Col,
   Progress,
   Divider,
+  Dropdown,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -33,6 +32,8 @@ import {
   TagOutlined,
   BarChartOutlined,
   TagsOutlined,
+  SettingOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { getParkingsMock, mockParkings, recalculerQuotasParking } from "../../../api/adminMock";
 import type { Parking } from "../types";
@@ -328,84 +329,80 @@ export function ParkingsList() {
       },
     },
     {
-      title: "Actions (Responsable)",
+      title: "Paramètres",
       key: "actions",
-      render: (_: unknown, record: Parking) => (
-        <Space wrap>
-          <Tooltip title="Consulter et modifier les plans tarifaires applicables à ce parking (Responsable)">
-            <Button
-              size="small"
-              type="primary"
-              icon={<TagsOutlined />}
-              onClick={() => handleOpenPlansModal(record)}
-              style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
-              className="rounded-lg font-bold"
-            >
-              Plans
-            </Button>
-          </Tooltip>
-
-          <Tooltip title="Ajuster les quotas % de places">
-            <Button
-              size="small"
-              icon={<PieChartOutlined />}
-              onClick={() => handleOpenQuotasModal(record)}
-            />
-          </Tooltip>
-
-          <Tooltip title="Géolocalisation sur carte Google Maps">
-            <Button
-              size="small"
-              icon={<EnvironmentOutlined />}
-              onClick={() => handleOpenMap(record)}
-            />
-          </Tooltip>
-
-          <Tooltip title="Modifier les informations du parking">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </Tooltip>
-
-          {record.verrouille ? (
-            <Tooltip title="Déverrouiller le parking">
-              <Button
-                size="small"
-                type="primary"
-                icon={<UnlockOutlined />}
-                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
-                onClick={() => {
+      width: 150,
+      render: (_: unknown, record: Parking) => {
+        const menuItems = [
+          {
+            key: "plans",
+            icon: <TagsOutlined style={{ color: "#006398" }} />,
+            label: <span style={{ fontWeight: 700, color: "#006398" }}>Plans Tarifaires</span>,
+            onClick: () => handleOpenPlansModal(record),
+          },
+          {
+            key: "quotas",
+            icon: <PieChartOutlined style={{ color: "#7c3aed" }} />,
+            label: <span>Quotas & Répartition %</span>,
+            onClick: () => handleOpenQuotasModal(record),
+          },
+          {
+            key: "edit",
+            icon: <EditOutlined style={{ color: "#0284c7" }} />,
+            label: <span>Modifier Caractéristiques</span>,
+            onClick: () => handleOpenEdit(record),
+          },
+          {
+            key: "map",
+            icon: <EnvironmentOutlined style={{ color: "#16a34a" }} />,
+            label: <span>Localisation Google Maps</span>,
+            onClick: () => handleOpenMap(record),
+          },
+          {
+            type: "divider" as const,
+          },
+          record.verrouille
+            ? {
+                key: "unlock",
+                icon: <UnlockOutlined style={{ color: "#16a34a" }} />,
+                label: <span style={{ fontWeight: 700, color: "#16a34a" }}>Déverrouiller le Parking</span>,
+                onClick: () => {
                   setSelectedParking(record);
                   toggleLockMutation.mutate({ lock: false });
-                }}
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title="Verrouiller pour maintenance">
-              <Button
-                size="small"
-                danger
-                icon={<LockOutlined />}
-                onClick={() => handleOpenLock(record)}
-              />
-            </Tooltip>
-          )}
+                },
+              }
+            : {
+                key: "lock",
+                icon: <LockOutlined style={{ color: "#d97706" }} />,
+                label: <span style={{ color: "#d97706" }}>Verrouiller (Maintenance)</span>,
+                onClick: () => handleOpenLock(record),
+              },
+          ...(record.actif
+            ? [
+                {
+                  key: "deactivate",
+                  icon: <StopOutlined style={{ color: "#dc2626" }} />,
+                  label: <span style={{ fontWeight: 700, color: "#dc2626" }}>Désactiver le Parking</span>,
+                  danger: true,
+                  onClick: () => handleOpenDeactivate(record),
+                },
+              ]
+            : []),
+        ];
 
-          {record.actif && (
-            <Tooltip title="Désactiver le parking (Alternative de suppression)">
-              <Button
-                size="small"
-                type="text"
-                danger
-                icon={<StopOutlined />}
-                onClick={() => handleOpenDeactivate(record)}
-              />
-            </Tooltip>
-          )}
-        </Space>
-      ),
+        return (
+          <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+            <Button
+              type="primary"
+              icon={<SettingOutlined />}
+              style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 8 }}
+              className="flex items-center gap-1.5 shadow-2xs"
+            >
+              Paramètres <DownOutlined style={{ fontSize: 10 }} />
+            </Button>
+          </Dropdown>
+        );
+      },
     },
   ];
 

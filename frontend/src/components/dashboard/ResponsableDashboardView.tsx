@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table } from "antd";
+import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table, Dropdown } from "antd";
 import {
   RiseOutlined,
   FileTextOutlined,
@@ -11,6 +11,8 @@ import {
   IdcardOutlined,
   ApartmentOutlined,
   TagsOutlined,
+  SettingOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -596,16 +598,35 @@ export function ResponsableDashboardView() {
                           {p.statutText}
                         </Tag>
                       </div>
-                      <Button
-                        size="small"
-                        type="primary"
-                        ghost
-                        icon={<TagsOutlined />}
-                        onClick={() => handleOpenPlans(p)}
-                        style={{ fontWeight: 700, borderRadius: 8, borderColor: "#006398", color: "#006398" }}
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: "plans",
+                              icon: <TagsOutlined style={{ color: "#006398" }} />,
+                              label: <span style={{ fontWeight: 700, color: "#006398" }}>Plans Tarifaires</span>,
+                              onClick: () => handleOpenPlans(p),
+                            },
+                            {
+                              key: "parkings",
+                              icon: <SettingOutlined style={{ color: "#7c3aed" }} />,
+                              label: <span>Gérer Quotas & Ouvrage</span>,
+                              onClick: () => navigate("/responsable/parkings"),
+                            },
+                          ],
+                        }}
+                        trigger={["click"]}
+                        placement="bottomRight"
                       >
-                        Plans
-                      </Button>
+                        <Button
+                          size="small"
+                          icon={<SettingOutlined />}
+                          style={{ fontWeight: 700, borderRadius: 8, borderColor: "#006398", color: "#006398" }}
+                          className="flex items-center gap-1"
+                        >
+                          Paramètres <DownOutlined style={{ fontSize: 9 }} />
+                        </Button>
+                      </Dropdown>
                     </div>
                     <span className="text-xs text-slate-500 font-semibold block mt-0.5">
                       Capacité Globale : <strong>{p.capaciteTotal} places</strong>
