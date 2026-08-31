@@ -4,8 +4,7 @@ import {
   Form,
   Input,
   InputNumber,
-  Row,
-  Col,
+  Select,
   Tag,
   Button,
   Alert,
@@ -13,19 +12,21 @@ import {
   Space,
   Card,
   Upload,
+  Tooltip,
 } from "antd";
 import {
   TagsOutlined,
   SaveOutlined,
   CarOutlined,
   UserOutlined,
-  IdcardOutlined,
   EnvironmentOutlined,
   LockOutlined,
   UnlockOutlined,
   EditOutlined,
   UploadOutlined,
   FileProtectOutlined,
+  PlusOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { mockTarifs, updateTarifsParkingMock } from "../../api/adminMock";
@@ -43,6 +44,16 @@ export interface ParkingPlanModalProps {
   onSuccess?: () => void;
 }
 
+export interface PlanItem {
+  id: number;
+  libelle: string;
+  typeAbonnement: string;
+  categorie: "Particulier" | "Corporate 20 Ans" | "Conventionné / Spécial";
+  plageHoraire: string;
+  dureeMois: number;
+  tarifTTC: number;
+}
+
 export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess }: ParkingPlanModalProps) {
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
@@ -50,8 +61,8 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
   const [isEditModeActive, setIsEditModeActive] = useState(false);
   const [attachedPvName, setAttachedPvName] = useState<string | null>(null);
 
-  // Watch form values to display live HT & TVA calculations
-  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  // Dynamic state holding all plans for this parking
+  const [plans, setPlans] = useState<PlanItem[]>([]);
 
   useEffect(() => {
     if (!parking || !open) return;
@@ -60,37 +71,113 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
     setIsEditModeActive(false);
     setAttachedPvName(null);
 
-    // Find actual tariffs for this parking from mockTarifs or set defaults
+    // Retrieve active tariffs for this parking from mockTarifs
     const parkingTarifs = mockTarifs.filter((t) => t.parkingId === parking.id);
 
-    const tarifPermanent = parkingTarifs.find((t) => t.typeAbonnement === "PERMANENT_24_7")?.tarifTTC ?? (parking.id === 3 ? 540 : parking.id === 2 ? 720 : 600);
-    const tarifJour = parkingTarifs.find((t) => t.typeAbonnement === "JOUR_8H_20H")?.tarifTTC ?? (parking.id === 3 ? 360 : parking.id === 2 ? 480 : 420);
-    const tarifNuit = parkingTarifs.find((t) => t.typeAbonnement === "NUIT_19H_8H")?.tarifTTC ?? (parking.id === 3 ? 250 : parking.id === 2 ? 360 : 300);
-    
-    const tarifCorpJour = parkingTarifs.find((t) => t.libelle?.includes("08:00 - 20:00") && t.dureeMois === 240)?.tarifTTC ?? 500;
-    const tarifCorpEtendu = parkingTarifs.find((t) => t.libelle?.includes("08:00 - 22:00") && t.dureeMois === 240)?.tarifTTC ?? 550;
-    const tarifCorp247 = parkingTarifs.find((t) => t.libelle?.includes("24h / 7j") && t.dureeMois === 240)?.tarifTTC ?? 650;
-    const tarifDeuxRoues = 150;
+    if (parkingTarifs.length > 0) {
+      setPlans(
+        parkingTarifs.map((t) => ({
+          id: t.id,
+          libelle: t.libelle,
+          typeAbonnement: t.typeAbonnement,
+          categorie:
+            t.typeAbonnement === "CORPORATE"
+              ? "Corporate 20 Ans"
+              : t.typeAbonnement.includes("CONV")
+              ? "Conventionné / Spécial"
+              : "Particulier",
+          plageHoraire: t.plageHoraire || "24h / 7j",
+          dureeMois: t.dureeMois || 1,
+          tarifTTC: t.tarifTTC,
+        }))
+      );
+    } else {
+      // Default canonical plans if parking has no tariffs configured yet
+      setPlans([
+        {
+          id: Date.now() + 1,
+          libelle: "Abonnement Particulier — Permanent (24h / 7j)",
+          typeAbonnement: "PERMANENT_24_7",
+          categorie: "Particulier",
+          plageHoraire: "24h / 7j",
+          dureeMois: 1,
+          tarifTTC: 600,
+        },
+        {
+          id: Date.now() + 2,
+          libelle: "Abonnement Particulier — Diurne (Jour 08:00 - 20:00)",
+          typeAbonnement: "JOUR_8H_20H",
+          categorie: "Particulier",
+          plageHoraire: "08:00 - 20:00",
+          dureeMois: 1,
+          tarifTTC: 420,
+        },
+        {
+          id: Date.now() + 3,
+          libelle: "Abonnement Particulier — Nocturne (Nuit 19:00 - 08:00)",
+          typeAbonnement: "NUIT_19H_8H",
+          categorie: "Particulier",
+          plageHoraire: "19:00 - 08:00",
+          dureeMois: 1,
+          tarifTTC: 300,
+        },
+        {
+          id: Date.now() + 4,
+          libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 20:00",
+          typeAbonnement: "CORPORATE",
+          categorie: "Corporate 20 Ans",
+          plageHoraire: "08:00 - 20:00",
+          dureeMois: 240,
+          tarifTTC: 500,
+        },
+        {
+          id: Date.now() + 5,
+          libelle: "Contrat Corporate 20 Ans — Formule 08:00 - 22:00",
+          typeAbonnement: "CORPORATE",
+          categorie: "Corporate 20 Ans",
+          plageHoraire: "08:00 - 22:00",
+          dureeMois: 240,
+          tarifTTC: 550,
+        },
+        {
+          id: Date.now() + 6,
+          libelle: "Contrat Corporate 20 Ans — Formule 24h / 7j",
+          typeAbonnement: "CORPORATE",
+          categorie: "Corporate 20 Ans",
+          plageHoraire: "24h / 7j",
+          dureeMois: 240,
+          tarifTTC: 650,
+        },
+      ]);
+    }
 
-    const initialPrices: Record<string, number> = {
-      tarifPermanent,
-      tarifJour,
-      tarifNuit,
-      tarifCorpJour,
-      tarifCorpEtendu,
-      tarifCorp247,
-      tarifDeuxRoues,
-    };
-
-    form.setFieldsValue({
-      ...initialPrices,
-      motifModification: "",
-    });
-    setLivePrices(initialPrices);
+    form.setFieldsValue({ motifModification: "" });
   }, [parking, open, form]);
 
-  const handleValuesChange = (_: any, allValues: any) => {
-    setLivePrices(allValues);
+  const handleUpdatePlan = (id: number, field: keyof PlanItem, value: any) => {
+    setPlans((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    );
+  };
+
+  const handleAddNewPlan = () => {
+    const newId = Date.now() + Math.floor(Math.random() * 1000);
+    const newPlan: PlanItem = {
+      id: newId,
+      libelle: `Nouvelle Formule Personnalisée ${plans.length + 1}`,
+      typeAbonnement: "PARTICULIER",
+      categorie: "Particulier",
+      plageHoraire: "24h / 7j",
+      dureeMois: 1,
+      tarifTTC: 450,
+    };
+    setPlans((prev) => [...prev, newPlan]);
+    message.success("Nouvelle formule d'abonnement ajoutée à la liste ! Vous pouvez modifier son nom et son tarif.");
+  };
+
+  const handleDeletePlan = (id: number) => {
+    setPlans((prev) => prev.filter((p) => p.id !== id));
+    message.info("Formule retirée de la grille tarifaire.");
   };
 
   const handleSubmit = async (values: any) => {
@@ -101,63 +188,39 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
       return;
     }
 
+    if (plans.length === 0) {
+      message.error("La grille tarifaire doit comporter au moins une formule.");
+      return;
+    }
+
+    const hasEmptyName = plans.some((p) => !p.libelle?.trim());
+    if (hasEmptyName) {
+      message.error("Tous les forfaits doivent posséder un intitulé valide.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await updateTarifsParkingMock(parking.id, [
-        {
-          typeAbonnement: "PERMANENT_24_7",
-          libelle: "Abonnement Permanent (24h / 7j)",
-          plageHoraire: "24h / 7j",
-          tarifTTC: values.tarifPermanent,
-          dureeMois: 1,
-        },
-        {
-          typeAbonnement: "JOUR_8H_20H",
-          libelle: "Abonnement Jour (Diurne 08:00 - 20:00)",
-          plageHoraire: "08:00 - 20:00",
-          tarifTTC: values.tarifJour,
-          dureeMois: 1,
-        },
-        {
-          typeAbonnement: "NUIT_19H_8H",
-          libelle: "Abonnement Nuit (Nocturne 19:00 - 08:00)",
-          plageHoraire: "19:00 - 08:00",
-          tarifTTC: values.tarifNuit,
-          dureeMois: 1,
-        },
-        {
-          typeAbonnement: "CORPORATE",
-          libelle: "Longue Durée 20 Ans (08:00 - 20:00)",
-          plageHoraire: "08:00 - 20:00",
-          tarifTTC: values.tarifCorpJour,
-          dureeMois: 240,
-        },
-        {
-          typeAbonnement: "CORPORATE",
-          libelle: "Longue Durée 20 Ans (08:00 - 22:00)",
-          plageHoraire: "08:00 - 22:00",
-          tarifTTC: values.tarifCorpEtendu,
-          dureeMois: 240,
-        },
-        {
-          typeAbonnement: "CORPORATE",
-          libelle: "Longue Durée 20 Ans (24h / 7j)",
-          plageHoraire: "24h / 7j",
-          tarifTTC: values.tarifCorp247,
-          dureeMois: 240,
-        },
-        {
-          typeAbonnement: "DEUX_ROUES",
-          libelle: "Abonnement Deux-Roues / Moto (24h / 7j)",
-          plageHoraire: "24h / 7j",
-          tarifTTC: values.tarifDeuxRoues,
-          dureeMois: 1,
-        },
-      ]);
+      await updateTarifsParkingMock(
+        parking.id,
+        plans.map((p) => ({
+          id: p.id,
+          libelle: p.libelle.trim(),
+          typeAbonnement:
+            p.categorie === "Corporate 20 Ans"
+              ? "CORPORATE"
+              : p.typeAbonnement || "PARTICULIER",
+          plageHoraire: p.plageHoraire,
+          dureeMois: p.categorie === "Corporate 20 Ans" ? 240 : p.dureeMois || 1,
+          tarifTTC: Number(p.tarifTTC) || 0,
+        }))
+      );
 
       message.success(
-        `Plans tarifaires pour ${parking.nom} mis à jour avec motif officiel enregistré${attachedPvName ? ` et PV "${attachedPvName}" associé` : ""} !`
+        `Plans tarifaires pour ${parking.nom} enregistrés avec succès (${plans.length} formules actives)${
+          attachedPvName ? ` avec PV "${attachedPvName}" associé` : ""
+        } !`
       );
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       if (onSuccess) onSuccess();
@@ -198,7 +261,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
       open={open}
       onCancel={onClose}
       footer={null}
-      width={780}
+      width={840}
       destroyOnClose
       className="plans-tarifaires-modal"
     >
@@ -236,8 +299,8 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
             type="warning"
             showIcon
             icon={<LockOutlined style={{ color: "#d97706" }} />}
-            message="Informations Verrouillées en Lecture Seule"
-            description="Toutes les valeurs tarifaires apparaissent en gris et sont protégées contre toute modification accidentelle. Pour réviser les tarifs, cliquez sur 'Débloquer la modification' ci-dessous, renseignez le motif officiel et joignez le PV de délibération (optionnel)."
+            message="Grille Tarifaire Verrouillée en Lecture Seule"
+            description="Les intitulés et les tarifs sont grisés et protégés contre toute modification accidentelle. Pour modifier les noms, ajuster les prix ou ajouter une nouvelle formule d'abonnement, cliquez sur 'Débloquer la modification' ci-dessous."
             className="rounded-xl border-amber-200 bg-amber-50/70"
           />
         ) : (
@@ -246,7 +309,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
             showIcon
             icon={<UnlockOutlined style={{ color: "#006398" }} />}
             message="Mode Modification Débloqué"
-            description="Vous pouvez ajuster les tarifs mensuels TTC. Conformément à la gouvernance RRM, la saisie du motif officiel est requise pour enregistrer les modifications."
+            description="Vous pouvez modifier directement le nom de chaque formule, son tarif mensuel, en ajouter de nouvelles ou en supprimer. La saisie du motif officiel est obligatoire pour enregistrer les modifications."
             className="rounded-xl border-blue-200 bg-blue-50/70"
           />
         )}
@@ -255,265 +318,153 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          onValuesChange={handleValuesChange}
-          className="space-y-4"
+          className="space-y-3"
         >
-          {/* SECTION 1: Abonnements Particuliers */}
-          <Card
-            size="small"
-            title={
-              <Space>
-                <UserOutlined style={{ color: "#006398" }} />
-                <span className="font-bold text-slate-900">1. Abonnements Particuliers (Mensuel)</span>
-                <Tag color="blue" className="font-extrabold text-[10px]">
-                  Périodicité : 1 Mois
-                </Tag>
-              </Space>
-            }
-            className={`rounded-xl border shadow-2xs transition-all ${
-              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-white border-slate-200/90"
-            }`}
-          >
-            <Row gutter={[16, 12]}>
-              {/* Permanent 24/7 */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifPermanent"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Permanent (24h / 7j)
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={50}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-slate-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifPermanent).ht} MAD (TVA: {getHtAndTva(livePrices.tarifPermanent).tva})
-                </div>
-              </Col>
+          {/* Table Header for Clean Alignment */}
+          <div className="hidden sm:flex items-center justify-between px-3.5 py-1 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+            <span>Formule d'Abonnement & Intitulé</span>
+            <span className="w-56 text-right pr-2">Tarif Mensuel (MAD TTC)</span>
+          </div>
 
-              {/* Jour 08:00 - 20:00 */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifJour"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Diurne (08:00 - 20:00)
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={50}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-slate-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifJour).ht} MAD (TVA: {getHtAndTva(livePrices.tarifJour).tva})
-                </div>
-              </Col>
+          {/* Dynamic List of Plans: Each Plan with Perfectly Aligned Name & Price */}
+          <div className="space-y-2.5">
+            {plans.map((plan) => {
+              const { ht, tva } = getHtAndTva(plan.tarifTTC);
 
-              {/* Nuit 19:00 - 08:00 */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifNuit"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Nocturne (19:00 - 08:00)
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
+              return (
+                <div
+                  key={plan.id}
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    !isEditModeActive
+                      ? "bg-slate-50/70 border-slate-200"
+                      : "bg-white border-slate-200/90 shadow-2xs hover:border-[#006398]/50"
+                  }`}
                 >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={50}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-slate-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifNuit).ht} MAD (TVA: {getHtAndTva(livePrices.tarifNuit).tva})
-                </div>
-              </Col>
-            </Row>
-          </Card>
+                  {/* Top Line: Category Badges, Plage Horaire, Live Tax breakdown & Delete Button */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-xs ${
+                          plan.categorie === "Corporate 20 Ans"
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-blue-100 text-[#006398]"
+                        }`}
+                      >
+                        {plan.categorie === "Corporate 20 Ans" ? <CarOutlined /> : <UserOutlined />}
+                      </div>
 
-          {/* SECTION 2: Contrats Corporate Longue Durée 20 Ans */}
-          <Card
-            size="small"
-            title={
-              <Space>
-                <CarOutlined style={{ color: "#9333ea" }} />
-                <span className="font-bold text-slate-900">2. Contrats Flottes Corporate (Contrat 20 Ans)</span>
-                <Tag color="purple" className="font-extrabold text-[10px]">
-                  Tarif Mensuel / Véhicule
-                </Tag>
-              </Space>
-            }
-            className={`rounded-xl border shadow-2xs transition-all ${
-              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-purple-50/20 border-purple-200/90"
-            }`}
-          >
-            <Row gutter={[16, 12]}>
-              {/* Formule 1: 08:00 - 20:00 */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifCorpJour"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Formule 08:00 - 20:00
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={100}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-purple-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifCorpJour).ht} MAD (TVA: {getHtAndTva(livePrices.tarifCorpJour).tva})
-                </div>
-              </Col>
+                      {isEditModeActive ? (
+                        <>
+                          <Select
+                            size="small"
+                            value={plan.categorie}
+                            onChange={(val) => {
+                              handleUpdatePlan(plan.id, "categorie", val);
+                              if (val === "Corporate 20 Ans") {
+                                handleUpdatePlan(plan.id, "typeAbonnement", "CORPORATE");
+                                handleUpdatePlan(plan.id, "dureeMois", 240);
+                              } else {
+                                handleUpdatePlan(plan.id, "typeAbonnement", "PARTICULIER");
+                                handleUpdatePlan(plan.id, "dureeMois", 1);
+                              }
+                            }}
+                            style={{ width: 150 }}
+                            options={[
+                              { value: "Particulier", label: "Particulier" },
+                              { value: "Corporate 20 Ans", label: "Corporate 20 Ans" },
+                              { value: "Conventionné / Spécial", label: "Spécial / Conv." },
+                            ]}
+                          />
+                          <Select
+                            size="small"
+                            value={plan.plageHoraire}
+                            onChange={(val) => handleUpdatePlan(plan.id, "plageHoraire", val)}
+                            style={{ width: 130 }}
+                            options={[
+                              { value: "24h / 7j", label: "24h / 7j" },
+                              { value: "08:00 - 20:00", label: "08:00 - 20:00" },
+                              { value: "08:00 - 22:00", label: "08:00 - 22:00" },
+                              { value: "19:00 - 08:00", label: "19:00 - 08:00" },
+                            ]}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <Tag
+                            color={plan.categorie === "Corporate 20 Ans" ? "purple" : "blue"}
+                            className="font-extrabold text-[10px] m-0"
+                          >
+                            {plan.categorie}
+                          </Tag>
+                          <Tag className="font-semibold text-[10px] m-0">
+                            {plan.plageHoraire}
+                          </Tag>
+                        </>
+                      )}
 
-              {/* Formule 2: 08:00 - 22:00 */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifCorpEtendu"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Formule 08:00 - 22:00
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={100}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-purple-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifCorpEtendu).ht} MAD (TVA: {getHtAndTva(livePrices.tarifCorpEtendu).tva})
-                </div>
-              </Col>
+                      <span className="text-[11px] text-slate-500 font-medium ml-1">
+                        HT : <strong>{ht} MAD</strong> | TVA (20%) : <strong>{tva} MAD</strong>
+                      </span>
+                    </div>
 
-              {/* Formule 3: 24h / 7j */}
-              <Col xs={24} sm={8}>
-                <Form.Item
-                  name="tarifCorp247"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Formule 24h / 7j
-                    </span>
-                  }
-                  rules={[{ required: true, message: "Tarif obligatoire" }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={100}
-                    max={5000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold text-purple-900"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifCorp247).ht} MAD (TVA: {getHtAndTva(livePrices.tarifCorp247).tva})
-                </div>
-              </Col>
-            </Row>
-          </Card>
-
-          {/* SECTION 3: Deux-Roues & Frais Badges */}
-          <Card
-            size="small"
-            title={
-              <Space>
-                <IdcardOutlined style={{ color: "#d97706" }} />
-                <span className="font-bold text-slate-900">3. Deux-Roues & Frais Réglementaires de Carte RFID</span>
-              </Space>
-            }
-            className={`rounded-xl border shadow-2xs transition-all ${
-              !isEditModeActive ? "bg-slate-50/60 border-slate-200" : "bg-white border-slate-200/90"
-            }`}
-          >
-            <Row gutter={[16, 12]}>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  name="tarifDeuxRoues"
-                  label={
-                    <span className="font-bold text-xs text-slate-800">
-                      Deux-Roues / Moto (Permanent 24h/7j)
-                    </span>
-                  }
-                  rules={[{ required: true }]}
-                  className="mb-1"
-                >
-                  <InputNumber
-                    disabled={!isEditModeActive}
-                    style={{ width: "100%" }}
-                    min={50}
-                    max={1000}
-                    step={10}
-                    addonAfter="MAD TTC / m"
-                    className="font-bold"
-                  />
-                </Form.Item>
-                <div className="text-[11px] text-slate-500 font-medium px-1">
-                  HT: {getHtAndTva(livePrices.tarifDeuxRoues).ht} MAD (TVA: {getHtAndTva(livePrices.tarifDeuxRoues).tva})
-                </div>
-              </Col>
-
-              <Col xs={24} sm={12}>
-                <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 h-full flex flex-col justify-center">
-                  <div className="text-xs font-black text-amber-900 flex items-center gap-1.5">
-                    <IdcardOutlined /> Politique Badges RFID (Règle des 50 DH)
+                    {isEditModeActive && (
+                      <Tooltip title="Supprimer cette formule">
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        />
+                      </Tooltip>
+                    )}
                   </div>
-                  <p className="text-[11px] text-amber-800 font-medium m-0 mt-1">
-                    Nouvelle carte / duplicata : <strong>+50 DH TTC</strong> ajoutés à la facture.
-                    <br />
-                    Renouvellement avec carte existante : <strong>0 DH (Gratuit)</strong>.
-                  </p>
-                </div>
-              </Col>
-            </Row>
-          </Card>
 
-          {/* SECTION 4: Mandatory Justification & Optional PV Upload (Visible when editing) */}
+                  {/* Bottom Line: Name Input and Price Input Perfectly Aligned Side-by-Side! */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <Input
+                        disabled={!isEditModeActive}
+                        value={plan.libelle}
+                        onChange={(e) => handleUpdatePlan(plan.id, "libelle", e.target.value)}
+                        placeholder="Intitulé de la formule d'abonnement..."
+                        className="font-bold text-sm text-slate-900 rounded-xl w-full h-10"
+                      />
+                    </div>
+
+                    <div className="w-56 shrink-0">
+                      <InputNumber
+                        disabled={!isEditModeActive}
+                        value={plan.tarifTTC}
+                        onChange={(val) => handleUpdatePlan(plan.id, "tarifTTC", val || 0)}
+                        style={{ width: "100%" }}
+                        min={50}
+                        max={10000}
+                        step={10}
+                        addonAfter="MAD / m"
+                        className="font-black text-slate-900 h-10 flex items-center rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add a New Plan Button (Active in Edit Mode) */}
+          {isEditModeActive && (
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={handleAddNewPlan}
+              className="w-full h-11 rounded-xl font-bold border-dashed border-blue-400 text-[#006398] hover:bg-blue-50/50 flex items-center justify-center gap-2 shadow-2xs mt-2"
+            >
+              Ajouter une Nouvelle Formule d'Abonnement
+            </Button>
+          )}
+
+          {/* Mandatory Justification & Optional PV Upload (Visible when editing) */}
           {isEditModeActive && (
             <Card
               size="small"
@@ -521,20 +472,20 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
                 <Space>
                   <FileProtectOutlined style={{ color: "#006398" }} />
                   <span className="font-bold text-slate-900">
-                    4. Justification Réglementaire & PV de Délibération
+                    Justification Réglementaire & PV de Délibération
                   </span>
                   <Tag color="red" className="font-extrabold text-[10px]">
                     OBLIGATOIRE
                   </Tag>
                 </Space>
               }
-              className="rounded-xl border border-blue-200 bg-blue-50/20 shadow-2xs"
+              className="rounded-xl border border-blue-200 bg-blue-50/20 shadow-2xs mt-3"
             >
               <Form.Item
                 name="motifModification"
                 label={
                   <span className="font-bold text-xs text-slate-800">
-                    Motif officiel de la modification tarifaire <span className="text-red-500">*</span>
+                    Motif officiel de la modification <span className="text-red-500">*</span>
                   </span>
                 }
                 rules={[
@@ -547,7 +498,7 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
               >
                 <Input.TextArea
                   rows={2}
-                  placeholder="Ex: Décision du Conseil d'Administration du 15/08/2026, révision de la grille tarifaire communale..."
+                  placeholder="Ex: Décision du Conseil d'Administration du 15/08/2026, révision ou ajout de nouvelles formules tarifaires..."
                   className="rounded-xl font-medium"
                 />
               </Form.Item>
@@ -602,11 +553,27 @@ export function ParkingPlansTarifairesModal({ open, onClose, parking, onSuccess 
             ) : (
               <>
                 <Button
-                  onClick={() => setIsEditModeActive(false)}
+                  onClick={() => {
+                    setIsEditModeActive(false);
+                    // Reload original tariffs
+                    const parkingTarifs = mockTarifs.filter((t) => t.parkingId === parking?.id);
+                    setPlans(
+                      parkingTarifs.map((t) => ({
+                        id: t.id,
+                        libelle: t.libelle,
+                        typeAbonnement: t.typeAbonnement,
+                        categorie:
+                          t.typeAbonnement === "CORPORATE" ? "Corporate 20 Ans" : "Particulier",
+                        plageHoraire: t.plageHoraire || "24h / 7j",
+                        dureeMois: t.dureeMois || 1,
+                        tarifTTC: t.tarifTTC,
+                      }))
+                    );
+                  }}
                   disabled={isSubmitting}
                   className="font-bold rounded-xl px-5"
                 >
-                  Annuler la modification
+                  Annuler
                 </Button>
                 <Button
                   type="primary"
