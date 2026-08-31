@@ -166,6 +166,48 @@ export async function getParkingsMock(): Promise<Parking[]> {
 export async function getTarifsMock(): Promise<PlanTarifaire[]> {
   return new Promise((res) => setTimeout(() => res(mockTarifs), 300));
 }
+
+export async function updateTarifsParkingMock(
+  parkingId: number,
+  updatedTarifs: Array<{
+    typeAbonnement: string;
+    tarifTTC: number;
+    libelle?: string;
+    plageHoraire?: string;
+    dureeMois?: number;
+  }>
+): Promise<void> {
+  await new Promise((res) => setTimeout(res, 300));
+  const parkingObj = mockParkings.find((p) => p.id === parkingId);
+  const parkingNom = parkingObj ? parkingObj.nom : "Parking RRM";
+
+  updatedTarifs.forEach((u) => {
+    const existingIndex = mockTarifs.findIndex(
+      (t) => t.parkingId === parkingId && t.typeAbonnement === u.typeAbonnement && (u.dureeMois ? t.dureeMois === u.dureeMois : true)
+    );
+    const tarifHT = Math.round(u.tarifTTC / 1.2);
+    if (existingIndex !== -1) {
+      mockTarifs[existingIndex].tarifTTC = u.tarifTTC;
+      mockTarifs[existingIndex].tarifHT = tarifHT;
+      if (u.libelle) mockTarifs[existingIndex].libelle = u.libelle;
+      if (u.plageHoraire) mockTarifs[existingIndex].plageHoraire = u.plageHoraire;
+    } else {
+      mockTarifs.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        libelle: u.libelle || `Abonnement ${u.typeAbonnement}`,
+        typeAbonnement: u.typeAbonnement,
+        plageHoraire: u.plageHoraire || "24h / 7j",
+        dureeMois: u.dureeMois || 1,
+        tarifHT,
+        tarifTTC: u.tarifTTC,
+        parkingId,
+        parkingNom,
+        actif: true,
+      });
+    }
+  });
+}
+
 export async function getLogsMock(): Promise<AuditLog[]> {
   return new Promise((res) => setTimeout(() => res(mockLogs.map((l) => ({ ...l, timestamp: formatDate(l.timestamp) }))), 300));
 }

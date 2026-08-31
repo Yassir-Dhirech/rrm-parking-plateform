@@ -32,9 +32,11 @@ import {
   BankOutlined,
   TagOutlined,
   BarChartOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { getParkingsMock, mockParkings, recalculerQuotasParking } from "../../../api/adminMock";
 import type { Parking } from "../types";
+import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
 
 const { Title, Text } = Typography;
 
@@ -43,6 +45,8 @@ export function ParkingsList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<Parking | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -213,6 +217,11 @@ export function ParkingsList() {
     setIsQuotaModalOpen(true);
   };
 
+  const handleOpenPlansModal = (record: Parking) => {
+    setSelectedParkingForPlans(record);
+    setIsPlansModalOpen(true);
+  };
+
   const handleOpenLock = (record: Parking) => {
     setSelectedParking(record);
     setLockReason(record.motifVerrouillage || "");
@@ -323,16 +332,25 @@ export function ParkingsList() {
       key: "actions",
       render: (_: unknown, record: Parking) => (
         <Space wrap>
-          <Tooltip title="Configurer la répartition % & quotas de places (Responsable)">
+          <Tooltip title="Consulter et modifier les plans tarifaires applicables à ce parking (Responsable)">
             <Button
               size="small"
               type="primary"
+              icon={<TagsOutlined />}
+              onClick={() => handleOpenPlansModal(record)}
+              style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+              className="rounded-lg font-bold"
+            >
+              Plans
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Ajuster les quotas % de places">
+            <Button
+              size="small"
               icon={<PieChartOutlined />}
               onClick={() => handleOpenQuotasModal(record)}
-              style={{ backgroundColor: "#0284c7" }}
-            >
-              Quotas %
-            </Button>
+            />
           </Tooltip>
 
           <Tooltip title="Géolocalisation sur carte Google Maps">
@@ -833,6 +851,13 @@ export function ParkingsList() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Modal 6: Plans Tarifaires par Parking (Responsable) */}
+      <ParkingPlansTarifairesModal
+        open={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        parking={selectedParkingForPlans}
+      />
     </Card>
   );
 }

@@ -10,15 +10,24 @@ import {
   FileDoneOutlined,
   IdcardOutlined,
   ApartmentOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
+import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
   const { userName } = useAuth();
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<number | null>(null);
+  const [plansModalOpen, setPlansModalOpen] = useState(false);
+  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<any | null>(null);
+
+  const handleOpenPlans = (parking: any) => {
+    setSelectedParkingForPlans(parking);
+    setPlansModalOpen(true);
+  };
 
   // Revenue Evolution Dataset (Monthly Stacked Multi-Segment)
   const monthlyRevenueData = [
@@ -190,6 +199,19 @@ export function ResponsableDashboardView() {
                 { value: 4, label: "Parking Chellah" },
               ]}
             />
+            <Button
+              icon={<TagsOutlined />}
+              onClick={() => {
+                const targetParking = selectedSiteFilter
+                  ? parkingsCapacityData.find((p) => p.id === selectedSiteFilter) || parkingsCapacityData[0]
+                  : parkingsCapacityData[0];
+                handleOpenPlans(targetParking);
+              }}
+              style={{ borderColor: "#006398", color: "#006398", fontWeight: 700 }}
+              className="rounded-xl"
+            >
+              Plans Tarifaires
+            </Button>
             <Button
               icon={<PrinterOutlined />}
               onClick={() => window.print()}
@@ -566,12 +588,24 @@ export function ResponsableDashboardView() {
               >
                 {/* Top Section: Info + Circular Dial */}
                 <div className="flex justify-between items-start gap-4 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-black text-slate-900 text-base">{p.nom}</span>
-                      <Tag color={isCritical ? "volcano" : p.tauxOccupation >= 85 ? "gold" : "green"} className="font-black text-xs m-0">
-                        {p.statutText}
-                      </Tag>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-900 text-base">{p.nom}</span>
+                        <Tag color={isCritical ? "volcano" : p.tauxOccupation >= 85 ? "gold" : "green"} className="font-black text-xs m-0">
+                          {p.statutText}
+                        </Tag>
+                      </div>
+                      <Button
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<TagsOutlined />}
+                        onClick={() => handleOpenPlans(p)}
+                        style={{ fontWeight: 700, borderRadius: 8, borderColor: "#006398", color: "#006398" }}
+                      >
+                        Plans
+                      </Button>
                     </div>
                     <span className="text-xs text-slate-500 font-semibold block mt-0.5">
                       Capacité Globale : <strong>{p.capaciteTotal} places</strong>
@@ -962,6 +996,13 @@ export function ResponsableDashboardView() {
           </div>
         </div>
       </Card>
+
+      {/* Parking Plans Tarifaires Pre-filled Modal */}
+      <ParkingPlansTarifairesModal
+        open={plansModalOpen}
+        onClose={() => setPlansModalOpen(false)}
+        parking={selectedParkingForPlans}
+      />
     </div>
   );
 }
