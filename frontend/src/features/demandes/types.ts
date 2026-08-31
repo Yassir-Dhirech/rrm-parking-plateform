@@ -94,5 +94,9 @@ export interface DemandeDetail extends DemandeListItem {
   montantTotal?: number;
   raisonRejet?: string;
   commentaireCorrection?: string;
+  cinRectoUrl?: string;
+  cinVersoUrl?: string;
+  carteGriseRectoUrl?: string;
+  carteGriseVersoUrl?: string;
   paiementInfo?: PaymentInfoInput & { datePaiement?: string; validePar?: string };
 }

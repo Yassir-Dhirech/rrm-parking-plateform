@@ -16,9 +16,9 @@ import {
   Divider,
   Alert,
   Steps,
-  Tooltip,
   Row,
   Col,
+  Image,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -34,6 +34,9 @@ import {
   ClockCircleOutlined,
   AlertOutlined,
   NotificationOutlined,
+  IdcardOutlined,
+  CarOutlined,
+  FileImageOutlined,
 } from "@ant-design/icons";
 import {
   getDemandeByIdMock,
@@ -58,6 +61,89 @@ const BANK_OPTIONS = [
   { label: "Al Barid Bank", value: "AL BARID" },
   { label: "Autre", value: "Autre" },
 ];
+
+function generateCinSvgUrl(nom: string, cin: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 315" width="100%" height="100%">
+    <defs>
+      <linearGradient id="cinBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f8fafc"/>
+        <stop offset="50%" stop-color="#eef6f2"/>
+        <stop offset="100%" stop-color="#dcefe6"/>
+      </linearGradient>
+    </defs>
+    <rect width="500" height="315" rx="14" fill="url(#cinBg)" stroke="#1b4332" stroke-width="2"/>
+    <rect x="0" y="0" width="500" height="44" fill="#1b4332" rx="14 14 0 0"/>
+    <text x="250" y="19" fill="#d8f3dc" font-size="10" font-weight="bold" font-family="Arial, sans-serif" text-anchor="middle" letter-spacing="2">ROYAUME DU MAROC • المملكة المغربية</text>
+    <text x="250" y="35" fill="#ffffff" font-size="12" font-weight="900" font-family="Arial, sans-serif" text-anchor="middle" letter-spacing="1">CARTE NATIONALE D'IDENTITÉ ÉLECTRONIQUE (CIN)</text>
+    
+    <rect x="185" y="60" width="46" height="34" rx="4" fill="#d4af37" stroke="#b89728" stroke-width="1.5"/>
+    <path d="M190 77 h36 M208 60 v34 M199 60 v34 M217 60 v34" stroke="#997d1e" stroke-width="1"/>
+    
+    <rect x="25" y="60" width="130" height="170" rx="8" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+    <circle cx="90" cy="115" r="30" fill="#64748b"/>
+    <path d="M50 190 C50 150, 130 150, 130 190 Z" fill="#64748b"/>
+    <rect x="25" y="238" width="130" height="22" rx="4" fill="#0f172a" opacity="0.85"/>
+    <text x="90" y="253" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle" font-family="monospace">OFFICIEL RRM</text>
+
+    <text x="180" y="116" fill="#475569" font-size="10" font-weight="bold" font-family="Arial">NOM / PRÉNOM :</text>
+    <text x="180" y="136" fill="#0f172a" font-size="15" font-weight="900" font-family="Arial">${(nom || "SOUSCRIPTEUR").toUpperCase()}</text>
+    
+    <text x="180" y="166" fill="#475569" font-size="10" font-weight="bold" font-family="Arial">N° D'IDENTITÉ NATIONALE (CIN) :</text>
+    <text x="180" y="188" fill="#1b4332" font-size="18" font-weight="900" font-family="monospace" letter-spacing="2">${(cin || "A748392").toUpperCase()}</text>
+    
+    <text x="180" y="216" fill="#475569" font-size="10" font-weight="bold" font-family="Arial">NATIONALITÉ : <tspan fill="#0f172a" font-weight="bold">MAROCAINE</tspan></text>
+    <text x="180" y="236" fill="#475569" font-size="10" font-weight="bold" font-family="Arial">VALIDITÉ : <tspan fill="#0f172a" font-weight="bold">12/2032</tspan> | LIEU : <tspan fill="#0f172a" font-weight="bold">RABAT</tspan></text>
+
+    <rect x="15" y="270" width="470" height="32" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="25" y="284" fill="#1e293b" font-size="9" font-weight="bold" font-family="monospace">IDMAR${(cin || "A748392").toUpperCase()}<<<<<<<<<<<<<<<<<<<<<<</text>
+    <text x="25" y="296" fill="#1e293b" font-size="9" font-weight="bold" font-family="monospace">9001014M3212318MAR<<<<<<<<<<<${(nom || "CLIENT").replace(/\\s+/g, "<").toUpperCase()}</text>
+  </svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
+function generateCarteGriseSvgUrl(nom: string, immat: string, vehicule: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 315" width="100%" height="100%">
+    <defs>
+      <linearGradient id="cgBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#faf5ff"/>
+        <stop offset="50%" stop-color="#f3e8ff"/>
+        <stop offset="100%" stop-color="#e9d5ff"/>
+      </linearGradient>
+    </defs>
+    <rect width="500" height="315" rx="14" fill="url(#cgBg)" stroke="#6b21a8" stroke-width="2"/>
+    <rect x="0" y="0" width="500" height="44" fill="#581c87" rx="14 14 0 0"/>
+    <text x="250" y="18" fill="#f3e8ff" font-size="9" font-weight="bold" font-family="Arial, sans-serif" text-anchor="middle" letter-spacing="1">ROYAUME DU MAROC • MINISTÈRE DU TRANSPORT</text>
+    <text x="250" y="35" fill="#ffffff" font-size="12" font-weight="900" font-family="Arial, sans-serif" text-anchor="middle" letter-spacing="2">CERTIFICAT D'IMMATRICULATION (CARTE GRISE)</text>
+
+    <rect x="30" y="56" width="440" height="42" rx="8" fill="#ffffff" stroke="#9333ea" stroke-width="1.5"/>
+    <text x="45" y="73" fill="#6b21a8" font-size="9" font-weight="bold" font-family="Arial">A. NUMÉRO D'IMMATRICULATION DU VÉHICULE :</text>
+    <text x="250" y="90" fill="#0f172a" font-size="16" font-weight="900" font-family="Arial, sans-serif" text-anchor="middle" letter-spacing="3">${immat || "12345 | A | 1"}</text>
+
+    <rect x="30" y="108" width="210" height="150" rx="8" fill="#ffffff" stroke="#e9d5ff" stroke-width="1"/>
+    <text x="42" y="126" fill="#7e22ce" font-size="9" font-weight="bold">C.1 TITULAIRE DU VÉHICULE :</text>
+    <text x="42" y="144" fill="#0f172a" font-size="13" font-weight="900">${(nom || "SOUSCRIPTEUR").toUpperCase()}</text>
+    
+    <text x="42" y="170" fill="#7e22ce" font-size="9" font-weight="bold">D.1 MARQUE / MODÈLE :</text>
+    <text x="42" y="188" fill="#0f172a" font-size="12" font-weight="bold">RENAULT / CLIO V</text>
+    
+    <text x="42" y="214" fill="#7e22ce" font-size="9" font-weight="bold">GENRE DU VÉHICULE :</text>
+    <text x="42" y="232" fill="#0f172a" font-size="12" font-weight="bold">${(vehicule || "VOITURE").toUpperCase()}</text>
+
+    <rect x="260" y="108" width="210" height="150" rx="8" fill="#ffffff" stroke="#e9d5ff" stroke-width="1"/>
+    <text x="272" y="126" fill="#7e22ce" font-size="9" font-weight="bold">E. N° CHÂSSIS (VIN) :</text>
+    <text x="272" y="144" fill="#0f172a" font-size="11" font-weight="900" font-family="monospace">VF1BB05CF9920148</text>
+
+    <text x="272" y="170" fill="#7e22ce" font-size="9" font-weight="bold">P.1 PUISSANCE FISCALE :</text>
+    <text x="272" y="188" fill="#0f172a" font-size="12" font-weight="bold">6 CV • DIESEL</text>
+
+    <text x="272" y="214" fill="#7e22ce" font-size="9" font-weight="bold">B. 1ÈRE MISE EN CIRCULATION :</text>
+    <text x="272" y="232" fill="#0f172a" font-size="12" font-weight="bold">14/03/2023 • RABAT</text>
+
+    <rect x="30" y="268" width="440" height="34" rx="6" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+    <text x="250" y="289" fill="#6b21a8" font-size="10" font-weight="bold" font-family="Arial" text-anchor="middle">AGENCE NATIONALE DE LA SÉCURITÉ ROUTIÈRE (NARSA) — CONTRÔLE RRM</text>
+  </svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
 
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -202,12 +288,12 @@ export function DemandeDetail() {
               },
               {
                 title: "2. Enregistrement Paiement",
-                description: isPaiementDone ? `Encaissé (${data.paiementInfo?.modePaiement ?? "Oui"})` : "Agent / Guichet",
+                description: isPaiementDone ? `Paiement reçu (${data.paiementInfo?.modePaiement ?? "Effectué"})` : "En attente",
                 icon: <DollarOutlined />,
               },
               {
                 title: "3. Validation Dossier",
-                description: isDossierValide ? "Validé et Activé" : "Superviseur uniquement",
+                description: isDossierValide ? "Validé et Activé" : "En attente",
                 icon: <SafetyCertificateOutlined />,
               },
             ]}
@@ -231,7 +317,7 @@ export function DemandeDetail() {
               <div style={{ fontSize: 12, color: "#64748b" }}>Intervenant Traitant :</div>
               <strong style={{ fontSize: 14, color: "#003566" }}>
                 <UserOutlined style={{ marginRight: 4 }} />
-                {data.traiteParNom || data.agentAffecteNom || "Agent Rachid (Guichet Agdal)"}
+                {data.traiteParNom || data.agentAffecteNom || "Agent d'Exploitation"}
               </strong>
               {data.roleTraitePar && <Tag color="blue" style={{ marginLeft: 6 }}>{data.roleTraitePar}</Tag>}
             </Col>
@@ -293,6 +379,87 @@ export function DemandeDetail() {
           </Descriptions.Item>
         </Descriptions>
 
+        {/* Documents Justificatifs Officiels (CIN & Carte Grise) */}
+        <Card
+          size="small"
+          title={
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Space>
+                <FileImageOutlined style={{ color: "#0284c7", fontSize: 16 }} />
+                <span style={{ color: "#003566", fontWeight: 800, fontSize: 14 }}>
+                  Pièces Justificatives du Dossier (CIN & Carte Grise)
+                </span>
+              </Space>
+              <Tag color="cyan" className="font-bold m-0">
+                Documents Téléversés par le Souscripteur
+              </Tag>
+            </div>
+          }
+          style={{ marginBottom: 20, borderRadius: 10, borderColor: "#cbd5e1", backgroundColor: "#f8fafc" }}
+        >
+          <div className="mb-3 text-xs text-slate-500 font-medium">
+            Cliquez sur un document pour l'agrandir en plein écran, zoomer ou faire pivoter pour contrôle de conformité.
+          </div>
+
+          <Image.PreviewGroup>
+            <Row gutter={[16, 16]}>
+              {/* Document 1 : Carte Nationale d'Identité (CIN) */}
+              <Col xs={24} md={12}>
+                <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                      <IdcardOutlined style={{ color: "#16a34a" }} />
+                      Carte Nationale d'Identité (CIN)
+                    </span>
+                    <Tag color="success" className="font-bold text-[10px] m-0">Recto Vérifié</Tag>
+                  </div>
+
+                  <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center group">
+                    <Image
+                      src={data.cinRectoUrl || generateCinSvgUrl(data.clientNom, data.cin || "A748392")}
+                      alt="CIN Recto Souscripteur"
+                      className="w-full h-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.02]"
+                      style={{ maxHeight: 220, borderRadius: 8 }}
+                    />
+                  </div>
+
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                    <span>N° CIN : <strong>{data.cin || "A748392"}</strong></span>
+                    <span>Titulaire : <strong>{data.clientNom}</strong></span>
+                  </div>
+                </div>
+              </Col>
+
+              {/* Document 2 : Carte Grise (Certificat d'Immatriculation) */}
+              <Col xs={24} md={12}>
+                <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                      <CarOutlined style={{ color: "#7e22ce" }} />
+                      Carte Grise (Certificat d'Immatriculation)
+                    </span>
+                    <Tag color="purple" className="font-bold text-[10px] m-0">Véhicule Conforme</Tag>
+                  </div>
+
+                  <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center group">
+                    <Image
+                      src={data.carteGriseRectoUrl || generateCarteGriseSvgUrl(data.clientNom, data.immatriculation, data.typeVehicule || "Voiture")}
+                      alt="Carte Grise Véhicule"
+                      className="w-full h-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.02]"
+                      style={{ maxHeight: 220, borderRadius: 8 }}
+                    />
+                  </div>
+
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                    <span>Immatriculation : <strong>{data.immatriculation || "12345 | A | 1"}</strong></span>
+                    <span>Châssis : <strong className="font-mono">VF1BB05CF...</strong></span>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Image.PreviewGroup>
+        </Card>
+
         {/* Détails Spécifiques au Type de Demande */}
         <Card
           size="small"
@@ -326,7 +493,7 @@ export function DemandeDetail() {
                   (Nouvelle carte obligatoire pour tout premier abonné)
                 </span>
               </Descriptions.Item>
-              <Descriptions.Item label="Montant Total Net à Encaisser" span={2}>
+              <Descriptions.Item label="Montant Total Net" span={2}>
                 <strong style={{ fontSize: 16, color: "#16a34a" }}>
                   {montantTotalExige} MAD TTC
                 </strong>
@@ -469,52 +636,52 @@ export function DemandeDetail() {
         {/* Section Actions Métier */}
         {!isDossierValide && data.statut !== "REJETEE" && (
           <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {/* ÉTAPE 1: Encaissement */}
-              <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
-                <h5 style={{ margin: "0 0 10px 0", color: "#16a34a", fontSize: 13, fontWeight: 700 }}>
-                  <DollarOutlined /> Étape 1: Encaissement (Agent / Superviseur)
-                </h5>
-                {isPaiementDone ? (
-                  <Tag color="green" style={{ padding: "4px 10px", fontSize: 12 }}>
-                    <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
-                  </Tag>
-                ) : (
-                  <Space size="middle">
-                    <Button
-                      type="primary"
-                      icon={<DollarOutlined />}
-                      style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
-                      onClick={handleOpenPaymentModal}
-                    >
-                      Encaisser Paiement
-                    </Button>
-                    <Button
-                      danger
-                      onClick={() => handleOpenRejectModal("PAIEMENT")}
-                      style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
-                    >
-                      Refuser Paiement
-                    </Button>
-                  </Space>
-                )}
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: role === "RESPONSABLE" ? "1fr" : "1fr 1fr", gap: 16 }}>
+              {/* ÉTAPE 1: Encaissement - strictly for AGENT and SUPERVISEUR, completely removed for RESPONSABLE */}
+              {role !== "RESPONSABLE" && (
+                <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                  <h5 style={{ margin: "0 0 10px 0", color: "#16a34a", fontSize: 13, fontWeight: 700 }}>
+                    <DollarOutlined /> Étape 1 : Encaissement
+                  </h5>
+                  {isPaiementDone ? (
+                    <Tag color="green" style={{ padding: "4px 10px", fontSize: 12 }}>
+                      <CheckOutlined style={{ marginRight: 4 }} />Paiement encaissé
+                    </Tag>
+                  ) : (
+                    <Space size="middle">
+                      <Button
+                        type="primary"
+                        icon={<DollarOutlined />}
+                        style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
+                        onClick={handleOpenPaymentModal}
+                      >
+                        Encaisser Paiement
+                      </Button>
+                      <Button
+                        danger
+                        onClick={() => handleOpenRejectModal("PAIEMENT")}
+                        style={{ fontWeight: 600, borderRadius: 8, padding: "6px 16px" }}
+                      >
+                        Refuser Paiement
+                      </Button>
+                    </Space>
+                  )}
+                </div>
+              )}
 
               {/* ÉTAPE 2: Validation Dossier */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 10px 0", color: "#2563eb", fontSize: 13, fontWeight: 700 }}>
-                  <FolderOutlined /> Étape 2: Validation Dossier (Superviseur)
+                  <FolderOutlined /> {role === "RESPONSABLE" ? "Validation du Dossier" : "Étape 2 : Validation Dossier"}
                 </h5>
                 
                 {isAgent && (
-                  <Tooltip title="Réservé au Superviseur après encaissement">
-                    <Button disabled icon={<LockOutlined />}>
-                      Réservé Superviseur
-                    </Button>
-                  </Tooltip>
+                  <Button disabled icon={<LockOutlined />}>
+                    Validation en attente
+                  </Button>
                 )}
 
-                {isSuperviseur && (
+                {(isSuperviseur || role === "RESPONSABLE") && (
                   <Space wrap>
                     {isPaiementDone ? (
                       <Button
@@ -527,11 +694,9 @@ export function DemandeDetail() {
                         Valider & Activer Dossier
                       </Button>
                     ) : (
-                      <Tooltip title="Encaissement préalable obligatoire à l'Étape 1.">
-                        <Button disabled icon={<LockOutlined />}>
-                          Encaissement Requis
-                        </Button>
-                      </Tooltip>
+                      <Button disabled icon={<LockOutlined />}>
+                        En attente du paiement
+                      </Button>
                     )}
                     <Button
                       danger
@@ -548,12 +713,12 @@ export function DemandeDetail() {
         )}
       </Card>
 
-      {/* Modal: Saisir les infos de paiement (Validation Paiement) */}
+      {/* Modal: Saisir les infos de paiement */}
       <Modal
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <DollarOutlined style={{ color: "#16a34a" }} />
-            <span>Saisir les informations de paiement (Guichet)</span>
+            <span>Saisir les informations de paiement</span>
           </div>
         }
         open={paymentModalOpen}
