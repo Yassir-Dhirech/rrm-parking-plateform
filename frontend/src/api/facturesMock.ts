@@ -17,7 +17,9 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000001",
     paiementReference: "PAY-2026-000001",
     paiementId: 1,
-    genereePar: "Agent Rachid",
+    modePaiement: "ESPECES",
+    libellePrestation: "Souscription Initiale 6 Mois (+50 DH Badge RFID)",
+    genereePar: "Agent Rachid (Guichet)",
     signeePar: "M. Samir El Amrani (Directeur Exploitation)",
     dateSignature: "16/01/2026",
     nombreCartes: 1,
@@ -38,6 +40,8 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000002",
     paiementReference: "PAY-2026-000002",
     paiementId: 2,
+    modePaiement: "CHEQUE",
+    libellePrestation: "Contrat Corporate Flotte (10 Véhicules x 20 Ans)",
     genereePar: "M. Samir El Amrani (Superviseur)",
   },
   {
@@ -56,7 +60,31 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000003",
     paiementReference: "PAY-2026-000003",
     paiementId: 3,
-    genereePar: "Agent Hassan",
+    modePaiement: "ESPECES",
+    libellePrestation: "Pass Diurne 08h-20h (Trimestre)",
+    genereePar: "Agent Hassan (Guichet)",
+  },
+  {
+    id: 4,
+    numero: "FACT-BEH-2026-000004",
+    montantTtc: 1440,
+    montantAbonnementTtc: 1440,
+    fraisCarteRfid: 0,
+    nombreCartes: 0,
+    montantHt: 1200.00,
+    tauxTva: 20,
+    montantTva: 240.00,
+    statut: "SIGNEE",
+    clientNom: "Karim El Amrani",
+    dateEmission: "15/07/2026",
+    abonnementReference: "ABO-2026-000001", // Second distinct payment for same subscriber -> New distinct Facture!
+    paiementReference: "PAY-2026-000004",
+    paiementId: 4,
+    modePaiement: "ESPECES",
+    libellePrestation: "Renouvellement 6 Mois (0 DH Badge - Même carte réutilisée)",
+    genereePar: "Agent Rachid (Guichet)",
+    signeePar: "M. Samir El Amrani (Directeur Exploitation)",
+    dateSignature: "16/07/2026",
   },
 ];
 
@@ -71,6 +99,8 @@ export async function getFacturesMock(): Promise<FactureListItem[]> {
     dateEmission: formatDate(item.dateEmission),
     paiementId: item.paiementId,
     paiementReference: item.paiementReference,
+    modePaiement: item.modePaiement,
+    libellePrestation: item.libellePrestation,
     fraisCarteRfid: item.fraisCarteRfid,
     montantAbonnementTtc: item.montantAbonnementTtc,
   }));
@@ -123,7 +153,8 @@ export interface CreerFacturePayload {
   paiementReference?: string;
   paiementId?: number;
   genereePar?: string;
-  modePaiement?: string;
+  modePaiement?: "ESPECES" | "CHEQUE";
+  libellePrestation?: string;
 }
 
 export async function creerFactureMock(payload: CreerFacturePayload): Promise<FactureDetail> {
@@ -156,12 +187,21 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
     abonnementReference: payload.abonnementReference,
     paiementReference: payload.paiementReference || `PAY-2026-${String(newId).padStart(6, "0")}`,
     paiementId: payload.paiementId || newId,
+    modePaiement: payload.modePaiement || "ESPECES",
+    libellePrestation: payload.libellePrestation || "Règlement Abonnement de Stationnement",
     genereePar: payload.genereePar || "Superviseur Exploitation",
   };
 
   mockFactures.unshift(newFacture);
 
   return newFacture;
+}
+
+export async function getFacturesByAbonnementRefMock(abonnementReference: string): Promise<FactureDetail[]> {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  if (!abonnementReference) return [];
+  const refClean = abonnementReference.trim().toUpperCase();
+  return mockFactures.filter((f) => f.abonnementReference?.trim().toUpperCase() === refClean);
 }
 
 export async function signerFactureMock(id: number): Promise<void> {

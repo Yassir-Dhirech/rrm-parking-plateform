@@ -169,13 +169,21 @@ export function FactureDetail() {
                 {data.paiementReference || `PAY-2026-00000${data.id}`}
               </Button>
             </Descriptions.Item>
+            <Descriptions.Item label="Mode de Règlement">
+              <Tag color={data.modePaiement === "CHEQUE" ? "purple" : "green"} className="font-bold">
+                {data.modePaiement === "CHEQUE" ? "Chèque Bancaire Certifié" : "Espèces (Guichet RRM)"}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Objet Prestation">
+              <strong>{data.libellePrestation || "Règlement Abonnement de Stationnement"}</strong>
+            </Descriptions.Item>
             <Descriptions.Item label="Émise par">
               {data.genereePar}
             </Descriptions.Item>
-            <Descriptions.Item label="Validation Signature">
+            <Descriptions.Item label="Validation Signature" span={2}>
               {data.statut === "SIGNEE" ? (
                 <Tag color="green" className="font-bold inline-flex items-center gap-1">
-                  <SafetyCertificateOutlined /> Signée & Validée
+                  <SafetyCertificateOutlined /> Signée & Validée ({data.dateSignature})
                 </Tag>
               ) : (
                 <Tag color="orange" className="font-bold">

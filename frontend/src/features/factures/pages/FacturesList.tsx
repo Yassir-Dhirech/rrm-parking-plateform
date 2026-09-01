@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Table, Card, Typography, Button, Space, Modal, Form, Select, InputNumber, message } from "antd";
+import { Table, Card, Typography, Button, Space, Modal, Form, Select, InputNumber, Tag, message } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -107,6 +107,29 @@ export function FacturesList() {
       ),
     },
     { title: "Client", dataIndex: "clientNom", key: "clientNom" },
+    {
+      title: "Prestation / Règlement",
+      dataIndex: "libellePrestation",
+      key: "libellePrestation",
+      render: (lib?: string, record?: FactureListItem) => (
+        <div>
+          <div style={{ fontWeight: 600, color: "#1e293b" }}>{lib || "Souscription Abonnement"}</div>
+          {record?.paiementReference && (
+            <div style={{ fontSize: 11, color: "#64748b", fontFamily: "monospace" }}>{record.paiementReference}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Mode",
+      dataIndex: "modePaiement",
+      key: "modePaiement",
+      render: (mode?: string) => (
+        <Tag color={mode === "CHEQUE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
+          {mode === "CHEQUE" ? "Chèque" : "Espèces"}
+        </Tag>
+      ),
+    },
     {
       title: "Montant TTC",
       dataIndex: "montantTtc",
