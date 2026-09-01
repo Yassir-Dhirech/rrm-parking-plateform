@@ -323,16 +323,16 @@ export function DemandeDetail() {
             </Col>
 
             <Col xs={24} md={8}>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Durée Traitement (SLA 7 Jours) :</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Durée Traitement :</div>
               {data.dureeTraitementJours !== undefined ? (
                 <strong style={{ fontSize: 14, color: "#16a34a" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  {data.dureeTraitementJours} Jours ({formatDate(data.dateTraitement ?? "")})
+                  {data.dureeTraitementJours} Jours — {formatDate(data.dateTraitement ?? "")}
                 </strong>
               ) : (
                 <strong style={{ fontSize: 14, color: "#0284c7" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  En cours ({data.slaRestantJours ?? 5}j restants)
+                  En cours — {data.slaRestantJours ?? 5}j restants
                 </strong>
               )}
             </Col>
@@ -479,18 +479,18 @@ export function DemandeDetail() {
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Formule Tarifaire">
-                <Tag color="blue">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+                <Tag color="blue">{data.forfaitNom || "Pass Permanent 24h/7j"}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Durée Souscription">
                 {data.dureeMois || 6} Mois
               </Descriptions.Item>
               <Descriptions.Item label="Immatriculation">
-                <Tag color="cyan">{data.immatriculation}</Tag> ({data.typeVehicule || "Voiture"})
+                <Tag color="cyan">{data.immatriculation}</Tag> — {data.typeVehicule || "Voiture"}
               </Descriptions.Item>
               <Descriptions.Item label="Frais d'Émission Carte RFID">
                 <Tag color="orange" style={{ fontWeight: 700 }}>+50 MAD TTC</Tag>
                 <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
-                  (Nouvelle carte obligatoire pour tout premier abonné)
+                  Nouvelle carte pour premier abonné
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="Montant Total Net" span={2}>
@@ -498,7 +498,7 @@ export function DemandeDetail() {
                   {montantTotalExige} MAD TTC
                 </strong>
                 <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
-                  (Abonnement : {montantBaseAbo} MAD + Badge RFID : 50 MAD)
+                  Abonnement : {montantBaseAbo} MAD + Badge RFID : 50 MAD
                 </span>
               </Descriptions.Item>
             </Descriptions>
@@ -515,7 +515,7 @@ export function DemandeDetail() {
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Formule">
-                <Tag color="purple">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+                <Tag color="purple">{data.forfaitNom || "Pass Permanent 24h/7j"}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Période Prolongation">
                 {data.dureeMois || 12} Mois
@@ -524,9 +524,9 @@ export function DemandeDetail() {
                 <Tag color="cyan">{data.immatriculation}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Frais de Carte RFID">
-                <Tag color="green" style={{ fontWeight: 700 }}>0 MAD (Exonéré)</Tag>
+                <Tag color="green" style={{ fontWeight: 700 }}>0 MAD — Exonéré</Tag>
                 <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
-                  (Même carte physique conservée et réactivée)
+                  Même carte physique conservée
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="Montant Renouvellement Total" span={2}>
@@ -746,7 +746,7 @@ export function DemandeDetail() {
             ) : (
               <Select
                 options={[
-                  { label: "Espèces (Guichet)", value: "ESPECES" },
+                  { label: "Espèces", value: "ESPECES" },
                   { label: "Chèque Bancaire", value: "CHEQUE" },
                 ]}
               />
@@ -755,7 +755,7 @@ export function DemandeDetail() {
 
           <Form.Item
             name="montant"
-            label="Montant (MAD)"
+            label="Montant en MAD"
             rules={[{ required: true, message: "Veuillez entrer le montant" }]}
             tooltip="Le montant de l'abonnement est fixe et non modifiable"
           >
@@ -800,7 +800,7 @@ export function DemandeDetail() {
             }}
           >
             <div style={{ fontWeight: 700, color: fraisCarteRfid > 0 ? "#92400e" : "#166534", marginBottom: 4 }}>
-              Détail du Montant Encaissé (Règle Tarifaire RRM) :
+              Détail du Montant Encaissé :
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
               <span style={{ color: "#475569" }}>Coût de l'Abonnement :</span>
@@ -809,7 +809,7 @@ export function DemandeDetail() {
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ color: "#475569" }}>Frais d'Émission Carte RFID :</span>
               <strong style={{ color: fraisCarteRfid > 0 ? "#b45309" : "#16a34a" }}>
-                {fraisCarteRfid > 0 ? `+${fraisCarteRfid} MAD (Nouvelle Carte / Duplicata)` : "0 MAD (Même Carte Conservée)"}
+                {fraisCarteRfid > 0 ? `+${fraisCarteRfid} MAD — Nouvelle Carte` : "0 MAD — Même Carte Conservée"}
               </strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #cbd5e1", paddingTop: 4, fontWeight: 800 }}>
