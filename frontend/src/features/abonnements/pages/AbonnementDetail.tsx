@@ -398,6 +398,7 @@ export function AbonnementDetail() {
               title: "N° Facture",
               dataIndex: "numero",
               key: "numero",
+              sorter: (a: any, b: any) => (a.numero || "").localeCompare(b.numero || ""),
               render: (num: string, record: any) => (
                 <Button
                   type="link"
@@ -413,18 +414,34 @@ export function AbonnementDetail() {
               title: "Date Émission",
               dataIndex: "dateEmission",
               key: "dateEmission",
+              sorter: (a: any, b: any) => {
+                const parseD = (d?: string) => {
+                  if (!d) return 0;
+                  const parts = d.split("/");
+                  return parts.length === 3 ? new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime() : new Date(d).getTime() || 0;
+                };
+                return parseD(a.dateEmission) - parseD(b.dateEmission);
+              },
+              defaultSortOrder: "descend" as const,
               render: (d: string) => formatDate(d),
             },
             {
               title: "Prestation / Objet du Règlement",
               dataIndex: "libellePrestation",
               key: "libellePrestation",
+              sorter: (a: any, b: any) => (a.libellePrestation || "").localeCompare(b.libellePrestation || ""),
               render: (lib?: string) => <strong>{lib || "Règlement Abonnement"}</strong>,
             },
             {
               title: "Mode de Règlement",
               dataIndex: "modePaiement",
               key: "modePaiement",
+              filters: [
+                { text: "Espèces", value: "ESPECES" },
+                { text: "Chèque", value: "CHEQUE" },
+              ],
+              onFilter: (value: any, record: any) => record.modePaiement === value,
+              sorter: (a: any, b: any) => (a.modePaiement || "").localeCompare(b.modePaiement || ""),
               render: (mode?: string) => (
                 <Tag color={mode === "CHEQUE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
                   {mode === "CHEQUE" ? "Chèque Certifié" : "Espèces (Guichet)"}
@@ -435,6 +452,7 @@ export function AbonnementDetail() {
               title: "Frais Carte RFID",
               dataIndex: "fraisCarteRfid",
               key: "fraisCarteRfid",
+              sorter: (a: any, b: any) => (a.fraisCarteRfid || 0) - (b.fraisCarteRfid || 0),
               render: (frais?: number) =>
                 frais && frais > 0 ? (
                   <Tag color="orange" style={{ fontWeight: 700 }}>+{frais} MAD (Carte neuve)</Tag>
@@ -455,6 +473,7 @@ export function AbonnementDetail() {
               title: "Total TTC",
               dataIndex: "montantTtc",
               key: "montantTtc",
+              sorter: (a: any, b: any) => a.montantTtc - b.montantTtc,
               render: (val: number) => (
                 <strong className="text-emerald-700 font-bold">
                   {val.toLocaleString("fr-FR")} MAD TTC
@@ -465,6 +484,11 @@ export function AbonnementDetail() {
               title: "Statut",
               dataIndex: "statut",
               key: "statut",
+              filters: [
+                { text: "Signée", value: "SIGNEE" },
+                { text: "Émise", value: "EMISE" },
+              ],
+              onFilter: (value: any, record: any) => record.statut === value,
               render: (statut: any) => <StatusBadge statut={statut} />,
             },
             {

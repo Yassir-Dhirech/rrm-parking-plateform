@@ -40,6 +40,15 @@ export function FacturesList() {
     queryFn: getAbonnementsMock,
   });
 
+  const parseDate = (d?: string) => {
+    if (!d) return 0;
+    const parts = d.split("/");
+    if (parts.length === 3) {
+      return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
+    }
+    return new Date(d).getTime() || 0;
+  };
+
   const createMutation = useMutation({
     mutationFn: creerFactureMock,
     onSuccess: (newFacture) => {
@@ -89,11 +98,17 @@ export function FacturesList() {
     });
   };
 
+  const clientFilters = Array.from(new Set((data || []).map((i) => i.clientNom))).map((c) => ({
+    text: c,
+    value: c,
+  }));
+
   const columns = [
     {
       title: "Numéro",
       dataIndex: "numero",
       key: "numero",
+      sorter: (a: FactureListItem, b: FactureListItem) => a.numero.localeCompare(b.numero),
       render: (num: string, record: FactureListItem) => (
         <a
           onClick={(e) => {
@@ -106,11 +121,22 @@ export function FacturesList() {
         </a>
       ),
     },
-    { title: "Client", dataIndex: "clientNom", key: "clientNom" },
+    {
+      title: "Client",
+      dataIndex: "clientNom",
+      key: "clientNom",
+      filters: clientFilters,
+      onFilter: (value: any, record: FactureListItem) => record.clientNom === value,
+      filterSearch: true,
+      sorter: (a: FactureListItem, b: FactureListItem) => a.clientNom.localeCompare(b.clientNom),
+      render: (client: string) => <strong>{client}</strong>,
+    },
     {
       title: "Prestation / Règlement",
       dataIndex: "libellePrestation",
       key: "libellePrestation",
+      sorter: (a: FactureListItem, b: FactureListItem) =>
+        (a.libellePrestation || "").localeCompare(b.libellePrestation || ""),
       render: (lib?: string, record?: FactureListItem) => (
         <div>
           <div style={{ fontWeight: 600, color: "#1e293b" }}>{lib || "Souscription Abonnement"}</div>
@@ -124,6 +150,12 @@ export function FacturesList() {
       title: "Mode",
       dataIndex: "modePaiement",
       key: "modePaiement",
+      filters: [
+        { text: "Espèces", value: "ESPECES" },
+        { text: "Chèque", value: "CHEQUE" },
+      ],
+      onFilter: (value: any, record: FactureListItem) => record.modePaiement === value,
+      sorter: (a: FactureListItem, b: FactureListItem) => (a.modePaiement || "").localeCompare(b.modePaiement || ""),
       render: (mode?: string) => (
         <Tag color={mode === "CHEQUE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
           {mode === "CHEQUE" ? "Chèque" : "Espèces"}
@@ -134,6 +166,7 @@ export function FacturesList() {
       title: "Montant TTC",
       dataIndex: "montantTtc",
       key: "montantTtc",
+      sorter: (a: FactureListItem, b: FactureListItem) => a.montantTtc - b.montantTtc,
       render: (value: number) => (
         <strong style={{ color: "#16a34a" }}>
           {value.toLocaleString("fr-FR")} MAD
@@ -144,9 +177,24 @@ export function FacturesList() {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
+      filters: [
+        { text: "Signée", value: "SIGNEE" },
+        { text: "Émise", value: "EMISE" },
+        { text: "Brouillon", value: "BROUILLON" },
+        { text: "Annulée", value: "ANNULEE" },
+      ],
+      onFilter: (value: any, record: FactureListItem) => record.statut === value,
+      sorter: (a: FactureListItem, b: FactureListItem) => a.statut.localeCompare(b.statut),
       render: (statut: FactureListItem["statut"]) => <StatusBadge statut={statut} />,
     },
-    { title: "Date émission", dataIndex: "dateEmission", key: "dateEmission", render: (d: string) => formatDate(d) },
+    {
+      title: "Date Émission",
+      dataIndex: "dateEmission",
+      key: "dateEmission",
+      sorter: (a: FactureListItem, b: FactureListItem) => parseDate(a.dateEmission) - parseDate(b.dateEmission),
+      defaultSortOrder: "descend" as const,
+      render: (d: string) => formatDate(d),
+    },
     {
       title: "Actions",
       key: "actions",
@@ -208,7 +256,7 @@ export function FacturesList() {
             Gestion des Factures Émises
           </Title>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            Consultez, téléchargez ou générez les factures réglementaires conformes aux encaissements RRM.
+            Consultez, filtrez, triez et téléchargez les factures réglementaires conformes aux encaissements RRM.
           </Text>
         </div>
 
