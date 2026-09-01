@@ -152,3 +152,28 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* Universal Responsive Table & Scrollable Container Styles for Mobile */
+.ant-table-wrapper {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ant-table-wrapper .ant-table {
+  min-width: 100%;
+}
+
+.ant-table-content {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .ant-table-wrapper .ant-table-thead > tr > th,
+  .ant-table-wrapper .ant-table-tbody > tr > td {
+    white-space: nowrap !important;
+    padding: 8px 10px !important;
+  }
+}

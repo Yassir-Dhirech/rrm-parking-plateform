@@ -82,12 +82,12 @@ export function SlaAuditDashboard() {
         </Col>
       </Row>
 
-      {/* Table 1: Performance par Agent & Superviseur */}
+      {/* Table 1: Performance par Intervenant */}
       <Card
         title={
           <Space>
             <UserOutlined style={{ color: "#0284c7" }} />
-            <span>Tableau d'Audit & Performance par Intervenant (Agent / Superviseur)</span>
+            <span>Tableau d'Audit & Performance par Intervenant</span>
           </Space>
         }
         style={{ borderRadius: 12 }}
@@ -99,7 +99,7 @@ export function SlaAuditDashboard() {
           scroll={{ x: "max-content" }}
           columns={[
             {
-              title: "Agent / Superviseur Traitant",
+              title: "Intervenant Traitant",
               dataIndex: "agentNom",
               key: "agentNom",
               render: (name: string, record) => (

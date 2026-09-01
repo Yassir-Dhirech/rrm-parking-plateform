@@ -12,8 +12,6 @@ import { LandingPage } from "../pages/LandingPage";
 import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
 import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
-import { PaiementsList } from "../features/paiements/pages/PaiementsList";
-import { PaiementDetail } from "../features/paiements/pages/PaiementDetail";
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
 import { CartesList } from "../features/cartes/pages/CartesList";
@@ -30,6 +28,7 @@ import { NotificationsPage } from "../pages/NotificationsPage";
 import { AboutPage } from "../pages/AboutPage";
 import { ContactPage } from "../pages/ContactPage";
 import { PublicParkingsPage } from "../pages/PublicParkingsPage";
+import { InternalParkingsMapPage } from "../features/parkings/pages/InternalParkingsMapPage";
 import { PublicTarifsPage } from "../pages/PublicTarifsPage";
 import { ScrollToTop } from "../components/ui/ScrollToTop";
 
@@ -46,6 +45,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   const extraRoutes = [
     { path: "/notifications", element: <NotificationsPage /> },
     { path: `${roleConfig[role].homePath}/notifications`, element: <NotificationsPage /> },
+    { path: `${roleConfig[role].homePath}/carte-parkings`, element: <InternalParkingsMapPage /> },
   ];
 
   if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
@@ -62,12 +62,6 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
-  if (role === "AGENT" || role === "SUPERVISEUR" || role === "COMPTABLE") {
-    extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/paiements`, element: <PaiementsList /> },
-      { path: `${roleConfig[role].homePath}/paiements/:id`, element: <PaiementDetail /> },
-    );
-  }
 
   if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
@@ -82,7 +76,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
       { path: `${roleConfig[role].homePath}/cartes/:id`, element: <CarteDetail /> },
     );
   }
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  if (role === "RESPONSABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
       { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },

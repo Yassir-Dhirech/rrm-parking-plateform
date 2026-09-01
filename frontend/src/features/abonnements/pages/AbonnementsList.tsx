@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Table, Card, Typography, Tag, Button, Modal, Form, Input, Select, Radio, Checkbox, message, Segmented, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, CarOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { getAbonnementsMock, createStaffAbonnementMock, type CreateStaffAbonnementInput } from "../../../api/abonnementsMock";
 import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
+import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { formatDate } from "../../../lib/dateUtils";
@@ -22,6 +23,7 @@ export function AbonnementsList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<string>("ALL");
   const [form] = Form.useForm();
+  const selectedType = Form.useWatch("type", form);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["abonnements"],
@@ -43,7 +45,7 @@ export function AbonnementsList() {
       type: values.type as TypeAbonnement,
       clientNom: values.clientNom,
       parkingNom: values.parkingNom || "Parking Agdal Gare",
-      immatriculation: values.immatriculation || "STF-123",
+      immatriculation: values.immatriculation || "12345 | أ (A) | 1",
       numeroMatriculeStaff: values.numeroMatriculeStaff,
       dureeMois: values.dureeMois || 12,
       exonereStaff: values.type === "STAFF" ? true : values.exonereStaff,
@@ -53,6 +55,8 @@ export function AbonnementsList() {
   const filteredData = data.filter((item) => {
     if (filterType === "ALL") return true;
     if (filterType === "SUSPENDU") return item.statut === "SUSPENDU";
+    if (filterType === "EN_ATTENTE") return item.statut === "EN_ATTENTE";
+    if (filterType === "ACTIF") return item.statut === "ACTIF";
     return item.type === filterType;
   });
 
@@ -61,12 +65,19 @@ export function AbonnementsList() {
       title: "Référence",
       dataIndex: "reference",
       key: "reference",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.reference.localeCompare(b.reference),
       render: (ref: string) => <strong>{ref}</strong>,
     },
     {
       title: "Type d'Abonnement",
       dataIndex: "type",
       key: "type",
+      filters: [
+        { text: "Staff RRM", value: "STAFF" },
+        { text: "Régulier", value: "REGULIER" },
+        { text: "Entreprise", value: "ENTREPRISE" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.type === value,
       render: (value: TypeAbonnement) => {
         if (value === "STAFF") {
           return (
@@ -81,32 +92,126 @@ export function AbonnementsList() {
         return <Tag color="blue">Régulier</Tag>;
       },
     },
-    { title: "Client / Bénéficiaire", dataIndex: "clientNom", key: "clientNom" },
-    { title: "Parking d'Attache", dataIndex: "parkingNom", key: "parkingNom" },
     {
-      title: "Traité Par",
+      title: "Client / Bénéficiaire",
+      dataIndex: "clientNom",
+      key: "clientNom",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.clientNom.localeCompare(b.clientNom),
+    },
+    {
+      title: "Parking d'Attache",
+      dataIndex: "parkingNom",
+      key: "parkingNom",
+      filters: [
+        { text: "Parking Agdal Gare", value: "Parking Agdal Gare" },
+        { text: "Parking Bab El Had", value: "Parking Bab El Had" },
+        { text: "Parking Hassan II", value: "Parking Hassan II" },
+        { text: "Parking Chellah", value: "Parking Chellah" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.parkingNom.includes(value as string),
+      filterSearch: true,
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => a.parkingNom.localeCompare(b.parkingNom),
+    },
+    {
+      title: "Créé / Traité Par",
       dataIndex: "traiteParNom",
       key: "traiteParNom",
-      render: (agentNom?: string) =>
-        agentNom ? (
-          <Tag color="cyan">
+      filters: [
+        { text: "Traité", value: "TRAITE" },
+        { text: "Non Traité", value: "NON_TRAITE" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => {
+        if (value === "NON_TRAITE") return !record.traiteParNom;
+        return !!record.traiteParNom;
+      },
+      render: (agentNom?: string) => {
+        if (!agentNom) {
+          return (
+            <Tag color="volcano" icon={<ExclamationCircleOutlined />} style={{ fontWeight: 600 }}>
+              Non Traité (Inactif)
+            </Tag>
+          );
+        }
+        return (
+          <Tag color="cyan" style={{ fontWeight: 600 }}>
             <UserOutlined style={{ marginRight: 4 }} />
             {agentNom}
           </Tag>
-        ) : (
-          <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
-            Non Traité Encore
-          </Tag>
-        ),
+        );
+      },
     },
     {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
-      render: (statut: AbonnementListItem["statut"]) => <StatusBadge statut={statut} />,
+      filters: [
+        { text: "Actif (Traité)", value: "ACTIF" },
+        { text: "En Attente de Traitement", value: "EN_ATTENTE" },
+        { text: "Expiré", value: "EXPIRE" },
+        { text: "Suspendu", value: "SUSPENDU" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.statut === value,
+      render: (statut: AbonnementListItem["statut"]) => {
+        if (statut === "EN_ATTENTE") {
+          return (
+            <Tag color="gold" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
+              En attente traitement opérateur
+            </Tag>
+          );
+        }
+        return <StatusBadge statut={statut} />;
+      },
     },
-    { title: "Date Début", dataIndex: "dateDebut", key: "dateDebut", render: (d: string) => formatDate(d) },
-    { title: "Date Expiration", dataIndex: "dateFin", key: "dateFin", render: (d: string) => formatDate(d) },
+    {
+      title: "Date Début",
+      dataIndex: "dateDebut",
+      key: "dateDebut",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateDebut).getTime() - new Date(b.dateDebut).getTime(),
+      render: (d: string) => formatDate(d),
+    },
+    {
+      title: "Date Expiration",
+      dataIndex: "dateFin",
+      key: "dateFin",
+      sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateFin).getTime() - new Date(b.dateFin).getTime(),
+      render: (d: string) => formatDate(d),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_: any, record: AbonnementListItem) => {
+        if (record.statut === "EN_ATTENTE") {
+          return (
+            <Button
+              size="small"
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`${basePath}/abonnements/${record.id}`);
+              }}
+              style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
+              className="rounded-lg"
+            >
+              Traiter & Activer
+            </Button>
+          );
+        }
+        return (
+          <Button
+            size="small"
+            type="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`${basePath}/abonnements/${record.id}`);
+            }}
+            className="rounded-lg font-semibold"
+          >
+            Consulter
+          </Button>
+        );
+      },
+    },
   ];
 
   return (
@@ -115,7 +220,7 @@ export function AbonnementsList() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Gestion des Abonnements</Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Consulter les abonnements actifs, renouvelés et créer des abonnements Staff RRM / Admin.
+            Consulter les abonnements actifs, en attente de traitement et créer des abonnements Staff RRM / Admin.
           </Text>
         </div>
 
@@ -136,6 +241,8 @@ export function AbonnementsList() {
         <Segmented
           options={[
             { label: `Tous (${data.length})`, value: "ALL" },
+            { label: `En Attente (${data.filter((i) => i.statut === "EN_ATTENTE").length})`, value: "EN_ATTENTE" },
+            { label: `Actifs (${data.filter((i) => i.statut === "ACTIF").length})`, value: "ACTIF" },
             { label: `Staff RRM (${data.filter((i) => i.type === "STAFF").length})`, value: "STAFF" },
             { label: `Réguliers (${data.filter((i) => i.type === "REGULIER").length})`, value: "REGULIER" },
             { label: `Entreprises (${data.filter((i) => i.type === "ENTREPRISE").length})`, value: "ENTREPRISE" },
@@ -151,6 +258,7 @@ export function AbonnementsList() {
         columns={columns}
         dataSource={filteredData}
         loading={isLoading}
+        scroll={{ x: 1300 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/abonnements/${record.id}`),
           style: { cursor: "pointer" },
@@ -200,8 +308,9 @@ export function AbonnementsList() {
             </Col>
           </Row>
 
+          {/* Parking Selection Row */}
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="parkingNom" label="Parking d'Attache" rules={[{ required: true }]}>
                 <Select placeholder="Sélectionner le parking">
                   <Option value="Parking Agdal Gare">Parking Agdal Gare</Option>
@@ -212,24 +321,37 @@ export function AbonnementsList() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="immatriculation" label="Plaque Véhicule (LPR)" rules={[{ required: true, message: "Plaque requise" }]}>
-                <Input prefix={<CarOutlined style={{ color: "#94a3b8" }} />} placeholder="Ex: 12345-A-6" />
+          </Row>
+
+          {/* Independent Full-Width Row for Moroccan Plate Input */}
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="immatriculation" label="Matricule du Véhicule (Plaque Maroc LPR)" rules={[{ required: true, message: "L'immatriculation est requise." }]}>
+                <MoroccanPlateInput />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
-                <Select>
-                  <Option value={3}>3 Mois (Courte Durée)</Option>
-                  <Option value={6}>6 Mois (Courte Durée)</Option>
-                  <Option value={9}>9 Mois (Courte Durée)</Option>
-                  <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
-                  <Option value={240}>20 Ans (Longue Durée / Concession)</Option>
-                </Select>
-              </Form.Item>
+              {selectedType === "ENTREPRISE" ? (
+                <Form.Item name="dureeMois" label="Durée de Contrat Entreprise" initialValue={240}>
+                  <Input
+                    readOnly
+                    value="20 Ans (Longue Durée — 240 Mois)"
+                    style={{ fontWeight: "bold", color: "#7e22ce", backgroundColor: "#f3e8ff", borderColor: "#d8b4fe" }}
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
+                  <Select>
+                    <Option value={3}>3 Mois (Courte Durée)</Option>
+                    <Option value={6}>6 Mois (Courte Durée)</Option>
+                    <Option value={9}>9 Mois (Courte Durée)</Option>
+                    <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
+                  </Select>
+                </Form.Item>
+              )}
             </Col>
             <Col span={12}>
               <Form.Item name="exonereStaff" valuePropName="checked" label="Facturation / Exonération">

@@ -19,6 +19,7 @@ import "./RoleCharts.css";
 import type { GlobalFilters } from "../ui/GlobalFilterBar";
 import type { RecetteHebdoListItem } from "../../features/recettes/types";
 import type { ContratListItem } from "../../features/contrats/types";
+import type { DemandeListItem } from "../../features/demandes/types";
 
 const { Text, Title } = Typography;
 
@@ -27,12 +28,13 @@ interface RoleChartsProps {
   filters?: GlobalFilters;
   recettes?: RecetteHebdoListItem[];
   contrats?: ContratListItem[];
+  demandes?: DemandeListItem[];
 }
 
-export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, recettes = [], contrats = [] }) => {
+export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, recettes = [], contrats = [], demandes = [] }) => {
   switch (role) {
     case "AGENT":
-      return <AgentCharts filters={filters} />;
+      return <AgentCharts filters={filters} demandes={demandes} />;
     case "SUPERVISEUR":
       return <SuperviseurCharts filters={filters} recettes={recettes} />;
     case "RESPONSABLE":
@@ -51,23 +53,28 @@ export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, rece
 /* ====================================================================
    1. AGENT CHARTS
    ==================================================================== */
-function AgentCharts({ filters }: { filters: GlobalFilters }) {
+function AgentCharts({ filters, demandes = [] }: { filters: GlobalFilters; demandes?: DemandeListItem[] }) {
+  const soumises = demandes.filter((d) => d.statut === "SOUMISE").length;
+  const enPaiement = demandes.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
+  const validees = demandes.filter((d) => d.statut === "VALIDEE" || d.statut === "COMPLETEE").length;
+  const total = (soumises + enPaiement + validees) || 1;
+
   const demandesData = [
-    { label: "Soumises (Nouvelles)", count: filters.statut && filters.statut !== "SOUMISE" ? 0 : 14, color: "#d97706", percent: 45 },
-    { label: "En cours d'instruction", count: filters.statut && filters.statut !== "EN_COURS" ? 0 : 8, color: "#3b82f6", percent: 26 },
-    { label: "Validées / Finalisées", count: filters.statut && filters.statut !== "VALIDEE" && filters.statut !== "VALIDEE_SUPERVISEUR" ? 0 : 9, color: "#10b981", percent: 29 },
+    { label: "Nouvelles Demandes à Vérifier (SOUMISE)", count: soumises, color: "#d97706", percent: Math.round((soumises / total) * 100) },
+    { label: "Paiements Enregistrés / En Attente Encodage", count: enPaiement, color: "#2563eb", percent: Math.round((enPaiement / total) * 100) },
+    { label: "Dossiers Validés & Badges Livrés", count: validees, color: "#10b981", percent: Math.round((validees / total) * 100) },
   ];
 
   const cartesData = [
     { type: "Cartes Actives en Circulation", val: filters.parkingId ? 85 : 340, total: filters.parkingId ? 100 : 400, color: "#10b981" },
-    { type: "Cartes en Attente d'Activation", val: filters.parkingId ? 10 : 42, total: filters.parkingId ? 100 : 400, color: "#f59e0b" },
+    { type: "Cartes en Attente d'Activation", val: enPaiement || (filters.parkingId ? 10 : 42), total: filters.parkingId ? 100 : 400, color: "#f59e0b" },
     { type: "Cartes Désactivées / Expirées", val: filters.parkingId ? 5 : 18, total: filters.parkingId ? 100 : 400, color: "#ef4444" },
   ];
 
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={12}>
-        <Card title={<Space><BarChartOutlined /><span>Progression du Traitement des Demandes (Aujourd'hui)</span></Space>} className="chart-card">
+        <Card title={<Space><BarChartOutlined /><span>Suivi Opérationnel & Traitement des Demandes</span></Space>} className="chart-card">
           <div className="bar-chart-container">
             {demandesData.map((d) => (
               <div key={d.label} className="bar-chart-item">

@@ -4,9 +4,13 @@ import { type Role } from "../lib/roleConfig";
 export const mockContacts: UserContact[] = [
   { id: "usr-agent-1", nom: "Agent Rachid (Guichet Agdal)", role: "AGENT", roleLibelle: "Agent d'exploitation", avatarColor: "#0284c7", enLigne: true },
   { id: "usr-agent-2", nom: "Agent Hassan (Guichet Hassan II)", role: "AGENT", roleLibelle: "Agent d'exploitation", avatarColor: "#0284c7", enLigne: true },
+  { id: "usr-agent-3", nom: "Agent Youssef (Guichet Bab El Had)", role: "AGENT", roleLibelle: "Agent d'exploitation", avatarColor: "#0284c7", enLigne: false },
   { id: "usr-super-1", nom: "M. Samir El Amrani", role: "SUPERVISEUR", roleLibelle: "Superviseur Référent", avatarColor: "#0d9488", enLigne: true },
+  { id: "usr-super-2", nom: "Mme. Omar Alami", role: "SUPERVISEUR", roleLibelle: "Superviseur Adjoint", avatarColor: "#0d9488", enLigne: true },
   { id: "usr-resp-1", nom: "Mme. Leila Benali", role: "RESPONSABLE", roleLibelle: "Responsable Exploitation & Finance", avatarColor: "#4f46e5", enLigne: true },
   { id: "usr-comp-1", nom: "Mme. Fatine Chraibi", role: "COMPTABLE", roleLibelle: "Comptable Principale RRM", avatarColor: "#9333ea", enLigne: false },
+  { id: "usr-admin-1", nom: "M. Mehdi Tazi", role: "ADMIN_SI", roleLibelle: "Administrateur SI & Réseaux", avatarColor: "#e11d48", enLigne: true },
+  { id: "usr-tech-1", nom: "M. Karim Berrada", role: "ADMIN_SI", roleLibelle: "Technicien Borne & Barrières", avatarColor: "#d97706", enLigne: true },
 ];
 
 let mockMessagesStore: Record<string, ChatMessage[]> = {

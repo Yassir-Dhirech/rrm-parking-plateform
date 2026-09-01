@@ -43,23 +43,25 @@ const mockAbonnements: AbonnementListItem[] = [
     id: 4,
     reference: "ABO-STF-2026-000101",
     type: "STAFF",
-    statut: "ACTIF",
+    statut: "EN_ATTENTE", // En attente de traitement & validation par un Agent ou Superviseur
     clientNom: "Youssef Tazi (Agent RRM)",
     parkingNom: "Parking Agdal Gare",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
     traiteParNom: undefined, // Non traité encore
+    dateTraitement: undefined,
   },
   {
     id: 5,
     reference: "ABO-STF-2026-000102",
     type: "STAFF",
-    statut: "ACTIF",
+    statut: "EN_ATTENTE", // En attente de traitement & validation par un Agent ou Superviseur
     clientNom: "Meriem Filali (Superviseur RRM)",
     parkingNom: "Parking Hassan II",
     dateDebut: "01/01/2026",
     dateFin: "31/12/2026",
     traiteParNom: undefined, // Non traité encore
+    dateTraitement: undefined,
   },
   {
     id: 6,
@@ -71,6 +73,7 @@ const mockAbonnements: AbonnementListItem[] = [
     dateDebut: "23/08/2026",
     dateFin: "23/02/2027",
     traiteParNom: undefined, // Non traité encore
+    dateTraitement: undefined,
   },
 ];
 
@@ -104,15 +107,19 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
   const endDateObj = new Date(today.setMonth(today.getMonth() + input.dureeMois));
   const dateFin = formatDate(endDateObj.toISOString());
 
+  // Règle RRM : Un abonnement créé débute obligatoirement en EN_ATTENTE
+  // Il ne devient ACTIF qu'après traitement effectif par un Agent ou Superviseur
   const newItem: AbonnementListItem = {
     id: newId,
     reference,
     type: input.type,
-    statut: "ACTIF",
+    statut: "EN_ATTENTE",
     clientNom: isStaff ? `${input.clientNom} (Staff RRM)` : input.clientNom,
     parkingNom: input.parkingNom,
     dateDebut,
     dateFin,
+    traiteParNom: undefined, // Reste vide jusqu'au traitement guichet/superviseur
+    dateTraitement: undefined,
   };
 
   const typeClientTarget = input.type === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER";
@@ -120,6 +127,35 @@ export async function createStaffAbonnementMock(input: CreateStaffAbonnementInpu
 
   mockAbonnements.unshift(newItem);
   return newItem;
+}
+
+export interface ActiverAbonnementInput {
+  id: number;
+  operateurNom: string;
+  roleOperateur: string;
+  numeroCarteRfid?: string;
+}
+
+export async function activerAbonnementMock({
+  id,
+  operateurNom,
+  roleOperateur,
+  numeroCarteRfid: _numeroCarteRfid,
+}: ActiverAbonnementInput): Promise<AbonnementDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  const found = mockAbonnements.find((item) => item.id === id);
+  if (!found) throw new Error("Abonnement introuvable");
+
+  // Règle d'or : Condition stricte d'activation par un intervenant habilité
+  if (!operateurNom || !operateurNom.trim()) {
+    throw new Error("L'abonnement ne peut pas être activé sans opérateur traitant (Agent ou Superviseur).");
+  }
+
+  found.statut = "ACTIF";
+  found.traiteParNom = `${operateurNom} (${roleOperateur})`;
+  found.dateTraitement = formatDate(new Date().toISOString());
+
+  return getAbonnementByIdMock(id);
 }
 
 export interface SuspendAbonnementInput {
@@ -137,10 +173,18 @@ export async function suspendAbonnementMock({ id, motif }: SuspendAbonnementInpu
   return getAbonnementByIdMock(id);
 }
 
-export async function reactivateAbonnementMock(id: number): Promise<AbonnementDetail> {
+export async function reactivateAbonnementMock(id: number, operateurNom?: string): Promise<AbonnementDetail> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = mockAbonnements.find((item) => item.id === id);
   if (found) {
+    // Ne peut pas être actif s'il n'a jamais été traité
+    if (!found.traiteParNom && !operateurNom) {
+      throw new Error("L'abonnement ne peut pas être actif sans traitement préalable par un Agent ou Superviseur.");
+    }
+    if (operateurNom && !found.traiteParNom) {
+      found.traiteParNom = operateurNom;
+      found.dateTraitement = formatDate(new Date().toISOString());
+    }
     found.statut = "ACTIF";
     delete suspendedMotifs[id];
   }
@@ -155,11 +199,13 @@ export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetai
     id,
     reference: found?.reference || `ABO-2026-00000${id}`,
     type: found?.type || "REGULIER",
-    statut: found?.statut || "ACTIF",
+    statut: found?.statut || "EN_ATTENTE",
     clientNom: found?.clientNom || "Karim El Amrani",
     parkingNom: found?.parkingNom || "Parking Bab El Had",
     dateDebut: formatDate(found?.dateDebut || "15/01/2026"),
     dateFin: formatDate(found?.dateFin || "15/07/2026"),
+    traiteParNom: found?.traiteParNom,
+    dateTraitement: found?.dateTraitement,
     vehiculeImmatriculation: "12345-A-6",
     planTarifaireNom: found?.type === "STAFF" ? "Pass Exonéré Staff RRM" : "Voiture - 6 mois",
     montantTotal: found?.type === "STAFF" ? 0 : 1200,

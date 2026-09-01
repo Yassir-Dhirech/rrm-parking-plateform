@@ -49,7 +49,7 @@ export function UtilisateursList() {
   return (
     <Card extra={<Button type="primary" icon={<UserAddOutlined />} onClick={() => setIsModalOpen(true)}>Nouvel Utilisateur</Button>}>
       <Title level={4}>Gestion des Utilisateurs</Title>
-      <Table columns={columns} dataSource={utilisateurs} loading={isLoading} rowKey="id" />
+      <Table columns={columns} dataSource={utilisateurs} loading={isLoading} rowKey="id" scroll={{ x: "max-content" }} />
 
       <Modal
         title="Ajouter un Utilisateur"

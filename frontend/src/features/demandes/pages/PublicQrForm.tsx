@@ -16,6 +16,7 @@ import {
   Checkbox,
   Card as AntCard,
 } from "antd";
+import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import {
   PlusCircleOutlined,
   SyncOutlined,
@@ -34,6 +35,8 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ThunderboltOutlined,
+  FileTextOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
@@ -187,8 +190,9 @@ export function PublicQrForm() {
       if (tabParam === "DUPLICATE") setTypeDemande("DUPLICATE");
     }
 
-    if (clientParam === "ENTREPRISE") {
+    if (clientParam === "ENTREPRISE" || typeDemande === "CORPORATE") {
       setTypeDemande("CORPORATE");
+      form.setFieldValue("dureeMois", 240);
     }
 
     if (planParam) {
@@ -198,7 +202,7 @@ export function PublicQrForm() {
     if (parkingParam) {
       form.setFieldValue("parkingId", Number(parkingParam));
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, typeDemande]);
 
   // BETA Quick Test Autofill Handler
   const handleBetaAutofill = () => {
@@ -324,6 +328,18 @@ export function PublicQrForm() {
 
   // Calculate pricing summary
   const getMonthlyPrice = () => {
+    if (typeDemande === "CORPORATE") {
+      switch (watchedFormuleCode) {
+        case "CORP_8_20":
+          return 500;
+        case "CORP_8_22":
+          return 550;
+        case "CORP_24_7":
+        default:
+          return 650;
+      }
+    }
+
     switch (watchedFormuleCode) {
       case "24H7J":
         return 600;
@@ -331,17 +347,24 @@ export function PublicQrForm() {
         return 420;
       case "NUIT":
         return 350;
-      case "MOTO":
-        return 200;
       default:
         return 600;
     }
   };
 
   const selectedParkingName =
-    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Mamounia (Rabat Hassan)";
-  const totalMonths = watchedDureeMois || 3;
-  const totalPrice = getMonthlyPrice() * totalMonths;
+    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Agdal Gare (Rabat)";
+  const totalMonths = typeDemande === "CORPORATE" ? 240 : (watchedDureeMois || 3);
+  const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
+  const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
+
+  // RRM Business Rule:
+  // - New subscriber (NEW / CORPORATE): requires new RFID card(s) => +50 DH per card
+  // - Damaged or lost card (DUPLICATE): replacement fee => 50 DH
+  // - Renewal with the same card (RENEW / TRANSFER): 0 DH (re-using existing card)
+  const fraisCarteUnitaire = (typeDemande === "NEW" || typeDemande === "CORPORATE" || typeDemande === "DUPLICATE") ? 50 : 0;
+  const totalFraisCarte = fraisCarteUnitaire * cardMultiplier;
+  const totalPrice = baseAbonnementPrice + totalFraisCarte;
 
   // Submit Mutation
   const submitMutation = useMutation({
@@ -362,6 +385,9 @@ export function PublicQrForm() {
         ...values,
         typeDemande,
         typeClient: typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER",
+        baseAbonnementPrice,
+        fraisCarte: totalFraisCarte,
+        montantTotal: totalPrice,
       });
       setIsOtpModalOpen(true);
     } catch {
@@ -426,14 +452,14 @@ export function PublicQrForm() {
             </div>
 
             {/* BETA Test Autofill Action */}
-            <div className="shrink-0">
+            <div className="w-full sm:w-auto shrink-0">
               <Button
                 size="large"
                 icon={<ThunderboltOutlined />}
                 onClick={handleBetaAutofill}
-                className="bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center gap-2 h-12 text-xs"
+                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center justify-center gap-2 h-12 text-xs"
               >
-                ⚡ Mode Remplissage Rapide (BETA Test)
+                Mode Remplissage Rapide (BETA Test)
               </Button>
             </div>
           </div>
@@ -442,8 +468,8 @@ export function PublicQrForm() {
 
       <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 my-6 mb-16">
         {/* Visual Stepper — Positioned initially between Hero Header & Form Choice, becoming Sticky on scroll */}
-        <div className="sticky top-24 z-40 flex justify-center mb-8">
-          <div className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-fit">
+        <div className="sticky top-20 md:top-24 z-40 flex justify-center mb-8 px-2 max-w-full overflow-x-auto">
+          <div className="bg-white/95 backdrop-blur-md px-3 md:px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-full shrink-0">
             {STEP_TITLES.map((title, idx) => {
               const isCompleted = idx < currentStep;
               const isCurrent = idx === currentStep;
@@ -500,7 +526,7 @@ export function PublicQrForm() {
 
         {/* STEP 0: Select Request Type */}
         {currentStep === 0 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/70">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/70">
             <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-6">
               Sélectionnez le Type de Demande
             </h2>
@@ -610,13 +636,13 @@ export function PublicQrForm() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-6 md:mt-8 flex justify-end">
               <Button
                 type="primary"
                 size="large"
                 icon={<ArrowRightOutlined />}
                 onClick={() => setCurrentStep(1)}
-                className="bg-primary rounded-xl font-bold h-12 px-8 shadow-md"
+                className="w-full sm:w-auto bg-primary rounded-xl font-bold h-12 px-8 shadow-md flex items-center justify-center"
               >
                 Continuer →
               </Button>
@@ -626,7 +652,7 @@ export function PublicQrForm() {
 
         {/* STEP 1: Dynamic Form based on TypeDemande */}
         {currentStep === 1 && (
-          <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
             {/* FLOW 1: RENOUVELLEMENT / TRANSFERT / DUPLICATE -> SEARCH ACCOUNT ONLY */}
             {["RENEW", "TRANSFER", "DUPLICATE"].includes(typeDemande) ? (
               <div className="space-y-6">
@@ -701,11 +727,11 @@ export function PublicQrForm() {
                   </Form>
                 )}
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -715,7 +741,7 @@ export function PublicQrForm() {
                       type="primary"
                       disabled={!hasFoundAccount}
                       onClick={handleNextToOtp}
-                      className="bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md"
+                      className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
                     >
                       Valider & Recevoir Code OTP →
                     </Button>
@@ -724,7 +750,7 @@ export function PublicQrForm() {
                       type="primary"
                       disabled={!hasFoundAccount}
                       onClick={() => setCurrentStep(2)}
-                      className="bg-primary rounded-xl h-11 px-8 font-bold"
+                      className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                     >
                       Étape Suivante (Parking & Durée) →
                     </Button>
@@ -930,11 +956,11 @@ export function PublicQrForm() {
                   </Collapse>
                 </Form>
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -942,7 +968,7 @@ export function PublicQrForm() {
                     type="primary"
                     icon={<ArrowRightOutlined />}
                     onClick={handleValidateCorporateAndNext}
-                    className="bg-primary rounded-xl h-11 px-8 font-bold"
+                    className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                   >
                     Étape Suivante (Choix Parking) →
                   </Button>
@@ -974,30 +1000,32 @@ export function PublicQrForm() {
                     {/* Panel 1: Informations Personnelles & CIN */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4 py-1">
-                          <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full pr-2 sm:pr-4 py-1 gap-2">
+                          <div className="flex items-center gap-2.5 sm:gap-3">
                             {isPersoValid ? (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm shrink-0">
                                 <CheckOutlined />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm shrink-0">
                                 1
                               </div>
                             )}
-                            <span className={`text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
-                              1. Informations Personnelles & Pièce d'Identité (CIN)
+                            <span className={`text-sm sm:text-base ${isPersoValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              1. Informations Personnelles & CIN
                             </span>
                           </div>
-                          {isPersoValid ? (
-                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
-                              <CheckCircleOutlined /> Étape Validée & Confirmée
-                            </Tag>
-                          ) : (
-                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
-                              En Cours de Saisie
-                            </Tag>
-                          )}
+                          <div>
+                            {isPersoValid ? (
+                              <Tag color="green" className="font-extrabold border-none px-3 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5 m-0">
+                                <CheckCircleOutlined /> Validé
+                              </Tag>
+                            ) : (
+                              <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs m-0">
+                                En Cours
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       }
                       key="perso_particulier"
@@ -1108,30 +1136,32 @@ export function PublicQrForm() {
                     {/* Panel 2: Informations du Véhicule & Carte Grise */}
                     <Collapse.Panel
                       header={
-                        <div className="flex items-center justify-between w-full pr-4 py-1">
-                          <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full pr-2 sm:pr-4 py-1 gap-2">
+                          <div className="flex items-center gap-2.5 sm:gap-3">
                             {isVehiculeValid ? (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm shrink-0">
                                 <CheckOutlined />
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-sm shrink-0">
                                 2
                               </div>
                             )}
-                            <span className={`text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
-                              2. Informations du Véhicule & Carte Grise (Recto / Verso)
+                            <span className={`text-sm sm:text-base ${isVehiculeValid ? "font-extrabold text-emerald-950" : "font-bold text-slate-900"}`}>
+                              2. Véhicule & Plaque Immatriculation
                             </span>
                           </div>
-                          {isVehiculeValid ? (
-                            <Tag color="green" className="font-extrabold border-none px-3.5 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
-                              <CheckCircleOutlined /> Étape Validée & Confirmée
-                            </Tag>
-                          ) : (
-                            <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs">
-                              À Remplir
-                            </Tag>
-                          )}
+                          <div>
+                            {isVehiculeValid ? (
+                              <Tag color="green" className="font-extrabold border-none px-3 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5 m-0">
+                                <CheckCircleOutlined /> Validé
+                              </Tag>
+                            ) : (
+                              <Tag color="blue" className="font-bold border-none px-2.5 py-0.5 rounded-full text-xs m-0">
+                                À Remplir
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       }
                       key="vehicule_particulier"
@@ -1141,19 +1171,24 @@ export function PublicQrForm() {
                           : "bg-white/80 border border-slate-200"
                       }`}
                     >
+                      {/* Independent Full-Width Row 1: Moroccan License Plate Input */}
                       <Row gutter={16}>
-                        <Col xs={24} md={12}>
+                        <Col span={24}>
                           <Form.Item
                             name="immatriculation"
-                            label="Matricule du Véhicule"
+                            label="Matricule du Véhicule (Plaque Marocaine LPR)"
                             rules={[{ required: true, message: "L'immatriculation est requise." }]}
                           >
-                            <Input prefix={<CarOutlined />} placeholder="12345-A-1" className="rounded-xl py-2" />
+                            <MoroccanPlateInput />
                           </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
-                          <Form.Item name="marque" label="Marque & Modèle (Optionnel)">
-                            <Input placeholder="ex: Dacia Logan / Golf 8" className="rounded-xl py-2" />
+                      </Row>
+
+                      {/* Independent Full-Width Row 2: Marque & Modèle */}
+                      <Row gutter={16}>
+                        <Col span={24}>
+                          <Form.Item name="marque" label="Marque & Modèle du Véhicule (Optionnel)">
+                            <Input placeholder="ex: Dacia Logan / Golf 8 / Renault Clio" className="rounded-xl py-2" />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -1194,11 +1229,11 @@ export function PublicQrForm() {
                   </Collapse>
                 </Form>
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
                   <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
-                    className="rounded-xl h-11 px-6 font-semibold"
+                    className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
                   </Button>
@@ -1206,7 +1241,7 @@ export function PublicQrForm() {
                     type="primary"
                     icon={<ArrowRightOutlined />}
                     onClick={handleValidateVehiculeAndNext}
-                    className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+                    className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
                   >
                     Valider & Passer à la Tarification →
                   </Button>
@@ -1218,7 +1253,7 @@ export function PublicQrForm() {
 
         {/* STEP 2: Select Parking, Formula & Duration */}
         {currentStep === 2 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/80">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
             <h2 className="text-xl font-extrabold text-slate-900 mb-6">
               Choix du Parking & Tarification Souhaitée
             </h2>
@@ -1241,48 +1276,144 @@ export function PublicQrForm() {
               <Form.Item
                 name="formuleCode"
                 label="Sélectionnez la Formule Tarifaire"
+                initialValue={typeDemande === "CORPORATE" ? "CORP_24_7" : "24H7J"}
                 rules={[{ required: true, message: "Veuillez sélectionner une formule." }]}
               >
                 <Select placeholder="Choisir une formule..." size="large" className="rounded-xl">
-                  <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
-                  <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
-                  <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
-                  <Option value="MOTO">Tarif Spécial Deux-roues — 200 DH / mois</Option>
+                  {typeDemande === "CORPORATE" ? (
+                    <>
+                      <Option value="CORP_8_20">Pass Diurne 08:00 - 20:00 — 500 DH / mois / place</Option>
+                      <Option value="CORP_8_22">Pass Étendu 08:00 - 22:00 — 550 DH / mois / place</Option>
+                      <Option value="CORP_24_7">Pass Permanent 24h / 7j — 650 DH / mois / place</Option>
+                    </>
+                  ) : (
+                    <>
+                      <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
+                      <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
+                      <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
+                    </>
+                  )}
                 </Select>
               </Form.Item>
 
-              <Form.Item
-                name="dureeMois"
-                label="Durée de Souscription Souhaitée (Mois)"
-                initialValue={3}
-                rules={[{ required: true, message: "Choisissez la durée." }]}
-              >
-                <Select size="large" className="rounded-xl">
-                  <Option value={3}>3 Mois</Option>
-                  <Option value={6}>6 Mois</Option>
-                  <Option value={9}>9 Mois</Option>
-                  <Option value={12}>12 Mois (1 An)</Option>
-                </Select>
-              </Form.Item>
+              {typeDemande === "CORPORATE" ? (
+                <div className="max-w-[260px]">
+                  <Form.Item
+                    name="dureeMois"
+                    label="Durée de Contrat Entreprise"
+                    initialValue={240}
+                  >
+                    <Input
+                      readOnly
+                      value="20 Ans (240 Mois)"
+                      size="large"
+                      className="rounded-xl bg-purple-50 text-purple-800 border-purple-200 font-bold"
+                      suffix={<Tag color="purple" className="font-extrabold m-0">20 Ans</Tag>}
+                    />
+                  </Form.Item>
+                </div>
+              ) : (
+                <div className="max-w-[260px]">
+                  <Form.Item
+                    name="dureeMois"
+                    label="Durée de Souscription Souhaitée"
+                    initialValue={3}
+                    rules={[{ required: true, message: "Choisissez la durée." }]}
+                  >
+                    <Select size="large" className="rounded-xl">
+                      <Option value={3}>3 Mois</Option>
+                      <Option value={6}>6 Mois</Option>
+                      <Option value={9}>9 Mois</Option>
+                      <Option value={12}>12 Mois (1 An)</Option>
+                    </Select>
+                  </Form.Item>
+                </div>
+              )}
 
-              <Form.Item
-                name="modePaiement"
-                label="Mode de Règlement Homologué"
-                initialValue="ESPECES"
-                rules={[{ required: true }]}
+              {typeDemande === "CORPORATE" ? (
+                <Form.Item
+                  name="modePaiement"
+                  label="Mode de Règlement Entreprise & Engagement Contractuel"
+                  initialValue="CHEQUE"
+                >
+                  <div className="p-4 rounded-2xl border border-purple-200 bg-purple-50/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                        <FileTextOutlined />
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-sm text-purple-950 block">
+                          Chèque Bancaire & Contrat Signé Légalisé
+                        </span>
+                        <span className="text-xs text-purple-700 block">
+                          Mode officiel Entreprise (Chèque certifié + Contrat 20 ans légalisé)
+                        </span>
+                      </div>
+                    </div>
+                    <Tag color="purple" className="font-extrabold px-3 py-1 rounded-full text-xs m-0 shrink-0">
+                      Règlement par Chèque Obligatoire
+                    </Tag>
+                  </div>
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="modePaiement"
+                  label="Mode de Règlement Homologué"
+                  initialValue="ESPECES"
+                  rules={[{ required: true }]}
+                >
+                  <Radio.Group buttonStyle="solid">
+                    <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
+                    <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              )}
+
+              {/* RFID Card Fee Indicator Card */}
+              <div
+                className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                  totalFraisCarte > 0 ? "bg-amber-50/90 border-amber-200" : "bg-emerald-50/90 border-emerald-200"
+                }`}
               >
-                <Radio.Group buttonStyle="solid">
-                  <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
-                  <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
-                </Radio.Group>
-              </Form.Item>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${
+                      totalFraisCarte > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+                    }`}
+                  >
+                    <CreditCardOutlined />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 block">
+                      {typeDemande === "NEW"
+                        ? "Frais d'Émission Carte RFID Neuve (+50 DH)"
+                        : typeDemande === "CORPORATE"
+                        ? `Frais d'Émission Cartes RFID Flotte (+50 DH x ${nombreVehiculesCorporate} Cartes)`
+                        : typeDemande === "DUPLICATE"
+                        ? "Frais de Duplicata / Remplacement Carte RFID (50 DH)"
+                        : "Conservation de la Carte RFID Actuelle (0 DH)"}
+                    </span>
+                    <span className="text-slate-600 block">
+                      {totalFraisCarte > 0
+                        ? "Tout nouvel abonné ou remplacement de carte perdue/endommagée est soumis au tarif réglementaire de 50 DH TTC par carte."
+                        : "En cas de renouvellement avec la même carte physique, aucun frais supplémentaire d'émission n'est appliqué."}
+                    </span>
+                  </div>
+                </div>
+                <Tag
+                  color={totalFraisCarte > 0 ? "orange" : "green"}
+                  className="font-black text-xs px-3 py-1 rounded-full m-0 shrink-0"
+                >
+                  {totalFraisCarte > 0 ? `+${totalFraisCarte} DH TTC` : "0 DH (Gratuit)"}
+                </Tag>
+              </div>
             </Form>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => setCurrentStep(1)}
-                className="rounded-xl h-11 px-6 font-semibold"
+                className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
               >
                 Retour
               </Button>
@@ -1290,7 +1421,7 @@ export function PublicQrForm() {
                 type="primary"
                 icon={<ArrowRightOutlined />}
                 onClick={handleValidateParkingAndGoToRecap}
-                className="bg-primary rounded-xl h-11 px-8 font-bold shadow-md"
+                className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
               >
                 Valider & Passer au Récapitulatif →
               </Button>
@@ -1300,8 +1431,8 @@ export function PublicQrForm() {
 
         {/* STEP 3: Final Step - Récapitulatif, CGU & Confirmation OTP */}
         {currentStep === 3 && (
-          <div className="glass-panel rounded-3xl p-8 border border-white/80 shadow-xl bg-white/90">
-            <div className="flex justify-between items-center mb-6">
+          <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/90">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-6">
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 m-0">
                   Récapitulatif Final & Validation par SMS OTP
@@ -1326,38 +1457,96 @@ export function PublicQrForm() {
                   <Tag color="blue" className="font-bold border-none px-3 py-1 rounded-full">Dossier RRM</Tag>
                 </div>
 
-                <Row gutter={[16, 16]}>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
-                    <span className="text-sm font-bold text-slate-900">
-                      {form.getFieldValue("nom") ? `${form.getFieldValue("nom")} ${form.getFieldValue("prenom") || ""}` : form.getFieldValue("raisonSociale") || "Particulier"}
-                    </span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant (CIN/ICE)</span>
-                    <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || form.getFieldValue("ice") || "AB123456"}</span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
-                    <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "12345-A-1"}</span>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
-                    <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
-                  </Col>
-                </Row>
+                {typeDemande === "CORPORATE" ? (
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Société / Entreprise</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("raisonSociale") || "Entreprise Souscripte"}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiants (ICE & RC)</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        ICE: {form.getFieldValue("ice") || "-"} | RC: {form.getFieldValue("rc") || "-"}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Responsable Flotte</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("nomContact") || "Contact Flotte"} ({form.getFieldValue("telephone") || ""})
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Nombre de Cartes RFID</span>
+                      <Tag color="purple" className="font-extrabold text-xs">
+                        {nombreVehiculesCorporate} Cartes Flotte
+                      </Tag>
+                    </Col>
+                  </Row>
+                ) : (
+                  <Row gutter={[16, 16]}>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
+                      <span className="text-sm font-bold text-slate-900">
+                        {form.getFieldValue("nom")} {form.getFieldValue("prenom") || ""}
+                      </span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant CIN</span>
+                      <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || "-"}</span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
+                      <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "-"}</span>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
+                      <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
+                    </Col>
+                  </Row>
+                )}
 
-                <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                  <div>
-                    <span className="text-xs text-slate-500 block font-semibold">Formule Tarifaire & Durée :</span>
-                    <span className="text-sm font-extrabold text-slate-900">
-                      {watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : watchedFormuleCode === "NUIT" ? "Pass Nocturne 19h-08h (350 DH/mois)" : "Tarif Deux-roues (200 DH/mois)"} — {totalMonths} Mois
+                <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">Formule & Durée :</span>
+                    <span className="font-extrabold text-slate-900">
+                      {typeDemande === "CORPORATE"
+                        ? `${watchedFormuleCode === "CORP_8_20" ? "Pass Diurne 08h-20h (500 DH/mois/place)" : watchedFormuleCode === "CORP_8_22" ? "Pass Étendu 08h-22h (550 DH/mois/place)" : "Pass Permanent 24h/7j (650 DH/mois/place)"} — 20 Ans (240 Mois)`
+                        : `${watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : "Pass Nocturne 19h-08h (350 DH/mois)"} — ${totalMonths} Mois`}
                     </span>
                   </div>
-                  <div className="bg-secondary/10 px-4 py-2 rounded-xl text-right">
-                    <span className="text-xs text-slate-500 block font-semibold">Montant Total Estimé</span>
-                    <span className="text-lg font-black text-secondary">
-                      {totalPrice.toLocaleString()} DH TTC
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">Coût de l'Abonnement Parking :</span>
+                    <span className="font-bold text-slate-800">
+                      {baseAbonnementPrice.toLocaleString("fr-FR")} DH TTC
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                    <span className="text-slate-600 font-semibold">
+                      Frais de Carte RFID Sans Contact :
+                      <span className="text-slate-400 font-normal ml-1">
+                        {totalFraisCarte > 0
+                          ? typeDemande === "DUPLICATE"
+                            ? "(Duplicata / Remplacement badge : 50 DH)"
+                            : `(Nouvel abonné : +50 DH${cardMultiplier > 1 ? ` x ${cardMultiplier} cartes` : ""})`
+                          : "(Renouvellement : même carte physique conservée)"}
+                      </span>
+                    </span>
+                    <span className={`font-bold ${totalFraisCarte > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                      {totalFraisCarte > 0 ? `+${totalFraisCarte.toLocaleString("fr-FR")} DH TTC` : "0 DH (Gratuit)"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-secondary/10 px-4 py-2.5 rounded-xl pt-3 border-t border-slate-200">
+                    <div>
+                      <span className="text-xs text-slate-700 font-bold block">Total Net à Régler au Guichet :</span>
+                      <span className="text-[11px] text-slate-500">Abonnement + Frais de carte RFID</span>
+                    </div>
+                    <span className="text-xl font-black text-secondary">
+                      {totalPrice.toLocaleString("fr-FR")} DH TTC
                     </span>
                   </div>
                 </div>
@@ -1385,20 +1574,20 @@ export function PublicQrForm() {
               </Form.Item>
             </Form>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => setCurrentStep(2)}
-                className="rounded-xl h-11 px-6 font-semibold"
+                className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
               >
                 Retour
               </Button>
               <Button
                 type="primary"
                 onClick={handleNextToOtp}
-                className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-8 font-extrabold shadow-md"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-6 sm:px-8 font-extrabold shadow-md flex items-center justify-center text-center"
               >
-                Confirmer Ma Demande & Recevoir Code OTP par SMS →
+                Confirmer Ma Demande (Code OTP) →
               </Button>
             </div>
           </div>
