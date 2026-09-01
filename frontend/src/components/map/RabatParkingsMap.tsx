@@ -347,8 +347,8 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
                     Répartition Quotas & Capacité (Supervision) :
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#3b0764", fontWeight: 600 }}>
-                    <span>Particuliers: 40% (180/450)</span>
-                    <span>Corporate: 60% (270/450)</span>
+                    <span>Particuliers: 40% — 180 / 450</span>
+                    <span>Corporate: 60% — 270 / 450</span>
                   </div>
                 </div>
               )}
@@ -356,10 +356,10 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
               {role === "COMPTABLE" && (
                 <div style={{ backgroundColor: "#fffbeb", padding: 12, borderRadius: 10, border: "1px solid #fde68a", marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "#b45309", marginBottom: 4 }}>
-                    Suivi Financier & Recettes (Comptabilité) :
+                    Suivi Financier & Recettes Comptabilité :
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#92400e" }}>
-                    CA Hebdo Collecté: 34 500 MAD (Espèces + Chèques)
+                    CA Hebdo Collecté: 34 500 MAD — Espèces & Chèques
                   </div>
                 </div>
               )}

@@ -217,7 +217,7 @@ export function Dashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase text-amber-800 tracking-wider">
-                    Action Exclusive Comptable (Haute Priorité)
+                    Action Exclusive Comptable
                   </span>
                   <Tag color="volcano" className="font-extrabold px-2 py-0.5 rounded-full border-none">
                     COMPLETED ➔ RECEIVED
