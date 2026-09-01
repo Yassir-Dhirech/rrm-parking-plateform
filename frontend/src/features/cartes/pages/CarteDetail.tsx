@@ -191,7 +191,7 @@ export function CarteDetail() {
               loading={toggleStepMutation.isPending}
               onClick={() => toggleStepMutation.mutate("TEST")}
             >
-              {!data.estTestee ? "Étape 3 : Confirmer Test RFID (Notifier Client)" : "Annuler statut Test"}
+              {!data.estTestee ? "Étape 3 : Confirmer Test RFID — Notifier Client" : "Annuler statut Test"}
             </Button>
 
             <Button
