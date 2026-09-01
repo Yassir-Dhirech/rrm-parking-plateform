@@ -33,6 +33,7 @@ import { KpiCard } from "../components/ui/KpiCard";
 import { formatDate } from "../lib/dateUtils";
 import type { AuditLog } from "../features/admin/types";
 import { ResponsableDashboardView } from "../components/dashboard/ResponsableDashboardView";
+import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -347,6 +348,11 @@ export function Dashboard() {
 
       {/* Graphiques Interactifs Personnalisés par Rôle */}
       <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} demandes={filteredDemandes} />
+
+      {/* Module Chiffre d'Affaires par Parking & Analyse Temporelle (Comptable & Reporting) */}
+      {(role === "COMPTABLE" || role === "RESP_REPORTING" || role === "SUPERVISEUR") && (
+        <ChiffreAffairesParkingTable />
+      )}
 
       {/* ADMIN_SI SYSTEMS CONSOLE VIEW: Audit Logs Preview */}
       {role === "ADMIN_SI" && (
