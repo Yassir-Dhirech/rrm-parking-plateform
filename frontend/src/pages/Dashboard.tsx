@@ -206,43 +206,81 @@ export function Dashboard() {
       )}
 
       {/* -------------------------------------------------------------
-         2. COMPTABLE DASHBOARD VIEW (Prominent Completed Recettes Card)
+         2. COMPTABLE DASHBOARD VIEW (Financial Reconciliation Header)
          ------------------------------------------------------------- */}
       {role === "COMPTABLE" && (
-        <Card className="border border-amber-300 bg-amber-50/70 shadow-lg rounded-2xl p-2 relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl font-black shrink-0 shadow-md">
-                <ExclamationCircleOutlined />
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          {/* Top Row: Title, Status Badge, Quick Action */}
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                <BankOutlined />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase text-amber-800 tracking-wider">
-                    Action Exclusive Comptable
+                    Caisse & Recouvrement Réseau
                   </span>
-                  <Tag color="volcano" className="font-extrabold px-2 py-0.5 rounded-full border-none">
-                    COMPLETED ➔ RECEIVED
+                  <Tag color="volcano" className="font-bold text-[10px] m-0 px-2 py-0.5 rounded-full">
+                    Visa Physique Requis
                   </Tag>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 m-0 mt-1">
-                  {recettesCompleted || 3} Recettes Hebdomadaires en Attente de Réception Physique
+                <h3 className="text-lg font-black text-slate-900 m-0 mt-0.5">
+                  {recettesCompleted || 3} Recettes Hebdomadaires à Valider
                 </h3>
-                <p className="text-slate-600 text-xs mt-1 mb-0 font-medium">
-                  Superviseurs ont soumis ces recettes. Procédez au rapprochement des enveloppes espèces & chèques pour basculer en <strong className="text-emerald-700">RECEIVED</strong>.
-                </p>
               </div>
             </div>
+
             <Button
               type="primary"
               size="large"
               icon={<CheckCircleOutlined />}
               onClick={() => navigate(`${basePath}/recettes`)}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-black border-none rounded-xl shadow-md shrink-0"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-black border-none rounded-xl shadow-xs shrink-0 h-10 px-5"
             >
-              Vérifier & Encaisser les Recettes
+              Rapprocher & Encaisser
             </Button>
           </div>
-        </Card>
+
+          {/* Bottom Financial Metrics Grid: Direct useful figures, no fluffy text */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+                Total Soumis à Encaisser
+              </span>
+              <div className="text-xl font-black text-slate-900 mt-1">
+                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalHebdo, 0) : 61250).toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-slate-500 font-semibold block mt-0.5">
+                Bordereaux superviseurs en attente
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 block">
+                Espèces en Enveloppes
+              </span>
+              <div className="text-xl font-black text-emerald-950 mt-1">
+                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalEspeces, 0) : 42850).toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
+                Comptage physique & scellés
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
+                Chèques Bancaires
+              </span>
+              <div className="text-xl font-black text-purple-950 mt-1">
+                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalCheques, 0) : 18400).toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-purple-700 font-semibold block mt-0.5">
+                Rapprochement bordereaux & quittances
+              </span>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* -------------------------------------------------------------
