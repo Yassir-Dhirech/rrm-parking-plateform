@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Table, Card, Typography, Tag, Button, Modal, Form, Input, Select, Radio, Checkbox, message, Segmented, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { getAbonnementsMock, createStaffAbonnementMock, type CreateStaffAbonnementInput } from "../../../api/abonnementsMock";
 import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -55,6 +55,8 @@ export function AbonnementsList() {
   const filteredData = data.filter((item) => {
     if (filterType === "ALL") return true;
     if (filterType === "SUSPENDU") return item.statut === "SUSPENDU";
+    if (filterType === "EN_ATTENTE") return item.statut === "EN_ATTENTE";
+    if (filterType === "ACTIF") return item.statut === "ACTIF";
     return item.type === filterType;
   });
 
@@ -115,30 +117,25 @@ export function AbonnementsList() {
       dataIndex: "traiteParNom",
       key: "traiteParNom",
       filters: [
-        { text: "Créé par Responsable", value: "RESPONSABLE" },
-        { text: "Traité par Agent Guichet", value: "AGENT" },
+        { text: "Traité", value: "TRAITE" },
+        { text: "Non Traité", value: "NON_TRAITE" },
       ],
       onFilter: (value: any, record: AbonnementListItem) => {
-        if (value === "RESPONSABLE") return record.type === "ENTREPRISE" || record.type === "STAFF" || (record.traiteParNom || "").includes("Responsable");
-        return !!record.traiteParNom && !record.traiteParNom.includes("Responsable");
+        if (value === "NON_TRAITE") return !record.traiteParNom;
+        return !!record.traiteParNom;
       },
-      render: (agentNom?: string, record?: AbonnementListItem) => {
-        if (record?.type === "ENTREPRISE" || record?.type === "STAFF" || (agentNom || "").includes("Responsable")) {
+      render: (agentNom?: string) => {
+        if (!agentNom) {
           return (
-            <Tag color="purple" style={{ fontWeight: 600 }}>
-              <UserOutlined style={{ marginRight: 4 }} />
-              Responsable (Direct)
+            <Tag color="volcano" icon={<ExclamationCircleOutlined />} style={{ fontWeight: 600 }}>
+              Non Traité (Inactif)
             </Tag>
           );
         }
-        return agentNom ? (
-          <Tag color="cyan">
+        return (
+          <Tag color="cyan" style={{ fontWeight: 600 }}>
             <UserOutlined style={{ marginRight: 4 }} />
             {agentNom}
-          </Tag>
-        ) : (
-          <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
-            En attente validation
           </Tag>
         );
       },
@@ -148,15 +145,19 @@ export function AbonnementsList() {
       dataIndex: "statut",
       key: "statut",
       filters: [
-        { text: "Actif (Carte Prête)", value: "ACTIF" },
-        { text: "En Attente Carte RFID", value: "EN_ATTENTE" },
+        { text: "Actif (Traité)", value: "ACTIF" },
+        { text: "En Attente de Traitement", value: "EN_ATTENTE" },
         { text: "Expiré", value: "EXPIRE" },
         { text: "Suspendu", value: "SUSPENDU" },
       ],
       onFilter: (value: any, record: AbonnementListItem) => record.statut === value,
       render: (statut: AbonnementListItem["statut"]) => {
         if (statut === "EN_ATTENTE") {
-          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente impression & activation carte RFID</Tag>;
+          return (
+            <Tag color="gold" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
+              En attente traitement opérateur
+            </Tag>
+          );
         }
         return <StatusBadge statut={statut} />;
       },
@@ -175,6 +176,42 @@ export function AbonnementsList() {
       sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateFin).getTime() - new Date(b.dateFin).getTime(),
       render: (d: string) => formatDate(d),
     },
+    {
+      title: "Action",
+      key: "action",
+      render: (_: any, record: AbonnementListItem) => {
+        if (record.statut === "EN_ATTENTE") {
+          return (
+            <Button
+              size="small"
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`${basePath}/abonnements/${record.id}`);
+              }}
+              style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
+              className="rounded-lg"
+            >
+              Traiter & Activer
+            </Button>
+          );
+        }
+        return (
+          <Button
+            size="small"
+            type="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`${basePath}/abonnements/${record.id}`);
+            }}
+            className="rounded-lg font-semibold"
+          >
+            Consulter
+          </Button>
+        );
+      },
+    },
   ];
 
   return (
@@ -183,7 +220,7 @@ export function AbonnementsList() {
         <div>
           <Title level={4} style={{ margin: 0 }}>Gestion des Abonnements</Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Consulter les abonnements actifs, renouvelés et créer des abonnements Staff RRM / Admin.
+            Consulter les abonnements actifs, en attente de traitement et créer des abonnements Staff RRM / Admin.
           </Text>
         </div>
 
@@ -204,6 +241,8 @@ export function AbonnementsList() {
         <Segmented
           options={[
             { label: `Tous (${data.length})`, value: "ALL" },
+            { label: `En Attente (${data.filter((i) => i.statut === "EN_ATTENTE").length})`, value: "EN_ATTENTE" },
+            { label: `Actifs (${data.filter((i) => i.statut === "ACTIF").length})`, value: "ACTIF" },
             { label: `Staff RRM (${data.filter((i) => i.type === "STAFF").length})`, value: "STAFF" },
             { label: `Réguliers (${data.filter((i) => i.type === "REGULIER").length})`, value: "REGULIER" },
             { label: `Entreprises (${data.filter((i) => i.type === "ENTREPRISE").length})`, value: "ENTREPRISE" },

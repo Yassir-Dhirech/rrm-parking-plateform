@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography } from "antd";
+import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography, Checkbox } from "antd";
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
@@ -17,7 +17,12 @@ import {
   FileTextOutlined,
   FileDoneOutlined,
 } from "@ant-design/icons";
-import { getAbonnementByIdMock, suspendAbonnementMock, reactivateAbonnementMock } from "../../../api/abonnementsMock";
+import {
+  getAbonnementByIdMock,
+  suspendAbonnementMock,
+  reactivateAbonnementMock,
+  activerAbonnementMock,
+} from "../../../api/abonnementsMock";
 import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
@@ -32,17 +37,39 @@ export function AbonnementDetail() {
   const abonnementId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { role } = useAuth();
+  const { role, userName } = useAuth();
   const basePath = role ? roleConfig[role].homePath : "";
 
   const isAuthorizedToSuspend = role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "ADMIN_SI";
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [suspendForm] = Form.useForm();
+  const [isActiverModalOpen, setIsActiverModalOpen] = useState(false);
+  const [activerForm] = Form.useForm();
 
   const { data, isLoading } = useQuery({
     queryKey: ["abonnement", abonnementId],
     queryFn: () => getAbonnementByIdMock(abonnementId),
+  });
+
+  const activerMutation = useMutation({
+    mutationFn: (values: { numeroCarteRfid?: string }) =>
+      activerAbonnementMock({
+        id: abonnementId,
+        operateurNom: userName || (role === "SUPERVISEUR" ? "Superviseur RRM" : "Agent Guichet RRM"),
+        roleOperateur: role || "AGENT",
+        numeroCarteRfid: values.numeroCarteRfid,
+      }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["abonnement", abonnementId], updated);
+      queryClient.invalidateQueries({ queryKey: ["abonnements"] });
+      message.success(`Abonnement ${updated.reference} instruit et activé avec succès par ${userName || role} !`);
+      setIsActiverModalOpen(false);
+      activerForm.resetFields();
+    },
+    onError: (err: any) => {
+      message.error(err.message || "Erreur lors de l'activation de l'abonnement");
+    },
   });
 
   const suspendMutation = useMutation({
@@ -116,7 +143,17 @@ export function AbonnementDetail() {
                   <SafetyCertificateOutlined style={{ marginRight: 4 }} /> Staff RRM
                 </Tag>
               )}
-              {isAuthorizedToSuspend && (
+              {data.statut === "EN_ATTENTE" && (
+                <Button
+                  type="primary"
+                  icon={<CheckCircleOutlined />}
+                  onClick={() => setIsActiverModalOpen(true)}
+                  style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700, borderRadius: 8 }}
+                >
+                  Traiter & Activer l'Abonnement
+                </Button>
+              )}
+              {isAuthorizedToSuspend && data.statut !== "EN_ATTENTE" && (
                 !isSuspended ? (
                   <Button
                     type="primary"
@@ -143,6 +180,37 @@ export function AbonnementDetail() {
           </div>
         }
       >
+        {data.statut === "EN_ATTENTE" && (
+          <Alert
+            message="Abonnement Non Traité — En Attente d'Instruction & Validation par un Agent ou Superviseur"
+            description={
+              <div>
+                <p style={{ margin: "4px 0" }}>
+                  <strong>Règle RRM :</strong> Un abonnement ne peut pas être <strong>ACTIF</strong> tant qu'il n'a pas été formellement instruit et validé par un <strong>Agent de guichet</strong> ou un <strong>Superviseur</strong>.
+                </p>
+                <div style={{ fontSize: 12, color: "#92400e" }}>
+                  L'accès aux barrières automatiques et la reconnaissance de plaque (LPR) restent verrouillés tant que l'attribution physique de la carte RFID n'a pas été enregistrée.
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => setIsActiverModalOpen(true)}
+                    style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700, borderRadius: 6 }}
+                  >
+                    Instruire et Activer Maintenant
+                  </Button>
+                </div>
+              </div>
+            }
+            type="warning"
+            showIcon
+            icon={<ExclamationCircleOutlined />}
+            style={{ marginBottom: 20, borderRadius: 10, border: "1px solid #fcd34d", backgroundColor: "#fffbeb" }}
+          />
+        )}
+
         {isSuspended && (
           <Alert
             message="Attention : Abonnement Actuellement Suspendu"
@@ -162,8 +230,18 @@ export function AbonnementDetail() {
         )}
 
         <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered size="middle">
-          <Descriptions.Item label="Statut">
-            <StatusBadge statut={data.statut} />
+          <Descriptions.Item label="Statut d'Activation">
+            {data.statut === "ACTIF" ? (
+              <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontWeight: 700 }}>
+                Actif (Barrières Débloquées)
+              </Tag>
+            ) : data.statut === "EN_ATTENTE" ? (
+              <Tag color="volcano" icon={<ExclamationCircleOutlined />} style={{ fontWeight: 700 }}>
+                Inactif (En attente de traitement)
+              </Tag>
+            ) : (
+              <StatusBadge statut={data.statut} />
+            )}
           </Descriptions.Item>
 
           <Descriptions.Item label="Type d'Abonnement">
@@ -186,13 +264,13 @@ export function AbonnementDetail() {
 
           <Descriptions.Item label="Intervenant Traitant">
             {data.traiteParNom ? (
-              <Tag color="cyan">
+              <Tag color="cyan" style={{ fontWeight: 600 }}>
                 <UserOutlined style={{ marginRight: 4 }} />
                 {data.traiteParNom}
               </Tag>
             ) : (
-              <Tag color="volcano" icon={<ExclamationCircleOutlined />}>
-                Non Traité Encore
+              <Tag color="red" icon={<ExclamationCircleOutlined />} style={{ fontWeight: 700 }}>
+                Non Traité — Aucun Opérateur
               </Tag>
             )}
           </Descriptions.Item>
@@ -409,6 +487,89 @@ export function AbonnementDetail() {
               icon={<PauseCircleOutlined />}
             >
               Confirmer la Suspension
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Modal Instruction & Activation par Agent ou Superviseur */}
+      <Modal
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <SafetyCertificateOutlined style={{ color: "#16a34a", fontSize: 20 }} />
+            <span>Instruction & Activation de l'Abonnement {data.reference}</span>
+          </div>
+        }
+        open={isActiverModalOpen}
+        onCancel={() => setIsActiverModalOpen(false)}
+        footer={null}
+        width={560}
+      >
+        <Form
+          form={activerForm}
+          layout="vertical"
+          onFinish={(values) => activerMutation.mutate(values)}
+          initialValues={{
+            numeroCarteRfid: `CRT-${String(Math.floor(100000 + Math.random() * 900000))}`,
+            conformePieces: true,
+          }}
+        >
+          <Alert
+            message="Condition Stricte de Traitement RRM"
+            description="Un abonnement ne peut pas être actif sans validation formelle par un Agent ou un Superviseur. En confirmant cette action, vous attestez avoir instruit le dossier et délivré le badge d'accès."
+            type="info"
+            showIcon
+            style={{ marginBottom: 16, marginTop: 10 }}
+          />
+
+          <Descriptions column={1} size="small" bordered style={{ marginBottom: 16 }}>
+            <Descriptions.Item label="Bénéficiaire">
+              <strong>{data.clientNom}</strong>
+            </Descriptions.Item>
+            <Descriptions.Item label="Parking d'Attache">
+              {data.parkingNom}
+            </Descriptions.Item>
+            <Descriptions.Item label="Opérateur Traitant">
+              <Tag color="blue" style={{ fontWeight: 600 }}>
+                <UserOutlined style={{ marginRight: 4 }} />
+                {userName || "Agent Guichet"} ({role})
+              </Tag>
+            </Descriptions.Item>
+          </Descriptions>
+
+          <Form.Item
+            name="numeroCarteRfid"
+            label="Numéro de la Carte RFID Attribuée"
+            rules={[{ required: true, message: "Veuillez renseigner le numéro du badge RFID" }]}
+          >
+            <Input placeholder="Ex: CRT-882910" />
+          </Form.Item>
+
+          <Form.Item
+            name="conformePieces"
+            valuePropName="checked"
+            rules={[
+              {
+                validator: (_, value) =>
+                  value ? Promise.resolve() : Promise.reject(new Error("Veuillez certifier la conformité du dossier")),
+              },
+            ]}
+          >
+            <Checkbox>
+              Je certifie avoir instruit le dossier, vérifié les pièces (CIN / Carte Grise) et activé le badge d'accès pour ce bénéficiaire.
+            </Checkbox>
+          </Form.Item>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
+            <Button onClick={() => setIsActiverModalOpen(false)}>Annuler</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={activerMutation.isPending}
+              icon={<CheckCircleOutlined />}
+              style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
+            >
+              Valider le Traitement & Activer
             </Button>
           </div>
         </Form>
