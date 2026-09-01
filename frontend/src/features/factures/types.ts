@@ -9,6 +9,8 @@ export interface FactureListItem {
   dateEmission: string;
   paiementId?: number;
   paiementReference?: string;
+  modePaiement?: "ESPECES" | "CHEQUE";
+  libellePrestation?: string;
   fraisCarteRfid?: number;
   montantAbonnementTtc?: number;
 }
