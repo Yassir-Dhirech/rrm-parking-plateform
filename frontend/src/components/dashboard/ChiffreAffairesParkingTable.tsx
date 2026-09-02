@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, Table, Segmented, Select, DatePicker, Row, Col, Progress, Tag, Button, Space, message } from "antd";
 import {
   DollarOutlined,
@@ -43,6 +43,18 @@ export const PARKINGS_CONFIG: ParkingMeta[] = [
   },
   {
     id: 2,
+    nom: "Parking Hassan II",
+    code: "HSS",
+    quartier: "Centre-Ville",
+    capacite: 300,
+    color: "#9333ea",
+    dailyBaseTickets: 3100,
+    monthlyAboPart: 68000,
+    monthlyAboCorp: 98000,
+    monthlyBadges: 4000,
+  },
+  {
+    id: 3,
     nom: "Parking Bab El Had",
     code: "BEH",
     quartier: "Médina",
@@ -54,28 +66,28 @@ export const PARKINGS_CONFIG: ParkingMeta[] = [
     monthlyBadges: 3500,
   },
   {
-    id: 3,
-    nom: "Parking Hassan II",
-    code: "HSS",
-    quartier: "Centre-Ville",
-    capacite: 600,
-    color: "#9333ea",
-    dailyBaseTickets: 4100,
-    monthlyAboPart: 94000,
-    monthlyAboCorp: 138000,
-    monthlyBadges: 5500,
-  },
-  {
     id: 4,
     nom: "Parking Chellah",
     code: "CHL",
     quartier: "Chellah",
-    capacite: 200,
+    capacite: 220,
     color: "#d97706",
     dailyBaseTickets: 1400,
     monthlyAboPart: 31000,
     monthlyAboCorp: 42000,
     monthlyBadges: 1800,
+  },
+  {
+    id: 5,
+    nom: "Parking Rabat Ville Gare",
+    code: "RVG",
+    quartier: "Centre Gare",
+    capacite: 400,
+    color: "#0284c7",
+    dailyBaseTickets: 3000,
+    monthlyAboPart: 72000,
+    monthlyAboCorp: 104000,
+    monthlyBadges: 4200,
   },
 ];
 
@@ -95,15 +107,39 @@ const MONTH_FACTORS: Record<string, { factor: number; numDays: number; index: nu
   Décembre: { factor: 1.05, numDays: 31, index: 11 },
 };
 
-export function ChiffreAffairesParkingTable() {
+export interface ChiffreAffairesParkingTableProps {
+  externalParkingId?: number | "ALL";
+  externalDateRange?: [string, string];
+}
+
+export function ChiffreAffairesParkingTable({
+  externalParkingId,
+  externalDateRange,
+}: ChiffreAffairesParkingTableProps = {}) {
   const [viewMode, setViewMode] = useState<"MOIS" | "DATES">("MOIS");
-  const [selectedParkingId, setSelectedParkingId] = useState<number | "ALL">("ALL");
+  const [selectedParkingId, setSelectedParkingId] = useState<number | "ALL">(
+    externalParkingId || "ALL"
+  );
 
   // Date Range state (Default: August 2026)
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs("2026-08-01"),
     dayjs("2026-08-31"),
   ]);
+
+  // Synchronize when external props from GlobalFilterBar change
+  useEffect(() => {
+    if (externalParkingId !== undefined) {
+      setSelectedParkingId(externalParkingId || "ALL");
+    }
+  }, [externalParkingId]);
+
+  useEffect(() => {
+    if (externalDateRange && externalDateRange[0] && externalDateRange[1]) {
+      setViewMode("DATES");
+      setDateRange([dayjs(externalDateRange[0]), dayjs(externalDateRange[1])]);
+    }
+  }, [externalDateRange]);
 
   // Selected single month filter for monthly view
   const [selectedMonth, setSelectedMonth] = useState<string>("ALL");
