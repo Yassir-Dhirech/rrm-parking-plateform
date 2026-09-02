@@ -108,6 +108,19 @@ export function Dashboard() {
   const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
   const parkingsCount = filteredParkings.length;
 
+  // Global network figures for Comptable Header (permanent network cash oversight, invariant to filter)
+  const globalRecettesCompleted = recettes.filter((r) => r.statut === "COMPLETED");
+  const globalCompletedCount = globalRecettesCompleted.length || 3;
+  const globalTotalSoumis = globalRecettesCompleted.length
+    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalHebdo || 0), 0)
+    : 61250;
+  const globalTotalEspeces = globalRecettesCompleted.length
+    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalEspeces || 0), 0)
+    : 42850;
+  const globalTotalCheques = globalRecettesCompleted.length
+    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalCheques || 0), 0)
+    : 18400;
+
   // Cartes KPIs Personnalisées par Rôle
   const getRoleKpis = (currentRole: Role) => {
     switch (currentRole) {
@@ -162,11 +175,89 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Barre de Filtres Globaux */}
+      {/* -------------------------------------------------------------
+         1. COMPTABLE DASHBOARD: Financial Reconciliation Header (At Top, Invariant to local filter)
+         ------------------------------------------------------------- */}
+      {role === "COMPTABLE" && (
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          {/* Top Row: Title, Status Badge, Quick Action */}
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                <BankOutlined />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase text-amber-800 tracking-wider">
+                    Caisse & Recouvrement Réseau
+                  </span>
+                  <Tag color="volcano" className="font-bold text-[10px] m-0 px-2 py-0.5 rounded-full">
+                    Visa Physique Requis
+                  </Tag>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 m-0 mt-0.5">
+                  {globalCompletedCount} Recettes Hebdomadaires à Valider
+                </h3>
+              </div>
+            </div>
+
+            <Button
+              type="primary"
+              size="large"
+              icon={<CheckCircleOutlined />}
+              onClick={() => navigate(`${basePath}/recettes`)}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-black border-none rounded-xl shadow-xs shrink-0 h-10 px-5"
+            >
+              Rapprocher & Encaisser
+            </Button>
+          </div>
+
+          {/* Bottom Financial Metrics Grid: Permanent network-wide cash oversight */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+                Total Soumis à Encaisser
+              </span>
+              <div className="text-xl font-black text-slate-900 mt-1">
+                {globalTotalSoumis.toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-slate-500 font-semibold block mt-0.5">
+                Bordereaux superviseurs en attente
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 block">
+                Espèces en Enveloppes
+              </span>
+              <div className="text-xl font-black text-emerald-950 mt-1">
+                {globalTotalEspeces.toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
+                Comptage physique & scellés
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
+                Chèques Bancaires
+              </span>
+              <div className="text-xl font-black text-purple-950 mt-1">
+                {globalTotalCheques.toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-purple-700 font-semibold block mt-0.5">
+                Rapprochement bordereaux & quittances
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barre de Filtres Globaux (Positionnée au-dessus des composants d'analyse / après le header pour Comptable) */}
       <GlobalFilterBar filters={filters} onChange={setFilters} />
 
       {/* -------------------------------------------------------------
-         1. AGENT DASHBOARD VIEW (Action Items / To-Do List First)
+         2. AGENT DASHBOARD VIEW (Action Items / To-Do List First)
          ------------------------------------------------------------- */}
       {role === "AGENT" && (
         <Card className="border border-slate-200/80 shadow-md rounded-2xl bg-gradient-to-r from-slate-900 via-secondary to-slate-800 text-white overflow-hidden">
@@ -203,84 +294,6 @@ export function Dashboard() {
             </div>
           </div>
         </Card>
-      )}
-
-      {/* -------------------------------------------------------------
-         2. COMPTABLE DASHBOARD VIEW (Financial Reconciliation Header)
-         ------------------------------------------------------------- */}
-      {role === "COMPTABLE" && (
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-          {/* Top Row: Title, Status Badge, Quick Action */}
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl font-bold shadow-xs">
-                <BankOutlined />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-amber-800 tracking-wider">
-                    Caisse & Recouvrement Réseau
-                  </span>
-                  <Tag color="volcano" className="font-bold text-[10px] m-0 px-2 py-0.5 rounded-full">
-                    Visa Physique Requis
-                  </Tag>
-                </div>
-                <h3 className="text-lg font-black text-slate-900 m-0 mt-0.5">
-                  {recettesCompleted || 3} Recettes Hebdomadaires à Valider
-                </h3>
-              </div>
-            </div>
-
-            <Button
-              type="primary"
-              size="large"
-              icon={<CheckCircleOutlined />}
-              onClick={() => navigate(`${basePath}/recettes`)}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-black border-none rounded-xl shadow-xs shrink-0 h-10 px-5"
-            >
-              Rapprocher & Encaisser
-            </Button>
-          </div>
-
-          {/* Bottom Financial Metrics Grid: Direct useful figures, no fluffy text */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
-                Total Soumis à Encaisser
-              </span>
-              <div className="text-xl font-black text-slate-900 mt-1">
-                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalHebdo, 0) : 61250).toLocaleString("fr-FR")} MAD
-              </div>
-              <span className="text-[11px] text-slate-500 font-semibold block mt-0.5">
-                Bordereaux superviseurs en attente
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70">
-              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 block">
-                Espèces en Enveloppes
-              </span>
-              <div className="text-xl font-black text-emerald-950 mt-1">
-                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalEspeces, 0) : 42850).toLocaleString("fr-FR")} MAD
-              </div>
-              <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
-                Comptage physique & scellés
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/70">
-              <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
-                Chèques Bancaires
-              </span>
-              <div className="text-xl font-black text-purple-950 mt-1">
-                {(recettesCompleted ? filteredRecettes.filter(r => r.statut === "COMPLETED").reduce((sum, r) => sum + r.totalCheques, 0) : 18400).toLocaleString("fr-FR")} MAD
-              </div>
-              <span className="text-[11px] text-purple-700 font-semibold block mt-0.5">
-                Rapprochement bordereaux & quittances
-              </span>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* -------------------------------------------------------------
