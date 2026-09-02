@@ -105,7 +105,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "tauxRenouvellement", title: "Taux de Renouvellement", color: "#982B5E", suffix: "%" },
     ],
     menuItems: [
-      { key: "dashboard", label: "Statistiques", path: "/reporting" },
+      { key: "dashboard", label: "Statistiques & Pilotage", path: "/reporting" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/reporting/carte-parkings" },
     ],
   },

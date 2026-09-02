@@ -14,7 +14,6 @@ import {
   BankOutlined,
   ExclamationCircleOutlined,
   PieChartOutlined,
-  DownloadOutlined,
   ToolOutlined,
   AimOutlined,
   FileDoneOutlined,
@@ -33,6 +32,7 @@ import { KpiCard } from "../components/ui/KpiCard";
 import { formatDate } from "../lib/dateUtils";
 import type { AuditLog } from "../features/admin/types";
 import { ResponsableDashboardView } from "../components/dashboard/ResponsableDashboardView";
+import { ReportingDashboardView } from "../components/dashboard/ReportingDashboardView";
 import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
 
 export function Dashboard() {
@@ -45,6 +45,10 @@ export function Dashboard() {
 
   if (role === "RESPONSABLE") {
     return <ResponsableDashboardView />;
+  }
+
+  if (role === "RESP_REPORTING") {
+    return <ReportingDashboardView />;
   }
 
   const currentRoleConfig = roleConfig[role];
@@ -354,32 +358,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* -------------------------------------------------------------
-         4. RESP_REPORTING DASHBOARD VIEW (Prominent PDF/Excel Export Button)
-         ------------------------------------------------------------- */}
-      {role === "RESP_REPORTING" && (
-        <Card className="border border-slate-200/80 bg-white shadow-xs rounded-2xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-lg font-black text-slate-900 m-0 flex items-center gap-2">
-                <DashboardOutlined className="text-secondary" /> Tableau de Bord Analytique & Heatmaps
-              </h3>
-              <p className="text-slate-500 text-xs font-medium mt-1 mb-0">
-                Vue lecture seule des indicateurs clés d'occupation, segmentation et revenus.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button icon={<DownloadOutlined />} type="primary" className="bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl border-none">
-                Exporter Rapport PDF
-              </Button>
-              <Button icon={<DownloadOutlined />} className="font-bold rounded-xl">
-                Excel Data
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Cartes KPIs Spécifiques au Rôle Connecté */}
       <Row gutter={[16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
         {kpis.map((kpi) => (
@@ -400,8 +378,8 @@ export function Dashboard() {
       {/* Graphiques Interactifs Personnalisés par Rôle */}
       <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} demandes={filteredDemandes} />
 
-      {/* Module Chiffre d'Affaires par Parking & Analyse Temporelle (Comptable & Reporting) */}
-      {(role === "COMPTABLE" || role === "RESP_REPORTING" || role === "SUPERVISEUR") && (
+      {/* Module Chiffre d'Affaires par Parking & Analyse Temporelle (Comptable & Superviseur) */}
+      {(role === "COMPTABLE" || role === "SUPERVISEUR") && (
         <ChiffreAffairesParkingTable />
       )}
 
