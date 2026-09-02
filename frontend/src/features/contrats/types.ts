@@ -28,5 +28,7 @@ export interface ContratDetail extends ContratListItem {
   montantMensuelHT: number;
   dateSignature?: string;
   signePar?: string;
+  referencePhysique?: string;
+  observations?: string;
   pdfUrl?: string;
 }

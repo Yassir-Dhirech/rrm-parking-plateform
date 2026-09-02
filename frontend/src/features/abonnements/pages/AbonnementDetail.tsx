@@ -77,8 +77,8 @@ export function AbonnementDetail() {
         montantTtc,
         fraisCarteRfid: fraisBadge,
         modePaiement: values.modePaiement || "ESPECES",
-        libellePrestation: values.libellePrestation || (isRenewal ? "Renouvellement Période d'Abonnement" : "Remplacement Badge RFID (Duplicata)"),
-        genereePar: `${userName || "Agent Guichet"} (${role || "AGENT"})`,
+        libellePrestation: values.libellePrestation || (isRenewal ? "Renouvellement Période d'Abonnement" : "Remplacement Badge RFID Duplicata"),
+        genereePar: `${userName || "Agent Guichet"} — ${role || "AGENT"}`,
       });
     },
     onSuccess: (newFacture) => {
@@ -230,7 +230,7 @@ export function AbonnementDetail() {
                   <strong>Règle RRM :</strong> Un abonnement ne peut pas être <strong>ACTIF</strong> tant qu'il n'a pas été formellement instruit et validé par un <strong>Agent de guichet</strong> ou un <strong>Superviseur</strong>.
                 </p>
                 <div style={{ fontSize: 12, color: "#92400e" }}>
-                  L'accès aux barrières automatiques et la reconnaissance de plaque (LPR) restent verrouillés tant que l'attribution physique de la carte RFID n'a pas été enregistrée.
+                  L'accès aux barrières automatiques et la reconnaissance de plaque LPR restent verrouillés tant que l'attribution physique de la carte RFID n'a pas été enregistrée.
                 </div>
                 <div style={{ marginTop: 10 }}>
                   <Button
@@ -274,11 +274,11 @@ export function AbonnementDetail() {
           <Descriptions.Item label="Statut d'Activation">
             {data.statut === "ACTIF" ? (
               <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontWeight: 700 }}>
-                Actif (Barrières Débloquées)
+                Actif — Barrières Débloquées
               </Tag>
             ) : data.statut === "EN_ATTENTE" ? (
               <Tag color="volcano" icon={<ExclamationCircleOutlined />} style={{ fontWeight: 700 }}>
-                Inactif (En attente de traitement)
+                Inactif — En attente de traitement
               </Tag>
             ) : (
               <StatusBadge statut={data.statut} />
@@ -289,7 +289,7 @@ export function AbonnementDetail() {
             {data.type === "STAFF" ? (
               <Tag color="gold">Staff RRM / Personnel</Tag>
             ) : data.type === "REGULIER" ? (
-              <Tag color="blue">Régulier (Particulier)</Tag>
+              <Tag color="blue">Régulier</Tag>
             ) : (
               <Tag color="purple">Entreprise</Tag>
             )}
@@ -320,7 +320,7 @@ export function AbonnementDetail() {
           <Descriptions.Item label="Date d'Expiration">{formatDate(data.dateFin)}</Descriptions.Item>
 
           {data.vehiculeImmatriculation && (
-            <Descriptions.Item label="Immatriculation Véhicule (LPR)">
+            <Descriptions.Item label="Immatriculation Véhicule LPR">
               <Tag color="geekblue">{data.vehiculeImmatriculation}</Tag>
             </Descriptions.Item>
           )}
@@ -366,7 +366,7 @@ export function AbonnementDetail() {
               nouveauPaiementForm.resetFields();
               nouveauPaiementForm.setFieldsValue({
                 typePrestation: "RENOUVELLEMENT",
-                libellePrestation: "Renouvellement Période (Même badge réutilisé - 0 DH)",
+                libellePrestation: "Renouvellement Période — 0 DH",
                 montantTtc: data?.type === "STAFF" ? 0 : (data?.type === "ENTREPRISE" ? 54000 : 1440),
                 modePaiement: data?.type === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
               });
@@ -380,7 +380,7 @@ export function AbonnementDetail() {
       >
         <Alert
           message="Principe Comptable RRM : 1 Paiement = 1 Facture Unique"
-          description="Chaque règlement encaissé pour cet abonnement fait obligatoirement l'objet d'une facture fiscale distincte et numérotée avec l'intégralité de ses détails (TVA 20%, frais de carte RFID, mode de règlement et quittance). Tout paiement ultérieur (renouvellement, duplicata, etc.) génère une nouvelle facture indépendante."
+          description="Chaque règlement encaissé pour cet abonnement fait obligatoirement l'objet d'une facture fiscale distincte et numérotée avec l'intégralité de ses détails. Tout paiement ultérieur génère une nouvelle facture indépendante."
           type="info"
           showIcon
           style={{ marginBottom: 16, borderRadius: 8 }}
@@ -444,7 +444,7 @@ export function AbonnementDetail() {
               sorter: (a: any, b: any) => (a.modePaiement || "").localeCompare(b.modePaiement || ""),
               render: (mode?: string) => (
                 <Tag color={mode === "CHEQUE" ? "purple" : "green"} style={{ fontWeight: 700 }}>
-                  {mode === "CHEQUE" ? "Chèque Certifié" : "Espèces (Guichet)"}
+                  {mode === "CHEQUE" ? "Chèque Certifié" : "Espèces"}
                 </Tag>
               ),
             },
@@ -455,9 +455,9 @@ export function AbonnementDetail() {
               sorter: (a: any, b: any) => (a.fraisCarteRfid || 0) - (b.fraisCarteRfid || 0),
               render: (frais?: number) =>
                 frais && frais > 0 ? (
-                  <Tag color="orange" style={{ fontWeight: 700 }}>+{frais} MAD (Carte neuve)</Tag>
+                  <Tag color="orange" style={{ fontWeight: 700 }}>+{frais} MAD — Carte neuve</Tag>
                 ) : (
-                  <Tag color="green" style={{ fontWeight: 700 }}>0 MAD (Carte réutilisée)</Tag>
+                  <Tag color="green" style={{ fontWeight: 700 }}>0 MAD — Carte réutilisée</Tag>
                 ),
             },
             {
@@ -465,7 +465,7 @@ export function AbonnementDetail() {
               key: "montantHt",
               render: (_, record: any) => (
                 <span className="text-xs text-slate-500">
-                  {record.montantHt?.toLocaleString("fr-FR")} MAD HT ({record.tauxTva || 20}%)
+                  {record.montantHt?.toLocaleString("fr-FR")} MAD HT — TVA {record.tauxTva || 20}%
                 </span>
               ),
             },
@@ -522,7 +522,7 @@ export function AbonnementDetail() {
         footer={null}
       >
         <Alert
-          message="Action de Suspension (Accès Superviseur / Responsable)"
+          message="Action de Suspension"
           description="La suspension désactivera immédiatement l'accès RFID et la lecture de plaque LPR aux barrières des parkings."
           type="error"
           showIcon
@@ -542,7 +542,7 @@ export function AbonnementDetail() {
               <Option value="Perte ou vol du badge RFID">Perte ou vol du badge RFID</Option>
               <Option value="Demande expresse de l'abonné">Demande expresse de l'abonné</Option>
               <Option value="Vérification administrative / Fraude suspicion">Vérification administrative / Suspicion de fraude</Option>
-              <Option value="AUTRE">Autre motif (préciser ci-dessous)</Option>
+              <Option value="AUTRE">Autre motif</Option>
             </Select>
           </Form.Item>
 
@@ -693,12 +693,12 @@ export function AbonnementDetail() {
                 if (val === "DUPLICATA") {
                   nouveauPaiementForm.setFieldsValue({
                     montantTtc: 50,
-                    libellePrestation: "Remplacement Badge RFID Perdu / Endommagé (Duplicata 50 DH)",
+                    libellePrestation: "Remplacement Badge RFID Perdu / Endommagé — 50 DH",
                   });
                 } else if (val === "RENOUVELLEMENT") {
                   nouveauPaiementForm.setFieldsValue({
                     montantTtc: data?.type === "STAFF" ? 0 : (data?.type === "ENTREPRISE" ? 54000 : 1440),
-                    libellePrestation: "Renouvellement Période (Même badge réutilisé - 0 DH)",
+                    libellePrestation: "Renouvellement Période — 0 DH",
                   });
                 } else {
                   nouveauPaiementForm.setFieldsValue({
@@ -707,8 +707,8 @@ export function AbonnementDetail() {
                 }
               }}
             >
-              <Option value="RENOUVELLEMENT">Renouvellement de Période (0 DH Carte)</Option>
-              <Option value="DUPLICATA">Remplacement Carte RFID Perdue / Duplicata (50 DH)</Option>
+              <Option value="RENOUVELLEMENT">Renouvellement de Période — 0 DH Carte</Option>
+              <Option value="DUPLICATA">Remplacement Carte RFID Perdue / Duplicata — 50 DH</Option>
               <Option value="REGULARISATION">Régularisation / Ajustement Tarifaire</Option>
             </Select>
           </Form.Item>
@@ -723,7 +723,7 @@ export function AbonnementDetail() {
 
           <Form.Item
             name="montantTtc"
-            label="Montant Total Encaissé (TTC MAD)"
+            label="Montant Total Encaissé TTC"
             rules={[{ required: true, message: "Indiquez le montant TTC" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
@@ -731,11 +731,11 @@ export function AbonnementDetail() {
 
           <Form.Item
             name="modePaiement"
-            label="Mode de Règlement Homologué (Strictement Espèces ou Chèque)"
+            label="Mode de Règlement Homologué"
             rules={[{ required: true, message: "Sélectionnez le mode de paiement" }]}
           >
             <Select>
-              <Option value="ESPECES">Espèces (Guichet RRM)</Option>
+              <Option value="ESPECES">Espèces</Option>
               <Option value="CHEQUE">Chèque Bancaire Certifié</Option>
             </Select>
           </Form.Item>

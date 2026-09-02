@@ -47,7 +47,7 @@ export function SlaAuditDashboard() {
         <Col xs={24} sm={12} lg={6}>
           <Card style={{ borderRadius: 12, backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}>
             <Statistic
-              title={<span style={{ color: "#15803d", fontWeight: 600 }}>Taux de Respect SLA (7 Jours)</span>}
+              title={<span style={{ color: "#15803d", fontWeight: 600 }}>Taux de Respect SLA — 7 Jours</span>}
               value={slaStats?.tauxRespectSla || 96}
               suffix="%"
               prefix={<CheckCircleOutlined style={{ color: "#16a34a" }} />}
@@ -60,7 +60,7 @@ export function SlaAuditDashboard() {
         <Col xs={24} sm={12} lg={6}>
           <Card style={{ borderRadius: 12, backgroundColor: "#faf5ff", borderColor: "#e9d5ff" }}>
             <Statistic
-              title={<span style={{ color: "#6b21a8", fontWeight: 600 }}>Demandes Traitées (Mois)</span>}
+              title={<span style={{ color: "#6b21a8", fontWeight: 600 }}>Demandes Traitées ce Mois</span>}
               value={slaStats?.demandesTraitees || 44}
               prefix={<ThunderboltOutlined style={{ color: "#9333ea" }} />}
               valueStyle={{ color: "#9333ea", fontWeight: 700 }}
@@ -126,7 +126,7 @@ export function SlaAuditDashboard() {
               render: (v: number) => <strong style={{ color: "#0369a1" }}>{v} Jours</strong>,
             },
             {
-              title: "Respect SLA 7 Jours (%)",
+              title: "Respect SLA 7 Jours",
               dataIndex: "tauxDansLesDelais",
               key: "tauxDansLesDelais",
               render: (pct: number) => (
@@ -153,7 +153,7 @@ export function SlaAuditDashboard() {
         title={
           <Space>
             <ClockCircleOutlined style={{ color: "#9333ea" }} />
-            <span>Traçabilité Individuelle des Demandes & Compte à Rebours SLA (7 Jours)</span>
+            <span>Traçabilité Individuelle des Demandes & Compte à Rebours SLA</span>
           </Space>
         }
         style={{ borderRadius: 12 }}
@@ -190,7 +190,7 @@ export function SlaAuditDashboard() {
               key: "slaIndicator",
               render: (_, record) => {
                 if (record.slaStatut === "DEPASSE") {
-                  return <Tag color="red" icon={<ExclamationCircleOutlined />}>Dépassement SLA (&gt;7j)</Tag>;
+                  return <Tag color="red" icon={<ExclamationCircleOutlined />}>Dépassement SLA</Tag>;
                 }
                 if (record.slaStatut === "ALERT_1_JOUR") {
                   return (
@@ -202,7 +202,7 @@ export function SlaAuditDashboard() {
                 if (record.slaStatut === "ALERT_3_JOURS") {
                   return <Tag color="warning" icon={<ClockCircleOutlined />}>Alerte : 3j Restants</Tag>;
                 }
-                return <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais (7j)</Tag>;
+                return <Tag color="green" icon={<CheckCircleOutlined />}>Dans les Délais</Tag>;
               },
             },
           ]}

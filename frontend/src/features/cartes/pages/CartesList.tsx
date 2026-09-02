@@ -97,7 +97,7 @@ export function CartesList() {
       onFilter: (value: any, record: CarteListItem) => record.statut === value,
       render: (statut: CarteListItem["statut"]) => {
         if (statut === "A_ACTIVER" || statut === "A_PREPARER") {
-          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente activation (Non Traitée)</Tag>;
+          return <Tag color="gold" style={{ fontWeight: 600 }}>En attente activation</Tag>;
         }
         return <StatusBadge statut={statut} />;
       },
