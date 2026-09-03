@@ -32,6 +32,7 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { formatDate } from "../../../lib/dateUtils";
+import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -52,6 +53,8 @@ export function AbonnementDetail() {
   const [activerForm] = Form.useForm();
   const [isNouveauPaiementModalOpen, setIsNouveauPaiementModalOpen] = useState(false);
   const [nouveauPaiementForm] = Form.useForm();
+  const watchedNouveauModePaiement = Form.useWatch("modePaiement", nouveauPaiementForm);
+  const watchedNouveauMontant = Form.useWatch("montantTtc", nouveauPaiementForm);
 
   const { data, isLoading } = useQuery({
     queryKey: ["abonnement", abonnementId],
@@ -668,7 +671,7 @@ export function AbonnementDetail() {
         open={isNouveauPaiementModalOpen}
         onCancel={() => setIsNouveauPaiementModalOpen(false)}
         footer={null}
-        width={560}
+        width={watchedNouveauModePaiement === "CHEQUE" ? 640 : 560}
       >
         <Form
           form={nouveauPaiementForm}
@@ -739,6 +742,18 @@ export function AbonnementDetail() {
               <Option value="CHEQUE">Chèque Bancaire Certifié</Option>
             </Select>
           </Form.Item>
+
+          {/* Cheque Specimen for Payment by Cheque */}
+          {watchedNouveauModePaiement === "CHEQUE" && (
+            <div className="mb-4">
+              <ChequeSpecimenCard
+                compact
+                montant={Number(watchedNouveauMontant) || 450}
+                clientNom={data?.clientNom || "Client RRM"}
+                typeClient={data?.type === "ENTREPRISE" ? "ENTREPRISE" : "PARTICULIER"}
+              />
+            </div>
+          )}
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
             <Button onClick={() => setIsNouveauPaiementModalOpen(false)}>Annuler</Button>

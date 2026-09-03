@@ -38,6 +38,7 @@ import {
   CarOutlined,
   FileImageOutlined,
 } from "@ant-design/icons";
+import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
 import {
   getDemandeByIdMock,
   validerDemandeMock,
@@ -725,6 +726,7 @@ export function DemandeDetail() {
         onCancel={() => setPaymentModalOpen(false)}
         footer={null}
         destroyOnClose
+        width={currentPaymentMode === "CHEQUE" ? 640 : 520}
       >
         <Form
           form={paymentForm}
@@ -769,7 +771,7 @@ export function DemandeDetail() {
                 label="Numéro de Chèque"
                 rules={[{ required: true, message: "Numéro de chèque requis" }]}
               >
-                <Input placeholder="Ex: CHQ-987654" />
+                <Input placeholder="Ex: 0123456" />
               </Form.Item>
               <Form.Item
                 name="banque"
@@ -781,6 +783,16 @@ export function DemandeDetail() {
                   options={BANK_OPTIONS}
                 />
               </Form.Item>
+
+              {/* Specimen Guide for Agent Verification */}
+              <div className="mb-4">
+                <ChequeSpecimenCard
+                  compact
+                  montant={montantTotalExige}
+                  clientNom={data.clientNom}
+                  typeClient={data.typeClient}
+                />
+              </div>
             </>
           )}
 
