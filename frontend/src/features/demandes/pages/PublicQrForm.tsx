@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Form,
@@ -45,6 +45,7 @@ import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
+import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
 
 const { Option } = Select;
 
@@ -169,6 +170,40 @@ export function PublicQrForm() {
   const watchedParkingId = Form.useWatch("parkingId", form);
   const watchedFormuleCode = Form.useWatch("formuleCode", form);
   const watchedDureeMois = Form.useWatch("dureeMois", form);
+  const watchedModePaiement = Form.useWatch("modePaiement", form);
+
+  // Persistent Form Values state across unmounting steps
+  const [formValues, setFormValues] = useState<any>({
+    nom: "",
+    prenom: "",
+    cin: "",
+    telephone: "",
+    email: "",
+    immatriculation: "",
+    marque: "",
+    carteRfidActuelle: "",
+    raisonSociale: "",
+    ice: "",
+    rc: "",
+    nomContact: "",
+    parkingId: undefined,
+    formuleCode: "24H7J",
+    dureeMois: 3,
+    modePaiement: "ESPECES",
+  });
+
+  // Consolidated live recap data merging form values and real-time form inputs
+  const recapData = useMemo(() => {
+    const raw = form.getFieldsValue(true) || {};
+    return {
+      ...formValues,
+      ...raw,
+      parkingId: watchedParkingId || formValues.parkingId || raw.parkingId,
+      formuleCode: watchedFormuleCode || formValues.formuleCode || raw.formuleCode,
+      dureeMois: watchedDureeMois || formValues.dureeMois || raw.dureeMois,
+      modePaiement: watchedModePaiement || formValues.modePaiement || raw.modePaiement,
+    };
+  }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedModePaiement]);
 
   // Public Parkings List
   const { data: parkings = [] } = useQuery({
@@ -193,14 +228,17 @@ export function PublicQrForm() {
     if (clientParam === "ENTREPRISE" || typeDemande === "CORPORATE") {
       setTypeDemande("CORPORATE");
       form.setFieldValue("dureeMois", 240);
+      setFormValues((prev: any) => ({ ...prev, dureeMois: 240, modePaiement: "CHEQUE" }));
     }
 
     if (planParam) {
       form.setFieldValue("formuleCode", planParam);
+      setFormValues((prev: any) => ({ ...prev, formuleCode: planParam }));
     }
 
     if (parkingParam) {
       form.setFieldValue("parkingId", Number(parkingParam));
+      setFormValues((prev: any) => ({ ...prev, parkingId: Number(parkingParam) }));
     }
   }, [searchParams, form, typeDemande]);
 
@@ -215,7 +253,7 @@ export function PublicQrForm() {
       },
     ];
 
-    form.setFieldsValue({
+    const vals = {
       nom: "BENNANI",
       prenom: "Karim",
       cin: "AB123456",
@@ -223,6 +261,7 @@ export function PublicQrForm() {
       email: "karim.bennani@gmail.com",
       immatriculation: "12345-A-1",
       marque: "Dacia Logan 2023",
+      carteRfidActuelle: "RFID-889901",
       photoCinRecto: mockDocumentList,
       photoCinVerso: mockDocumentList,
       photoCarteGriseRecto: mockDocumentList,
@@ -237,7 +276,10 @@ export function PublicQrForm() {
       dureeMois: 6,
       modePaiement: "ESPECES",
       acceptTerms: true,
-    });
+    };
+
+    form.setFieldsValue(vals);
+    setFormValues((prev: any) => ({ ...prev, ...vals }));
 
     setIsPersoValid(true);
     setIsVehiculeValid(true);
@@ -257,7 +299,7 @@ export function PublicQrForm() {
       const res = await searchSubscriberByCinOrCardMock(lookupQuery.trim());
       if (res) {
         setHasFoundAccount(true);
-        form.setFieldsValue({
+        const lookupVals = {
           nom: res.nom,
           prenom: res.prenom,
           cin: res.cin,
@@ -267,7 +309,9 @@ export function PublicQrForm() {
           carteRfidActuelle: res.numeroCarteAbonne,
           parkingId: res.parkingId,
           formuleCode: res.forfaitNom.includes("24h") ? "24H7J" : "JOUR",
-        });
+        };
+        form.setFieldsValue(lookupVals);
+        setFormValues((prev: any) => ({ ...prev, ...lookupVals }));
         message.success("Compte abonné identifié avec succès !");
       } else {
         message.error("Aucun compte correspondant trouvé.");
@@ -283,6 +327,7 @@ export function PublicQrForm() {
   const handleValidatePerso = async () => {
     try {
       await form.validateFields(["nom", "prenom", "cin", "telephone", "email", "photoCinRecto", "photoCinVerso"]);
+      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setIsPersoValid(true);
       message.success("Informations Personnelles & CIN validées !");
       setActiveCollapseKeys(["vehicule_particulier"]);
@@ -295,6 +340,7 @@ export function PublicQrForm() {
   const handleValidateVehiculeAndNext = async () => {
     try {
       await form.validateFields(["immatriculation", "photoCarteGriseRecto", "photoCarteGriseVerso"]);
+      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setIsVehiculeValid(true);
       message.success("Informations Véhicule & Carte Grise validées !");
       setCurrentStep(2);
@@ -307,6 +353,7 @@ export function PublicQrForm() {
   const handleValidateParkingAndGoToRecap = async () => {
     try {
       await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setCurrentStep(3);
       message.success("Choix du parking et formule validés ! Vérifiez votre récapitulatif.");
     } catch {
@@ -318,6 +365,7 @@ export function PublicQrForm() {
   const handleValidateCorporateAndNext = async () => {
     try {
       await form.validateFields(["raisonSociale", "ice", "rc", "nomContact", "telephone", "email", "photoDocEntreprise"]);
+      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setIsCorporateValid(true);
       message.success("Informations Société validées !");
       setCurrentStep(2);
@@ -328,8 +376,9 @@ export function PublicQrForm() {
 
   // Calculate pricing summary
   const getMonthlyPrice = () => {
+    const currentFormule = recapData.formuleCode || watchedFormuleCode;
     if (typeDemande === "CORPORATE") {
-      switch (watchedFormuleCode) {
+      switch (currentFormule) {
         case "CORP_8_20":
           return 500;
         case "CORP_8_22":
@@ -340,7 +389,7 @@ export function PublicQrForm() {
       }
     }
 
-    switch (watchedFormuleCode) {
+    switch (currentFormule) {
       case "24H7J":
         return 600;
       case "JOUR":
@@ -352,9 +401,9 @@ export function PublicQrForm() {
     }
   };
 
-  const selectedParkingName =
-    parkings.find((p: any) => p.id === watchedParkingId)?.nom || "Parking Agdal Gare (Rabat)";
-  const totalMonths = typeDemande === "CORPORATE" ? 240 : (watchedDureeMois || 3);
+  const selectedParking = parkings.find((p: any) => p.id === (recapData.parkingId || watchedParkingId));
+  const selectedParkingName = selectedParking?.nom || "Parking Agdal Gare (Rabat)";
+  const totalMonths = typeDemande === "CORPORATE" ? 240 : (recapData.dureeMois || watchedDureeMois || 3);
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
   const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
 
@@ -365,6 +414,49 @@ export function PublicQrForm() {
   const fraisCarteUnitaire = (typeDemande === "NEW" || typeDemande === "CORPORATE" || typeDemande === "DUPLICATE") ? 50 : 0;
   const totalFraisCarte = fraisCarteUnitaire * cardMultiplier;
   const totalPrice = baseAbonnementPrice + totalFraisCarte;
+
+  const currentPaymentMode = recapData.modePaiement || watchedModePaiement || (typeDemande === "CORPORATE" ? "CHEQUE" : "ESPECES");
+
+  const getFormuleLabel = (code: string) => {
+    if (typeDemande === "CORPORATE") {
+      switch (code) {
+        case "CORP_8_20":
+          return "Pass Diurne Corporate 08h-20h (500 DH/mois/place)";
+        case "CORP_8_22":
+          return "Pass Étendu Corporate 08h-22h (550 DH/mois/place)";
+        case "CORP_24_7":
+        default:
+          return "Pass Permanent Corporate 24h/7j (650 DH/mois/place)";
+      }
+    }
+    switch (code) {
+      case "24H7J":
+        return "Pass Permanent 24h/7j (600 DH/mois)";
+      case "JOUR":
+        return "Pass Diurne 08h-20h (420 DH/mois)";
+      case "NUIT":
+        return "Pass Nocturne 19h-08h (350 DH/mois)";
+      default:
+        return "Pass Permanent 24h/7j (600 DH/mois)";
+    }
+  };
+
+  const getTypeDemandeLabel = () => {
+    switch (typeDemande) {
+      case "NEW":
+        return "Nouvel Abonnement Particulier";
+      case "RENEW":
+        return "Renouvellement d'Abonnement Actif";
+      case "TRANSFER":
+        return "Transfert & Changement de Parking";
+      case "DUPLICATE":
+        return "Duplicata / Remplacement Carte RFID";
+      case "CORPORATE":
+        return "Abonnement Long Terme Corporate (20 Ans)";
+      default:
+        return "Abonnement RRM";
+    }
+  };
 
   // Submit Mutation
   const submitMutation = useMutation({
@@ -381,8 +473,13 @@ export function PublicQrForm() {
   const handleNextToOtp = async () => {
     try {
       const values = await form.validateFields();
-      setPendingValues({
+      const consolidated = {
+        ...formValues,
+        ...form.getFieldsValue(true),
         ...values,
+      };
+      setPendingValues({
+        ...consolidated,
         typeDemande,
         typeClient: typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER",
         baseAbonnementPrice,
@@ -695,7 +792,13 @@ export function PublicQrForm() {
                 </div>
 
                 {hasFoundAccount && (
-                  <Form form={form} layout="vertical" className="space-y-4">
+                  <Form
+                    form={form}
+                    preserve={true}
+                    layout="vertical"
+                    onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
+                    className="space-y-4"
+                  >
                     <AntCard className="rounded-2xl border-emerald-200 bg-emerald-50/50 shadow-sm">
                       <div className="flex items-center gap-2 mb-3">
                         <Tag color="green" className="font-bold">Abonné Validé</Tag>
@@ -774,7 +877,13 @@ export function PublicQrForm() {
                   </Tag>
                 </div>
 
-                <Form form={form} layout="vertical" className="space-y-4">
+                <Form
+                  form={form}
+                  preserve={true}
+                  layout="vertical"
+                  onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
+                  className="space-y-4"
+                >
                   <Collapse defaultActiveKey={["societe", "vehicules_flotte", "docs_entreprise"]} className="bg-transparent border-none space-y-4">
                     {/* Panel 1: Société & Responsable */}
                     <Collapse.Panel
@@ -991,7 +1100,13 @@ export function PublicQrForm() {
                   </Tag>
                 </div>
 
-                <Form form={form} layout="vertical" className="space-y-4">
+                <Form
+                  form={form}
+                  preserve={true}
+                  layout="vertical"
+                  onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
+                  className="space-y-4"
+                >
                   <Collapse
                     activeKey={activeCollapseKeys}
                     onChange={(keys) => setActiveCollapseKeys(typeof keys === "string" ? [keys] : (keys as string[]))}
@@ -1258,7 +1373,13 @@ export function PublicQrForm() {
               Choix du Parking & Tarification Souhaitée
             </h2>
 
-            <Form form={form} layout="vertical" className="space-y-4">
+            <Form
+              form={form}
+              preserve={true}
+              layout="vertical"
+              onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
+              className="space-y-4"
+            >
               <Form.Item
                 name="parkingId"
                 label="Sélectionnez le Parking Souhaité à Rabat"
@@ -1369,6 +1490,21 @@ export function PublicQrForm() {
                 </Form.Item>
               )}
 
+              {/* Cheque Specimen Example when Cheque is chosen */}
+              {watchedModePaiement === "CHEQUE" && (
+                <div className="mb-4">
+                  <ChequeSpecimenCard
+                    montant={totalPrice}
+                    clientNom={
+                      form.getFieldValue("raisonSociale") ||
+                      `${form.getFieldValue("nom") || ""} ${form.getFieldValue("prenom") || ""}`.trim() ||
+                      "Souscripteur RRM"
+                    }
+                    typeClient={typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER"}
+                  />
+                </div>
+              )}
+
               {/* RFID Card Fee Indicator Card */}
               <div
                 className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
@@ -1448,108 +1584,273 @@ export function PublicQrForm() {
 
             <Form form={form} layout="vertical">
               {/* Dynamic Live Subscription Summary Card */}
-              <div className="glass-panel rounded-2xl p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
-                <div className="flex items-center justify-between mb-4 border-b border-slate-200/80 pb-3">
+              <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 border-b border-slate-200/80 pb-3 gap-2">
                   <div className="flex items-center gap-2">
                     <SafetyCertificateOutlined className="text-secondary text-xl" />
-                    <h3 className="text-base md:text-lg font-extrabold text-slate-900 m-0">Récapitulatif de votre Souscription</h3>
-                  </div>
-                  <Tag color="blue" className="font-bold border-none px-3 py-1 rounded-full">Dossier RRM</Tag>
-                </div>
-
-                {typeDemande === "CORPORATE" ? (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Société / Entreprise</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {form.getFieldValue("raisonSociale") || "Entreprise Souscripte"}
-                      </span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiants (ICE & RC)</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        ICE: {form.getFieldValue("ice") || "-"} | RC: {form.getFieldValue("rc") || "-"}
-                      </span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Responsable Flotte</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {form.getFieldValue("nomContact") || "Contact Flotte"} ({form.getFieldValue("telephone") || ""})
-                      </span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Nombre de Cartes RFID</span>
-                      <Tag color="purple" className="font-extrabold text-xs">
-                        {nombreVehiculesCorporate} Cartes Flotte
-                      </Tag>
-                    </Col>
-                  </Row>
-                ) : (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
-                      <span className="text-sm font-bold text-slate-900">
-                        {form.getFieldValue("nom")} {form.getFieldValue("prenom") || ""}
-                      </span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant CIN</span>
-                      <span className="text-sm font-bold text-slate-900">{form.getFieldValue("cin") || "-"}</span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
-                      <span className="text-sm font-bold text-secondary font-mono">{form.getFieldValue("immatriculation") || "-"}</span>
-                    </Col>
-                    <Col xs={12} md={6}>
-                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
-                      <span className="text-sm font-bold text-slate-900">{selectedParkingName}</span>
-                    </Col>
-                  </Row>
-                )}
-
-                <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
-                    <span className="text-slate-600 font-semibold">Formule & Durée :</span>
-                    <span className="font-extrabold text-slate-900">
-                      {typeDemande === "CORPORATE"
-                        ? `${watchedFormuleCode === "CORP_8_20" ? "Pass Diurne 08h-20h (500 DH/mois/place)" : watchedFormuleCode === "CORP_8_22" ? "Pass Étendu 08h-22h (550 DH/mois/place)" : "Pass Permanent 24h/7j (650 DH/mois/place)"} — 20 Ans (240 Mois)`
-                        : `${watchedFormuleCode === "24H7J" ? "Pass Permanent 24h/7j (600 DH/mois)" : watchedFormuleCode === "JOUR" ? "Pass Diurne 08h-20h (420 DH/mois)" : "Pass Nocturne 19h-08h (350 DH/mois)"} — ${totalMonths} Mois`}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
-                    <span className="text-slate-600 font-semibold">Coût de l'Abonnement Parking :</span>
-                    <span className="font-bold text-slate-800">
-                      {baseAbonnementPrice.toLocaleString("fr-FR")} DH TTC
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
-                    <span className="text-slate-600 font-semibold">
-                      Frais de Carte RFID Sans Contact :
-                      <span className="text-slate-400 font-normal ml-1">
-                        {totalFraisCarte > 0
-                          ? typeDemande === "DUPLICATE"
-                            ? "(Duplicata / Remplacement badge : 50 DH)"
-                            : `(Nouvel abonné : +50 DH${cardMultiplier > 1 ? ` x ${cardMultiplier} cartes` : ""})`
-                          : "(Renouvellement : même carte physique conservée)"}
-                      </span>
-                    </span>
-                    <span className={`font-bold ${totalFraisCarte > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-                      {totalFraisCarte > 0 ? `+${totalFraisCarte.toLocaleString("fr-FR")} DH TTC` : "0 DH (Gratuit)"}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center bg-secondary/10 px-4 py-2.5 rounded-xl pt-3 border-t border-slate-200">
                     <div>
-                      <span className="text-xs text-slate-700 font-bold block">Total Net à Régler au Guichet :</span>
-                      <span className="text-[11px] text-slate-500">Abonnement + Frais de carte RFID</span>
+                      <h3 className="text-base md:text-lg font-extrabold text-slate-900 m-0">
+                        Récapitulatif Complet de votre Souscription
+                      </h3>
+                      <span className="text-xs text-slate-500 font-semibold">
+                        Vérifiez le détail des informations saisies avant de valider votre demande
+                      </span>
                     </div>
-                    <span className="text-xl font-black text-secondary">
-                      {totalPrice.toLocaleString("fr-FR")} DH TTC
-                    </span>
+                  </div>
+                  <Tag color="cyan" className="font-extrabold px-3 py-1 rounded-full text-xs m-0">
+                    {getTypeDemandeLabel()}
+                  </Tag>
+                </div>
+
+                {/* Section 1: Identité & Coordonnées du Souscripteur / Entreprise */}
+                <div className="mb-4">
+                  <span className="text-[11px] font-black uppercase text-secondary tracking-wider block mb-2">
+                    1. Identité & Coordonnées du Souscripteur
+                  </span>
+                  {typeDemande === "CORPORATE" ? (
+                    <Row gutter={[16, 12]} className="bg-white/90 p-4 rounded-xl border border-slate-200/80">
+                      <Col xs={24} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Société / Entreprise</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.raisonSociale || form.getFieldValue("raisonSociale") || "Société Souscriptrice"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiants (ICE & RC)</span>
+                        <strong className="text-sm text-slate-900 block">
+                          ICE: {recapData.ice || form.getFieldValue("ice") || "-"} | RC: {recapData.rc || form.getFieldValue("rc") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Flotte d'Entreprise</span>
+                        <Tag color="purple" className="font-extrabold text-xs m-0">
+                          {nombreVehiculesCorporate} Véhicules sous contrat
+                        </Tag>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Responsable Flotte</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.nomContact || form.getFieldValue("nomContact") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Téléphone Mobile</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.telephone || form.getFieldValue("telephone") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Email Professionnel</span>
+                        <strong className="text-sm text-slate-900 block truncate">
+                          {recapData.email || form.getFieldValue("email") || "-"}
+                        </strong>
+                      </Col>
+                    </Row>
+                  ) : (
+                    <Row gutter={[16, 12]} className="bg-white/90 p-4 rounded-xl border border-slate-200/80">
+                      <Col xs={24} sm={12} md={6}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Souscripteur</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {`${recapData.nom || ""} ${recapData.prenom || ""}`.trim() || `${form.getFieldValue("nom") || ""} ${form.getFieldValue("prenom") || ""}`.trim() || "Souscripteur Particulier"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} sm={12} md={6}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Identifiant CIN</span>
+                        <strong className="text-sm text-slate-900 font-mono block">
+                          {recapData.cin || form.getFieldValue("cin") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} sm={12} md={6}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Téléphone Mobile (OTP)</span>
+                        <strong className="text-sm text-slate-900 font-mono block">
+                          {recapData.telephone || form.getFieldValue("telephone") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={24} sm={12} md={6}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Email de Contact</span>
+                        <strong className="text-sm text-slate-900 block truncate">
+                          {recapData.email || form.getFieldValue("email") || "-"}
+                        </strong>
+                      </Col>
+                    </Row>
+                  )}
+                </div>
+
+                {/* Section 2: Véhicule & Parking d'Affectation */}
+                <div className="mb-4">
+                  <span className="text-[11px] font-black uppercase text-secondary tracking-wider block mb-2">
+                    2. Véhicule & Parking d'Affectation à Rabat
+                  </span>
+                  <Row gutter={[16, 12]} className="bg-white/90 p-4 rounded-xl border border-slate-200/80">
+                    {typeDemande !== "CORPORATE" && (
+                      <>
+                        <Col xs={12} sm={8}>
+                          <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
+                          <strong className="text-sm text-secondary font-mono block">
+                            {recapData.immatriculation || form.getFieldValue("immatriculation") || "-"}
+                          </strong>
+                        </Col>
+                        <Col xs={12} sm={8}>
+                          <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Marque & Modèle</span>
+                          <strong className="text-sm text-slate-800 block">
+                            {recapData.marque || form.getFieldValue("marque") || "Véhicule Particulier"}
+                          </strong>
+                        </Col>
+                        {recapData.carteRfidActuelle && (
+                          <Col xs={24} sm={8}>
+                            <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Carte RFID Actuelle</span>
+                            <strong className="text-sm text-purple-700 font-mono block">
+                              {recapData.carteRfidActuelle}
+                            </strong>
+                          </Col>
+                        )}
+                      </>
+                    )}
+                    <Col xs={24} sm={typeDemande === "CORPORATE" ? 12 : 8}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
+                      <strong className="text-sm text-slate-900 block">
+                        {selectedParkingName}
+                      </strong>
+                    </Col>
+                    <Col xs={12} sm={typeDemande === "CORPORATE" ? 12 : 8}>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Localisation</span>
+                      <span className="text-xs font-bold text-slate-700 block">
+                        Rabat Réseau Mobilité
+                      </span>
+                    </Col>
+                  </Row>
+                </div>
+
+                {/* Section 3: Formule, Durée & Mode de Règlement */}
+                <div className="mb-4">
+                  <span className="text-[11px] font-black uppercase text-secondary tracking-wider block mb-2">
+                    3. Formule, Période & Mode de Règlement
+                  </span>
+                  <div className="bg-white/90 p-4 rounded-xl border border-slate-200/80 space-y-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                      <span className="text-slate-600 font-semibold">Formule Souscrite :</span>
+                      <strong className="text-slate-900 text-sm">
+                        {getFormuleLabel(recapData.formuleCode || watchedFormuleCode || "24H7J")}
+                      </strong>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                      <span className="text-slate-600 font-semibold">Durée d'Engagement :</span>
+                      <Tag color="geekblue" className="font-extrabold text-xs m-0">
+                        {typeDemande === "CORPORATE" ? "Contrat 20 Ans (240 Mois)" : `${totalMonths} Mois`}
+                      </Tag>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                      <span className="text-slate-600 font-semibold">Mode de Règlement Choisi :</span>
+                      <Tag color={currentPaymentMode === "CHEQUE" ? "purple" : "green"} className="font-black text-xs m-0">
+                        {currentPaymentMode === "CHEQUE" ? "Chèque Bancaire (Au guichet RRM)" : "Espèces (Au guichet RRM)"}
+                      </Tag>
+                    </div>
                   </div>
                 </div>
+
+                {/* Section 4: Décompte Financier Détaillé */}
+                <div>
+                  <span className="text-[11px] font-black uppercase text-secondary tracking-wider block mb-2">
+                    4. Décompte Financier TTC
+                  </span>
+                  <div className="bg-white/90 p-4 rounded-xl border border-slate-200/80 space-y-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                      <span className="text-slate-600 font-semibold">Coût de l'Abonnement Parking :</span>
+                      <span className="font-bold text-slate-800">
+                        {baseAbonnementPrice.toLocaleString("fr-FR")} DH TTC
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                      <span className="text-slate-600 font-semibold">
+                        Frais de Carte RFID Sans Contact :
+                        <span className="text-slate-400 font-normal ml-1">
+                          {totalFraisCarte > 0
+                            ? typeDemande === "DUPLICATE"
+                              ? "(Duplicata / Remplacement badge : 50 DH)"
+                              : `(Nouvel abonné : +50 DH${cardMultiplier > 1 ? ` x ${cardMultiplier} cartes` : ""})`
+                            : "(Renouvellement : même carte physique conservée)"}
+                        </span>
+                      </span>
+                      <span className={`font-bold ${totalFraisCarte > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+                        {totalFraisCarte > 0 ? `+${totalFraisCarte.toLocaleString("fr-FR")} DH TTC` : "0 DH (Gratuit)"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-secondary/10 px-4 py-3 rounded-xl border border-secondary/20">
+                      <div>
+                        <span className="text-xs text-slate-700 font-extrabold block">Total Net à Régler au Guichet :</span>
+                        <span className="text-[11px] text-slate-500 font-medium">Abonnement + Frais d'émission badge RFID</span>
+                      </div>
+                      <span className="text-xl font-black text-secondary">
+                        {totalPrice.toLocaleString("fr-FR")} DH TTC
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 5: Pièces Justificatives Téléversées */}
+                <div className="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                  <span className="font-semibold text-slate-500">Pièces Justificatives :</span>
+                  <Tag color="green" className="font-bold m-0 inline-flex items-center gap-1">
+                    <CheckCircleOutlined /> {typeDemande === "CORPORATE" ? "Document Entreprise (ICE/RC)" : "CIN Recto/Verso"}
+                  </Tag>
+                  {typeDemande !== "CORPORATE" && (
+                    <Tag color="green" className="font-bold m-0 inline-flex items-center gap-1">
+                      <CheckCircleOutlined /> Carte Grise Recto/Verso
+                    </Tag>
+                  )}
+                  <Tag color="blue" className="font-bold m-0">Dossier Complet</Tag>
+                </div>
+
+                {/* Instructions & Explications pour le Règlement par Chèque */}
+                {currentPaymentMode === "CHEQUE" && (
+                  <div className="mt-5 pt-4 border-t border-slate-200/80">
+                    <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BankOutlined className="text-amber-800 text-base" />
+                        <h4 className="text-xs sm:text-sm font-extrabold text-amber-950 m-0">
+                          Consignes de Rédaction du Chèque de Règlement ({totalPrice.toLocaleString("fr-FR")} DH TTC)
+                        </h4>
+                      </div>
+                      <p className="text-xs text-amber-900/90 mb-3 leading-relaxed">
+                        Pour que votre chèque soit immédiatement accepté au guichet RRM sans risque de rejet, veillez à respecter scrupuleusement les consignes suivantes lors de son émission :
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800">
+                        <div className="bg-white/90 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2">
+                          <CheckCircleOutlined className="text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="font-bold text-slate-900 block">Ordre / Bénéficiaire :</span>
+                            <span>Strictement à l'ordre de <strong className="text-secondary">« Société Rabat Région Mobilité SA »</strong></span>
+                          </div>
+                        </div>
+                        <div className="bg-white/90 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2">
+                          <CheckCircleOutlined className="text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="font-bold text-slate-900 block">Montant du règlement :</span>
+                            <span>Exactement <strong className="text-secondary font-mono">{totalPrice.toLocaleString("fr-FR")} DH TTC</strong> (concordance chiffres et lettres requise)</span>
+                          </div>
+                        </div>
+                        <div className="bg-white/90 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2">
+                          <CheckCircleOutlined className="text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="font-bold text-slate-900 block">Lieu & Date d'émission :</span>
+                            <span>Fait à <strong className="text-slate-900">Rabat</strong>, daté du jour de votre visite (les chèques postdatés ne sont pas acceptés)</span>
+                          </div>
+                        </div>
+                        <div className="bg-white/90 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2">
+                          <CheckCircleOutlined className="text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="font-bold text-slate-900 block">Signature & Cachet :</span>
+                            <span>{typeDemande === "CORPORATE" ? "Signature autorisée et cachet officiel de la société obligatoires" : "Signature conforme au spécimen déposé auprès de votre banque"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Mandatory Terms & Conditions Checkbox */}
