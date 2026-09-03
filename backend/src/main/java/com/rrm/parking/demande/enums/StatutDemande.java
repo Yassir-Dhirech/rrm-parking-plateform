@@ -1,0 +1,13 @@
+package com.rrm.parking.demande.enums;
+
+public enum StatutDemande {
+    SOUMISE,
+    EN_ATTENTE_PAIEMENT,
+    EN_ATTENTE_CONFIRMATION_PAIEMENT,
+    EN_INSTRUCTION,
+    EN_ATTENTE_VALIDATION_SUPERVISEUR,
+    EN_ATTENTE_VALIDATION_RESPONSABLE,
+    VALIDEE,
+    REFUSEE,
+    ANNULEE
+}

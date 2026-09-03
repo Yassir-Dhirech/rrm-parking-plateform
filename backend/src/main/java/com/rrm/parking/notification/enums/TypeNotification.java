@@ -1,0 +1,19 @@
+package com.rrm.parking.notification.enums;
+
+public enum TypeNotification {
+    DEMANDE_CREEE,
+    DEMANDE_VALIDEE,
+    DEMANDE_REFUSEE,
+
+    PAIEMENT_CONFIRME,
+    CHEQUE_REJETE,
+
+    FACTURE_DISPONIBLE,
+
+    CARTE_DISPONIBLE,
+    CARTE_ACTIVEE,
+    CARTE_SUSPENDUE,
+    CARTE_DESACTIVEE,
+
+    RENOUVELLEMENT_PROCHE
+}
