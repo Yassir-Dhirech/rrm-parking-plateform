@@ -25,13 +25,13 @@ public class ClientEntreprise extends Client {
     @Column(nullable = false, length = 15)
     private String ice;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String numeroRC;
 
     @Column(nullable = false, length = 500)
     private String adresseSiege;
 
-    @Column(nullable = false, length = 200)
+    @Column(length = 200)
     private String nomContactPrincipal;
 
     @Column(length = 150)
@@ -100,5 +100,14 @@ public class ClientEntreprise extends Client {
 
     public void setFonctionContactPrincipal(String fonctionContactPrincipal) {
         this.fonctionContactPrincipal = fonctionContactPrincipal;
+    }
+    public ClientEntreprise(
+            String raisonSociale,
+            String ice,
+            String adresseSiege
+    ) {
+        this.raisonSociale = raisonSociale;
+        this.ice = ice;
+        this.adresseSiege = adresseSiege;
     }
 }

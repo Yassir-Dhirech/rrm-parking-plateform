@@ -1,7 +1,7 @@
 package com.rrm.parking.demande.entity;
 
 import com.rrm.parking.abonnement.entity.AbonnementRegulier;
-import com.rrm.parking.client.entity.ClientParticulier;
+import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.tarification.entity.TarifParking;
@@ -42,7 +42,7 @@ public class DemandeNouvelAbonnementRegulier
     public DemandeNouvelAbonnementRegulier(
             String reference,
             CanalInitiation canalInitiation,
-            ClientParticulier client,
+            Client client,
             Utilisateur initieePar
     ) {
         super(
