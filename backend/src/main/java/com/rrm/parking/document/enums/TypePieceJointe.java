@@ -18,5 +18,8 @@ public enum TypePieceJointe {
     COPIE_CHEQUE,
     JUSTIFICATIF_PAIEMENT,
 
-    AUTRE
+    AUTRE,
+
+    FACTURE_SIGNEE,
+    DECHARGE_REMISE_CORPORATE
 }
