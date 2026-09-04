@@ -25,7 +25,6 @@ import { ParkingsList } from "../features/admin/pages/ParkingsList";
 import { PlansTarifairesList } from "../features/admin/pages/PlansTarifairesList";
 import { AuditLogsList } from "../features/admin/pages/AuditLogsList";
 import { NotificationsPage } from "../pages/NotificationsPage";
-import { AboutPage } from "../pages/AboutPage";
 import { ContactPage } from "../pages/ContactPage";
 import { PublicParkingsPage } from "../pages/PublicParkingsPage";
 import { InternalParkingsMapPage } from "../features/parkings/pages/InternalParkingsMapPage";
@@ -125,7 +124,6 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: "/", element: <LandingPage /> },
-      { path: "/about", element: <AboutPage /> },
       { path: "/parkings-public", element: <PublicParkingsPage /> },
       { path: "/tarifs-public", element: <PublicTarifsPage /> },
       { path: "/contact", element: <ContactPage /> },

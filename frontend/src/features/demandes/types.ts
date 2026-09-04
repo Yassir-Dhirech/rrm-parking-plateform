@@ -77,6 +77,8 @@ export interface DemandeDetail extends DemandeListItem {
   email: string;
   telephone: string;
   immatriculation: string;
+  marque?: string;
+  modele?: string;
   typeVehicule: string;
   typeClient?: TypeClient;
   cin?: string;
@@ -89,9 +91,12 @@ export interface DemandeDetail extends DemandeListItem {
   motifPerte?: string;
   fraisDuplicata?: number;
   statutCarteAncienne?: string;
+  formuleCode?: string;
   forfaitNom?: string;
   dureeMois?: number;
+  nombreAbonnements?: number;
   montantTotal?: number;
+  modePaiement?: "ESPECES" | "CHEQUE";
   raisonRejet?: string;
   commentaireCorrection?: string;
   cinRectoUrl?: string;

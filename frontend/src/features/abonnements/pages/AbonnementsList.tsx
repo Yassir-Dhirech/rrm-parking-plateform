@@ -297,13 +297,36 @@ export function AbonnementsList() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="clientNom" label="Nom du Bénéficiaire / Agent" rules={[{ required: true, message: "Saisissez le nom" }]}>
-                <Input prefix={<UserOutlined style={{ color: "#94a3b8" }} />} placeholder="Ex: Youssef Tazi" />
+              <Form.Item
+                name="clientNom"
+                label={selectedType === "ENTREPRISE" ? "Raison Sociale de l'Entreprise" : "Nom du Bénéficiaire / Agent"}
+                rules={[{ required: true, message: selectedType === "ENTREPRISE" ? "Saisissez la raison sociale" : "Saisissez le nom" }]}
+              >
+                <Input
+                  prefix={<UserOutlined style={{ color: "#94a3b8" }} />}
+                  placeholder={selectedType === "ENTREPRISE" ? "Ex: Maroc Telecom SA" : "Ex: Youssef Tazi"}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="numeroMatriculeStaff" label="N° Matricule / CIN">
-                <Input placeholder="Ex: STF-2026-889" />
+              <Form.Item
+                name={selectedType === "ENTREPRISE" ? "ice" : "numeroMatriculeStaff"}
+                label={selectedType === "ENTREPRISE" ? "Identifiant Commun (ICE — 15 chiffres)" : "N° Matricule / CIN"}
+                normalize={selectedType === "ENTREPRISE" ? (val) => (val ? val.replace(/\D/g, "").slice(0, 15) : "") : undefined}
+                rules={
+                  selectedType === "ENTREPRISE"
+                    ? [
+                        { required: true, message: "L'ICE est requis pour une entreprise." },
+                        { pattern: /^\d{15}$/, message: "L'ICE doit comporter exactement 15 chiffres numériques." },
+                      ]
+                    : undefined
+                }
+              >
+                <Input
+                  maxLength={selectedType === "ENTREPRISE" ? 15 : undefined}
+                  placeholder={selectedType === "ENTREPRISE" ? "15 chiffres (ex: 001234567000089)" : "Ex: STF-2026-889"}
+                  className={selectedType === "ENTREPRISE" ? "font-mono" : undefined}
+                />
               </Form.Item>
             </Col>
           </Row>

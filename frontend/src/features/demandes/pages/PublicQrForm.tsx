@@ -370,7 +370,7 @@ export function PublicQrForm() {
       message.success("Informations Société validées !");
       setCurrentStep(2);
     } catch {
-      message.error("Veuillez remplir les informations et téléverser le document entreprise (ICE / RC).");
+      message.error("Veuillez vérifier les informations de l'entreprise et joindre les documents.");
     }
   };
 
@@ -934,10 +934,21 @@ export function PublicQrForm() {
                         <Col xs={24} md={6}>
                           <Form.Item
                             name="ice"
-                            label="Identifiant Commun (ICE)"
-                            rules={[{ required: true, message: "L'ICE est requis." }]}
+                            label="Identifiant Commun (ICE — 15 chiffres)"
+                            normalize={(value) => (value ? value.replace(/\D/g, "").slice(0, 15) : "")}
+                            rules={[
+                              { required: true, message: "L'ICE est requis pour les entreprises." },
+                              {
+                                pattern: /^\d{15}$/,
+                                message: "L'ICE doit comporter exactement 15 chiffres numériques.",
+                              },
+                            ]}
                           >
-                            <Input placeholder="001234567000089" className="rounded-xl py-2" />
+                            <Input
+                              placeholder="15 chiffres (ex: 001234567000089)"
+                              maxLength={15}
+                              className="rounded-xl py-2 font-mono"
+                            />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={6}>
