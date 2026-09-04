@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dropdown, Drawer, Button, type MenuProps } from "antd";
-import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, InfoCircleOutlined, EnvironmentOutlined, FormOutlined, SearchOutlined } from "@ant-design/icons";
+import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, EnvironmentOutlined, FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
 
@@ -66,14 +66,6 @@ export function PublicNavbar() {
               Accueil
             </button>
 
-            <button
-              onClick={() => navigate("/about")}
-              className={`font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                location.pathname === "/about" ? "text-secondary font-bold" : "text-on-surface-variant hover:text-secondary hover:bg-white/40"
-              }`}
-            >
-              À Propos
-            </button>
 
             <Dropdown menu={{ items: parkingsMenuItems }} trigger={["hover"]} placement="bottomLeft">
               <button
@@ -148,13 +140,6 @@ export function PublicNavbar() {
           >
             <HomeOutlined className="text-base text-secondary" />
             <span>Accueil</span>
-          </button>
-          <button
-            onClick={() => { navigate("/about"); setMobileDrawerOpen(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 border-none bg-transparent cursor-pointer text-left w-full"
-          >
-            <InfoCircleOutlined className="text-base text-secondary" />
-            <span>À Propos de RRM</span>
           </button>
           <button
             onClick={() => { navigate("/parkings-public"); setMobileDrawerOpen(false); }}

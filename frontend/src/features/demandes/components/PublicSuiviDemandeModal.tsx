@@ -15,6 +15,8 @@ import {
   message,
   Card,
   Spin,
+  Radio,
+  InputNumber,
 } from "antd";
 import {
   SearchOutlined,
@@ -32,6 +34,8 @@ import {
   SaveOutlined,
   RollbackOutlined,
   InfoCircleOutlined,
+  CalendarOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { type DemandeDetail } from "../types";
 import { searchPublicDemandeByRef, updatePublicDemande } from "../../../api/demandes";
@@ -98,19 +102,26 @@ export function PublicSuiviDemandeModal({
     }
   };
 
-  // Open edit mode
+  // Open edit mode with prefilled values
   const handleStartEditing = () => {
     if (!demande) return;
+    const isCorp = demande.typeClient === "ENTREPRISE";
+
     editForm.setFieldsValue({
       clientNom: demande.clientNom,
-      cin: demande.cin,
-      ice: demande.ice,
-      rc: demande.rc,
+      cin: demande.cin || "",
+      ice: demande.ice || "",
+      rc: demande.rc || "",
       telephone: demande.telephone,
       email: demande.email,
       immatriculation: demande.immatriculation,
+      marque: demande.marque || "",
       typeVehicule: demande.typeVehicule || "VOITURE",
       parkingNom: demande.parkingNom,
+      forfaitNom: demande.forfaitNom || (isCorp ? "Pass Permanent Corporate 24h/7j (650 DH/m/place)" : "Pass Permanent 24h/7j (600 DH/mois)"),
+      dureeMois: demande.dureeMois || (isCorp ? 240 : 3),
+      nombreAbonnements: demande.nombreAbonnements || 1,
+      modePaiement: demande.paiementInfo?.modePaiement || demande.modePaiement || (isCorp ? "CHEQUE" : "ESPECES"),
       commentaireCorrection: demande.commentaireCorrection || "",
     });
     setIsEditing(true);
@@ -123,6 +134,25 @@ export function PublicSuiviDemandeModal({
       if (!demande) return;
 
       setIsSaving(true);
+      const isCorp = demande.typeClient === "ENTREPRISE";
+
+      // Calculate monthly base price
+      let monthly = 600;
+      if (isCorp) {
+        if (values.forfaitNom?.includes("500")) monthly = 500;
+        else if (values.forfaitNom?.includes("550")) monthly = 550;
+        else monthly = 650;
+      } else {
+        if (values.forfaitNom?.includes("420")) monthly = 420;
+        else if (values.forfaitNom?.includes("350")) monthly = 350;
+        else monthly = 600;
+      }
+
+      const months = Number(values.dureeMois) || (isCorp ? 240 : 3);
+      const count = isCorp ? (Number(values.nombreAbonnements) || 1) : 1;
+      const cardFee = (demande.typeDemande === "RENOUVELLEMENT" || demande.typeDemande === "CHANGEMENT_PARKING") ? 0 : (50 * count);
+      const newTotal = (monthly * months * count) + cardFee;
+
       const updated = await updatePublicDemande(demande.reference, {
         clientNom: values.clientNom,
         cin: values.cin,
@@ -131,8 +161,14 @@ export function PublicSuiviDemandeModal({
         telephone: values.telephone,
         email: values.email,
         immatriculation: values.immatriculation,
+        marque: values.marque,
         typeVehicule: values.typeVehicule,
         parkingNom: values.parkingNom,
+        forfaitNom: values.forfaitNom,
+        dureeMois: months,
+        nombreAbonnements: count,
+        montantTotal: newTotal,
+        modePaiement: values.modePaiement,
         commentaireCorrection: values.commentaireCorrection,
       });
 
@@ -184,12 +220,14 @@ export function PublicSuiviDemandeModal({
     }
   };
 
+  const isEntreprise = demande?.typeClient === "ENTREPRISE";
+
   return (
     <Modal
       open={open}
       onCancel={onClose}
       footer={null}
-      width={780}
+      width={840}
       destroyOnClose
       centered
       className="rounded-3xl overflow-hidden"
@@ -202,8 +240,8 @@ export function PublicSuiviDemandeModal({
         </div>
       }
     >
-      <div className="py-2 space-y-5">
-        {/* Search Bar Bar */}
+      <div className="py-2 space-y-5 max-h-[80vh] overflow-y-auto pr-1">
+        {/* Search Bar */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
           <span className="text-xs font-bold text-slate-700 block mb-2">
             Rechercher votre demande par Référence, N° CIN, ICE ou Téléphone :
@@ -314,14 +352,14 @@ export function PublicSuiviDemandeModal({
               </div>
             </div>
 
-            {/* EDIT MODE FORM */}
+            {/* EDIT MODE FORM: All Essential Information is Modifiable */}
             {isEditing ? (
               <Card
                 className="rounded-2xl border-amber-300 bg-amber-50/40 shadow-md"
                 title={
                   <div className="flex items-center gap-2 text-amber-900 font-extrabold text-sm sm:text-base">
                     <EditOutlined className="text-amber-700" />
-                    <span>Modification de votre Demande ({demande.reference})</span>
+                    <span>Modification Complète de votre Demande ({demande.reference})</span>
                   </div>
                 }
               >
@@ -329,114 +367,251 @@ export function PublicSuiviDemandeModal({
                   type="info"
                   showIcon
                   icon={<InfoCircleOutlined />}
-                  message="Mise à jour libre de vos données"
-                  description="Vous pouvez modifier vos coordonnées de contact, vos identifiants, votre véhicule ou préciser vos remarques. Vos changements seront immédiatement synchronisés sur votre dossier."
-                  className="mb-4 rounded-xl text-xs"
+                  message="Modification Libre & Exhaustive de votre Dossier"
+                  description="Vous pouvez modifier l'ensemble des éléments essentiels de votre souscription : identité, coordonnées, immatriculation et marque du véhicule, parking de rattachement, formule tarifaire, durée d'abonnement et mode de paiement."
+                  className="mb-5 rounded-xl text-xs"
                 />
 
                 <Form form={editForm} layout="vertical">
-                  <Row gutter={16}>
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="clientNom"
-                        label={demande.typeClient === "ENTREPRISE" ? "Raison Sociale de l'Entreprise" : "Nom & Prénom"}
-                        rules={[{ required: true, message: "Ce champ est obligatoire." }]}
-                      >
-                        <Input className="rounded-xl py-2 font-semibold" />
-                      </Form.Item>
-                    </Col>
-
-                    {demande.typeClient === "ENTREPRISE" ? (
-                      <>
-                        <Col xs={24} sm={12}>
-                          <Form.Item
-                            name="ice"
-                            label="Identifiant Commun (ICE — 15 chiffres)"
-                            normalize={(val) => (val ? val.replace(/\D/g, "").slice(0, 15) : "")}
-                            rules={[
-                              { required: true, message: "L'ICE est requis pour les entreprises." },
-                              { pattern: /^\d{15}$/, message: "L'ICE doit comporter exactement 15 chiffres numériques." },
-                            ]}
-                          >
-                            <Input maxLength={15} className="rounded-xl py-2 font-mono" placeholder="15 chiffres" />
-                          </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12}>
-                          <Form.Item name="rc" label="Registre de Commerce (RC)">
-                            <Input className="rounded-xl py-2 font-mono" />
-                          </Form.Item>
-                        </Col>
-                      </>
-                    ) : (
+                  {/* Section 1: Identité & Coordonnées */}
+                  <div className="mb-4">
+                    <Divider titlePlacement="left" className="m-0 mb-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><IdcardOutlined className="text-secondary" /> Identité & Coordonnées</span>
+                    </Divider>
+                    <Row gutter={16}>
                       <Col xs={24} sm={12}>
                         <Form.Item
-                          name="cin"
-                          label="Carte d'Identité Nationale (CIN)"
-                          rules={[{ required: true, message: "La CIN est obligatoire." }]}
+                          name="clientNom"
+                          label={isEntreprise ? "Raison Sociale de l'Entreprise" : "Nom & Prénom"}
+                          rules={[{ required: true, message: "Ce champ est obligatoire." }]}
                         >
-                          <Input className="rounded-xl py-2 font-mono uppercase" />
+                          <Input className="rounded-xl py-2 font-semibold" />
                         </Form.Item>
                       </Col>
-                    )}
 
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="telephone"
-                        label="Téléphone Mobile (SMS)"
-                        rules={[{ required: true, message: "Le numéro de téléphone est obligatoire." }]}
-                      >
-                        <Input className="rounded-xl py-2 font-mono" prefix={<PhoneOutlined className="text-slate-400" />} />
-                      </Form.Item>
-                    </Col>
+                      {isEntreprise ? (
+                        <>
+                          <Col xs={24} sm={12}>
+                            <Form.Item
+                              name="ice"
+                              label="Identifiant Commun Entreprise (ICE — 15 chiffres)"
+                              normalize={(val) => (val ? val.replace(/\D/g, "").slice(0, 15) : "")}
+                              rules={[
+                                { required: true, message: "L'ICE est requis pour les entreprises." },
+                                { pattern: /^\d{15}$/, message: "L'ICE doit comporter exactement 15 chiffres numériques." },
+                              ]}
+                            >
+                              <Input maxLength={15} className="rounded-xl py-2 font-mono" placeholder="15 chiffres obligatoires" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} sm={12}>
+                            <Form.Item name="rc" label="Registre de Commerce (RC)">
+                              <Input className="rounded-xl py-2 font-mono" />
+                            </Form.Item>
+                          </Col>
+                        </>
+                      ) : (
+                        <Col xs={24} sm={12}>
+                          <Form.Item
+                            name="cin"
+                            label="Carte d'Identité Nationale (CIN)"
+                            rules={[{ required: true, message: "La CIN est obligatoire." }]}
+                          >
+                            <Input className="rounded-xl py-2 font-mono uppercase" />
+                          </Form.Item>
+                        </Col>
+                      )}
 
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="email"
-                        label="Adresse Email de Confirmation"
-                        rules={[
-                          { required: true, message: "L'email est obligatoire." },
-                          { type: "email", message: "Email invalide." },
-                        ]}
-                      >
-                        <Input className="rounded-xl py-2" prefix={<MailOutlined className="text-slate-400" />} />
-                      </Form.Item>
-                    </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          name="telephone"
+                          label="Téléphone Mobile (SMS)"
+                          rules={[{ required: true, message: "Le numéro de téléphone est obligatoire." }]}
+                        >
+                          <Input className="rounded-xl py-2 font-mono" prefix={<PhoneOutlined className="text-slate-400" />} />
+                        </Form.Item>
+                      </Col>
 
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        name="immatriculation"
-                        label="Immatriculation du Véhicule"
-                        rules={[{ required: true, message: "L'immatriculation est obligatoire." }]}
-                      >
-                        <Input className="rounded-xl py-2 font-mono font-bold text-secondary" prefix={<CarOutlined className="text-slate-400" />} />
-                      </Form.Item>
-                    </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          name="email"
+                          label="Adresse Email de Correspondance"
+                          rules={[
+                            { required: true, message: "L'email est obligatoire." },
+                            { type: "email", message: "Email invalide." },
+                          ]}
+                        >
+                          <Input className="rounded-xl py-2" prefix={<MailOutlined className="text-slate-400" />} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
 
-                    <Col xs={24} sm={12}>
-                      <Form.Item name="parkingNom" label="Parking Souhaité à Rabat">
-                        <Select className="rounded-xl">
-                          {parkings.map((p: any) => (
-                            <Select.Option key={p.id} value={p.nom}>
-                              {p.nom}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                  </Row>
+                  {/* Section 2: Véhicule */}
+                  <div className="mb-4">
+                    <Divider titlePlacement="left" className="m-0 mb-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><CarOutlined className="text-secondary" /> Véhicule & Stationnement</span>
+                    </Divider>
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          name="immatriculation"
+                          label="Immatriculation du Véhicule"
+                          rules={[{ required: true, message: "L'immatriculation est obligatoire." }]}
+                        >
+                          <Input className="rounded-xl py-2 font-mono font-bold text-secondary" prefix={<CarOutlined className="text-slate-400" />} />
+                        </Form.Item>
+                      </Col>
 
-                  <Form.Item
-                    name="commentaireCorrection"
-                    label="Précisions ou Observations pour le Service Instruction RRM"
-                  >
-                    <Input.TextArea
-                      rows={2}
-                      className="rounded-xl"
-                      placeholder="Indiquez ici toute information complémentaire ou précision sur votre demande..."
-                    />
-                  </Form.Item>
+                      <Col xs={24} sm={6}>
+                        <Form.Item name="marque" label="Marque du Véhicule">
+                          <Input className="rounded-xl py-2" placeholder="Ex: Renault, Dacia, Peugeot" />
+                        </Form.Item>
+                      </Col>
 
-                  <div className="flex justify-end gap-3 pt-2 border-t border-amber-200">
+                      <Col xs={24} sm={6}>
+                        <Form.Item name="typeVehicule" label="Type de Véhicule">
+                          <Select className="rounded-xl">
+                            <Select.Option value="VOITURE">Voiture Légère</Select.Option>
+                            <Select.Option value="MOTO">Moto / Deux-roues</Select.Option>
+                            <Select.Option value="UTILITAIRE">Utilitaire Léger</Select.Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  {/* Section 3: Abonnement, Durée & Formule */}
+                  <div className="mb-4">
+                    <Divider titlePlacement="left" className="m-0 mb-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><CalendarOutlined className="text-secondary" /> Formule, Parking & Durée</span>
+                    </Divider>
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12}>
+                        <Form.Item name="parkingNom" label="Parking Souhaité à Rabat" rules={[{ required: true, message: "Le parking est requis." }]}>
+                          <Select className="rounded-xl">
+                            {parkings.map((p: any) => (
+                              <Select.Option key={p.id} value={p.nom}>
+                                {p.nom}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} sm={12}>
+                        <Form.Item name="forfaitNom" label="Formule Tarifaire Souhaitée" rules={[{ required: true, message: "La formule est requise." }]}>
+                          <Select className="rounded-xl">
+                            {isEntreprise ? (
+                              <>
+                                <Select.Option value="Pass Corporate 08:00 - 20:00 (500 DH/m/place)">
+                                  Pass Corporate Diurne 08h-20h (500 DH / mois / place)
+                                </Select.Option>
+                                <Select.Option value="Pass Corporate 08:00 - 22:00 (550 DH/m/place)">
+                                  Pass Corporate Étendu 08h-22h (550 DH / mois / place)
+                                </Select.Option>
+                                <Select.Option value="Pass Permanent Corporate 24h/7j (650 DH/m/place)">
+                                  Pass Corporate Permanent 24h/7j (650 DH / mois / place)
+                                </Select.Option>
+                              </>
+                            ) : (
+                              <>
+                                <Select.Option value="Pass Permanent (24h / 7j — 600 DH/m)">
+                                  Pass Permanent 24h/7j (600 DH / mois)
+                                </Select.Option>
+                                <Select.Option value="Pass Diurne (08:00 - 20:00 — 420 DH/m)">
+                                  Pass Diurne 08:00 - 20:00 (420 DH / mois)
+                                </Select.Option>
+                                <Select.Option value="Pass Nocturne (19:00 - 08:00 — 350 DH/m)">
+                                  Pass Nocturne 19:00 - 08:00 (350 DH / mois)
+                                </Select.Option>
+                              </>
+                            )}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} sm={isEntreprise ? 12 : 24}>
+                        <Form.Item
+                          name="dureeMois"
+                          label="Durée de l'Abonnement"
+                          rules={[{ required: true, message: "La durée est requise." }]}
+                        >
+                          <Select className="rounded-xl">
+                            {isEntreprise ? (
+                              <>
+                                <Select.Option value={240}>240 Mois (Contrat Longue Durée 20 Ans)</Select.Option>
+                                <Select.Option value={12}>12 Mois (1 Année)</Select.Option>
+                                <Select.Option value={6}>6 Mois (1 Semestre)</Select.Option>
+                                <Select.Option value={3}>3 Mois (1 Trimestre)</Select.Option>
+                              </>
+                            ) : (
+                              <>
+                                <Select.Option value={3}>3 Mois (1 Trimestre)</Select.Option>
+                                <Select.Option value={6}>6 Mois (1 Semestre)</Select.Option>
+                                <Select.Option value={9}>9 Mois</Select.Option>
+                                <Select.Option value={12}>12 Mois (1 Année)</Select.Option>
+                              </>
+                            )}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+
+                      {isEntreprise && (
+                        <Col xs={24} sm={12}>
+                          <Form.Item
+                            name="nombreAbonnements"
+                            label="Nombre de Badges / Places Flotte"
+                            rules={[{ required: true, message: "Le nombre de badges est requis." }]}
+                          >
+                            <InputNumber min={1} max={200} className="w-full rounded-xl py-1 font-bold" />
+                          </Form.Item>
+                        </Col>
+                      )}
+                    </Row>
+                  </div>
+
+                  {/* Section 4: Mode de Paiement & Remarques */}
+                  <div className="mb-4">
+                    <Divider titlePlacement="left" className="m-0 mb-3 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><CreditCardOutlined className="text-secondary" /> Règlement & Remarques</span>
+                    </Divider>
+                    <Row gutter={16}>
+                      <Col xs={24}>
+                        <Form.Item
+                          name="modePaiement"
+                          label="Mode de Règlement Souhaité au Guichet RRM"
+                          rules={[{ required: true, message: "Le mode de règlement est requis." }]}
+                        >
+                          <Radio.Group className="w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <Radio value="ESPECES" className="border border-slate-200 rounded-xl p-3 bg-white hover:border-secondary flex items-center">
+                                <span className="font-bold text-slate-800">Espèces au Guichet RRM</span>
+                              </Radio>
+                              <Radio value="CHEQUE" className="border border-slate-200 rounded-xl p-3 bg-white hover:border-secondary flex items-center">
+                                <span className="font-bold text-slate-800">Chèque Bancaire (à l'ordre de RRM)</span>
+                              </Radio>
+                            </div>
+                          </Radio.Group>
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24}>
+                        <Form.Item
+                          name="commentaireCorrection"
+                          label="Précisions ou Observations pour le Service Instruction RRM"
+                        >
+                          <Input.TextArea
+                            rows={3}
+                            className="rounded-xl"
+                            placeholder="Indiquez ici toute précision utile concernant votre modification ou votre dossier..."
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-3 border-t border-amber-200">
                     <Button onClick={() => setIsEditing(false)} className="rounded-xl">
                       Annuler
                     </Button>
@@ -447,7 +622,7 @@ export function PublicSuiviDemandeModal({
                       onClick={handleSaveModifications}
                       className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 rounded-xl font-bold px-6 shadow-sm"
                     >
-                      Enregistrer les Modifications
+                      Enregistrer Toutes les Modifications
                     </Button>
                   </div>
                 </Form>
@@ -463,9 +638,14 @@ export function PublicSuiviDemandeModal({
                     <Descriptions.Item label="Souscripteur">
                       <strong className="text-slate-900">{demande.clientNom}</strong>
                     </Descriptions.Item>
-                    <Descriptions.Item label={demande.typeClient === "ENTREPRISE" ? "Identifiant ICE" : "Identifiant CIN"}>
+                    <Descriptions.Item label={isEntreprise ? "Identifiant ICE" : "Identifiant CIN"}>
                       <span className="font-mono font-bold text-slate-800">{demande.ice || demande.cin || "-"}</span>
                     </Descriptions.Item>
+                    {isEntreprise && (
+                      <Descriptions.Item label="Registre de Commerce (RC)">
+                        <span className="font-mono font-bold text-slate-800">{demande.rc || "-"}</span>
+                      </Descriptions.Item>
+                    )}
                     <Descriptions.Item label="Téléphone">
                       <span className="font-mono text-slate-800">{demande.telephone || "-"}</span>
                     </Descriptions.Item>
@@ -485,6 +665,14 @@ export function PublicSuiviDemandeModal({
                         {demande.immatriculation || "-"}
                       </Tag>
                     </Descriptions.Item>
+                    {demande.marque && (
+                      <Descriptions.Item label="Marque du Véhicule">
+                        <span className="font-semibold text-slate-800">{demande.marque}</span>
+                      </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label="Type de Véhicule">
+                      <span className="text-slate-800 font-medium">{demande.typeVehicule || "VOITURE"}</span>
+                    </Descriptions.Item>
                     <Descriptions.Item label="Parking d'Affectation">
                       <span className="font-bold text-slate-900 flex items-center gap-1">
                         <EnvironmentOutlined className="text-cyan-600" /> {demande.parkingNom}
@@ -495,17 +683,24 @@ export function PublicSuiviDemandeModal({
                     </Descriptions.Item>
                     <Descriptions.Item label="Durée de Souscription">
                       <Tag color="purple" className="font-bold m-0">
-                        {demande.dureeMois ? `${demande.dureeMois} Mois` : "Courte Durée"}
+                        {demande.dureeMois === 240 ? "240 Mois (20 Ans)" : demande.dureeMois ? `${demande.dureeMois} Mois` : "Courte Durée"}
                       </Tag>
                     </Descriptions.Item>
+                    {isEntreprise && (
+                      <Descriptions.Item label="Nombre de Places / Badges">
+                        <Tag color="blue" className="font-bold m-0">
+                          {demande.nombreAbonnements || 1} Places Flotte
+                        </Tag>
+                      </Descriptions.Item>
+                    )}
                     <Descriptions.Item label="Montant Net Total">
                       <strong className="text-secondary text-base font-black">
                         {(demande.montantTotal || 0).toLocaleString("fr-FR")} DH TTC
                       </strong>
                     </Descriptions.Item>
                     <Descriptions.Item label="Mode de Règlement">
-                      <Tag color={demande.paiementInfo?.modePaiement === "CHEQUE" ? "purple" : "green"} className="font-bold m-0">
-                        {demande.paiementInfo?.modePaiement === "CHEQUE" ? "Chèque Bancaire" : "Espèces (Guichet RRM)"}
+                      <Tag color={(demande.paiementInfo?.modePaiement || demande.modePaiement) === "CHEQUE" ? "purple" : "green"} className="font-bold m-0">
+                        {(demande.paiementInfo?.modePaiement || demande.modePaiement) === "CHEQUE" ? "Chèque Bancaire" : "Espèces (Guichet RRM)"}
                       </Tag>
                     </Descriptions.Item>
                   </Descriptions>
@@ -516,7 +711,7 @@ export function PublicSuiviDemandeModal({
                     type="info"
                     showIcon
                     className="rounded-xl text-xs"
-                    message="Dernière note client enregistrée"
+                    message="Précisions Client Enregistrées"
                     description={demande.commentaireCorrection}
                   />
                 )}
