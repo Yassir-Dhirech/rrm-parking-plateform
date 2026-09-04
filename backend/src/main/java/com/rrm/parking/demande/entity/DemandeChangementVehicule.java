@@ -100,7 +100,7 @@ public class DemandeChangementVehicule extends DemandeClient {
             String couleur,
             TypeVehicule type
     ) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
 
         this.nouvelleImmatriculation =
                 normaliserImmatriculation(immatriculation);

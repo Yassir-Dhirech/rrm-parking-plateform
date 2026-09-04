@@ -5,6 +5,9 @@ import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.paiement.enums.ModePaiement;
+import com.rrm.parking.vehicule.entity.Vehicule;
+import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
 
@@ -36,8 +39,29 @@ public class DemandeNouvelAbonnementRegulier
     )
     private AbonnementRegulier abonnementGenere;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "vehicule_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_demande_nouvel_abonnement_vehicule"
+            )
+    )
+    private Vehicule vehicule;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "mode_paiement_souhaite",
+            nullable = false,
+            length = 20,
+            columnDefinition = "VARCHAR(20)"
+    )
+    private ModePaiement modePaiementSouhaite;
+
     protected DemandeNouvelAbonnementRegulier() {
     }
+
+
 
     public DemandeNouvelAbonnementRegulier(
             String reference,
@@ -56,11 +80,7 @@ public class DemandeNouvelAbonnementRegulier
     public void selectionnerTarif(
             TarifParking tarifParking
     ) {
-        if (getStatut() != null) {
-            throw new IllegalStateException(
-                    "Le tarif ne peut plus être modifié après la soumission"
-            );
-        }
+        verifierModifiableAvantPaiement();
 
         this.tarifParking = Objects.requireNonNull(
                 tarifParking,
@@ -89,13 +109,77 @@ public class DemandeNouvelAbonnementRegulier
         );
     }
 
+    private void verifierVehiculeDuClient(Vehicule vehicule) {
+        Client clientDemande = getClient();
+        Client proprietaire = vehicule.getClient();
+
+        boolean memeClient =
+                clientDemande == proprietaire
+                        || (
+                        clientDemande != null
+                                && proprietaire != null
+                                && clientDemande.getId() != null
+                                && clientDemande.getId()
+                                .equals(proprietaire.getId())
+                );
+
+        if (!memeClient) {
+            throw new IllegalArgumentException(
+                    "Le véhicule n'appartient pas au client de la demande"
+            );
+        }
+    }
+
+    public void selectionnerVehicule(Vehicule vehicule) {
+        verifierModifiableAvantPaiement();
+
+        Vehicule vehiculeValide = Objects.requireNonNull(
+                vehicule,
+                "Le véhicule est obligatoire"
+        );
+
+        verifierVehiculeDuClient(vehiculeValide);
+        this.vehicule = vehiculeValide;
+    }
+
+    public void choisirModePaiement(
+            ModePaiement modePaiement
+    ) {
+        verifierModifiableAvantPaiement();
+
+        this.modePaiementSouhaite = Objects.requireNonNull(
+                modePaiement,
+                "Le mode de paiement souhaité est obligatoire"
+        );
+    }
+
     @PrePersist
     private void verifierAvantCreation() {
         if (tarifParking == null) {
             throw new IllegalStateException(
-                    "Un tarif doit être sélectionné avant l'enregistrement"
+                    "Un tarif doit être sélectionné"
             );
         }
+
+        if (vehicule == null) {
+            throw new IllegalStateException(
+                    "Un véhicule doit être sélectionné"
+            );
+        }
+
+        if (modePaiementSouhaite == null) {
+            throw new IllegalStateException(
+                    "Le mode de paiement souhaité est obligatoire"
+            );
+        }
+    }
+
+    public Vehicule getVehicule() {
+        return vehicule;
+    }
+
+    public ModePaiement getModePaiementSouhaite() {
+        return modePaiementSouhaite;
     }
 
     public TarifParking getTarifParking() {

@@ -86,7 +86,7 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
     }
 
     public void selectionnerTarif(TarifParking tarif) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
 
         this.tarifParking = exigerNonNull(
                 tarif,
@@ -95,7 +95,7 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
     }
 
     public void ajouterVehicule(Vehicule vehicule) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
 
         Vehicule vehiculeValide = exigerNonNull(
                 vehicule,
@@ -107,7 +107,7 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
     }
 
     public void retirerVehicule(Vehicule vehicule) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
 
         if (vehicule == null) {
             return;
