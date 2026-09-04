@@ -142,12 +142,6 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
                     "Le tarif corporate est obligatoire"
             );
         }
-
-        if (vehiculesSelectionnes.isEmpty()) {
-            throw new IllegalStateException(
-                    "La demande corporate doit sélectionner au moins un véhicule"
-            );
-        }
     }
 
     private void verifierVehiculeEntreprise(Vehicule vehicule) {
