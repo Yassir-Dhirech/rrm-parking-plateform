@@ -29,7 +29,12 @@ public class Role {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 60)
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 50,
+            columnDefinition = "VARCHAR(50)"
+    )
     private CodeRole code;
 
     @Column(nullable = false, length = 150)

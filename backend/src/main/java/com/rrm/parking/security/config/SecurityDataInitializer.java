@@ -44,12 +44,6 @@ public class SecurityDataInitializer
     @Transactional
     public void run(ApplicationArguments args) {
 
-        if (!enabled) {
-            return;
-        }
-
-        verifierConfiguration();
-
         List<Permission> permissions = Arrays
                 .stream(CodePermission.values())
                 .map(this::obtenirOuCreerPermission)
@@ -67,6 +61,12 @@ public class SecurityDataInitializer
                 .addAll(permissions);
 
         roleRepository.save(roleAdministrateur);
+
+        if (!enabled) {
+            return;
+        }
+
+        verifierConfiguration();
 
         String emailNormalise = adminEmail
                 .trim()
