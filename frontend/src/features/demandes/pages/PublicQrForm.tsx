@@ -46,6 +46,7 @@ import { submitPublicDemande } from "../../../api/demandes";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
+import { PublicSuiviDemandeModal } from "../components/PublicSuiviDemandeModal";
 
 const { Option } = Select;
 
@@ -163,6 +164,7 @@ export function PublicQrForm() {
 
   // OTP Modal State
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [isSuiviOpen, setIsSuiviOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<any>(null);
   const [submittedResult, setSubmittedResult] = useState<any>(null);
 
@@ -548,8 +550,16 @@ export function PublicQrForm() {
               </p>
             </div>
 
-            {/* BETA Test Autofill Action */}
-            <div className="w-full sm:w-auto shrink-0">
+            {/* Actions: Suivi / Modification & BETA Test Autofill */}
+            <div className="w-full sm:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <Button
+                size="large"
+                icon={<SearchOutlined />}
+                onClick={() => setIsSuiviOpen(true)}
+                className="w-full sm:w-auto bg-white hover:bg-slate-50 border-secondary text-secondary font-extrabold rounded-2xl px-5 shadow-sm inline-flex items-center justify-center gap-2 h-12 text-xs"
+              >
+                Suivre ou Modifier Ma Demande
+              </Button>
               <Button
                 size="large"
                 icon={<ThunderboltOutlined />}
@@ -1917,6 +1927,12 @@ export function PublicQrForm() {
         }}
         phone={pendingValues?.telephone || "0661234567"}
         referenceNumber={submittedResult?.reference}
+      />
+
+      {/* Public Suivi & Modification Modal */}
+      <PublicSuiviDemandeModal
+        open={isSuiviOpen}
+        onClose={() => setIsSuiviOpen(false)}
       />
 
       <PublicFooter />

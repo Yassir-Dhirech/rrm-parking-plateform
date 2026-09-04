@@ -278,7 +278,12 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
   const q = query.trim().toUpperCase();
   if (!q) return null;
   const found = Object.values(mockDemandesStore).find(
-    (d) => d.reference.toUpperCase() === q || d.email.toUpperCase() === q
+    (d) =>
+      d.reference.toUpperCase() === q ||
+      d.email.toUpperCase() === q ||
+      d.telephone === q ||
+      (d.cin && d.cin.toUpperCase() === q) ||
+      (d.ice && d.ice === q)
   );
   if (!found) return null;
   return {
@@ -291,6 +296,26 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
         }
       : undefined,
   };
+}
+
+export async function updatePublicDemandeMock(reference: string, updates: Partial<DemandeDetail>): Promise<DemandeDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const refClean = reference.trim().toUpperCase();
+  const entry = Object.entries(mockDemandesStore).find(([_, d]) => d.reference.toUpperCase() === refClean);
+  if (!entry) {
+    throw new Error(`Dossier avec la référence ${reference} introuvable.`);
+  }
+  const [idStr, currentDemande] = entry;
+  const id = Number(idStr);
+
+  const updated: DemandeDetail = {
+    ...currentDemande,
+    ...updates,
+    statut: currentDemande.statut === "REJETEE" ? "CORRIGEE" : currentDemande.statut,
+  };
+
+  mockDemandesStore[id] = updated;
+  return updated;
 }
 
 export async function validerDemandeMock(id: number, _decision?: any, _validePar?: string): Promise<void> {

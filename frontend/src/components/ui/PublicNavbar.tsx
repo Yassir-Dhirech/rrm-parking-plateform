@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Dropdown, Drawer, Button, type MenuProps } from "antd";
-import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, InfoCircleOutlined, EnvironmentOutlined, FormOutlined } from "@ant-design/icons";
+import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, InfoCircleOutlined, EnvironmentOutlined, FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
+import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
 
 export function PublicNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [isSuiviOpen, setIsSuiviOpen] = useState(false);
 
   const isHome = location.pathname === "/";
 
@@ -93,6 +95,14 @@ export function PublicNavbar() {
             >
               <span>Abonnement & Démarches</span>
             </button>
+
+            <button
+              onClick={() => setIsSuiviOpen(true)}
+              className="flex items-center gap-1.5 font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors text-on-surface-variant hover:text-secondary hover:bg-white/40"
+            >
+              <SearchOutlined />
+              <span>Suivi de Demande</span>
+            </button>
           </nav>
 
           {/* Action Button: Personnel RRM (Desktop: Text + Icon, Mobile: Blue Icon Button Only) */}
@@ -160,6 +170,13 @@ export function PublicNavbar() {
             <FormOutlined className="text-base text-secondary" />
             <span>Souscription Abonnement</span>
           </button>
+          <button
+            onClick={() => { setIsSuiviOpen(true); setMobileDrawerOpen(false); }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-secondary border-none bg-secondary/5 cursor-pointer text-left w-full"
+          >
+            <SearchOutlined className="text-base text-secondary" />
+            <span>Suivi & Modification Demande</span>
+          </button>
           <div className="pt-4 border-t border-slate-200 mt-2">
             <button
               onClick={() => { navigate("/login"); setMobileDrawerOpen(false); }}
@@ -171,6 +188,9 @@ export function PublicNavbar() {
           </div>
         </div>
       </Drawer>
+
+      {/* Suivi et Gestion de Demande Modal */}
+      <PublicSuiviDemandeModal open={isSuiviOpen} onClose={() => setIsSuiviOpen(false)} />
     </>
   );
 }
