@@ -76,9 +76,14 @@ export function PublicFooter() {
                   <span>•</span> Demande d'Abonnement En Ligne
                 </Link>
               </li>
-              <li className="pt-2 border-t border-slate-800/60">
-                <Link to="/login" className="text-amber-400 hover:text-amber-300 transition-colors font-bold flex items-center gap-1.5">
-                  <LockOutlined /> Espace personnel RRM →
+              <li className="pt-3 border-t border-slate-800/60">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                >
+                  <LockOutlined />
+                  <span>Espace Personnel RRM</span>
+                  <ArrowRightOutlined className="text-[10px]" />
                 </Link>
               </li>
             </ul>
