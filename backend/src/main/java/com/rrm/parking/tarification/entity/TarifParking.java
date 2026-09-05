@@ -19,10 +19,11 @@ import java.time.LocalDateTime;
         name = "tarif_parking",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_tarif_parking_forfait_date",
+                        name = "uk_tarif_parking_forfait_duree_date",
                         columnNames = {
                                 "parking_id",
                                 "forfait_id",
+                                "duree_en_mois",
                                 "date_debut_validite"
                         }
                 )

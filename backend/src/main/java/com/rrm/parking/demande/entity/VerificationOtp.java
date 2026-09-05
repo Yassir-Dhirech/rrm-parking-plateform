@@ -3,6 +3,7 @@ package com.rrm.parking.demande.entity;
 import com.rrm.parking.demande.enums.CanalOtp;
 import com.rrm.parking.demande.enums.StatutOtp;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -23,8 +24,6 @@ import java.util.Objects;
 )
 public class VerificationOtp {
 
-    private static final int NOMBRE_MAX_TENTATIVES = 5;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,16 +31,27 @@ public class VerificationOtp {
     @Column(nullable = false, length = 255)
     private String codeHash;
 
+    @NotNull(message = "Le canal d'envoi du code OTP est obligatoire")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(
+            nullable = false,
+            length = 20,
+            columnDefinition = "VARCHAR(20)"
+    )
     private CanalOtp canal;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(
+            nullable = false,
+            length = 20,
+            columnDefinition = "VARCHAR(20)"
+    )
     private StatutOtp statut;
 
     @Column(nullable = false)
     private Integer nombreTentatives;
+
+    private static final int NOMBRE_MAX_TENTATIVES = 3;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;
@@ -118,6 +128,18 @@ public class VerificationOtp {
                 .isAfter(dateExpiration);
     }
 
+    public void marquerExpire() {
+        verifierEnAttente();
+        statut = StatutOtp.EXPIRE;
+    }
+
+    public int getNombreTentativesRestantes() {
+        return Math.max(
+                0,
+                NOMBRE_MAX_TENTATIVES - nombreTentatives
+        );
+    }
+
     public void enregistrerEchec() {
         verifierEnAttente();
 
@@ -133,6 +155,8 @@ public class VerificationOtp {
             statut = StatutOtp.BLOQUE;
         }
     }
+
+
 
     public void marquerValide() {
         verifierEnAttente();
