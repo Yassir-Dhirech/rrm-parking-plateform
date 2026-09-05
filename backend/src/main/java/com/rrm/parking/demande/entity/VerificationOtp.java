@@ -109,6 +109,13 @@ public class VerificationOtp {
         this.nombreTentatives = 0;
     }
 
+    public int getTentativesRestantes() {
+        return Math.max(
+                0,
+                NOMBRE_MAX_TENTATIVES - nombreTentatives
+        );
+    }
+
     @PrePersist
     protected void avantCreation() {
         if (statut == null) {
@@ -132,6 +139,8 @@ public class VerificationOtp {
         verifierEnAttente();
         statut = StatutOtp.EXPIRE;
     }
+
+
 
     public int getNombreTentativesRestantes() {
         return Math.max(

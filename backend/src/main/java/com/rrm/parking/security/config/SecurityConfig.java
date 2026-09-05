@@ -40,14 +40,12 @@ public class SecurityConfig {
                         )
                 )
 
-                .authorizeHttpRequests(authorize ->
-                        authorize
-                                .requestMatchers(
-                                        HttpMethod.POST,
-                                        "/api/v1/auth/login"
-                                ).permitAll()
-                                .requestMatchers("/error").permitAll()
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/**"
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 )
 
                 .oauth2ResourceServer(oauth2 ->

@@ -2,6 +2,7 @@ package com.rrm.parking.demande.dto.request;
 
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.vehicule.enums.TypeVehicule;
+import com.rrm.parking.demande.enums.CanalOtp;
 import jakarta.validation.constraints.*;
 
 public record DemandeAbonnementRegulierRequest(
@@ -20,8 +21,8 @@ public record DemandeAbonnementRegulierRequest(
 
         @NotBlank(message = "Le téléphone est obligatoire")
         @Pattern(
-                regexp = "^(\\+212|0)[5-7][0-9]{8}$",
-                message = "Le numéro de téléphone marocain est invalide"
+                regexp = "^(?:0[67][0-9]{8}|\\+[1-9][0-9]{7,14})$",
+                message = "Le téléphone doit être un numéro marocain mobile ou un numéro international au format + indicatif"
         )
         String telephone,
 
@@ -66,6 +67,10 @@ public record DemandeAbonnementRegulierRequest(
 
         @NotNull(message = "Le mode de paiement est obligatoire")
         ModePaiement modePaiement,
+
+
+        @NotNull(message = "Le canal OTP est obligatoire")
+        CanalOtp canalOtp,
 
         @AssertTrue(
                 message = "Les conditions générales doivent être acceptées"

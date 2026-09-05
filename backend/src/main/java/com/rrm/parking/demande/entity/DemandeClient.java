@@ -204,7 +204,8 @@ public abstract class DemandeClient {
     }
 
     protected void verifierModifiableAvantPaiement() {
-        if (statut != StatutDemande.SOUMISE
+        if (statut != null
+                && statut != StatutDemande.SOUMISE
                 && statut != StatutDemande.EN_ATTENTE_PAIEMENT) {
             throw new IllegalStateException(
                     "La demande ne peut plus être modifiée après le paiement"

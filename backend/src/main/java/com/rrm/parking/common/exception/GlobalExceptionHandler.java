@@ -215,4 +215,25 @@ public class GlobalExceptionHandler {
 
         return probleme;
     }
+
+    @ExceptionHandler(OtpEnvoiException.class)
+    public ProblemDetail gererErreurEnvoiOtp(
+            OtpEnvoiException exception
+    ) {
+        ProblemDetail probleme =
+                ProblemDetail.forStatus(
+                        HttpStatus.BAD_GATEWAY
+                );
+
+        probleme.setTitle(
+                "Service OTP indisponible"
+        );
+
+        probleme.setDetail(
+                "Le code OTP n'a pas pu être envoyé. "
+                        + "Veuillez réessayer ultérieurement."
+        );
+
+        return probleme;
+    }
 }

@@ -1,0 +1,38 @@
+parkingCode;forfaitCode;libelle;placeReservee;prixMensuelHT
+BAB_EL_HAD;NUIT_5J_20H_08H;Nuit 5j/7 hors week-end 20h-08h;false;300.00
+BAB_EL_HAD;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;350.00
+BAB_EL_HAD;NUIT_5J_WE_24H;Nuit 5j/7 20h-08h et week-end 24h/24;false;450.00
+BAB_EL_HAD;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;500.00
+BAB_EL_HAD;JOUR_7J_08H_22H;Jour 7j/7 08h-22h;false;550.00
+BAB_EL_HAD;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;650.00
+BAB_EL_HAD;H24_RESERVEE;24h/24 et 7j/7 place réservée;true;1000.00
+BAB_CHELLAH;NUIT_5J_20H_08H;Nuit 5j/7 hors week-end 20h-08h;false;300.00
+BAB_CHELLAH;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;350.00
+BAB_CHELLAH;NUIT_5J_WE_24H;Nuit 5j/7 20h-08h et week-end 24h/24;false;450.00
+BAB_CHELLAH;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;500.00
+BAB_CHELLAH;JOUR_7J_08H_22H;Jour 7j/7 08h-22h;false;550.00
+BAB_CHELLAH;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;650.00
+BAB_CHELLAH;H24_RESERVEE;24h/24 et 7j/7 place réservée;true;1000.00
+PLACE_RUSSIE;NUIT_5J_20H_08H;Nuit 5j/7 hors week-end 20h-08h;false;300.00
+PLACE_RUSSIE;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;350.00
+PLACE_RUSSIE;NUIT_5J_WE_24H;Nuit 5j/7 20h-08h et week-end 24h/24;false;450.00
+PLACE_RUSSIE;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;500.00
+PLACE_RUSSIE;JOUR_7J_08H_22H;Jour 7j/7 08h-22h;false;550.00
+PLACE_RUSSIE;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;650.00
+PLACE_RUSSIE;H24_RESERVEE;24h/24 et 7j/7 place réservée;true;1000.00
+RUE_BRUXELLES;NUIT_5J_20H_08H;Nuit 5j/7 hors week-end 20h-08h;false;300.00
+RUE_BRUXELLES;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;350.00
+RUE_BRUXELLES;NUIT_5J_WE_24H;Nuit 5j/7 20h-08h et week-end 24h/24;false;450.00
+RUE_BRUXELLES;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;500.00
+RUE_BRUXELLES;JOUR_7J_08H_22H;Jour 7j/7 08h-22h;false;550.00
+RUE_BRUXELLES;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;650.00
+RUE_BRUXELLES;H24_RESERVEE;24h/24 et 7j/7 place réservée;true;1000.00
+THEATRE_MOHAMMED_V;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;500.00
+THEATRE_MOHAMMED_V;H24_7J_STANDARD;24h/24 et 7j/7;false;700.00
+THEATRE_MOHAMMED_V;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;270.00
+BAB_FES;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;350.00
+BAB_FES;RAHTI;Rahti - nuit 7j/7 18h-09h et week-end 24h/24;false;300.00
+BAB_FES;TAJIR;Tajir - jour 7j/7 08h-22h;false;300.00
+BAB_FES;H24_RESERVEE;24h/24 et 7j/7 place réservée;true;1000.00
+HARHOURA_NORD;JOUR_7J_08H_20H;Jour 7j/7 08h-20h;false;350.00
+HARHOURA_NORD;H24_NON_RESERVEE;24h/24 et 7j/7 place non réservée;false;500.00

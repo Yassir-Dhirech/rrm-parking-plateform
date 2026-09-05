@@ -48,7 +48,12 @@ public class PieceJointe {
     private String reference;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type_piece", nullable = false, length = 40)
+    @Column(
+            name = "type_piece",
+            nullable = false,
+            length = 50,
+            columnDefinition = "VARCHAR(50)"
+    )
     private TypePieceJointe typePiece;
 
     @Enumerated(EnumType.STRING)
