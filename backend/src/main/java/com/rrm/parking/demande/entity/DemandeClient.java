@@ -83,6 +83,8 @@ public abstract class DemandeClient {
     )
     private Utilisateur initieePar;
 
+    private LocalDateTime dateValidationOtp;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 
@@ -170,6 +172,88 @@ public abstract class DemandeClient {
         );
     }
 
+    public void confirmerOtp() {
+        verifierStatutActuel(StatutDemande.SOUMISE);
+
+        dateValidationOtp = LocalDateTime.now();
+
+        appliquerTransition(
+                StatutDemande.EN_ATTENTE_PAIEMENT,
+                OrigineTransition.CLIENT,
+                null,
+                "Validation du code OTP"
+        );
+    }
+
+    public void marquerPayee(Utilisateur agent) {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_PAIEMENT
+        );
+
+        Objects.requireNonNull(
+                agent,
+                "L'agent ayant enregistré le paiement est obligatoire"
+        );
+
+        appliquerTransition(
+                StatutDemande.PAYEE,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                agent,
+                "Paiement enregistré"
+        );
+    }
+
+    protected void verifierModifiableAvantPaiement() {
+        if (statut != StatutDemande.SOUMISE
+                && statut != StatutDemande.EN_ATTENTE_PAIEMENT) {
+            throw new IllegalStateException(
+                    "La demande ne peut plus être modifiée après le paiement"
+            );
+        }
+    }
+
+    private void verifierStatutActuel(
+            StatutDemande statutAttendu
+    ) {
+        if (statut != statutAttendu) {
+            throw new IllegalStateException(
+                    "Opération impossible depuis le statut " + statut
+            );
+        }
+    }
+
+    public void valider(
+            Utilisateur utilisateur,
+            String commentaire
+    ) {
+        verifierStatutActuel(StatutDemande.PAYEE);
+
+        Objects.requireNonNull(
+                utilisateur,
+                "L'utilisateur ayant validé la demande est obligatoire"
+        );
+
+        appliquerTransition(
+                StatutDemande.VALIDEE,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                utilisateur,
+                commentaire
+        );
+    }
+
+    public void expirer() {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_PAIEMENT
+        );
+
+        appliquerTransition(
+                StatutDemande.EXPIREE,
+                OrigineTransition.SYSTEME,
+                null,
+                "Demande expirée faute de paiement sous sept jours"
+        );
+    }
+
     public void changerStatut(
             StatutDemande nouveauStatut,
             OrigineTransition origine,
@@ -235,6 +319,10 @@ public abstract class DemandeClient {
         );
     }
 
+    public LocalDateTime getDateValidationOtp() {
+        return dateValidationOtp;
+    }
+
     private void appliquerTransition(
             StatutDemande nouveauStatut,
             OrigineTransition origine,
@@ -294,6 +382,7 @@ public abstract class DemandeClient {
     public boolean estTerminee() {
         return statut == StatutDemande.VALIDEE
                 || statut == StatutDemande.REFUSEE
+                || statut == StatutDemande.EXPIREE
                 || statut == StatutDemande.ANNULEE;
     }
 

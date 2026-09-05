@@ -4,6 +4,9 @@ public enum TypePieceJointe {
     CIN_RECTO,
     CIN_VERSO,
 
+    CARTE_GRISE_RECTO,
+    CARTE_GRISE_VERSO,
+
     JUSTIFICATIF_DOMICILE,
 
     REGISTRE_COMMERCE,
@@ -15,5 +18,8 @@ public enum TypePieceJointe {
     COPIE_CHEQUE,
     JUSTIFICATIF_PAIEMENT,
 
-    AUTRE
+    AUTRE,
+
+    FACTURE_SIGNEE,
+    DECHARGE_REMISE_CORPORATE
 }
