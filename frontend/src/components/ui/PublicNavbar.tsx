@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dropdown, Drawer, Button, type MenuProps } from "antd";
-import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, EnvironmentOutlined, FormOutlined, SearchOutlined } from "@ant-design/icons";
+import { DownOutlined, MenuOutlined, HomeOutlined, EnvironmentOutlined, FormOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
 
@@ -97,26 +97,6 @@ export function PublicNavbar() {
             </button>
           </nav>
 
-          {/* Action Button: Personnel RRM (Desktop: Text + Icon, Mobile: Blue Icon Button Only) */}
-          <div className="flex items-center">
-            {/* Desktop Full Pill */}
-            <button
-              onClick={() => navigate("/login")}
-              className="hidden sm:flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-xs cursor-pointer border-none"
-            >
-              <UserOutlined style={{ fontSize: "14px" }} />
-              <span>Personnel RRM</span>
-            </button>
-
-            {/* Mobile Phone: Blue Circle Icon Button Only */}
-            <button
-              onClick={() => navigate("/login")}
-              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-slate-900 text-white shadow-xs cursor-pointer border-none transition-all"
-              title="Connexion Espace RRM"
-            >
-              <UserOutlined style={{ fontSize: "16px" }} />
-            </button>
-          </div>
         </div>
       </header>
 
@@ -162,15 +142,6 @@ export function PublicNavbar() {
             <SearchOutlined className="text-base text-secondary" />
             <span>Suivi & Modification Demande</span>
           </button>
-          <div className="pt-4 border-t border-slate-200 mt-2">
-            <button
-              onClick={() => { navigate("/login"); setMobileDrawerOpen(false); }}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer border-none"
-            >
-              <UserOutlined />
-              <span>Connexion Personnel RRM</span>
-            </button>
-          </div>
         </div>
       </Drawer>
 
