@@ -13,8 +13,8 @@ import org.springframework.web.client.RestClient;
         BrevoProperties.class
 )
 @ConditionalOnProperty(
-        name = "app.otp.provider",
-        havingValue = "brevo"
+        name = "app.integration.brevo.enabled",
+        havingValue = "true"
 )
 public class BrevoConfiguration {
 
