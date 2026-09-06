@@ -21,33 +21,24 @@ export function PublicFooter() {
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -z-0"></div>
 
       <div className="max-w-[1500px] mx-auto px-4 md:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-12 border-b border-slate-800/80">
           {/* Column 1: Operator Identity */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-24 h-14 rounded-2xl bg-transparent p-2 flex items-center justify-center ">
+              <div className="w-200 h-200 rounded-2xl bg-transparent drop-shadow-md shadow-white p-2 flex items-center justify-center ">
                 <img
                   src="/pictures/logo-rrm.png"
                   alt="Rabat Région Mobilité"
-                  className="h-full w-auto object-contain drop-shadow-sm"
+                  className="h-full w-auto object-contain drop-shadow-white/50"
                 />
         
               </div>
               
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Opérateur délégué et gestionnaire du réseau des parkings en ouvrage et relais de la métropole de Rabat-Salé-Kénitra.
-            </p>
+            
 
-            <div className="pt-2">
-              <Tag
-                color="cyan"
-                className="px-3 py-1 rounded-full font-bold border-none bg-cyan-950 text-cyan-300 text-xs inline-flex items-center gap-1.5"
-              >
-                <SafetyCertificateOutlined /> Opérateur Régional Certifié
-              </Tag>
-            </div>
+            
           </div>
 
           {/* Column 2: Navigation & Quick Links */}
@@ -115,29 +106,8 @@ export function PublicFooter() {
           </div>
 
           {/* Column 4: Quick Action CTA */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-4">
-              Souscription Rapide
-            </h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Souscrivez en 4 étapes simples et récupérez votre badge RFID au guichet de votre parking d'affectation.
-            </p>
-
-            <button
-              onClick={() => navigate("/demande-publique")}
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl py-3 px-4 text-xs shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer border-none"
-            >
-              <span>Faire une Demande En Ligne</span>
-              <ArrowRightOutlined />
-            </button>
-
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <Tag className="bg-slate-900 border-slate-800 text-slate-400 text-[11px] m-0">Pass 24h/7j</Tag>
-              <Tag className="bg-slate-900 border-slate-800 text-slate-400 text-[11px] m-0">Diurne</Tag>
-              <Tag className="bg-slate-900 border-slate-800 text-slate-400 text-[11px] m-0">Nocturne</Tag>
-              <Tag className="bg-slate-900 border-slate-800 text-slate-400 text-[11px] m-0">Flottes Corporate</Tag>
-            </div>
-          </div>
+          
+          
         </div>
 
         {/* Bottom Sub-Footer Bar */}
