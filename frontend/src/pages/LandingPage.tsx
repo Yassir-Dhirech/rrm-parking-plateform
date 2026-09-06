@@ -6,7 +6,6 @@ import {
   FileTextOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
-  CheckCircleOutlined,
   BuildOutlined,
   SafetyCertificateOutlined,
   ArrowRightOutlined,
