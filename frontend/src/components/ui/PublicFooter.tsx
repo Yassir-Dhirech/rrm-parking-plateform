@@ -1,17 +1,15 @@
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
-  
   CarOutlined,
   LockOutlined,
   ArrowRightOutlined,
 } from "@ant-design/icons";
 
 export function PublicFooter() {
-  const navigate = useNavigate();
 
   return (
     <footer className="bg-slate-950 text-slate-300 relative overflow-hidden border-t border-slate-800/80 mt-28 pt-16 pb-8 w-full">
