@@ -1,11 +1,10 @@
 import { useNavigate, Link } from "react-router-dom";
-import { Tag } from "antd";
 import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
-  SafetyCertificateOutlined,
+  
   CarOutlined,
   LockOutlined,
   ArrowRightOutlined,
