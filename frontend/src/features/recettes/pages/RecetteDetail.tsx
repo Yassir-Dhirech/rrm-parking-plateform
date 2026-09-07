@@ -47,9 +47,9 @@ export function RecetteDetail() {
 
   const handleMarkAsCompleted = () => {
     Modal.confirm({
-      title: "Finaliser l'Arrêté de Recette (Set to COMPLETED)",
-      content: `Clôturer la collecte en cours pour ${recette.parkingNom} (${recette.semaineAnnee}) et transmettre l'arrêté de caisse (${recette.totalHebdo.toLocaleString("fr-FR")} DH) au statut COMPLETED ?`,
-      okText: "Finaliser & Passer à COMPLETED",
+      title: "Finaliser l'Arrêté de Recette",
+      content: `Clôturer la collecte en cours pour ${recette.parkingNom} — ${recette.semaineAnnee} et transmettre l'arrêté de caisse de ${recette.totalHebdo.toLocaleString("fr-FR")} DH au statut Complété ?`,
+      okText: "Finaliser la Recette",
       cancelText: "Annuler",
       onOk: () => markCompletedMutation.mutateAsync(recette.id),
     });
@@ -57,9 +57,9 @@ export function RecetteDetail() {
 
   const handleMarkAsReceived = () => {
     Modal.confirm({
-      title: "Confirmer la Réception des Fonds (Set to RECEIVED)",
-      content: `Certifier la réception physique des espèces (${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH) et des ${recette.nombreCheques || 0} chèque(s) par le service comptabilité ?`,
-      okText: "Marquer comme Reçue (RECEIVED)",
+      title: "Confirmer la Réception des Fonds",
+      content: `Certifier la réception physique des espèces de ${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH et des ${recette.nombreCheques || 0} chèques par le service comptabilité ?`,
+      okText: "Confirmer la Réception",
       cancelText: "Annuler",
       onOk: () => markReceivedMutation.mutateAsync(recette.id),
     });
@@ -69,25 +69,25 @@ export function RecetteDetail() {
     { title: "Date", dataIndex: "date", key: "date", render: (d: string) => formatDate(d) },
     { title: "Transactions", dataIndex: "nombreTransactions", key: "nombreTransactions" },
     {
-      title: "Espèces Liquide (DH)",
+      title: "Espèces",
       dataIndex: "montantEspeces",
       key: "montantEspeces",
       render: (v: number) => <span style={{ color: "#16a34a", fontWeight: 600 }}>{(v || 0).toLocaleString("fr-FR")} DH</span>,
     },
     {
-      title: "Chèques Physiques (DH)",
+      title: "Chèques",
       dataIndex: "montantCheque",
       key: "montantCheque",
       render: (v: number) => <span style={{ color: "#9333ea", fontWeight: 600 }}>{(v || 0).toLocaleString("fr-FR")} DH</span>,
     },
     {
-      title: "TPE / Carte (DH)",
+      title: "TPE / Carte",
       dataIndex: "montantCarte",
       key: "montantCarte",
       render: (v: number) => (v || 0).toLocaleString("fr-FR"),
     },
     {
-      title: "Total Journée (DH)",
+      title: "Total Journée",
       dataIndex: "totalJournee",
       key: "totalJournee",
       render: (v: number) => <strong style={{ color: "#0369a1" }}>{v.toLocaleString("fr-FR")} DH</strong>,
@@ -208,8 +208,8 @@ export function RecetteDetail() {
           <Alert
             type="success"
             showIcon
-            message={`Statut : RECEIVED — Recette Reçue & Validée par la Comptabilité (Quittance N° ${recette.quittanceNumero || "QUIT-2026-00481"})`}
-            description={`La somme en espèces (${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH) et les ${recette.nombreCheques || 0} chèque(s) physique(s) (${(recette.totalCheques || 0).toLocaleString("fr-FR")} DH) ont été réceptionnés et confirmés par le service comptable.`}
+            message={`Statut : RECEIVED — Recette Reçue & Validée par la Comptabilité — Quittance N° ${recette.quittanceNumero || "QUIT-2026-00481"}`}
+            description={`La somme en espèces de ${(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH et les ${recette.nombreCheques || 0} chèques pour un montant de ${(recette.totalCheques || 0).toLocaleString("fr-FR")} DH ont été réceptionnés et confirmés par le service comptable.`}
             style={{ marginBottom: 20 }}
           />
         )}
@@ -243,12 +243,12 @@ export function RecetteDetail() {
           <Descriptions.Item label="Transmission Comptable">{recette.transmisPar || "En attente"}</Descriptions.Item>
           {recette.validePar && (
             <Descriptions.Item label="Complété par Superviseur">
-              {recette.validePar} (le {formatDate(recette.dateValidation)})
+              {recette.validePar} — le {formatDate(recette.dateValidation)}
             </Descriptions.Item>
           )}
           {recette.comptableNom && (
             <Descriptions.Item label="Reçu par Comptabilité">
-              {recette.comptableNom} (le {formatDate(recette.dateEncaissementComptable)})
+              {recette.comptableNom} — le {formatDate(recette.dateEncaissementComptable)}
             </Descriptions.Item>
           )}
         </Descriptions>
@@ -257,13 +257,13 @@ export function RecetteDetail() {
         <Row gutter={16} style={{ marginBottom: 20 }}>
           <Col span={8}>
             <Card size="small" style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}>
-              <div style={{ fontSize: 12, color: "#166534" }}><BankOutlined /> Espèces Liquide :</div>
+              <div style={{ fontSize: 12, color: "#166534" }}><BankOutlined /> Espèces :</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#15803d" }}>{(recette.totalEspeces || 0).toLocaleString("fr-FR")} DH</div>
             </Card>
           </Col>
           <Col span={8}>
             <Card size="small" style={{ backgroundColor: "#faf5ff", borderColor: "#e9d5ff" }}>
-              <div style={{ fontSize: 12, color: "#6b21a8" }}><FileTextOutlined /> Chèques Physiques ({recette.nombreCheques || 0}) :</div>
+              <div style={{ fontSize: 12, color: "#6b21a8" }}><FileTextOutlined /> Chèques : {recette.nombreCheques || 0}</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#7e22ce" }}>{(recette.totalCheques || 0).toLocaleString("fr-FR")} DH</div>
             </Card>
           </Col>
@@ -379,11 +379,11 @@ export function RecetteDetail() {
 
         <div style={{ marginTop: 12 }}>
           <label style={{ fontWeight: 600, display: "block", marginBottom: 6 }}>
-            Motif de Rejet par la Banque (Requis) :
+            Motif de Rejet par la Banque :
           </label>
           <Input.TextArea
             rows={3}
-            placeholder="Ex: Chèque sans provision (Attijariwafa Bank), signature non conforme, compte clôturé..."
+            placeholder="Ex: Chèque sans provision, signature non conforme, compte clôturé..."
             value={motifRejetInput}
             onChange={(e) => setMotifRejetInput(e.target.value)}
           />

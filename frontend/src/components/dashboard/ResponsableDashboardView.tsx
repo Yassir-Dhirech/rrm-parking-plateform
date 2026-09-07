@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table, Dropdown, Badge, message } from "antd";
 import {
-  RiseOutlined,
   FileTextOutlined,
   DollarOutlined,
   SafetyCertificateOutlined,
-  ArrowUpOutlined,
   FileDoneOutlined,
-  IdcardOutlined,
   ApartmentOutlined,
   TagsOutlined,
   SettingOutlined,
@@ -19,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
+import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
@@ -35,7 +33,7 @@ export function ResponsableDashboardView() {
     setTimeout(() => {
       setIsRefreshing(false);
       if (wasFiltered) {
-        message.success("Filtre réinitialisé : Vue globale réseau (Tous les parkings)");
+        message.success("Filtre réinitialisé : Vue globale réseau");
       } else {
         message.success("Indicateurs actualisés en temps réel");
       }
@@ -46,15 +44,6 @@ export function ResponsableDashboardView() {
     setSelectedParkingForPlans(parking);
     setPlansModalOpen(true);
   };
-
-  // Base Monthly Trend Template (proportional scaling based on active filter)
-  const baseMonthlyRevenueData = [
-    { month: "Avr", corporate: 180000, particuliers: 290000, tickets: 160000, total: 630000 },
-    { month: "Mai", corporate: 210000, particuliers: 305000, tickets: 165000, total: 680000 },
-    { month: "Juin", corporate: 230000, particuliers: 315000, tickets: 175000, total: 720000 },
-    { month: "Juil", corporate: 245000, particuliers: 310000, tickets: 190000, total: 745000 },
-    { month: "Août", corporate: 260000, particuliers: 320000, tickets: 168500, total: 748500 },
-  ];
 
   // Real-Time Quota & Saturation Pressure Data with per-site metrics
   const parkingsCapacityData = [
@@ -173,35 +162,11 @@ export function ResponsableDashboardView() {
   const totalCA = displayedParkings.reduce((sum, p) => sum + p.caMensuel, 0);
   const totalCAAbos = displayedParkings.reduce((sum, p) => sum + p.caAbos, 0);
   const totalCATickets = displayedParkings.reduce((sum, p) => sum + p.caTickets, 0);
-  const pctAbos = Math.round((totalCAAbos / totalCA) * 100) || 77;
-  const pctTickets = 100 - pctAbos;
-
-  const totalCAEspeces = displayedParkings.reduce((sum, p) => sum + p.caEspeces, 0);
-  const totalCACheques = displayedParkings.reduce((sum, p) => sum + p.caCheques, 0);
-  const pctEspeces = Math.round((totalCAEspeces / totalCA) * 100) || 58;
-  const pctCheques = 100 - pctEspeces;
 
   const totalCorporateCount = displayedParkings.reduce((sum, p) => sum + p.contratsCorporate, 0);
   const totalAbosParticuliers = displayedParkings.reduce((sum, p) => sum + p.abosParticulier, 0);
   const totalAbosCorporate = displayedParkings.reduce((sum, p) => sum + p.abosCorporate, 0);
   const totalAbonnes = totalAbosParticuliers + totalAbosCorporate;
-  const avgRetention = Math.round((displayedParkings.reduce((sum, p) => sum + p.retentionRate, 0) / displayedParkings.length) * 10) / 10;
-  const avgSlaHours = Math.round((displayedParkings.reduce((sum, p) => sum + p.slaHours, 0) / displayedParkings.length) * 10) / 10;
-
-  const totalBadgesNouveaux = displayedParkings.reduce((sum, p) => sum + p.badges.nouveaux, 0);
-  const totalBadgesReactives = displayedParkings.reduce((sum, p) => sum + p.badges.reactives, 0);
-  const totalBadgesDuplicatas = displayedParkings.reduce((sum, p) => sum + p.badges.duplicatas, 0);
-
-  // Scaled monthly revenue chart for the active filter
-  const caRatio = totalCA / 748500;
-  const dynamicMonthlyRevenue = baseMonthlyRevenueData.map((m) => ({
-    month: m.month,
-    corporate: Math.round(m.corporate * caRatio),
-    particuliers: Math.round(m.particuliers * caRatio),
-    tickets: Math.round(m.tickets * caRatio),
-    total: Math.round(m.total * caRatio),
-  }));
-  const dynamicMaxMonthVal = Math.max(...dynamicMonthlyRevenue.map((m) => m.total), 1);
 
   // Pending Executive Approvals (Corporate Contracts & Invoices)
   const pendingContracts = [
@@ -324,7 +289,7 @@ export function ResponsableDashboardView() {
             />
 
             {/* 2. Reset / Refresh Button */}
-            <Tooltip title={isFiltered ? "Réinitialiser le filtre (Tous les parkings)" : "Actualiser les indicateurs en temps réel"}>
+            <Tooltip title={isFiltered ? "Réinitialiser le filtre" : "Actualiser les indicateurs en temps réel"}>
               <Button
                 icon={<ReloadOutlined spin={isRefreshing} />}
                 onClick={handleResetFilter}
@@ -338,7 +303,7 @@ export function ResponsableDashboardView() {
               </Button>
             </Tooltip>
 
-            {/* 3. Primary Decision Action: Viser Contrats with Notification Badge */}
+            {/* 3. Primary Decision Action: Situation Contrats with Notification Badge */}
             <Badge count={filteredContracts.length} offset={[-2, 2]}>
               <Button
                 type="primary"
@@ -347,22 +312,22 @@ export function ResponsableDashboardView() {
                 className="font-bold rounded-xl shadow-xs flex items-center gap-1.5 h-9"
                 style={{ backgroundColor: "#003566", borderColor: "#003566" }}
               >
-                <span>Viser Contrats</span>
+                <span>Situation Contrats</span>
               </Button>
             </Badge>
           </div>
         </div>
       </div>
 
-      {/* 2. Top Executive Row: Hybrid Circular & Rectangular Visual Meters */}
+      {/* 2. Indicateurs Clés de Gouvernance (4 Cartes Synthétiques) */}
       <Row gutter={[16, 16]}>
-        {/* KPI 1: Chiffre d'Affaires Mensuel (Rectangular Accent with Breakdown Pill) */}
-        <Col xs={24} sm={12} lg={8} xl={5}>
-          <div className="h-full p-4 rounded-2xl bg-gradient-to-br from-white to-emerald-50/50 border border-emerald-200 shadow-xs flex flex-col justify-between relative overflow-hidden">
+        {/* KPI 1: Chiffre d'Affaires Réseau */}
+        <Col xs={24} sm={12} lg={6}>
+          <div className="h-full p-4 rounded-2xl bg-white border border-emerald-200 shadow-xs flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider block">
-                  {isFiltered ? `CA (${currentParking?.nom})` : "Chiffre d'Affaires (Août)"}
+                  {isFiltered ? `CA — ${currentParking?.nom}` : "Chiffre d'Affaires — Août"}
                 </span>
                 <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
                   {totalCA.toLocaleString("fr-FR")} MAD
@@ -372,314 +337,88 @@ export function ResponsableDashboardView() {
                 <DollarOutlined />
               </div>
             </div>
-
-            <div className="my-2.5">
-              <div className="flex items-center gap-1 text-xs text-emerald-700 font-extrabold">
-                <ArrowUpOutlined /> +14.2% vs Trimestre Précédent
-              </div>
-              {/* Mini Rectangular Proportion Bar */}
-              <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden flex mt-2">
-                <div style={{ width: `${pctAbos}%` }} className="bg-emerald-600" title={`Abonnements: ${totalCAAbos.toLocaleString("fr-FR")} MAD`} />
-                <div style={{ width: `${pctTickets}%` }} className="bg-sky-500" title={`Tickets: ${totalCATickets.toLocaleString("fr-FR")} MAD`} />
-              </div>
-            </div>
-
-            <div className="text-[11px] text-slate-500 font-semibold pt-2 border-t border-emerald-100 flex justify-between">
-              <span className="text-emerald-800">Abos: <strong>{(totalCAAbos / 1000).toFixed(0)}k MAD</strong></span>
-              <span className="text-sky-800">Tickets: <strong>{(totalCATickets / 1000).toFixed(0)}k</strong></span>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+              <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
+              <span>•</span>
+              <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
             </div>
           </div>
         </Col>
 
-        {/* KPI 2: Taux d'Occupation Réseau (CIRCULAR GAUGE) */}
-        <Col xs={24} sm={12} lg={8} xl={5}>
-          <div className="h-full p-4 rounded-2xl bg-gradient-to-br from-white to-amber-50/40 border border-amber-200 shadow-xs flex items-center justify-between gap-3">
-            <div className="flex-1">
-              <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider block">
-                {isFiltered ? `Occupation (${currentParking?.nom})` : "Occupation Réseau"}
-              </span>
-              <span className="text-xl font-black text-slate-900 mt-1 block">
-                {totalOccupes.toLocaleString("fr-FR")} / {totalCapacite.toLocaleString("fr-FR")}
-              </span>
-              <span className="text-xs text-slate-500 font-medium block">{totalLibres} places libres</span>
-              <Tag color={tauxOccupationGlobal >= 90 ? "volcano" : tauxOccupationGlobal >= 85 ? "orange" : "green"} className="font-extrabold text-[10px] m-0 mt-2">
-                {isFiltered ? currentParking?.statutText : `Bab El Had à 92%`}
-              </Tag>
+        {/* KPI 2: Taux d'Occupation Réseau */}
+        <Col xs={24} sm={12} lg={6}>
+          <div className="h-full p-4 rounded-2xl bg-white border border-amber-200 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider block">
+                  {isFiltered ? `Occupation — ${currentParking?.nom}` : "Occupation Globale Réseau"}
+                </span>
+                <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
+                  {tauxOccupationGlobal}%
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg font-bold shadow-xs">
+                <ApartmentOutlined />
+              </div>
             </div>
-
-            {/* Circular Gauge */}
-            <div className="shrink-0 flex flex-col items-center">
-              <Progress
-                type="circle"
-                percent={tauxOccupationGlobal}
-                size={74}
-                strokeColor={{
-                  "0%": "#10b981",
-                  "80%": "#f59e0b",
-                  "100%": "#ef4444",
-                }}
-                format={(percent) => (
-                  <span className="text-xs font-black text-slate-900">{percent}%</span>
-                )}
-              />
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-600">{totalOccupes} occupées / {totalCapacite} pl.</span>
+              <Tag color="green" className="font-bold m-0 text-[11px]">{totalLibres} libres</Tag>
             </div>
           </div>
         </Col>
 
-        {/* KPI 3: Grands Comptes Corporate 20 Ans (Rectangular Purple Glow) */}
-        <Col xs={24} sm={12} lg={8} xl={5}>
-          <div className="h-full p-4 rounded-2xl bg-gradient-to-br from-white to-purple-50/50 border border-purple-200 shadow-xs flex flex-col justify-between">
+        {/* KPI 3: Grands Comptes & Abonnés Actifs */}
+        <Col xs={24} sm={12} lg={6}>
+          <div className="h-full p-4 rounded-2xl bg-white border border-purple-200 shadow-xs flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[11px] font-black text-purple-800 uppercase tracking-wider block">
-                  Contrats Corporate (20 Ans)
+                  Abonnés & Flottes Sous Gestion
                 </span>
                 <span className="text-2xl font-black text-purple-950 leading-tight block mt-1">
-                  {totalCorporateCount} Actifs
+                  {totalAbonnes.toLocaleString("fr-FR")} Abonnés
                 </span>
               </div>
               <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg font-bold shadow-xs">
                 <FileTextOutlined />
               </div>
             </div>
-
-            <div className="my-2">
-              <div className="text-xs text-purple-800 font-bold">
-                {totalAbosCorporate} véhicules longue durée
-              </div>
-              <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
-                {(totalAbosCorporate * 650 * 12).toLocaleString("fr-FR")} MAD / an garantis
-              </div>
-            </div>
-
-            <div className="text-[11px] pt-2 border-t border-purple-100 flex justify-between items-center">
-              <Tag color="purple" className="font-extrabold text-[10px] m-0">Engagement 20 Ans</Tag>
-              <Tag color="gold" className="font-extrabold text-[10px] m-0">{filteredContracts.length} à Viser</Tag>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+              <span className="text-purple-700 font-bold">{totalCorporateCount} Corporate</span>
+              <span>•</span>
+              <span className="text-sky-700 font-bold">{totalAbosParticuliers} Résidents</span>
             </div>
           </div>
         </Col>
 
-        {/* KPI 4: Rétention Abonnés (CIRCULAR RING METER) */}
-        <Col xs={24} sm={12} lg={8} xl={5}>
-          <div className="h-full p-4 rounded-2xl bg-gradient-to-br from-white to-sky-50/50 border border-sky-200 shadow-xs flex items-center justify-between gap-3">
-            <div className="flex-1">
-              <span className="text-[11px] font-black text-sky-800 uppercase tracking-wider block">
-                Abonnés Enregistrés
-              </span>
-              <span className="text-xl font-black text-slate-900 mt-1 block">
-                {totalAbonnes.toLocaleString("fr-FR")} Abonnés
-              </span>
-              <span className="text-xs text-slate-500 font-medium block">
-                {totalAbosParticuliers} Part. / {totalAbosCorporate} Corp.
-              </span>
-              <span className="text-[11px] text-emerald-600 font-bold block mt-1.5">
-                Même carte : 0 DH
-              </span>
+        {/* KPI 4: Décisions Requises (Contrats et Factures) */}
+        <Col xs={24} sm={12} lg={6}>
+          <div className="h-full p-4 rounded-2xl bg-white border border-sky-200 shadow-xs flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[11px] font-black text-sky-900 uppercase tracking-wider block">
+                  Visas & Décisions en Attente
+                </span>
+                <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
+                  {filteredContracts.length + filteredFactures.length} Dossiers
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#003566] text-white flex items-center justify-center text-lg font-bold shadow-xs">
+                <SafetyCertificateOutlined />
+              </div>
             </div>
-
-            {/* Circular Ring */}
-            <div className="shrink-0 flex flex-col items-center">
-              <Progress
-                type="circle"
-                percent={avgRetention}
-                size={74}
-                strokeColor="#0284c7"
-                format={(percent) => (
-                  <span className="text-xs font-black text-sky-900">{percent}%</span>
-                )}
-              />
-            </div>
-          </div>
-        </Col>
-
-        {/* KPI 5: SLA Instruction Dossiers (CIRCULAR SPEED GAUGE) */}
-        <Col xs={24} sm={12} lg={8} xl={4}>
-          <div className="h-full p-4 rounded-2xl bg-gradient-to-br from-white to-indigo-50/50 border border-indigo-200 shadow-xs flex items-center justify-between gap-2">
-            <div className="flex-1">
-              <span className="text-[11px] font-black text-indigo-800 uppercase tracking-wider block">
-                Conformité SLA
-              </span>
-              <span className="text-xl font-black text-indigo-950 mt-1 block">
-                {avgSlaHours}h
-              </span>
-              <span className="text-xs text-slate-500 font-medium block">Délai moyen</span>
-              <Tag color="green" className="font-extrabold text-[10px] m-0 mt-2">
-                Cible &lt; 24h
-              </Tag>
-            </div>
-
-            {/* Circular Speed Ring */}
-            <div className="shrink-0 flex flex-col items-center">
-              <Progress
-                type="circle"
-                percent={98.6}
-                size={74}
-                strokeColor="#4f46e5"
-                format={(percent) => (
-                  <span className="text-xs font-black text-indigo-900">{percent}%</span>
-                )}
-              />
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+              <span className="text-purple-700 font-bold">{filteredContracts.length} Contrats</span>
+              <span>•</span>
+              <span className="text-[#003566] font-bold">{filteredFactures.length} Factures</span>
             </div>
           </div>
         </Col>
       </Row>
 
-      {/* 3. Visual Charts Row: Rectangular Bar Chart + Circular Donut Ring */}
-      <Row gutter={[16, 16]}>
-        {/* Left: Rectangular Multi-Stream Monthly Bar Chart */}
-        <Col xs={24} lg={15}>
-          <Card
-            title={
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <Space>
-                  <RiseOutlined style={{ color: "#006398" }} />
-                  <span className="font-extrabold text-slate-900">
-                    {isFiltered ? `Évolution CA (${currentParking?.nom})` : "Évolution Mensuelle du CA & Ventilation Multi-Flux"}
-                  </span>
-                </Space>
-                <Tag color="green" className="font-black m-0">
-                  <ArrowUpOutlined style={{ marginRight: 4 }} />
-                  +18.8% depuis Avril 2026
-                </Tag>
-              </div>
-            }
-            className="rounded-2xl border border-slate-200/80 shadow-xs"
-          >
-            {/* Visual Bar Columns */}
-            <div className="flex justify-around items-end h-56 pt-6 pb-2 px-2">
-              {dynamicMonthlyRevenue.map((item) => {
-                const heightPercent = Math.round((item.total / dynamicMaxMonthVal) * 100);
-                const corpPct = (item.corporate / item.total) * 100;
-                const partPct = (item.particuliers / item.total) * 100;
-                const ticketPct = (item.tickets / item.total) * 100;
-
-                return (
-                  <div key={item.month} className="flex flex-col items-center h-full w-14 sm:w-16">
-                    <span className="text-[11px] font-extrabold text-slate-700 mb-1.5">
-                      {(item.total / 1000).toFixed(0)}k MAD
-                    </span>
-
-                    <div className="flex-1 w-8 sm:w-10 bg-slate-100 rounded-xl overflow-hidden flex flex-col justify-end">
-                      <Tooltip
-                        title={
-                          <div className="text-xs p-1">
-                            <div className="font-black border-b border-slate-600 pb-1 mb-1">
-                              {item.month} 2026 : {item.total.toLocaleString("fr-FR")} MAD
-                            </div>
-                            <div className="text-purple-300 font-semibold">
-                              Corporate (20 Ans): {item.corporate.toLocaleString("fr-FR")} MAD ({corpPct.toFixed(0)}%)
-                            </div>
-                            <div className="text-sky-300 font-semibold">
-                              Particuliers: {item.particuliers.toLocaleString("fr-FR")} MAD ({partPct.toFixed(0)}%)
-                            </div>
-                            <div className="text-emerald-300 font-semibold">
-                              Tickets Horodatés: {item.tickets.toLocaleString("fr-FR")} MAD ({ticketPct.toFixed(0)}%)
-                            </div>
-                          </div>
-                        }
-                      >
-                        <div style={{ height: `${heightPercent}%`, width: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                          <div style={{ height: `${corpPct}%`, backgroundColor: "#9333ea" }} />
-                          <div style={{ height: `${partPct}%`, backgroundColor: "#006398" }} />
-                          <div style={{ height: `${ticketPct}%`, backgroundColor: "#10b981" }} />
-                        </div>
-                      </Tooltip>
-                    </div>
-
-                    <span className="text-xs font-bold text-slate-600 mt-2">{item.month}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-md bg-purple-600 inline-block shrink-0" />
-                <span className="font-bold text-slate-800">Contrats Corporate (20 Ans) — 34.7%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-md bg-[#006398] inline-block shrink-0" />
-                <span className="font-bold text-slate-800">Abonnements Particuliers — 42.8%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-md bg-emerald-500 inline-block shrink-0" />
-                <span className="font-bold text-slate-800">Tickets Rotatifs Horodatés — 22.5%</span>
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        {/* Right: Circular Donut Ring for Payment Modes (Strictly ESPECES & CHEQUE - Zero Virement!) */}
-        <Col xs={24} lg={9}>
-          <Card
-            title={
-              <div className="flex justify-between items-center">
-                <Space>
-                  <DollarOutlined style={{ color: "#16a34a" }} />
-                  <span className="font-extrabold text-slate-900">
-                    Mix des Règlements Homologués
-                  </span>
-                </Space>
-                <Tag color="red" className="font-black text-[10px] uppercase m-0">
-                  Zéro Virement
-                </Tag>
-              </div>
-            }
-            className="rounded-2xl border border-slate-200/80 shadow-xs h-full"
-          >
-            <div className="flex flex-col items-center justify-center py-2">
-              {/* Circular Dual-Progress Donut Simulation */}
-              <div className="relative flex items-center justify-center my-3">
-                <Progress
-                  type="circle"
-                  percent={pctEspeces}
-                  size={148}
-                  strokeColor="#10b981"
-                  trailColor="#9333ea"
-                  strokeWidth={10}
-                  format={() => (
-                    <div className="text-center">
-                      <span className="text-base font-black text-slate-900 block leading-tight">{(totalCA / 1000).toFixed(1)}k</span>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase block">MAD Total</span>
-                    </div>
-                  )}
-                />
-              </div>
-
-              {/* Rectangular Stat Breakdown Pills */}
-              <div className="w-full space-y-2.5 mt-2">
-                <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block" />
-                    <span className="text-xs font-bold text-emerald-950">Espèces (Guichet RRM)</span>
-                  </div>
-                  <div className="text-right">
-                    <strong className="text-emerald-700 text-xs block">{totalCAEspeces.toLocaleString("fr-FR")} MAD</strong>
-                    <span className="text-[10px] text-slate-500 font-semibold">{pctEspeces}% du total</span>
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-purple-50/80 border border-purple-200 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-purple-600 inline-block" />
-                    <span className="text-xs font-bold text-purple-950">Chèques Certifiés (Corporate)</span>
-                  </div>
-                  <div className="text-right">
-                    <strong className="text-purple-700 text-xs block">{totalCACheques.toLocaleString("fr-FR")} MAD</strong>
-                    <span className="text-[10px] text-slate-500 font-semibold">{pctCheques}% du total</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-[11px] text-slate-500 mt-3 text-center flex items-center gap-1.5 justify-center">
-                <SafetyCertificateOutlined className="text-emerald-600" />
-                <span>Encaissements 100% rapprochés avec les quittances de caisse</span>
-              </div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
+      {/* Chiffre d'Affaires Détaillé par Parking : Mensuel & Entre Deux Dates */}
+      <ChiffreAffairesParkingTable />
 
       {/* 4. Parking Quotas & Saturation: Circular Dial + Rectangular Track for Each Site */}
       <Card
@@ -828,78 +567,7 @@ export function ResponsableDashboardView() {
         </div>
       </Card>
 
-      {/* 5. Corporate 20-Year Contracts Pipeline (Rectangular Progression Timeline) */}
-      <Card
-        title={
-          <div className="flex justify-between items-center">
-            <Space>
-              <ApartmentOutlined style={{ color: "#9333ea" }} />
-              <span className="font-extrabold text-slate-900">
-                Pipeline Stratégique des Grands Comptes Flottes (Contrats 20 Ans)
-              </span>
-            </Space>
-            <Tag color="purple" className="font-black m-0">
-              Formules : 08h-20h / 08h-22h / 24h-7j
-            </Tag>
-          </div>
-        }
-        className="rounded-2xl border border-slate-200/80 shadow-xs"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Phase 1 */}
-          <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-blue-900 uppercase">1. Audit & Prospection</span>
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
-                4
-              </span>
-            </div>
-            <div className="text-sm font-black text-slate-900">60 Places Demandées</div>
-            <p className="text-[11px] text-slate-500 mt-1 mb-0">Évaluation des flottes entreprises</p>
-          </div>
 
-          {/* Phase 2 */}
-          <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-indigo-900 uppercase">2. Contrats Rédigés</span>
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
-                3
-              </span>
-            </div>
-            <div className="text-sm font-black text-slate-900">45 Places Négociées</div>
-            <p className="text-[11px] text-slate-500 mt-1 mb-0">En relecture juridique & ICE/RC</p>
-          </div>
-
-          {/* Phase 3: Action Requise */}
-          <div
-            onClick={() => navigate("/responsable/contrats")}
-            className="p-3.5 rounded-2xl bg-amber-50/90 border-2 border-amber-400 cursor-pointer hover:bg-amber-100/70 transition-all shadow-xs"
-          >
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-black text-amber-900 uppercase">3. En Attente Signature</span>
-              <span className="w-6 h-6 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center animate-pulse">
-                {filteredContracts.length}
-              </span>
-            </div>
-            <div className="text-sm font-black text-amber-950">
-              {filteredContracts.reduce((s, c) => s + c.nombreAbonnements, 0)} Places — {filteredContracts.reduce((s, c) => s + c.montantMensuel, 0).toLocaleString("fr-FR")} MAD / m
-            </div>
-            <p className="text-[11px] text-amber-800 font-bold mt-1 mb-0">Cliquez pour viser les contrats →</p>
-          </div>
-
-          {/* Phase 4 */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-emerald-900 uppercase">4. Signés & En Vigueur</span>
-              <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
-                {totalCorporateCount}
-              </span>
-            </div>
-            <div className="text-sm font-black text-slate-900">{totalAbosCorporate} Véhicules Actifs</div>
-            <p className="text-[11px] text-slate-500 mt-1 mb-0">{(totalAbosCorporate * 650 * 12).toLocaleString("fr-FR")} MAD / an garantis</p>
-          </div>
-        </div>
-      </Card>
 
       {/* 6. Executive Action Tables (Pending Contracts & Invoices) */}
       <Row gutter={[16, 16]}>
@@ -909,9 +577,9 @@ export function ResponsableDashboardView() {
             title={
               <div className="flex justify-between items-center">
                 <Space>
-                  <FileTextOutlined style={{ color: "#9333ea" }} />
+                  <FileTextOutlined style={{ color: "#006398" }} />
                   <span className="font-extrabold text-slate-900">
-                    Contrats Corporate 20 Ans à Viser
+                    Situation des Contrats Corporate
                   </span>
                 </Space>
                 <Tag color="purple" className="font-black m-0">
@@ -980,10 +648,10 @@ export function ResponsableDashboardView() {
                       type="primary"
                       icon={<SafetyCertificateOutlined />}
                       onClick={() => navigate(`/responsable/contrats/${record.id}`)}
-                      style={{ backgroundColor: "#9333ea", borderColor: "#9333ea", fontWeight: 700 }}
+                      style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
                       className="rounded-lg"
                     >
-                      Viser
+                      Gérer Situation
                     </Button>
                   ),
                 },
@@ -1065,88 +733,7 @@ export function ResponsableDashboardView() {
         </Col>
       </Row>
 
-      {/* 7. RFID Badges & Tariff Governance (50 DH Rule) with Circular & Rectangular Mix */}
-      <Card
-        title={
-          <Space>
-            <IdcardOutlined style={{ color: "#d97706" }} />
-            <span className="font-extrabold text-slate-900">
-              Gouvernance des Badges RFID & Politique Tarifaire (+50 DH Nouveaux / 0 DH Renouvellements)
-            </span>
-          </Space>
-        }
-        className="rounded-2xl border border-slate-200/80 shadow-xs"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 to-amber-100/50 border border-amber-300 flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <span className="text-xs text-amber-900 font-black uppercase tracking-wider block">
-                Nouvelles Cartes Émises
-              </span>
-              <Tag color="orange" className="font-black m-0">+50 DH TTC</Tag>
-            </div>
-            <div className="my-2">
-              <div className="text-2xl font-black text-amber-950">{totalBadgesNouveaux} Badges</div>
-              <span className="text-xs text-amber-800 font-semibold block">Nouveaux abonnés & corporate</span>
-            </div>
-            <div className="pt-2 border-t border-amber-200 text-xs font-black text-amber-900 flex justify-between">
-              <span>Recette Encaissée :</span>
-              <strong>+{(totalBadgesNouveaux * 50).toLocaleString("fr-FR")} MAD TTC</strong>
-            </div>
-          </div>
 
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/90 to-emerald-100/50 border border-emerald-300 flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <span className="text-xs text-emerald-900 font-black uppercase tracking-wider block">
-                Cartes Réactivées
-              </span>
-              <Tag color="green" className="font-black m-0">0 DH (Gratuit)</Tag>
-            </div>
-            <div className="my-2">
-              <div className="text-2xl font-black text-emerald-950">{totalBadgesReactives} Badges</div>
-              <span className="text-xs text-emerald-800 font-semibold block">Même carte physique réutilisée</span>
-            </div>
-            <div className="pt-2 border-t border-emerald-200 text-xs font-black text-emerald-900 flex justify-between">
-              <span>Économie Usagers :</span>
-              <strong>{(totalBadgesReactives * 50).toLocaleString("fr-FR")} MAD</strong>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50/90 to-rose-100/50 border border-rose-300 flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <span className="text-xs text-rose-900 font-black uppercase tracking-wider block">
-                Duplicatas Émis
-              </span>
-              <Tag color="volcano" className="font-black m-0">50 DH TTC</Tag>
-            </div>
-            <div className="my-2">
-              <div className="text-2xl font-black text-rose-950">{totalBadgesDuplicatas} Badges</div>
-              <span className="text-xs text-rose-800 font-semibold block">Remplacement perte / dommage</span>
-            </div>
-            <div className="pt-2 border-t border-rose-200 text-xs font-black text-rose-900 flex justify-between">
-              <span>Frais Perte Collectés :</span>
-              <strong>+{(totalBadgesDuplicatas * 50).toLocaleString("fr-FR")} MAD TTC</strong>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50/90 to-blue-100/50 border border-blue-300 flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <span className="text-xs text-blue-900 font-black uppercase tracking-wider block">
-                Digitalisation Souscriptions
-              </span>
-              <Tag color="blue" className="font-black m-0">QR Code / Web</Tag>
-            </div>
-            <div className="my-2">
-              <div className="text-2xl font-black text-blue-950">86.2%</div>
-              <span className="text-xs text-blue-800 font-semibold block">13.8% Guichet physique</span>
-            </div>
-            <div className="pt-2 border-t border-blue-200 text-xs font-black text-blue-900 flex justify-between">
-              <span>Temps Gagné / Dossier :</span>
-              <strong>~15 min</strong>
-            </div>
-          </div>
-        </div>
-      </Card>
 
       {/* Parking Plans Tarifaires Pre-filled Modal */}
       <ParkingPlansTarifairesModal

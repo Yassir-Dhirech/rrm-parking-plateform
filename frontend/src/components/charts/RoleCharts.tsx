@@ -263,9 +263,8 @@ function ResponsableCharts({ filters, contrats }: { filters: GlobalFilters; rece
 function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
   const total = recettes.reduce((acc, r) => acc + r.totalHebdo, 0) || 258700;
   const modesPaiement = [
-    { mode: "Carte Bancaire / TPE", montant: Math.round(total * 0.60), percent: 60, color: "#003566" },
-    { mode: "Espèces (Guichet)", montant: Math.round(total * 0.25), percent: 25, color: "#10b981" },
-    { mode: "Chèques Certifiés", montant: Math.round(total * 0.15), percent: 15, color: "#d97706" },
+    { mode: "Espèces Guichet", montant: Math.round(total * 0.65), percent: 65, color: "#10b981" },
+    { mode: "Chèques Bancaires", montant: Math.round(total * 0.35), percent: 35, color: "#d97706" },
   ];
 
   return (
@@ -278,7 +277,7 @@ function ComptableCharts({ recettes }: { filters: GlobalFilters; recettes: Recet
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                   <Text strong>{m.mode}</Text>
                   <Text strong style={{ color: m.color }}>
-                    {m.montant.toLocaleString("fr-FR")} MAD ({m.percent}%)
+                    {m.montant.toLocaleString("fr-FR")} MAD — {m.percent}%
                   </Text>
                 </div>
                 <Progress percent={m.percent} strokeColor={m.color} />

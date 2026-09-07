@@ -145,7 +145,7 @@ export function AbonnementsList() {
       dataIndex: "statut",
       key: "statut",
       filters: [
-        { text: "Actif (Traité)", value: "ACTIF" },
+        { text: "Actif", value: "ACTIF" },
         { text: "En Attente de Traitement", value: "EN_ATTENTE" },
         { text: "Expiré", value: "EXPIRE" },
         { text: "Suspendu", value: "SUSPENDU" },
@@ -270,7 +270,7 @@ export function AbonnementsList() {
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <SafetyCertificateOutlined style={{ color: "#d97706", fontSize: 20 }} />
-            <span>Création d'un Abonnement Back-Office (Staff / Admin)</span>
+            <span>Création d'un Abonnement Back-Office</span>
           </div>
         }
         open={isModalOpen}
@@ -289,21 +289,44 @@ export function AbonnementsList() {
         <Form form={form} layout="vertical" onFinish={handleCreateSubmit}>
           <Form.Item name="type" label="Type d'Abonnement" rules={[{ required: true }]}>
             <Radio.Group buttonStyle="solid">
-              <Radio.Button value="STAFF">Staff RRM (Personnel)</Radio.Button>
-              <Radio.Button value="REGULIER">Régulier (Particulier)</Radio.Button>
+              <Radio.Button value="STAFF">Staff RRM</Radio.Button>
+              <Radio.Button value="REGULIER">Régulier</Radio.Button>
               <Radio.Button value="ENTREPRISE">Entreprise</Radio.Button>
             </Radio.Group>
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="clientNom" label="Nom du Bénéficiaire / Agent" rules={[{ required: true, message: "Saisissez le nom" }]}>
-                <Input prefix={<UserOutlined style={{ color: "#94a3b8" }} />} placeholder="Ex: Youssef Tazi" />
+              <Form.Item
+                name="clientNom"
+                label={selectedType === "ENTREPRISE" ? "Raison Sociale de l'Entreprise" : "Nom du Bénéficiaire / Agent"}
+                rules={[{ required: true, message: selectedType === "ENTREPRISE" ? "Saisissez la raison sociale" : "Saisissez le nom" }]}
+              >
+                <Input
+                  prefix={<UserOutlined style={{ color: "#94a3b8" }} />}
+                  placeholder={selectedType === "ENTREPRISE" ? "Ex: Maroc Telecom SA" : "Ex: Youssef Tazi"}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="numeroMatriculeStaff" label="N° Matricule / CIN">
-                <Input placeholder="Ex: STF-2026-889" />
+              <Form.Item
+                name={selectedType === "ENTREPRISE" ? "ice" : "numeroMatriculeStaff"}
+                label={selectedType === "ENTREPRISE" ? "Identifiant Commun (ICE — 15 chiffres)" : "N° Matricule / CIN"}
+                normalize={selectedType === "ENTREPRISE" ? (val) => (val ? val.replace(/\D/g, "").slice(0, 15) : "") : undefined}
+                rules={
+                  selectedType === "ENTREPRISE"
+                    ? [
+                        { required: true, message: "L'ICE est requis pour une entreprise." },
+                        { pattern: /^\d{15}$/, message: "L'ICE doit comporter exactement 15 chiffres numériques." },
+                      ]
+                    : undefined
+                }
+              >
+                <Input
+                  maxLength={selectedType === "ENTREPRISE" ? 15 : undefined}
+                  placeholder={selectedType === "ENTREPRISE" ? "15 chiffres (ex: 001234567000089)" : "Ex: STF-2026-889"}
+                  className={selectedType === "ENTREPRISE" ? "font-mono" : undefined}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -317,7 +340,7 @@ export function AbonnementsList() {
                   <Option value="Parking Bab El Had">Parking Bab El Had</Option>
                   <Option value="Parking Hassan II">Parking Hassan II</Option>
                   <Option value="Parking Chellah">Parking Chellah</Option>
-                  <Option value="Tous Parkings (Pass Staff Régional)">Tous Parkings (Pass Régional)</Option>
+                  <Option value="Tous Parkings — Pass Staff Régional">Tous Parkings — Pass Régional</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -326,7 +349,7 @@ export function AbonnementsList() {
           {/* Independent Full-Width Row for Moroccan Plate Input */}
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item name="immatriculation" label="Matricule du Véhicule (Plaque Maroc LPR)" rules={[{ required: true, message: "L'immatriculation est requise." }]}>
+              <Form.Item name="immatriculation" label="Matricule du Véhicule LPR" rules={[{ required: true, message: "L'immatriculation est requise." }]}>
                 <MoroccanPlateInput />
               </Form.Item>
             </Col>
@@ -338,17 +361,17 @@ export function AbonnementsList() {
                 <Form.Item name="dureeMois" label="Durée de Contrat Entreprise" initialValue={240}>
                   <Input
                     readOnly
-                    value="20 Ans (Longue Durée — 240 Mois)"
+                    value="20 Ans — Longue Durée"
                     style={{ fontWeight: "bold", color: "#7e22ce", backgroundColor: "#f3e8ff", borderColor: "#d8b4fe" }}
                   />
                 </Form.Item>
               ) : (
                 <Form.Item name="dureeMois" label="Durée de Validité" rules={[{ required: true }]}>
                   <Select>
-                    <Option value={3}>3 Mois (Courte Durée)</Option>
-                    <Option value={6}>6 Mois (Courte Durée)</Option>
-                    <Option value={9}>9 Mois (Courte Durée)</Option>
-                    <Option value={12}>12 Mois / 1 An (Courte Durée)</Option>
+                    <Option value={3}>3 Mois</Option>
+                    <Option value={6}>6 Mois</Option>
+                    <Option value={9}>9 Mois</Option>
+                    <Option value={12}>12 Mois / 1 An</Option>
                   </Select>
                 </Form.Item>
               )}
@@ -356,7 +379,7 @@ export function AbonnementsList() {
             <Col span={12}>
               <Form.Item name="exonereStaff" valuePropName="checked" label="Facturation / Exonération">
                 <Checkbox defaultChecked style={{ marginTop: 6 }}>
-                  Exonération Staff 100% (0 MAD TTC)
+                  Exonération Staff 100% — 0 MAD TTC
                 </Checkbox>
               </Form.Item>
             </Col>

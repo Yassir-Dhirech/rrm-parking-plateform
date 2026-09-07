@@ -1,4 +1,4 @@
-import { Table, Card, Typography } from "antd";
+import { Table, Card, Typography, Button } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { getContratsMock } from "../../../api/contratsMock";
 import { type ContratListItem } from "../types";
@@ -74,11 +74,30 @@ export function ContratsList() {
         <StatusBadge statut={statut} />
       ),
     },
+    {
+      title: "Action",
+      key: "action",
+      render: (_: any, record: ContratListItem) => (
+        <Button
+          type="primary"
+          size="small"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            navigate(`${basePath}/contrats/${record.id}`);
+          }}
+          style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 6 }}
+        >
+          Gérer Situation
+        </Button>
+      ),
+    },
   ];
 
   return (
     <Card>
-      <Title level={4}>Contrats Corporate</Title>
+      <Title level={4} style={{ color: "#003566", margin: 0, marginBottom: 16 }}>
+        Gestion de la Situation des Contrats Corporate
+      </Title>
       <Table
         rowKey="id"
         columns={columns}

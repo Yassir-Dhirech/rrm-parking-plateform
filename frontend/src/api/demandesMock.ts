@@ -260,13 +260,24 @@ export async function submitPublicDemande(input: PublicDemandeInput): Promise<De
     typeDemande: input.typeDemande || "NOUVEL_ABONNEMENT",
     statut: "SOUMISE",
     clientNom,
-    parkingNom: "Parking Agdal Gare",
+    parkingNom: input.nouveauParkingNom || "Parking Agdal Gare",
     dateCreation: formatDate(new Date().toISOString()),
     email: input.email,
     telephone: input.telephone,
     immatriculation: input.immatriculation,
+    marque: input.marque,
+    modele: input.modele,
     typeVehicule: input.typeVehicule,
+    typeClient: input.typeClient,
+    cin: input.cin,
+    ice: input.ice,
+    rc: input.rcEntreprise,
     ancienneImmatriculation: input.ancienneImmatriculation,
+    forfaitNom: input.forfaitNom || (input.typeClient === "ENTREPRISE" ? "Pass Corporate 08:00 - 20:00 (500 DH/m/place)" : "Pass Permanent (24h / 7j)"),
+    dureeMois: input.dureeMois || (input.typeClient === "ENTREPRISE" ? 240 : 3),
+    nombreAbonnements: input.nombreAbonnements || 1,
+    montantTotal: input.montantTotal || 1800,
+    modePaiement: (input as any).modePaiement || "ESPECES",
   };
 
   mockDemandesStore[newId] = newDemande;
@@ -278,7 +289,12 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
   const q = query.trim().toUpperCase();
   if (!q) return null;
   const found = Object.values(mockDemandesStore).find(
-    (d) => d.reference.toUpperCase() === q || d.email.toUpperCase() === q
+    (d) =>
+      d.reference.toUpperCase() === q ||
+      d.email.toUpperCase() === q ||
+      d.telephone === q ||
+      (d.cin && d.cin.toUpperCase() === q) ||
+      (d.ice && d.ice === q)
   );
   if (!found) return null;
   return {
@@ -291,6 +307,26 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
         }
       : undefined,
   };
+}
+
+export async function updatePublicDemandeMock(reference: string, updates: Partial<DemandeDetail>): Promise<DemandeDetail> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const refClean = reference.trim().toUpperCase();
+  const entry = Object.entries(mockDemandesStore).find(([_, d]) => d.reference.toUpperCase() === refClean);
+  if (!entry) {
+    throw new Error(`Dossier avec la référence ${reference} introuvable.`);
+  }
+  const [idStr, currentDemande] = entry;
+  const id = Number(idStr);
+
+  const updated: DemandeDetail = {
+    ...currentDemande,
+    ...updates,
+    statut: currentDemande.statut === "REJETEE" ? "CORRIGEE" : currentDemande.statut,
+  };
+
+  mockDemandesStore[id] = updated;
+  return updated;
 }
 
 export async function validerDemandeMock(id: number, _decision?: any, _validePar?: string): Promise<void> {

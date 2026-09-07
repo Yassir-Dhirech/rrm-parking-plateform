@@ -6,7 +6,6 @@ import {
   FileTextOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
-  CheckCircleOutlined,
   BuildOutlined,
   SafetyCertificateOutlined,
   ArrowRightOutlined,
@@ -39,13 +38,15 @@ export function LandingPage() {
           <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
             <div className="max-w-3xl">
               <Tag color="gold" className="px-3.5 py-1 rounded-full font-extrabold mb-4 border-none shadow-md text-xs inline-flex items-center gap-1.5">
-                <SafetyCertificateOutlined /> Opérateur Public Officiel — Rabat Région Mobilité
+                <SafetyCertificateOutlined /> Rabat Région Mobilité
               </Tag>
               <h1 className="text-3xl md:text-5xl text-slate-900 font-black mb-4 leading-tight tracking-tight">
-                Plateforme Régionale du Stationnement à Rabat
+                Plateforme du Stationnement à Rabat, Salé et Témara
               </h1>
               <p className="text-slate-700 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-medium">
-                Bienvenue sur le portail officiel de souscription et d'information de Rabat Région Mobilité. Gérez vos abonnements, consultez la carte des 17 ouvrages et facilitez votre stationnement quotidien.
+                Bienvenue sur le portail officiel de souscription et d'information
+                des parkings de Rabat Région Mobilité. Gérez vos abonnements,
+                consultez la carte des 17 parkings en ouvrage et facilitez votre stationnement quotidien.
               </p>
               <div className="flex flex-wrap gap-4">
                 <button
@@ -66,18 +67,10 @@ export function LandingPage() {
 
             {/* Right side floating glass highlights card */}
             <div className="w-full lg:w-80 glass-panel p-6 rounded-3xl border border-slate-200/90 bg-white/90 text-slate-900 space-y-4 shadow-xl shrink-0">
-              <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
-                <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center text-xl font-black">
-                  <CheckCircleOutlined />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-slate-900 m-0">Infrastructures Certifiées</h4>
-                  <span className="text-[11px] text-secondary font-extrabold uppercase tracking-wider">Capitale Rabat-Salé</span>
-                </div>
-              </div>
+
               <div className="space-y-3 text-xs text-slate-700 font-medium">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Ouvrages Ouverts :</span>
+                  <span className="text-slate-600">Parkings Ouverts :</span>
                   <span className="font-black text-emerald-700 text-sm">17 Parkings 24/7</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -96,7 +89,7 @@ export function LandingPage() {
 
       <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 space-y-16">
         {/* Quick General Statistics Section */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
             <div className="text-3xl md:text-4xl font-black text-secondary mb-1">17</div>
             <p className="text-slate-600 text-xs md:text-sm font-semibold m-0">Parkings Régionaux</p>
@@ -109,18 +102,11 @@ export function LandingPage() {
             <div className="text-3xl md:text-4xl font-black text-purple-600 mb-1">24h / 7j</div>
             <p className="text-slate-600 text-xs md:text-sm font-semibold m-0">Accès Sécurisé RFID</p>
           </div>
-          <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
-            <div className="text-3xl md:text-4xl font-black text-amber-600 mb-1">100%</div>
-            <p className="text-slate-600 text-xs md:text-sm font-semibold m-0">Services en Ligne</p>
-          </div>
         </section>
 
         {/* Shortcuts to Dedicated Pages */}
         <section className="space-y-6">
           <div className="text-center max-w-2xl mx-auto">
-            <span className="px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container font-label-sm text-xs border border-secondary-container/30 font-semibold">
-              Ressources & Accès Directs
-            </span>
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-3 mb-2">
               Explorez nos Espaces Dédiés
             </h2>
@@ -199,9 +185,7 @@ export function LandingPage() {
         <section id="map" className="space-y-4 pt-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <Tag color="cyan" className="px-3.5 py-1 rounded-full font-bold border-none shadow-sm text-xs mb-2">
-                <EnvironmentOutlined /> Localisation en Temps Réel
-              </Tag>
+
               <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 17 Parkings Régionaux</h2>
               <p className="text-slate-600 text-sm mt-1">Consultez la carte interactive de Rabat pour repérer les ouvrages de stationnement et leurs places libres.</p>
             </div>
@@ -222,23 +206,14 @@ export function LandingPage() {
         <section className="glass-card p-8 lg:p-12 rounded-3xl border border-white/80 shadow-xl bg-white/80">
           <Row gutter={[32, 32]} align="middle">
             <Col xs={24} md={12}>
-              <Tag color="geekblue" className="mb-3 font-semibold">Société de Développement Local (SDL)</Tag>
               <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-900 mb-4">
                 Rabat Région Mobilité
               </h2>
               <p className="text-slate-600 text-base leading-relaxed mb-4">
-                Acteur public majeur de la mobilité urbaine dans la conurbation Rabat-Salé-Témara, Rabat Région Mobilité assure l'aménagement, l'exploitation et la modernisation des infrastructures de transport et des parkings publics.
+                Société de Développement Local en charge de la mobilité urbaine dans la conurbation Rabat-Salé-Témara,
+                 RRM assure la gestion et la modernisation des infrastructures de transport et des parkings publics.
               </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircleOutlined className="text-xl text-emerald-500" />
-                  <span className="font-semibold text-slate-800">Contrôle d'Accès Sécurisé par Badge RFID & Caméras LPR</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircleOutlined className="text-xl text-emerald-500" />
-                  <span className="font-semibold text-slate-800">Paiement Homologué en Espèces et Chèques avec Édition de Reçu</span>
-                </div>
-              </div>
+
             </Col>
             <Col xs={24} md={12}>
               <Card className="rounded-2xl border-slate-200 shadow-md bg-slate-50">
@@ -250,7 +225,7 @@ export function LandingPage() {
                   Nos ouvrages sont implantés à proximité immédiate des gares et centres névralgiques de la capitale pour garantir une intermodalité fluide avec le réseau de tramway et de train.
                 </p>
                 <Button block onClick={() => navigate("/public-about")} className="rounded-xl font-bold">
-                  En savoir plus sur l'Opérateur RRM →
+                  En savoir plus sur RRM →
                 </Button>
               </Card>
             </Col>

@@ -72,7 +72,7 @@ export function RecettesList() {
     createRecetteMutation.mutate({
       parkingId: selectedParkingId,
       parkingNom: selectedParkingNom,
-      semaineAnnee: "Semaine 34 (2026)",
+      semaineAnnee: "Semaine 34 — 2026",
       paiementsChoisis: paiementsCoches,
     });
   };
@@ -91,7 +91,7 @@ export function RecettesList() {
       key: "modePaiement",
       render: (mode: string) => (
         <Tag color={mode === "ESPECES" ? "green" : "purple"}>
-          {mode === "ESPECES" ? "Espèces (Liquide)" : "Chèque"}
+          {mode === "ESPECES" ? "Espèces" : "Chèque"}
         </Tag>
       ),
     },
@@ -101,11 +101,9 @@ export function RecettesList() {
       render: (_: unknown, record: PaiementAEncasserRecette) =>
         record.modePaiement === "CHEQUE" ? (
           <span style={{ fontSize: 12, color: "#6b21a8" }}>
-            {record.numeroCheque} ({record.banque})
+            {record.numeroCheque} — {record.banque}
           </span>
-        ) : (
-          <span style={{ color: "#94a3b8" }}>—</span>
-        ),
+        ) : null,
     },
     {
       title: "Date",
@@ -149,7 +147,7 @@ export function RecettesList() {
       sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.semaineAnnee.localeCompare(b.semaineAnnee),
     },
     {
-      title: "Total Espèces (Liquide)",
+      title: "Total Espèces",
       dataIndex: "totalEspeces",
       key: "totalEspeces",
       sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => (a.totalEspeces || 0) - (b.totalEspeces || 0),
@@ -163,7 +161,7 @@ export function RecettesList() {
       render: (val: number, record: RecetteHebdoListItem) => (
         <span>
           {(val || 0).toLocaleString("fr-FR")} DH{" "}
-          {record.nombreCheques ? <Tag color="purple" style={{ marginLeft: 4 }}>{record.nombreCheques} chèque(s)</Tag> : null}
+          {record.nombreCheques ? <Tag color="purple" style={{ marginLeft: 4 }}>{record.nombreCheques} chèques</Tag> : null}
         </span>
       ),
     },
@@ -180,8 +178,8 @@ export function RecettesList() {
       key: "statut",
       filters: [
         { text: "En cours", value: "EN_COURS" },
-        { text: "Completed (Générée par Superviseur)", value: "COMPLETED" },
-        { text: "Received (Reçue par Comptabilité)", value: "RECEIVED" },
+        { text: "Completed", value: "COMPLETED" },
+        { text: "Received", value: "RECEIVED" },
       ],
       onFilter: (value: any, record: RecetteHebdoListItem) => record.statut === value,
       render: (statut: RecetteHebdoListItem["statut"]) => <StatusBadge statut={statut} />,
@@ -193,7 +191,7 @@ export function RecettesList() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <Title level={4} style={{ margin: 0 }}>Gestion & Remise des Recettes Hebdomadaires</Title>
-          <Text type="secondary">Centralisation des encaissements (Espèces & Chèques) par le Superviseur vers la Comptabilité</Text>
+          <Text type="secondary">Centralisation des encaissements Espèces et Chèques par le Superviseur vers la Comptabilité</Text>
         </div>
         {(role === "SUPERVISEUR" || role === "RESPONSABLE") && (
           <Button
@@ -222,7 +220,7 @@ export function RecettesList() {
         <Col xs={24} sm={6}>
           <Card size="small" style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}>
             <Statistic
-              title="Espèces à Verser (Liquide)"
+              title="Espèces à Verser"
               value={totalEspeces}
               suffix="DH"
               prefix={<BankOutlined style={{ color: "#16a34a" }} />}
@@ -235,7 +233,7 @@ export function RecettesList() {
             <Statistic
               title="Chèques à Remettre"
               value={totalCheques}
-              suffix={`DH (${countCheques} chq)`}
+              suffix={`DH — ${countCheques} chèques`}
               prefix={<FileTextOutlined style={{ color: "#9333ea" }} />}
               valueStyle={{ color: "#7e22ce", fontWeight: 700 }}
             />
@@ -266,9 +264,9 @@ export function RecettesList() {
         })}
       />
 
-      {/* MODALE DE GÉNÉRATION PAR LE SUPERVISEUR (SÉLECTION DES PAIEMENTS COCHÉS & CHOIX PARKING) */}
+      {/* MODALE DE GÉNÉRATION PAR LE SUPERVISEUR */}
       <Modal
-        title="Créer un Arrêté de Recette Hebdomadaire (Superviseur)"
+        title="Créer un Arrêté de Recette Hebdomadaire"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         width={900}
@@ -284,21 +282,21 @@ export function RecettesList() {
             onClick={handleGenerateRecetteSubmit}
             style={{ backgroundColor: "#0284c7" }}
           >
-            Générer l'Arrêté de Recette ({totalRecetteCalculee.toLocaleString("fr-FR")} DH)
+            Générer l'Arrêté de Recette — {totalRecetteCalculee.toLocaleString("fr-FR")} DH
           </Button>,
         ]}
       >
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Alert
-            message="Procédure de la Recette Hebdomadaire par le Superviseur"
-            description="Sélectionnez le parking/gare de destination, puis cochez dans la liste ci-dessous les paiements (espèces & chèques) que vous avez physiquement récupérés auprès des agents."
+            message="Procédure de la Recette Hebdomadaire"
+            description="Sélectionnez le parking, puis cochez dans la liste ci-dessous les paiements récupérés auprès des agents."
             type="info"
             showIcon
           />
 
           <Row gutter={16} align="middle">
             <Col span={12}>
-              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Choisir la Gare / Parking :</label>
+              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Choisir le Parking :</label>
               <Select
                 size="large"
                 style={{ width: "100%" }}
@@ -310,19 +308,19 @@ export function RecettesList() {
                   setSelectedPaiementIds([]);
                 }}
               >
-                <Option value={1}>Parking Agdal Gare (Rabat Agdal)</Option>
-                <Option value={2}>Parking Hassan II (Rabat Ville)</Option>
+                <Option value={1}>Parking Agdal Gare</Option>
+                <Option value={2}>Parking Hassan II</Option>
                 <Option value={3}>Parking Bab El Had</Option>
               </Select>
             </Col>
             <Col span={12}>
               <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Période de la Recette :</label>
-              <Tag color="geekblue" style={{ fontSize: 14, padding: "6px 12px" }}>Semaine 34 (2026)</Tag>
+              <Tag color="geekblue" style={{ fontSize: 14, padding: "6px 12px" }}>Semaine 34 — 2026</Tag>
             </Col>
           </Row>
 
           <Text style={{ fontWeight: 600, display: "block", marginTop: 8 }}>
-            Cochez les encaissements perçus pour ce parking ({paiementsAEncasser.length} paiements en attente) :
+            Cochez les encaissements perçus pour ce parking — {paiementsAEncasser.length} paiements en attente :
           </Text>
 
           <Table<PaiementAEncasserRecette>
@@ -343,7 +341,7 @@ export function RecettesList() {
           <div style={{ padding: 16, backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #cbd5e1", marginTop: 12 }}>
             <Row gutter={16} align="middle">
               <Col span={8}>
-                <Text type="secondary">Espèces Liquide Cochées :</Text>
+                <Text type="secondary">Espèces Cochées :</Text>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#16a34a" }}>
                   {montantEspecesCoche.toLocaleString("fr-FR")} DH
                 </div>
@@ -351,7 +349,7 @@ export function RecettesList() {
               <Col span={8}>
                 <Text type="secondary">Chèques Physiques Cochés :</Text>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#7e22ce" }}>
-                  {montantChequesCoche.toLocaleString("fr-FR")} DH ({mePaiementsChequeCoche.length} chq)
+                  {montantChequesCoche.toLocaleString("fr-FR")} DH — {mePaiementsChequeCoche.length} chèques
                 </div>
               </Col>
               <Col span={8}>

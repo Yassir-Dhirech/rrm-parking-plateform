@@ -1,14 +1,28 @@
 import { useState } from "react";
 import { Dropdown, Drawer, Button, type MenuProps } from "antd";
-import { DownOutlined, UserOutlined, MenuOutlined, HomeOutlined, InfoCircleOutlined, EnvironmentOutlined, FormOutlined } from "@ant-design/icons";
+import {
+  DownOutlined,
+  MenuOutlined,
+  HomeOutlined,
+  EnvironmentOutlined,
+  FormOutlined,
+  SearchOutlined,
+  CommentOutlined,
+} from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
+import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
+import { PublicFeedbackModal } from "./PublicFeedbackModal";
 
 export function PublicNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [isSuiviOpen, setIsSuiviOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const isHome = location.pathname === "/";
+  const isParkings = location.pathname === "/parkings-public" || location.pathname === "/tarifs-public";
+  const isAbonnement = location.pathname === "/demande-publique";
 
   // Dropdown 2: Nos Parkings & Tarifs Menu
   const parkingsMenuItems: MenuProps["items"] = [
@@ -31,12 +45,19 @@ export function PublicNavbar() {
     },
   ];
 
+  const getLinkClasses = (isActive: boolean) =>
+    `group flex items-center gap-2 px-3.5 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-extrabold whitespace-nowrap shrink-0 transition-all duration-300 cursor-pointer border select-none ${
+      isActive
+        ? "bg-gradient-to-r from-secondary to-[#0077b6] text-white border-white/40 shadow-[0_4px_20px_rgba(0,99,152,0.35)] backdrop-blur-md scale-[1.02]"
+        : "text-slate-700 bg-white/40 hover:bg-white/95 hover:text-secondary border-white/60 hover:border-white hover:shadow-[0_4px_20px_rgba(0,99,152,0.12)] hover:-translate-y-0.5 active:translate-y-0"
+    }`;
+
   return (
     <>
-      <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-        <div className="relative flex items-center justify-between px-4 md:px-8 h-16 md:h-20 w-full max-w-[1500px] mx-auto">
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+        <div className="relative flex items-center justify-between px-4 md:px-8 h-16 md:h-20 w-full max-w-[1500px] mx-auto gap-4">
           {/* Mobile Hamburger Button (Left on phone) */}
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center md:hidden w-10 shrink-0">
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: 20, color: "#003566" }} />}
@@ -45,74 +66,70 @@ export function PublicNavbar() {
             />
           </div>
 
-          {/* Brand Logo — Centered on Mobile, Left-aligned on Desktop */}
+          {/* Left: Brand Logo */}
           <div
-            className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center cursor-pointer"
+            className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center cursor-pointer shrink-0"
             onClick={() => navigate("/")}
           >
-            <img src="/pictures/logo-rrm.png" alt="RRM" className="h-10 md:h-16 w-auto object-contain" />
+            <img src="/pictures/logo-rrm.png" alt="RRM" className="h-10 md:h-16 w-auto object-contain drop-shadow-xs" />
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-md lg:gap-lg">
+          {/* Center: Desktop Navigation Links (True Frosted Glassmorphism Island) */}
+          <nav className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2.5 flex-nowrap bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/80 shadow-[0_8px_32px_rgba(0,99,152,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] shrink-0">
             <button
               onClick={() => navigate("/")}
-              className={`font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                isHome ? "text-secondary font-bold" : "text-on-surface-variant hover:text-secondary hover:bg-white/40"
-              }`}
+              className={getLinkClasses(isHome)}
             >
-              Accueil
-            </button>
-
-            <button
-              onClick={() => navigate("/about")}
-              className={`font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                location.pathname === "/about" ? "text-secondary font-bold" : "text-on-surface-variant hover:text-secondary hover:bg-white/40"
-              }`}
-            >
-              À Propos
+              <HomeOutlined className={`text-sm transition-colors ${isHome ? "text-white" : "text-slate-400 group-hover:text-secondary"}`} />
+              <span className="whitespace-nowrap">Accueil</span>
             </button>
 
             <Dropdown menu={{ items: parkingsMenuItems }} trigger={["hover"]} placement="bottomLeft">
               <button
                 onClick={() => navigate("/parkings-public")}
-                className={`flex items-center gap-1.5 font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                  location.pathname === "/parkings-public" || location.pathname === "/tarifs-public" ? "text-secondary font-bold" : "text-on-surface-variant hover:text-secondary hover:bg-white/40"
-                }`}
+                className={getLinkClasses(isParkings)}
               >
-                <span>Parkings & Tarifs</span>
-                <DownOutlined style={{ fontSize: "10px" }} />
+                <EnvironmentOutlined className={`text-sm transition-colors ${isParkings ? "text-white" : "text-slate-400 group-hover:text-secondary"}`} />
+                <span className="whitespace-nowrap">Parkings & Tarifs</span>
+                <DownOutlined className={`text-[10px] transition-transform group-hover:translate-y-0.5 ${isParkings ? "text-white" : "text-slate-400 group-hover:text-secondary"}`} />
               </button>
             </Dropdown>
 
             <button
               onClick={() => navigate("/demande-publique")}
-              className={`flex items-center gap-1.5 font-label-md text-label-md px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
-                location.pathname === "/demande-publique" ? "text-secondary font-bold" : "text-on-surface-variant hover:text-secondary hover:bg-white/40"
-              }`}
+              className={getLinkClasses(isAbonnement)}
             >
-              <span>Abonnement & Démarches</span>
+              <FormOutlined className={`text-sm transition-colors ${isAbonnement ? "text-white" : "text-slate-400 group-hover:text-secondary"}`} />
+              <span className="whitespace-nowrap">Abonnement & Démarches</span>
+            </button>
+
+            <button
+              onClick={() => setIsSuiviOpen(true)}
+              className={getLinkClasses(isSuiviOpen)}
+            >
+              <SearchOutlined className={`text-sm transition-colors ${isSuiviOpen ? "text-white" : "text-slate-400 group-hover:text-secondary"}`} />
+              <span className="whitespace-nowrap">Suivi de Demande</span>
             </button>
           </nav>
 
-          {/* Action Button: Personnel RRM (Desktop: Text + Icon, Mobile: Blue Icon Button Only) */}
-          <div className="flex items-center">
-            {/* Desktop Full Pill */}
+          {/* Right: Feedback Action Button */}
+          <div className="flex items-center justify-end shrink-0">
+            {/* Desktop Pill Button */}
             <button
-              onClick={() => navigate("/login")}
-              className="hidden sm:flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-xs cursor-pointer border-none"
+              onClick={() => setIsFeedbackOpen(true)}
+              className="hidden sm:inline-flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-amber-500/95 to-amber-600/95 hover:from-amber-500 hover:to-amber-600 text-white border border-amber-300/40 px-4 py-2.5 rounded-xl text-xs font-extrabold backdrop-blur-md shadow-[0_4px_16px_rgba(217,119,6,0.22)] hover:shadow-[0_6px_22px_rgba(217,119,6,0.35)] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
             >
-              <UserOutlined style={{ fontSize: "14px" }} />
-              <span>Personnel RRM</span>
+              <CommentOutlined className="text-white text-sm" />
+              <span className="whitespace-nowrap">Avis & Feedbacks</span>
             </button>
 
-            {/* Mobile Phone: Blue Circle Icon Button Only */}
+            {/* Mobile Icon Button */}
             <button
-              onClick={() => navigate("/login")}
-              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-secondary hover:bg-slate-900 text-white shadow-xs cursor-pointer border-none transition-all"
-              title="Connexion Espace RRM"
+              onClick={() => setIsFeedbackOpen(true)}
+              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-900/20 hover:scale-105 active:scale-95 cursor-pointer border-none transition-all"
+              title="Donner votre avis"
             >
-              <UserOutlined style={{ fontSize: "16px" }} />
+              <CommentOutlined style={{ fontSize: "16px" }} />
             </button>
           </div>
         </div>
@@ -134,43 +151,53 @@ export function PublicNavbar() {
         <div className="flex flex-col gap-2">
           <button
             onClick={() => { navigate("/"); setMobileDrawerOpen(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 border-none bg-transparent cursor-pointer text-left w-full"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold border-none cursor-pointer text-left w-full transition-all ${
+              isHome ? "bg-secondary text-white shadow-sm" : "text-slate-700 bg-transparent hover:bg-slate-100"
+            }`}
           >
-            <HomeOutlined className="text-base text-secondary" />
-            <span>Accueil</span>
-          </button>
-          <button
-            onClick={() => { navigate("/about"); setMobileDrawerOpen(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 border-none bg-transparent cursor-pointer text-left w-full"
-          >
-            <InfoCircleOutlined className="text-base text-secondary" />
-            <span>À Propos de RRM</span>
+            <HomeOutlined className={`text-base ${isHome ? "text-white" : "text-secondary"}`} />
+            <span className="whitespace-nowrap">Accueil</span>
           </button>
           <button
             onClick={() => { navigate("/parkings-public"); setMobileDrawerOpen(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 border-none bg-transparent cursor-pointer text-left w-full"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold border-none cursor-pointer text-left w-full transition-all ${
+              isParkings ? "bg-secondary text-white shadow-sm" : "text-slate-700 bg-transparent hover:bg-slate-100"
+            }`}
           >
-            <EnvironmentOutlined className="text-base text-secondary" />
-            <span>Carte & Grille des Parkings</span>
+            <EnvironmentOutlined className={`text-base ${isParkings ? "text-white" : "text-secondary"}`} />
+            <span className="whitespace-nowrap">Carte & Grille des Parkings</span>
           </button>
           <button
             onClick={() => { navigate("/demande-publique"); setMobileDrawerOpen(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 border-none bg-transparent cursor-pointer text-left w-full"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold border-none cursor-pointer text-left w-full transition-all ${
+              isAbonnement ? "bg-secondary text-white shadow-sm" : "text-slate-700 bg-transparent hover:bg-slate-100"
+            }`}
           >
-            <FormOutlined className="text-base text-secondary" />
-            <span>Souscription Abonnement</span>
+            <FormOutlined className={`text-base ${isAbonnement ? "text-white" : "text-secondary"}`} />
+            <span className="whitespace-nowrap">Souscription Abonnement</span>
           </button>
-          <div className="pt-4 border-t border-slate-200 mt-2">
-            <button
-              onClick={() => { navigate("/login"); setMobileDrawerOpen(false); }}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer border-none"
-            >
-              <UserOutlined />
-              <span>Connexion Personnel RRM</span>
-            </button>
-          </div>
+          <button
+            onClick={() => { setIsSuiviOpen(true); setMobileDrawerOpen(false); }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 text-xs font-bold text-secondary border-none bg-secondary/5 cursor-pointer text-left w-full transition-all"
+          >
+            <SearchOutlined className="text-base text-secondary" />
+            <span className="whitespace-nowrap">Suivi & Modification Demande</span>
+          </button>
+          <button
+            onClick={() => { setIsFeedbackOpen(true); setMobileDrawerOpen(false); }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 text-xs font-bold text-amber-700 border-none bg-amber-50/50 cursor-pointer text-left w-full transition-all mt-2 border border-amber-200"
+          >
+            <CommentOutlined className="text-base text-amber-600" />
+            <span className="whitespace-nowrap">Donner un Avis / Feedbacks</span>
+          </button>
         </div>
       </Drawer>
+
+      {/* Suivi et Gestion de Demande Modal */}
+      <PublicSuiviDemandeModal open={isSuiviOpen} onClose={() => setIsSuiviOpen(false)} />
+
+      {/* Avis & Feedbacks Modal */}
+      <PublicFeedbackModal open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 }

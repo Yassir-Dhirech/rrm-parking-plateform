@@ -7,6 +7,7 @@ import { router } from "./routes/router";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./context/AuthContext";
 import "antd/dist/reset.css";
+import "./Styles/tailwind.css";
 import "./Styles/theme.css";
 import { themeConfig } from "./lib/theme";
 
