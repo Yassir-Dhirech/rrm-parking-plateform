@@ -10,9 +10,12 @@ import {
   SearchOutlined,
   HomeOutlined,
   LoadingOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { sendOtpMock, verifyOtpMock } from "../../api/otpMock";
+import { validerOtp, extraireMessageErreur } from "../../api/demandesApi";
+import type { DemandeAbonnementRegulierResponse, ValidationOtpResponse } from "../../features/demandes/types";
 import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
 
 const { Text, Paragraph } = Typography;
@@ -22,10 +25,12 @@ interface OtpVerificationModalProps {
   phone?: string;
   email?: string;
   onClose: () => void;
-  onSuccessSubmit: () => Promise<any> | void;
+  onSuccessSubmit?: () => Promise<any> | void;
   title?: string;
   subtitle?: string;
   referenceNumber?: string;
+  demandeResponse?: DemandeAbonnementRegulierResponse | null;
+  onOtpVerified?: (res: ValidationOtpResponse) => void;
 }
 
 type ModalPhase = "INPUT_OTP" | "LOADING" | "CONFIRMED";
@@ -39,6 +44,8 @@ export function OtpVerificationModal({
   title = "Vérification de Sécurité par Code OTP",
   subtitle = "Veuillez certifier votre identité pour finaliser votre souscription.",
   referenceNumber,
+  demandeResponse,
+  onOtpVerified,
 }: OtpVerificationModalProps) {
   const navigate = useNavigate();
 
@@ -46,23 +53,46 @@ export function OtpVerificationModal({
   const [phase, setPhase] = useState<ModalPhase>("INPUT_OTP");
   const [channel, setChannel] = useState<"SMS" | "EMAIL">("SMS");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const [countdown, setCountdown] = useState<number>(60);
+  const [countdown, setCountdown] = useState<number>(600);
   const [isSending, setIsSending] = useState<boolean>(false);
   const [generatedRef, setGeneratedRef] = useState<string>("");
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState<boolean>(false);
+  const [tentativesRestantes, setTentativesRestantes] = useState<number>(3);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const currentRecipient = channel === "SMS" ? phone : email;
+  const activeRef = demandeResponse?.reference || referenceNumber || generatedRef;
+  const currentRecipient = demandeResponse?.destinationMasquee || (channel === "SMS" ? phone : email);
 
   // Initialize or reset when modal opens
   useEffect(() => {
     if (open) {
       setPhase("INPUT_OTP");
       setOtpDigits(["", "", "", "", "", ""]);
-      setCountdown(60);
-      handleSendOtp();
+      setErrorMessage(null);
+      
+      if (demandeResponse) {
+        setGeneratedRef(demandeResponse.reference);
+        setTentativesRestantes(demandeResponse.tentativesRestantes ?? 3);
+        if (demandeResponse.canalOtp) {
+          setChannel(demandeResponse.canalOtp);
+        }
+        
+        // Calculate remaining seconds if dateExpirationOtp is provided
+        if (demandeResponse.dateExpirationOtp) {
+          const expDate = new Date(demandeResponse.dateExpirationOtp).getTime();
+          const now = new Date().getTime();
+          const diffSeconds = Math.max(0, Math.floor((expDate - now) / 1000));
+          setCountdown(diffSeconds > 0 ? diffSeconds : 600);
+        } else {
+          setCountdown(600);
+        }
+      } else {
+        setCountdown(60);
+        handleSendOtp();
+      }
     }
-  }, [open]);
+  }, [open, demandeResponse]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -76,9 +106,10 @@ export function OtpVerificationModal({
   }, [open, phase, countdown]);
 
   const handleSendOtp = async () => {
+    if (demandeResponse) return;
     setIsSending(true);
     try {
-      const res = await sendOtpMock({ recipient: currentRecipient, channel });
+      const res = await sendOtpMock({ recipient: currentRecipient, channel: channel === "EMAIL" ? "EMAIL" : "SMS" });
       if (res.success) {
         message.info(res.message);
       }
@@ -88,8 +119,9 @@ export function OtpVerificationModal({
   };
 
   const handleResend = () => {
-    setCountdown(60);
+    setCountdown(600);
     setOtpDigits(["", "", "", "", "", ""]);
+    setErrorMessage(null);
     handleSendOtp();
   };
 
@@ -128,29 +160,64 @@ export function OtpVerificationModal({
       return;
     }
 
-    // 1. Switch to LOADING phase in the same popup
     setPhase("LOADING");
+    setErrorMessage(null);
 
     try {
-      // Verify OTP mock
+      // If we have an active backend reference, call the backend validerOtp API
+      if (activeRef) {
+        try {
+          const validationRes = await validerOtp(activeRef, fullCode);
+          if (validationRes.otpValide) {
+            if (onOtpVerified) {
+              onOtpVerified(validationRes);
+            }
+            if (onSuccessSubmit) {
+              await onSuccessSubmit();
+            }
+            setGeneratedRef(validationRes.reference || activeRef);
+            setTimeout(() => {
+              setPhase("CONFIRMED");
+            }, 800);
+            return;
+          } else {
+            setTentativesRestantes(validationRes.tentativesRestantes ?? (tentativesRestantes - 1));
+            setErrorMessage(validationRes.message || "Code OTP incorrect.");
+            setPhase("INPUT_OTP");
+            return;
+          }
+        } catch (err: any) {
+          const msg = extraireMessageErreur(err);
+          if (typeof err === "object" && err !== null && "tentativesRestantes" in err) {
+            setTentativesRestantes(Number(err.tentativesRestantes));
+          } else {
+            setTentativesRestantes((prev) => Math.max(0, prev - 1));
+          }
+          setErrorMessage(msg);
+          setPhase("INPUT_OTP");
+          return;
+        }
+      }
+
+      // Fallback mock path if no reference is present
       const res = await verifyOtpMock({ recipient: currentRecipient, code: fullCode });
       if (!res.success) {
-        message.error(res.message);
+        setErrorMessage(res.message);
         setPhase("INPUT_OTP");
         return;
       }
 
-      // Execute parent submission callback
-      const submitRes = await onSuccessSubmit();
-      const ref = submitRes?.reference || referenceNumber || `RRM-DEM-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      setGeneratedRef(ref);
+      if (onSuccessSubmit) {
+        const submitRes = await onSuccessSubmit();
+        const ref = submitRes?.reference || referenceNumber || `RRM-DEM-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        setGeneratedRef(ref);
+      }
 
-      // Simulate a brief loading transition for smooth UX
       setTimeout(() => {
         setPhase("CONFIRMED");
-      }, 1000);
+      }, 800);
     } catch {
-      message.error("Erreur lors de la validation. Veuillez réespayer.");
+      setErrorMessage("Erreur lors de la validation. Veuillez réessayer.");
       setPhase("INPUT_OTP");
     }
   };
@@ -232,13 +299,25 @@ export function OtpVerificationModal({
                 </Radio.Group>
               </div>
 
+              {errorMessage && (
+                <Alert
+                  type="error"
+                  message={errorMessage}
+                  showIcon
+                  style={{ marginBottom: 16, textAlign: "left" }}
+                />
+              )}
+
               <Alert
                 type="info"
                 showIcon={false}
                 style={{ marginBottom: 20, backgroundColor: "#f8fafc", borderColor: "#cbd5e1" }}
                 message={
-                  <div style={{ fontSize: 13, color: "#334155" }}>
-                    Code envoyé à : <strong>{maskRecipient(currentRecipient, channel)}</strong>
+                  <div style={{ fontSize: 13, color: "#334155", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Code envoyé à : <strong>{maskRecipient(currentRecipient, channel)}</strong></span>
+                    <Tag color={tentativesRestantes > 1 ? "blue" : "red"} style={{ fontWeight: 700, margin: 0 }}>
+                      {tentativesRestantes} essai{tentativesRestantes > 1 ? "s" : ""} restant{tentativesRestantes > 1 ? "s" : ""}
+                    </Tag>
                   </div>
                 }
               />
@@ -359,7 +438,7 @@ export function OtpVerificationModal({
                   border: "1px solid #e2e8f0",
                   borderRadius: 16,
                   padding: "16px",
-                  marginBottom: 24,
+                  marginBottom: 16,
                 }}
               >
                 <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, display: "block", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
@@ -369,6 +448,15 @@ export function OtpVerificationModal({
                   {generatedRef || referenceNumber || "RRM-DEM-2026-9988"}
                 </span>
               </div>
+
+              <Alert
+                type="info"
+                showIcon
+                icon={<InfoCircleOutlined />}
+                message="Finalisation du Paiement sur Place"
+                description="Veuillez vous présenter au guichet du parking choisi muni de votre numéro de référence ou de votre carte CIN pour régler votre souscription."
+                style={{ marginBottom: 24, textAlign: "left", borderRadius: 12 }}
+              />
 
               {/* 3 Action Buttons in the Same Popup */}
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
