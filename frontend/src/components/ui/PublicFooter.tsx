@@ -116,7 +116,12 @@ export function PublicFooter() {
             <a href="#privacy" onClick={(e) => e.preventDefault()} className="hover:text-slate-300 transition-colors">
               Mentions Légales
             </a>
-            <a href="#terms" onClick={(e) => e.preventDefault()} className="hover:text-slate-300 transition-colors">
+            <a
+              href={encodeURI("/file/Conditions générales d'abonnement VFINALE.pdf")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-300 transition-colors"
+            >
               Conditions Générales (CGU)
             </a>
             <a href="#data" onClick={(e) => e.preventDefault()} className="hover:text-slate-300 transition-colors">

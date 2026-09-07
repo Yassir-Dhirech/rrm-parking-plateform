@@ -1956,7 +1956,12 @@ export function PublicQrForm() {
               >
                 <Checkbox className="text-xs text-slate-700 font-semibold">
                   J'ai lu et j'accepte les{" "}
-                  <a href="#terms" onClick={(e) => e.preventDefault()} className="text-secondary underline font-bold">
+                  <a
+                    href={encodeURI("/file/Conditions générales d'abonnement VFINALE.pdf")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-secondary underline font-bold"
+                  >
                     conditions générales d'utilisation (CGU)
                   </a>{" "}
                   des parkings sous la gestion de Rabat Région Mobilité (RRM) ainsi que la politique de traitement des données personnelles (Loi 09-08).
