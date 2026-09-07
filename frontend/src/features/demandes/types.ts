@@ -1,5 +1,62 @@
 import { type TypeClient, type TypeVehicule, type TypeDemande } from "../../lib/enums";
 
+export type ModePaiement = "ESPECE" | "CHEQUE";
+
+export interface DemandeAbonnementRegulierRequest {
+  nom: string;
+  prenom: string;
+  cin: string;
+  telephone: string;
+  email: string;
+
+  numeroImmatriculation: string;
+  serieImmatriculation: string;
+  codeRegion: string;
+  marque?: string;
+  modele?: string;
+  couleur?: string;
+  typeVehicule: string;
+
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+  conditionsAcceptees: boolean;
+}
+
+export interface DocumentsDemande {
+  cinRecto: File;
+  cinVerso: File;
+  carteGriseRecto: File;
+  carteGriseVerso: File;
+}
+
+export interface DemandeAbonnementRegulierResponse {
+  reference: string;
+  statut: "SOUMISE" | string;
+  dateSoumission: string;
+  dateExpirationOtp: string;
+  tentativesRestantes: number;
+  canalOtp: "SMS" | "EMAIL";
+  destinationMasquee: string;
+}
+
+export interface ValidationOtpResponse {
+  reference: string;
+  otpValide: boolean;
+  statutDemande: string;
+  tentativesRestantes: number;
+  dateValidation: string | null;
+  message: string;
+}
+
+export interface ApiProblemDetails {
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  date?: string;
+  chemin?: string;
+}
+
 export interface PublicDemandeInput {
   parkingId: number;
   typeClient: TypeClient;
@@ -37,7 +94,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
 
 export type StatutSla = "DANS_LES_DELAIS" | "ALERT_5_JOURS" | "ALERT_3_JOURS" | "ALERT_1_JOUR" | "DEPASSE";
 
@@ -66,7 +123,7 @@ export interface DemandeSubmissionResult {
 export type BankOption = "CIH" | "ATTIJARI" | "BMCE" | "SOCIETE GENERALE" | "BANQUE POPULAIRE" | "AL BARID" | "Autre";
 
 export interface PaymentInfoInput {
-  modePaiement: "ESPECES" | "CHEQUE";
+  modePaiement: "ESPECES" | "CHEQUE" | "ESPECE";
   montant: number;
   numeroCheque?: string;
   banque?: BankOption;
@@ -96,7 +153,7 @@ export interface DemandeDetail extends DemandeListItem {
   dureeMois?: number;
   nombreAbonnements?: number;
   montantTotal?: number;
-  modePaiement?: "ESPECES" | "CHEQUE";
+  modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
   raisonRejet?: string;
   commentaireCorrection?: string;
   cinRectoUrl?: string;

@@ -43,6 +43,8 @@ import { PublicNavbar } from "../../../components/ui/PublicNavbar";
 import { PublicFooter } from "../../../components/ui/PublicFooter";
 import { getPublicParkings } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
+import { creerDemandeAbonnementRegulier, extraireMessageErreur } from "../../../api/demandesApi";
+import type { DemandeAbonnementRegulierRequest, DocumentsDemande, DemandeAbonnementRegulierResponse, ModePaiement } from "../types";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
@@ -105,7 +107,7 @@ function ScanUploadField({
             </div>
             <h5 className="text-sm font-bold text-slate-900 mb-1 text-center">{label}</h5>
             <p className="text-xs text-emerald-800 font-mono font-semibold truncate max-w-xs mb-3 text-center">
-              📄 {fileName}
+              <FileTextOutlined className="mr-1" /> {fileName}
             </p>
             <Button
               icon={<SyncOutlined />}
@@ -165,6 +167,8 @@ export function PublicQrForm() {
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<any>(null);
   const [submittedResult, setSubmittedResult] = useState<any>(null);
+  const [backendDemandeResponse, setBackendDemandeResponse] = useState<DemandeAbonnementRegulierResponse | null>(null);
+  const [isSubmittingBackend, setIsSubmittingBackend] = useState<boolean>(false);
 
   // Form Live Watchers for Summary Calculation
   const watchedParkingId = Form.useWatch("parkingId", form);
@@ -470,6 +474,28 @@ export function PublicQrForm() {
     },
   });
 
+  const getFileFromList = (list: any): File | null => {
+    if (!list) return null;
+    if (list instanceof File) return list;
+    if (Array.isArray(list) && list.length > 0) {
+      const item = list[0];
+      if (item instanceof File) return item;
+      if (item?.originFileObj instanceof File) return item.originFileObj;
+    }
+    if (list?.originFileObj instanceof File) return list.originFileObj;
+    return null;
+  };
+
+  const parsePlate = (plateStr: string) => {
+    if (!plateStr) return { numeroImmatriculation: "", serieImmatriculation: "A", codeRegion: "1" };
+    const parts = plateStr.split("|").map((s) => s.trim());
+    return {
+      numeroImmatriculation: parts[0] || "",
+      serieImmatriculation: parts[1] || "A",
+      codeRegion: parts[2] || "1",
+    };
+  };
+
   const handleNextToOtp = async () => {
     try {
       const values = await form.validateFields();
@@ -486,7 +512,59 @@ export function PublicQrForm() {
         fraisCarte: totalFraisCarte,
         montantTotal: totalPrice,
       });
-      setIsOtpModalOpen(true);
+
+      if (typeDemande === "NEW") {
+        const cinRecto = getFileFromList(consolidated.photoCinRecto);
+        const cinVerso = getFileFromList(consolidated.photoCinVerso);
+        const carteGriseRecto = getFileFromList(consolidated.photoCarteGriseRecto);
+        const carteGriseVerso = getFileFromList(consolidated.photoCarteGriseVerso);
+
+        if (!cinRecto || !cinVerso || !carteGriseRecto || !carteGriseVerso) {
+          message.error("Veuillez téléverser les 4 documents requis (CIN Recto/Verso, Carte Grise Recto/Verso).");
+          return;
+        }
+
+        const plateObj = parsePlate(consolidated.immatriculation);
+
+        const demandeReq: DemandeAbonnementRegulierRequest = {
+          nom: consolidated.nom,
+          prenom: consolidated.prenom,
+          cin: consolidated.cin,
+          telephone: consolidated.telephone,
+          email: consolidated.email,
+          numeroImmatriculation: plateObj.numeroImmatriculation,
+          serieImmatriculation: plateObj.serieImmatriculation,
+          codeRegion: plateObj.codeRegion,
+          marque: consolidated.marque,
+          modele: consolidated.modele,
+          couleur: consolidated.couleur,
+          typeVehicule: consolidated.typeVehicule || "VOITURE",
+          tarifParkingId: Number(consolidated.tarifParkingId || consolidated.parkingId || 48),
+          modePaiement: (consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE") as ModePaiement,
+          conditionsAcceptees: Boolean(consolidated.acceptTerms),
+        };
+
+        const documents: DocumentsDemande = {
+          cinRecto,
+          cinVerso,
+          carteGriseRecto,
+          carteGriseVerso,
+        };
+
+        setIsSubmittingBackend(true);
+        try {
+          const res = await creerDemandeAbonnementRegulier(demandeReq, documents);
+          setBackendDemandeResponse(res);
+          setIsOtpModalOpen(true);
+          message.success("Demande créée avec succès ! Code OTP généré.");
+        } catch (err) {
+          message.error(extraireMessageErreur(err));
+        } finally {
+          setIsSubmittingBackend(false);
+        }
+      } else {
+        setIsOtpModalOpen(true);
+      }
     } catch {
       message.error("Veuillez remplir les champs obligatoires et accepter les conditions d'utilisation.");
     }
@@ -1897,6 +1975,7 @@ export function PublicQrForm() {
               <Button
                 type="primary"
                 onClick={handleNextToOtp}
+                loading={isSubmittingBackend}
                 className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-6 sm:px-8 font-extrabold shadow-md flex items-center justify-center text-center"
               >
                 Confirmer Ma Demande (Code OTP) →
@@ -1910,13 +1989,17 @@ export function PublicQrForm() {
       <OtpVerificationModal
         open={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
+        demandeResponse={backendDemandeResponse}
         onSuccessSubmit={async () => {
-          const res = await submitMutation.mutateAsync(pendingValues);
-          setSubmittedResult(res);
-          return res;
+          if (!backendDemandeResponse) {
+            const res = await submitMutation.mutateAsync(pendingValues);
+            setSubmittedResult(res);
+            return res;
+          }
         }}
         phone={pendingValues?.telephone || "0661234567"}
-        referenceNumber={submittedResult?.reference}
+        email={pendingValues?.email}
+        referenceNumber={backendDemandeResponse?.reference || submittedResult?.reference}
       />
 
       <PublicFooter />
