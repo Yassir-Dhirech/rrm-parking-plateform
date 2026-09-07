@@ -153,7 +153,7 @@ export interface CreerFacturePayload {
   paiementReference?: string;
   paiementId?: number;
   genereePar?: string;
-  modePaiement?: "ESPECES" | "CHEQUE";
+  modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
   libellePrestation?: string;
 }
 
@@ -187,7 +187,7 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
     abonnementReference: payload.abonnementReference,
     paiementReference: payload.paiementReference || `PAY-2026-${String(newId).padStart(6, "0")}`,
     paiementId: payload.paiementId || newId,
-    modePaiement: payload.modePaiement || "ESPECES",
+    modePaiement: (payload.modePaiement === "ESPECE" ? "ESPECES" : payload.modePaiement) || "ESPECES",
     libellePrestation: payload.libellePrestation || "Règlement Abonnement de Stationnement",
     genereePar: payload.genereePar || "Superviseur Exploitation",
   };
