@@ -17,4 +17,18 @@ public interface DemandeClientRepository
     List<DemandeClient> findByStatut(StatutDemande statut);
 
     List<DemandeClient> findByClientId(Long clientId);
+
+    Optional<DemandeClient> findByReferenceIgnoreCase(
+            String reference
+    );
+
+    List<DemandeClient>
+    findByClientIdOrderByDateSoumissionDesc(
+            Long clientId
+    );
+
+    List<DemandeClient>
+    findByStatutOrderByDateValidationOtpAsc(
+            StatutDemande statut
+    );
 }
