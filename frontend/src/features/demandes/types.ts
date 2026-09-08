@@ -254,7 +254,7 @@ export interface DemandeDetail
   commentaireCorrection?: string;
 
   cinRectoUrl?: string;
-  cinVersoUrl?: string;DemandeAbonnementRegulierRequest
+  cinVersoUrl?: string;
   carteGriseRectoUrl?: string;
   carteGriseVersoUrl?: string;
 
