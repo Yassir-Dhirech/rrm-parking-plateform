@@ -76,11 +76,6 @@ export function OtpVerificationModal({
       setPhase("INPUT_OTP");
       setOtpDigits(["", "", "", "", "", ""]);
       setErrorMessage(null);
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> origin/main
       if (demandeResponse) {
         setGeneratedRef(demandeResponse.reference);
         setTentativesRestantes(demandeResponse.tentativesRestantes ?? 3);
@@ -334,7 +329,7 @@ export function OtpVerificationModal({
                 style={{ marginBottom: 20, backgroundColor: "#f8fafc", borderColor: "#cbd5e1" }}
                 message={
                   <div style={{ fontSize: 13, color: "#334155", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>Code envoyé à : <strong>{maskRecipient(currentRecipient, channel)}</strong></span>
+                    <span>Code envoyé à : <strong>{maskRecipient(currentRecipient)}</strong></span>
                     <Tag color={tentativesRestantes > 1 ? "blue" : "red"} style={{ fontWeight: 700, margin: 0 }}>
                       {tentativesRestantes} essai{tentativesRestantes > 1 ? "s" : ""} restant{tentativesRestantes > 1 ? "s" : ""}
                     </Tag>

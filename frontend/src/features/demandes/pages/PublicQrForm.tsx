@@ -443,59 +443,12 @@ const {
     }
   };
 
-<<<<<<< HEAD
-  const parkingIdRecapitulatif = Number(
-    recapData.parkingId || watchedParkingId
-  );
-
-  const tarifParkingIdRecapitulatif = Number(
-    recapData.tarifParkingId
-  );
-
-  const selectedParking = parkings.find(
-    (parking) => parking.id === parkingIdRecapitulatif
-  );
-
-  const selectedTarif = tarifsParking.find(
-    (tarif) =>
-      tarif.tarifParkingId ===
-      tarifParkingIdRecapitulatif
-  );
-
-  const selectedParkingName =
-    selectedParking?.nom || "Parking non sélectionné";
-
-  const totalMonths =
-    typeDemande === "NEW"
-      ? selectedTarif?.dureeEnMois || 0
-      : typeDemande === "CORPORATE"
-        ? 240
-        : recapData.dureeMois ||
-          watchedDureeMois ||
-          3;
-
-  const cardMultiplier =
-    typeDemande === "CORPORATE"
-      ? nombreVehiculesCorporate
-      : 1;
-
-  const baseAbonnementPrice =
-    typeDemande === "DUPLICATE"
-      ? 0
-      : typeDemande === "NEW"
-        ? Number(
-            selectedTarif?.montantTotalTTC || 0
-          )
-        : getMonthlyPrice() *
-          totalMonths *
-          cardMultiplier;
-=======
-  const selectedParking = parkings.find((p: any) => p.id === (recapData.parkingId || watchedParkingId));
+  const parkingIdRecapitulatif = Number(recapData.parkingId || watchedParkingId);
+  const selectedParking = parkings.find((p: any) => p.id === parkingIdRecapitulatif);
   const selectedParkingName = selectedParking?.nom || "Parking Agdal Gare (Rabat)";
   const totalMonths = typeDemande === "CORPORATE" ? 240 : (recapData.dureeMois || watchedDureeMois || 3);
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
   const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
->>>>>>> origin/main
 
   // RRM Business Rule:
   // - New subscriber (NEW / CORPORATE): requires new RFID card(s) => +50 DH per card

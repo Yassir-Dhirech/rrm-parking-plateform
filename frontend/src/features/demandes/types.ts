@@ -8,13 +8,9 @@ import {
  * Types utilisés par les véritables API backend.
  */
 
-export type ModePaiement =
-  | "ESPECE"
-  | "CHEQUE";
+export type ModePaiement = "ESPECE" | "CHEQUE";
 
-export type CanalOtp =
-  | "SMS"
-  | "WHATSAPP";
+export type CanalOtp = "SMS" | "WHATSAPP" | "EMAIL";
 
 export type StatutDemandeApi =
   | "SOUMISE"
@@ -42,11 +38,11 @@ export interface DemandeAbonnementRegulierRequest {
   modele?: string;
   couleur?: string;
 
-  typeVehicule: TypeVehicule;
+  typeVehicule: string | TypeVehicule;
 
   tarifParkingId: number;
   modePaiement: ModePaiement;
-  canalOtp: CanalOtp;
+  canalOtp?: CanalOtp;
   conditionsAcceptees: boolean;
 }
 
@@ -59,7 +55,7 @@ export interface DocumentsDemande {
 
 export interface DemandeAbonnementRegulierResponse {
   reference: string;
-  statut: StatutDemandeApi;
+  statut: StatutDemandeApi | string;
   dateSoumission: string;
   dateExpirationOtp: string;
   tentativesRestantes: number;
@@ -70,71 +66,7 @@ export interface DemandeAbonnementRegulierResponse {
 export interface ValidationOtpResponse {
   reference: string;
   otpValide: boolean;
-  statutDemande: StatutDemandeApi;
-  tentativesRestantes: number;
-  dateValidation: string | null;
-  message: string;
-}
-
-export interface ApiProblemDetails {
-  title?: string;
-  status?: number;
-  detail?: string;
-  instance?: string;
-  date?: string;
-  chemin?: string;
-}
-
-/*
- * Modèle actuellement utilisé par les anciens écrans
- * et les données mock.
- *
- * Il sera progressivement remplacé par les DTO réels.
- */
-
-export type ModePaiement = "ESPECE" | "CHEQUE";
-
-export interface DemandeAbonnementRegulierRequest {
-  nom: string;
-  prenom: string;
-  cin: string;
-  telephone: string;
-  email: string;
-
-  numeroImmatriculation: string;
-  serieImmatriculation: string;
-  codeRegion: string;
-  marque?: string;
-  modele?: string;
-  couleur?: string;
-  typeVehicule: string;
-
-  tarifParkingId: number;
-  modePaiement: ModePaiement;
-  conditionsAcceptees: boolean;
-}
-
-export interface DocumentsDemande {
-  cinRecto: File;
-  cinVerso: File;
-  carteGriseRecto: File;
-  carteGriseVerso: File;
-}
-
-export interface DemandeAbonnementRegulierResponse {
-  reference: string;
-  statut: "SOUMISE" | string;
-  dateSoumission: string;
-  dateExpirationOtp: string;
-  tentativesRestantes: number;
-  canalOtp: "SMS" | "EMAIL";
-  destinationMasquee: string;
-}
-
-export interface ValidationOtpResponse {
-  reference: string;
-  otpValide: boolean;
-  statutDemande: string;
+  statutDemande: StatutDemandeApi | string;
   tentativesRestantes: number;
   dateValidation: string | null;
   message: string;
