@@ -33,9 +33,6 @@ export function PublicFooter() {
 
             </div>
 
-
-
-
           </div>
 
           {/* Column 2: Navigation & Quick Links */}
@@ -103,8 +100,6 @@ export function PublicFooter() {
           </div>
 
           {/* Column 4: Quick Action CTA */}
-
-
         </div>
 
         {/* Bottom Sub-Footer Bar */}

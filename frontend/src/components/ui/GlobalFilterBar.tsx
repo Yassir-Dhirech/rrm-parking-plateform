@@ -99,7 +99,6 @@ export function GlobalFilterBar({ filters, onChange }: GlobalFilterBarProps) {
                 </Tag>
               )}
             </div>
-
           </div>
         </div>
 
@@ -148,7 +147,6 @@ export function GlobalFilterBar({ filters, onChange }: GlobalFilterBarProps) {
               }}
             />
           </div>
-
           {/* Quick Presets for fast reporting */}
           <div className="hidden sm:flex items-center gap-1 bg-slate-100/70 p-0.5 rounded-lg border border-slate-200/60">
             <button

@@ -67,7 +67,6 @@ export function LandingPage() {
 
             {/* Right side floating glass highlights card */}
             <div className="w-full lg:w-80 glass-panel p-6 rounded-3xl border border-slate-200/90 bg-white/90 text-slate-900 space-y-4 shadow-xl shrink-0">
-
               <div className="space-y-3 text-xs text-slate-700 font-medium">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Parkings Ouverts :</span>
@@ -185,7 +184,6 @@ export function LandingPage() {
         <section id="map" className="space-y-4 pt-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-
               <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 17 Parkings Régionaux</h2>
               <p className="text-slate-600 text-sm mt-1">Consultez la carte interactive de Rabat pour repérer les ouvrages de stationnement et leurs places libres.</p>
             </div>
@@ -213,7 +211,6 @@ export function LandingPage() {
                 Société de Développement Local en charge de la mobilité urbaine dans la conurbation Rabat-Salé-Témara,
                  RRM assure la gestion et la modernisation des infrastructures de transport et des parkings publics.
               </p>
-
             </Col>
             <Col xs={24} md={12}>
               <Card className="rounded-2xl border-slate-200 shadow-md bg-slate-50">

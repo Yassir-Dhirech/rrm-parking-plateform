@@ -92,6 +92,63 @@ export interface ApiProblemDetails {
  * Il sera progressivement remplacé par les DTO réels.
  */
 
+export type ModePaiement = "ESPECE" | "CHEQUE";
+
+export interface DemandeAbonnementRegulierRequest {
+  nom: string;
+  prenom: string;
+  cin: string;
+  telephone: string;
+  email: string;
+
+  numeroImmatriculation: string;
+  serieImmatriculation: string;
+  codeRegion: string;
+  marque?: string;
+  modele?: string;
+  couleur?: string;
+  typeVehicule: string;
+
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+  conditionsAcceptees: boolean;
+}
+
+export interface DocumentsDemande {
+  cinRecto: File;
+  cinVerso: File;
+  carteGriseRecto: File;
+  carteGriseVerso: File;
+}
+
+export interface DemandeAbonnementRegulierResponse {
+  reference: string;
+  statut: "SOUMISE" | string;
+  dateSoumission: string;
+  dateExpirationOtp: string;
+  tentativesRestantes: number;
+  canalOtp: "SMS" | "EMAIL";
+  destinationMasquee: string;
+}
+
+export interface ValidationOtpResponse {
+  reference: string;
+  otpValide: boolean;
+  statutDemande: string;
+  tentativesRestantes: number;
+  dateValidation: string | null;
+  message: string;
+}
+
+export interface ApiProblemDetails {
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  date?: string;
+  chemin?: string;
+}
+
 export interface PublicDemandeInput {
   parkingId: number;
   typeClient: TypeClient;
@@ -140,19 +197,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-/*
- * Statuts historiques utilisés uniquement par les écrans mock.
- * Ne pas utiliser ce type pour appeler le backend.
- */
-export type StatutDemande =
-  | "SOUMISE"
-  | "EN_COURS"
-  | "EN_ATTENTE_PAIEMENT"
-  | "PAIEMENT_ENREGISTRE"
-  | "VALIDEE"
-  | "REJETEE"
-  | "CORRIGEE"
-  | "COMPLETEE";
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
 
 export type StatutSla =
   | "DANS_LES_DELAIS"
@@ -203,11 +248,7 @@ export type BankOption =
  * L'API réelle de paiement utilisera ModePaiement.
  */
 export interface PaymentInfoInput {
-  modePaiement:
-    | "ESPECES"
-    | "ESPECE"
-    | "CHEQUE";
-
+  modePaiement: "ESPECES" | "CHEQUE" | "ESPECE";
   montant: number;
   numeroCheque?: string;
   banque?: BankOption;
@@ -220,7 +261,6 @@ export interface DemandeDetail
   email: string;
   telephone: string;
   immatriculation: string;
-
   marque?: string;
   modele?: string;
   typeVehicule: string;
@@ -238,18 +278,12 @@ export interface DemandeDetail
   motifPerte?: string;
   fraisDuplicata?: number;
   statutCarteAncienne?: string;
-
   formuleCode?: string;
   forfaitNom?: string;
   dureeMois?: number;
   nombreAbonnements?: number;
   montantTotal?: number;
-
-  modePaiement?:
-    | "ESPECES"
-    | "ESPECE"
-    | "CHEQUE";
-
+  modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
   raisonRejet?: string;
   commentaireCorrection?: string;
 

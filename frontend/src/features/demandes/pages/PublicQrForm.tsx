@@ -378,51 +378,30 @@ const {
   };
 
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
-const handleValidateParkingAndGoToRecap = async () => {
-  try {
-    if (typeDemande === "NEW") {
-      await form.validateFields([
-        "parkingId",
-        "tarifParkingId",
-      ]);
-
-      const tarifParkingId = Number(
-        form.getFieldValue("tarifParkingId")
-      );
-
-      if (
-        !Number.isInteger(tarifParkingId) ||
-        tarifParkingId <= 0
-      ) {
-        message.error(
-          "Veuillez sélectionner un parking, une formule et une durée."
-        );
-        return;
+  const handleValidateParkingAndGoToRecap = async () => {
+    try {
+      if (typeDemande === "NEW") {
+        await form.validateFields(["parkingId", "tarifParkingId"]);
+        const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
+        if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
+          message.error("Veuillez sélectionner un parking, une formule et une durée.");
+          return;
+        }
+      } else {
+        await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
       }
-    } else {
-      await form.validateFields([
-        "parkingId",
-        "formuleCode",
-        "dureeMois",
-      ]);
+
+      setFormValues((prev: any) => ({
+        ...prev,
+        ...form.getFieldsValue(true),
+      }));
+
+      setCurrentStep(3);
+      message.success("Choix du parking et de la formule validé.");
+    } catch {
+      message.error("Veuillez sélectionner un parking, une formule et une durée.");
     }
-
-    setFormValues((precedentes: any) => ({
-      ...precedentes,
-      ...form.getFieldsValue(true),
-    }));
-
-    setCurrentStep(3);
-
-    message.success(
-      "Choix du parking et de la formule validé."
-    );
-  } catch {
-    message.error(
-      "Veuillez sélectionner un parking, une formule et une durée."
-    );
-  }
-};
+  };
 
   // Corporate Section Validation
   const handleValidateCorporateAndNext = async () => {
@@ -464,6 +443,7 @@ const handleValidateParkingAndGoToRecap = async () => {
     }
   };
 
+<<<<<<< HEAD
   const parkingIdRecapitulatif = Number(
     recapData.parkingId || watchedParkingId
   );
@@ -509,6 +489,13 @@ const handleValidateParkingAndGoToRecap = async () => {
         : getMonthlyPrice() *
           totalMonths *
           cardMultiplier;
+=======
+  const selectedParking = parkings.find((p: any) => p.id === (recapData.parkingId || watchedParkingId));
+  const selectedParkingName = selectedParking?.nom || "Parking Agdal Gare (Rabat)";
+  const totalMonths = typeDemande === "CORPORATE" ? 240 : (recapData.dureeMois || watchedDureeMois || 3);
+  const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
+  const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
+>>>>>>> origin/main
 
   // RRM Business Rule:
   // - New subscriber (NEW / CORPORATE): requires new RFID card(s) => +50 DH per card
@@ -521,14 +508,6 @@ const handleValidateParkingAndGoToRecap = async () => {
   const currentPaymentMode = recapData.modePaiement || watchedModePaiement || (typeDemande === "CORPORATE" ? "CHEQUE" : "ESPECES");
 
   const getFormuleLabel = (code: string) => {
-
-      if (typeDemande === "NEW" && selectedTarif) {
-        return (
-          `${selectedTarif.forfaitLibelle} ` +
-          `(${selectedTarif.dureeEnMois} mois — ` +
-          `${selectedTarif.montantTotalTTC} DH TTC)`
-        );
-      }
     if (typeDemande === "CORPORATE") {
       switch (code) {
         case "CORP_8_20":
@@ -581,57 +560,25 @@ const handleValidateParkingAndGoToRecap = async () => {
     },
   });
 
-  const getFileFromList = (
-    valeur: unknown
-  ): File | null => {
-    if (!valeur) {
-      return null;
+  const getFileFromList = (list: any): File | null => {
+    if (!list) return null;
+    if (list instanceof File) return list;
+    if (Array.isArray(list) && list.length > 0) {
+      const item = list[0];
+      if (item instanceof File) return item;
+      if (item?.originFileObj instanceof File) return item.originFileObj;
     }
-
-    if (valeur instanceof File) {
-      return valeur;
-    }
-
-    const element = Array.isArray(valeur)
-      ? valeur[0]
-      : valeur;
-
-    if (!element || typeof element !== "object") {
-      return null;
-    }
-
-    const fichierUpload = element as {
-      originFileObj?: File;
-      name?: string;
-      type?: string;
-      size?: number;
-    };
-
-    if (fichierUpload.originFileObj) {
-      return fichierUpload.originFileObj;
-    }
-
-    if (
-      typeof fichierUpload.name === "string" &&
-      typeof fichierUpload.type === "string" &&
-      typeof fichierUpload.size === "number"
-    ) {
-      return element as File;
-    }
-
+    if (list?.originFileObj instanceof File) return list.originFileObj;
     return null;
   };
 
   const parsePlate = (plateStr: string) => {
-    const parties = plateStr
-      .trim()
-      .split(/\s*[|-]\s*/)
-      .map((partie) => partie.trim());
-
+    if (!plateStr) return { numeroImmatriculation: "", serieImmatriculation: "A", codeRegion: "1" };
+    const parts = plateStr.split(/\s*[|-]\s*/).map((s) => s.trim());
     return {
-      numeroImmatriculation: parties[0] || "",
-      serieImmatriculation: parties[1] || "",
-      codeRegion: parties[2] || "",
+      numeroImmatriculation: parts[0] || "",
+      serieImmatriculation: parts[1] || "A",
+      codeRegion: parts[2] || "1",
     };
   };
 
@@ -665,27 +612,12 @@ const handleValidateParkingAndGoToRecap = async () => {
 
         const plateObj = parsePlate(consolidated.immatriculation);
 
-        const tarifParkingId = Number(
-          consolidated.tarifParkingId
-        );
-
-        if (
-          !Number.isInteger(tarifParkingId) ||
-          tarifParkingId <= 0
-        ) {
-          message.error(
-            "Veuillez sélectionner un parking, une formule et une durée."
-          );
-          return;
-        }
-
         const demandeReq: DemandeAbonnementRegulierRequest = {
           nom: consolidated.nom,
           prenom: consolidated.prenom,
           cin: consolidated.cin,
           telephone: consolidated.telephone,
           email: consolidated.email,
-          canalOtp: "SMS",
           numeroImmatriculation: plateObj.numeroImmatriculation,
           serieImmatriculation: plateObj.serieImmatriculation,
           codeRegion: plateObj.codeRegion,
@@ -693,7 +625,7 @@ const handleValidateParkingAndGoToRecap = async () => {
           modele: consolidated.modele,
           couleur: consolidated.couleur,
           typeVehicule: consolidated.typeVehicule || "VOITURE",
-          tarifParkingId,
+          tarifParkingId: Number(consolidated.tarifParkingId || consolidated.parkingId || 48),
           modePaiement: (consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE") as ModePaiement,
           conditionsAcceptees: Boolean(consolidated.acceptTerms),
         };
@@ -710,24 +642,17 @@ const handleValidateParkingAndGoToRecap = async () => {
           const res = await creerDemandeAbonnementRegulier(demandeReq, documents);
           setBackendDemandeResponse(res);
           setIsOtpModalOpen(true);
-          message.success(
-            "Demande créée avec succès ! Code OTP généré."
-          );
+          message.success("Demande créée avec succès ! Code OTP généré.");
         } catch (err) {
           message.error(extraireMessageErreur(err));
         } finally {
           setIsSubmittingBackend(false);
         }
-      }else {
-         message.error(
-           "Veuillez sélectionner un parking, une formule et une durée."
-         );
-         return;
-       }
+      } else {
+        setIsOtpModalOpen(true);
+      }
     } catch {
-      message.error(
-        "Veuillez téléverser les 4 documents requis (CIN recto/verso, carte grise recto/verso)."
-      );
+      message.error("Veuillez remplir les champs obligatoires et accepter les conditions d'utilisation.");
     }
   };
 
