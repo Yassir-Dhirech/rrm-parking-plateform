@@ -26,7 +26,12 @@ public class Permission {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 100)
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 100,
+            columnDefinition = "VARCHAR(100)"
+    )
     private CodePermission code;
 
     @Column(nullable = false, length = 150)

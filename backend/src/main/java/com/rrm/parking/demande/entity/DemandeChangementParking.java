@@ -80,7 +80,7 @@ public class DemandeChangementParking extends DemandeClient {
     }
 
     public void selectionnerParking(Parking parking) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
 
         this.nouveauParking = exigerNonNull(
                 parking,
@@ -89,7 +89,7 @@ public class DemandeChangementParking extends DemandeClient {
     }
 
     public void modifierDateChangementSouhaitee(LocalDate date) {
-        verifierDemandeNonSoumise();
+        verifierModifiableAvantPaiement();
         this.dateChangementSouhaitee = date;
     }
 

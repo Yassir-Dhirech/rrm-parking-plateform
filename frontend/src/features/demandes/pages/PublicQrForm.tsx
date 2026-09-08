@@ -41,7 +41,10 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PublicNavbar } from "../../../components/ui/PublicNavbar";
 import { PublicFooter } from "../../../components/ui/PublicFooter";
-import { getPublicParkings } from "../../../api/parkings";
+import {
+  getParkingsDisponiblesAbonnement,
+  getTarifsParking,
+} from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
 import { creerDemandeAbonnementRegulier, extraireMessageErreur } from "../../../api/demandesApi";
 import type { DemandeAbonnementRegulierRequest, DocumentsDemande, DemandeAbonnementRegulierResponse, ModePaiement } from "../types";
@@ -209,11 +212,32 @@ export function PublicQrForm() {
     };
   }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedModePaiement]);
 
-  // Public Parkings List
+
+
   const { data: parkings = [] } = useQuery({
-    queryKey: ["public_parkings"],
-    queryFn: getPublicParkings,
+    queryKey: ["parkings-disponibles-abonnement"],
+    queryFn: getParkingsDisponiblesAbonnement,
   });
+
+const parkingIdSelectionne =
+  typeof watchedParkingId === "number"
+    ? watchedParkingId
+    : Number(watchedParkingId);
+
+const {
+  data: tarifsParking = [],
+  isLoading: chargementTarifs,
+} = useQuery({
+  queryKey: ["tarifs-parking", parkingIdSelectionne],
+  queryFn: () => getTarifsParking(parkingIdSelectionne),
+  enabled:
+    Number.isInteger(parkingIdSelectionne) &&
+    parkingIdSelectionne > 0 &&
+    typeDemande === "NEW",
+});
+
+
+
 
   // Read URL parameters
   useEffect(() => {
@@ -356,12 +380,26 @@ export function PublicQrForm() {
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
   const handleValidateParkingAndGoToRecap = async () => {
     try {
-      await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
-      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
+      if (typeDemande === "NEW") {
+        await form.validateFields(["parkingId", "tarifParkingId"]);
+        const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
+        if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
+          message.error("Veuillez sélectionner un parking, une formule et une durée.");
+          return;
+        }
+      } else {
+        await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+      }
+
+      setFormValues((prev: any) => ({
+        ...prev,
+        ...form.getFieldsValue(true),
+      }));
+
       setCurrentStep(3);
-      message.success("Choix du parking et formule validés ! Vérifiez votre récapitulatif.");
+      message.success("Choix du parking et de la formule validé.");
     } catch {
-      message.error("Veuillez choisir un parking et une formule.");
+      message.error("Veuillez sélectionner un parking, une formule et une durée.");
     }
   };
 
@@ -405,7 +443,8 @@ export function PublicQrForm() {
     }
   };
 
-  const selectedParking = parkings.find((p: any) => p.id === (recapData.parkingId || watchedParkingId));
+  const parkingIdRecapitulatif = Number(recapData.parkingId || watchedParkingId);
+  const selectedParking = parkings.find((p: any) => p.id === parkingIdRecapitulatif);
   const selectedParkingName = selectedParking?.nom || "Parking Agdal Gare (Rabat)";
   const totalMonths = typeDemande === "CORPORATE" ? 240 : (recapData.dureeMois || watchedDureeMois || 3);
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
@@ -488,7 +527,7 @@ export function PublicQrForm() {
 
   const parsePlate = (plateStr: string) => {
     if (!plateStr) return { numeroImmatriculation: "", serieImmatriculation: "A", codeRegion: "1" };
-    const parts = plateStr.split("|").map((s) => s.trim());
+    const parts = plateStr.split(/\s*[|-]\s*/).map((s) => s.trim());
     return {
       numeroImmatriculation: parts[0] || "",
       serieImmatriculation: parts[1] || "A",
@@ -1475,34 +1514,66 @@ export function PublicQrForm() {
                 rules={[{ required: true, message: "Veuillez choisir un parking." }]}
               >
                 <Select placeholder="Choisir un ouvrage..." size="large" className="rounded-xl">
-                  {parkings.map((p: any) => (
-                    <Option key={p.id} value={p.id}>
-                      {p.nom} — {p.placesLibresAbst ?? p.placesTotal} places libres disponibles
+                  {parkings.map((parking) => (
+                    <Option key={parking.id} value={parking.id}>
+                      {parking.nom} — {parking.placesDisponiblesAbonnements} places disponibles
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
 
               <Form.Item
-                name="formuleCode"
-                label="Sélectionnez la Formule Tarifaire"
-                initialValue={typeDemande === "CORPORATE" ? "CORP_24_7" : "24H7J"}
-                rules={[{ required: true, message: "Veuillez sélectionner une formule." }]}
+                name="tarifParkingId"
+                label="Formule et durée de l'abonnement"
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez sélectionner une formule et une durée.",
+                  },
+                ]}
               >
-                <Select placeholder="Choisir une formule..." size="large" className="rounded-xl">
-                  {typeDemande === "CORPORATE" ? (
-                    <>
-                      <Option value="CORP_8_20">Pass Diurne 08:00 - 20:00 — 500 DH / mois / place</Option>
-                      <Option value="CORP_8_22">Pass Étendu 08:00 - 22:00 — 550 DH / mois / place</Option>
-                      <Option value="CORP_24_7">Pass Permanent 24h / 7j — 650 DH / mois / place</Option>
-                    </>
-                  ) : (
-                    <>
-                      <Option value="24H7J">Pass Permanent 24h / 7j — 600 DH / mois</Option>
-                      <Option value="JOUR">Pass Diurne (08:00 - 20:00) — 420 DH / mois</Option>
-                      <Option value="NUIT">Pass Nocturne (19:00 - 08:00) — 350 DH / mois</Option>
-                    </>
-                  )}
+                <Select
+                  placeholder={
+                    parkingIdSelectionne > 0
+                      ? "Choisir une formule et une durée..."
+                      : "Sélectionnez d'abord un parking"
+                  }
+                  size="large"
+                  className="rounded-xl"
+                  loading={chargementTarifs}
+                  disabled={!parkingIdSelectionne || chargementTarifs}
+                  onChange={(tarifParkingId: number) => {
+                    const tarifSelectionne = tarifsParking.find(
+                      (tarif) =>
+                        tarif.tarifParkingId === tarifParkingId
+                    );
+
+                    if (!tarifSelectionne) {
+                      return;
+                    }
+
+                    form.setFieldsValue({
+                      formuleCode: tarifSelectionne.forfaitCode,
+                      dureeMois: tarifSelectionne.dureeEnMois,
+                    });
+
+                    setFormValues((precedentes: any) => ({
+                      ...precedentes,
+                      tarifParkingId,
+                      formuleCode: tarifSelectionne.forfaitCode,
+                      dureeMois: tarifSelectionne.dureeEnMois,
+                    }));
+                  }}
+                >
+                  {tarifsParking.map((tarif) => (
+                    <Option
+                      key={tarif.tarifParkingId}
+                      value={tarif.tarifParkingId}
+                    >
+                      {tarif.forfaitLibelle} — {tarif.dureeEnMois} mois —
+                      {" "}{tarif.montantTotalTTC} DH TTC
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
 
@@ -1526,16 +1597,19 @@ export function PublicQrForm() {
                 <div className="max-w-[260px]">
                   <Form.Item
                     name="dureeMois"
-                    label="Durée de Souscription Souhaitée"
-                    initialValue={3}
-                    rules={[{ required: true, message: "Choisissez la durée." }]}
+                    label="Durée de souscription"
                   >
-                    <Select size="large" className="rounded-xl">
-                      <Option value={3}>3 Mois</Option>
-                      <Option value={6}>6 Mois</Option>
-                      <Option value={9}>9 Mois</Option>
-                      <Option value={12}>12 Mois (1 An)</Option>
-                    </Select>
+                    <Input
+                      readOnly
+                      placeholder="Déterminée par le tarif"
+                      size="large"
+                      className="rounded-xl bg-slate-50"
+                      suffix={
+                        watchedDureeMois
+                          ? `${watchedDureeMois} mois`
+                          : undefined
+                      }
+                    />
                   </Form.Item>
                 </div>
               )}
@@ -1599,7 +1673,7 @@ export function PublicQrForm() {
                 className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
                   totalFraisCarte > 0 ? "bg-amber-50/90 border-amber-200" : "bg-emerald-50/90 border-emerald-200"
                 }`}
-              >
+              >formuleCode
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${

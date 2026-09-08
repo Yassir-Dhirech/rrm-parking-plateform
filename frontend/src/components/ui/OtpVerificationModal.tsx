@@ -13,9 +13,14 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+
+import type {
+  CanalOtp,
+  DemandeAbonnementRegulierResponse,
+  ValidationOtpResponse,
+} from "../../features/demandes/types";
 import { sendOtpMock, verifyOtpMock } from "../../api/otpMock";
 import { validerOtp, extraireMessageErreur } from "../../api/demandesApi";
-import type { DemandeAbonnementRegulierResponse, ValidationOtpResponse } from "../../features/demandes/types";
 import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
 
 const { Text, Paragraph } = Typography;
@@ -51,7 +56,8 @@ export function OtpVerificationModal({
 
   // Internal Phase State
   const [phase, setPhase] = useState<ModalPhase>("INPUT_OTP");
-  const [channel, setChannel] = useState<"SMS" | "EMAIL">("SMS");
+  const [channel, setChannel] =
+    useState<CanalOtp>("SMS");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState<number>(600);
   const [isSending, setIsSending] = useState<boolean>(false);
@@ -70,7 +76,6 @@ export function OtpVerificationModal({
       setPhase("INPUT_OTP");
       setOtpDigits(["", "", "", "", "", ""]);
       setErrorMessage(null);
-      
       if (demandeResponse) {
         setGeneratedRef(demandeResponse.reference);
         setTentativesRestantes(demandeResponse.tentativesRestantes ?? 3);
@@ -222,13 +227,23 @@ export function OtpVerificationModal({
     }
   };
 
-  const maskRecipient = (val: string, type: "SMS" | "EMAIL") => {
-    if (type === "SMS") {
-      return val.replace(/(\d{2})\d{4}(\d{2})/, "$1 **** $2");
+  function maskRecipient(recipient: string): string {
+    if (!recipient) {
+      return "";
     }
-    const [name, domain] = val.split("@");
-    return `${name.slice(0, 2)}***@${domain}`;
-  };
+
+    const valeur = recipient.trim();
+
+    if (valeur.length <= 4) {
+      return "****";
+    }
+
+    return (
+      valeur.substring(0, 2) +
+      "*".repeat(valeur.length - 4) +
+      valeur.substring(valeur.length - 2)
+    );
+  }
 
   const handleCopyRef = () => {
     const refText = generatedRef || referenceNumber || "RRM-DEM-2026-9988";
@@ -314,7 +329,7 @@ export function OtpVerificationModal({
                 style={{ marginBottom: 20, backgroundColor: "#f8fafc", borderColor: "#cbd5e1" }}
                 message={
                   <div style={{ fontSize: 13, color: "#334155", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>Code envoyé à : <strong>{maskRecipient(currentRecipient, channel)}</strong></span>
+                    <span>Code envoyé à : <strong>{maskRecipient(currentRecipient)}</strong></span>
                     <Tag color={tentativesRestantes > 1 ? "blue" : "red"} style={{ fontWeight: 700, margin: 0 }}>
                       {tentativesRestantes} essai{tentativesRestantes > 1 ? "s" : ""} restant{tentativesRestantes > 1 ? "s" : ""}
                     </Tag>

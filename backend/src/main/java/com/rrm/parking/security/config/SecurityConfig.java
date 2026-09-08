@@ -1,5 +1,7 @@
 package com.rrm.parking.security.config;
 
+
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,7 +17,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import java.util.List;
+
 
 @Configuration
 @EnableMethodSecurity
@@ -40,14 +44,23 @@ public class SecurityConfig {
                         )
                 )
 
-                .authorizeHttpRequests(authorize ->
-                        authorize
-                                .requestMatchers(
-                                        HttpMethod.POST,
-                                        "/api/v1/auth/login"
-                                ).permitAll()
-                                .requestMatchers("/error").permitAll()
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(authorize -> authorize
+
+                        .dispatcherTypeMatchers(
+                                DispatcherType.ERROR
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/auth/login"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                "/api/public/**",
+                                "/error"
+                        ).permitAll()
+
+                        .anyRequest().authenticated()
                 )
 
                 .oauth2ResourceServer(oauth2 ->
@@ -92,7 +105,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://127.0.0.1:5173"
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174"
         ));
 
         configuration.setAllowedMethods(List.of(

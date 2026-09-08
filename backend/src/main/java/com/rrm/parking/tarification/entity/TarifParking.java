@@ -19,10 +19,11 @@ import java.time.LocalDateTime;
         name = "tarif_parking",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_tarif_parking_forfait_date",
+                        name = "uk_tarif_parking_forfait_duree_date",
                         columnNames = {
                                 "parking_id",
                                 "forfait_id",
+                                "duree_en_mois",
                                 "date_debut_validite"
                         }
                 )
@@ -129,6 +130,47 @@ public class TarifParking {
         return prixHT
                 .multiply(coefficientTVA)
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal calculerMontantTotalHT() {
+        if (prixHT == null || dureeEnMois == null) {
+            throw new IllegalStateException(
+                    "Le prix mensuel HT et la durée sont obligatoires"
+            );
+        }
+
+        return prixHT
+                .multiply(
+                        BigDecimal.valueOf(dureeEnMois)
+                )
+                .setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
+    }
+
+    public BigDecimal calculerMontantTotalTTC() {
+        if (tauxTVA == null) {
+            throw new IllegalStateException(
+                    "Le taux de TVA est obligatoire"
+            );
+        }
+
+        BigDecimal coefficientTVA =
+                BigDecimal.ONE.add(
+                        tauxTVA.divide(
+                                BigDecimal.valueOf(100),
+                                4,
+                                RoundingMode.HALF_UP
+                        )
+                );
+
+        return calculerMontantTotalHT()
+                .multiply(coefficientTVA)
+                .setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
     }
 
     public boolean estApplicableA(LocalDate date) {
