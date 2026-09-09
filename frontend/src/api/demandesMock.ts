@@ -1,5 +1,5 @@
 import { type DemandeListItem, type DemandeDetail, type PaymentInfoInput, type PublicDemandeInput, type DemandeSubmissionResult } from "../features/demandes/types";
-import { formatDate } from "../lib/dateUtils";
+import { formatDate, getExpirationDateFormatted, getValidityDaysRemaining, isDossierExpired } from "../lib/dateUtils";
 import { creerFactureMock } from "./facturesMock";
 
 const mockDemandesStore: Record<number, DemandeDetail> = {
@@ -213,30 +213,48 @@ export async function getSlaPerformanceStatsMock() {
 
 export async function getDemandesMock(): Promise<DemandeListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  return Object.values(mockDemandesStore).map((d) => ({
-    id: d.id,
-    reference: d.reference,
-    typeDemande: d.typeDemande,
-    statut: d.statut,
-    clientNom: d.clientNom,
-    parkingNom: d.parkingNom,
-    dateCreation: formatDate(d.dateCreation),
-    traiteParNom: d.traiteParNom,
-    roleTraitePar: d.roleTraitePar,
-    dateTraitement: d.dateTraitement ? formatDate(d.dateTraitement) : undefined,
-    dureeTraitementJours: d.dureeTraitementJours,
-    slaRestantJours: d.slaRestantJours,
-    slaStatut: d.slaStatut,
-  }));
+  return Object.values(mockDemandesStore).map((d) => {
+    const isUnpaid = d.statut === "SOUMISE" || d.statut === "CORRIGEE" || d.statut === "EN_COURS";
+    const hasExpired = isUnpaid && isDossierExpired(d.dateCreation, 7);
+    const dateExp = d.dateExpiration || getExpirationDateFormatted(d.dateCreation, 7);
+    const remaining = getValidityDaysRemaining(d.dateCreation, 7);
+
+    return {
+      id: d.id,
+      reference: d.reference,
+      typeDemande: d.typeDemande,
+      statut: hasExpired ? "EXPIREE" : d.statut,
+      clientNom: d.clientNom,
+      parkingNom: d.parkingNom,
+      dateCreation: formatDate(d.dateCreation),
+      dateExpiration: dateExp,
+      delaiJoursRestants: remaining,
+      traiteParNom: d.traiteParNom,
+      roleTraitePar: d.roleTraitePar,
+      dateTraitement: d.dateTraitement ? formatDate(d.dateTraitement) : undefined,
+      dureeTraitementJours: d.dureeTraitementJours,
+      slaRestantJours: d.slaRestantJours,
+      slaStatut: hasExpired ? "DEPASSE" : d.slaStatut,
+    };
+  });
 }
 
 export async function getDemandeByIdMock(id: number): Promise<DemandeDetail> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = mockDemandesStore[id];
   if (!found) throw new Error("Demande introuvable");
+
+  const isUnpaid = found.statut === "SOUMISE" || found.statut === "CORRIGEE" || found.statut === "EN_COURS";
+  const hasExpired = isUnpaid && isDossierExpired(found.dateCreation, 7);
+  const dateExp = found.dateExpiration || getExpirationDateFormatted(found.dateCreation, 7);
+  const remaining = getValidityDaysRemaining(found.dateCreation, 7);
+
   return {
     ...found,
+    statut: hasExpired ? "EXPIREE" : found.statut,
     dateCreation: formatDate(found.dateCreation),
+    dateExpiration: dateExp,
+    delaiJoursRestants: remaining,
     paiementInfo: found.paiementInfo
       ? {
           ...found.paiementInfo,
@@ -254,6 +272,10 @@ export async function submitPublicDemande(input: PublicDemandeInput): Promise<De
     ? input.raisonSociale
     : `${input.nom || ""} ${input.prenom || ""}`.trim() || "Client Public";
 
+  const now = new Date();
+  const dateCreation = formatDate(now.toISOString());
+  const dateExpiration = getExpirationDateFormatted(now, 7);
+
   const newDemande: DemandeDetail = {
     id: newId,
     reference,
@@ -261,7 +283,11 @@ export async function submitPublicDemande(input: PublicDemandeInput): Promise<De
     statut: "SOUMISE",
     clientNom,
     parkingNom: input.nouveauParkingNom || "Parking Agdal Gare",
-    dateCreation: formatDate(new Date().toISOString()),
+    dateCreation,
+    dateExpiration,
+    delaiJoursRestants: 7,
+    slaRestantJours: 7,
+    slaStatut: "DANS_LES_DELAIS",
     email: input.email,
     telephone: input.telephone,
     immatriculation: input.immatriculation,
@@ -297,9 +323,23 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
       (d.ice && d.ice === q)
   );
   if (!found) return null;
+
+  // Auto-expire if unpaid and older than 7 days
+  const isUnpaid = found.statut === "SOUMISE" || found.statut === "CORRIGEE" || found.statut === "EN_COURS";
+  const hasExpired = isUnpaid && isDossierExpired(found.dateCreation, 7);
+  if (hasExpired) {
+    found.statut = "EXPIREE";
+  }
+
+  const dateExp = found.dateExpiration || getExpirationDateFormatted(found.dateCreation, 7);
+  const remaining = getValidityDaysRemaining(found.dateCreation, 7);
+
   return {
     ...found,
+    statut: hasExpired ? "EXPIREE" : found.statut,
     dateCreation: formatDate(found.dateCreation),
+    dateExpiration: dateExp,
+    delaiJoursRestants: remaining,
     paiementInfo: found.paiementInfo
       ? {
           ...found.paiementInfo,

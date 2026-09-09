@@ -11,12 +11,14 @@ import {
   HomeOutlined,
   LoadingOutlined,
   InfoCircleOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { sendOtpMock, verifyOtpMock } from "../../api/otpMock";
 import { validerOtp, extraireMessageErreur } from "../../api/demandesApi";
 import type { DemandeAbonnementRegulierResponse, ValidationOtpResponse } from "../../features/demandes/types";
 import { PublicSuiviDemandeModal } from "../../features/demandes/components/PublicSuiviDemandeModal";
+import { getExpirationDateFormatted } from "../../lib/dateUtils";
 
 const { Text, Paragraph } = Typography;
 
@@ -447,15 +449,50 @@ export function OtpVerificationModal({
                 <span style={{ fontSize: 24, fontWeight: 900, color: "#006398", fontFamily: "monospace" }}>
                   {generatedRef || referenceNumber || "RRM-DEM-2026-9988"}
                 </span>
+
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "#475569", fontWeight: 600 }}>
+                    <ClockCircleOutlined style={{ color: "#d97706", marginRight: 6 }} />
+                    Délai de validité du dossier :
+                  </span>
+                  <Tag color="warning" style={{ fontWeight: 800, borderRadius: 8, margin: 0, padding: "2px 8px" }}>
+                    7 Jours (Jusqu'au {getExpirationDateFormatted(new Date(), 7)})
+                  </Tag>
+                </div>
               </div>
+
+              {/* Strict 7-Day Expiration Warning Alert */}
+              <Alert
+                type="warning"
+                showIcon
+                icon={<ClockCircleOutlined style={{ color: "#d97706", fontSize: 18 }} />}
+                message={<span style={{ fontWeight: 800, fontSize: 14 }}>Délai Impératif de Règlement : 7 Jours</span>}
+                description={
+                  <div style={{ fontSize: 12, color: "#78350f", marginTop: 4, lineHeight: 1.6 }}>
+                    <p style={{ margin: "0 0 6px" }}>
+                      Votre place est réservée pour une durée de <strong>7 jours</strong>, jusqu'au <strong>{getExpirationDateFormatted(new Date(), 7)}</strong>.
+                    </p>
+                    <p style={{ margin: 0, fontWeight: 700, color: "#9a3412" }}>
+                      Passé ce délai de 7 jours sans règlement au guichet, votre demande sera automatiquement annulée et supprimée du système pour libérer la place réservée.
+                    </p>
+                  </div>
+                }
+                style={{
+                  marginBottom: 16,
+                  textAlign: "left",
+                  borderRadius: 12,
+                  backgroundColor: "#fffbeb",
+                  borderColor: "#fde68a",
+                }}
+              />
 
               <Alert
                 type="info"
                 showIcon
                 icon={<InfoCircleOutlined />}
-                message="Finalisation du Paiement sur Place"
-                description="Veuillez vous présenter au guichet du parking choisi muni de votre numéro de référence ou de votre carte CIN pour régler votre souscription."
-                style={{ marginBottom: 24, textAlign: "left", borderRadius: 12 }}
+                message="Finalisation du Paiement au Guichet"
+                description="Veuillez vous présenter au guichet du parking choisi muni de votre référence ou de votre carte CIN pour régler votre souscription."
+                style={{ marginBottom: 20, textAlign: "left", borderRadius: 12 }}
               />
 
               {/* 3 Action Buttons in the Same Popup */}

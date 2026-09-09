@@ -634,8 +634,29 @@ export function DemandeDetail() {
           </>
         )}
 
+        {/* Alerte Dossier Expiré */}
+        {data.statut === "EXPIREE" && (
+          <div style={{ marginTop: 20 }}>
+            <Alert
+              type="error"
+              showIcon
+              message="Dossier Expiré & Réservation Annulée (Délai 7 Jours Échu)"
+              description={
+                <div>
+                  <p style={{ margin: 0 }}>
+                    Le délai légal de validité de 7 jours alloué pour le règlement au guichet RRM est dépassé.
+                  </p>
+                  <p style={{ margin: "4px 0 0 0", fontWeight: 600 }}>
+                    La place pré-réservée a été automatiquement libérée dans le quota du parking et ce dossier est clos/annulé. Aucun encaissement n'est permis sur ce dossier.
+                  </p>
+                </div>
+              }
+            />
+          </div>
+        )}
+
         {/* Section Actions Métier */}
-        {!isDossierValide && data.statut !== "REJETEE" && (
+        {!isDossierValide && data.statut !== "REJETEE" && data.statut !== "EXPIREE" && (
           <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <div style={{ display: "grid", gridTemplateColumns: role === "RESPONSABLE" ? "1fr" : "1fr 1fr", gap: 16 }}>
               {/* ÉTAPE 1: Encaissement - strictly for AGENT and SUPERVISEUR, completely removed for RESPONSABLE */}

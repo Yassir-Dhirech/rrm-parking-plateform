@@ -94,7 +94,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
 
 export type StatutSla = "DANS_LES_DELAIS" | "ALERT_5_JOURS" | "ALERT_3_JOURS" | "ALERT_1_JOUR" | "DEPASSE";
 
@@ -106,6 +106,8 @@ export interface DemandeListItem {
   clientNom: string;
   parkingNom: string;
   dateCreation: string;
+  dateExpiration?: string;
+  delaiJoursRestants?: number;
   // Performance & SLA Tracking
   agentAffecteNom?: string;
   traiteParNom?: string;

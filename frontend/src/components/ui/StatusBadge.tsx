@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 
-type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
