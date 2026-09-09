@@ -6,3 +6,6 @@ node_modules/
 # Antigravity Rules & Customizations
 AGENTS.md
 .agents/
+
+# IntelliJ IDEA
+.idea/
