@@ -147,6 +147,8 @@ export interface DemandeListItem {
   clientNom: string;
   parkingNom: string;
   dateCreation: string;
+  dateExpiration?: string;
+  delaiJoursRestants?: number;
 
   agentAffecteNom?: string;
   traiteParNom?: string;
