@@ -126,6 +126,7 @@ export function DemandesList() {
         { text: "Paiement Enregistré", value: "PAIEMENT_ENREGISTRE" },
         { text: "Validée", value: "VALIDEE" },
         { text: "Rejetée", value: "REJETEE" },
+        { text: "Expirée (7j)", value: "EXPIREE" },
       ],
       onFilter: (value: any, record: DemandeListItem) => record.statut === value,
       render: (statut: string) => {
@@ -154,6 +155,13 @@ export function DemandesList() {
           return (
             <Tag color="red" className="font-extrabold px-2.5 py-0.5 rounded-full border-none shadow-2xs">
               Rejetée
+            </Tag>
+          );
+        }
+        if (statut === "EXPIREE") {
+          return (
+            <Tag color="default" className="font-extrabold px-2.5 py-0.5 rounded-full border-rose-200 text-rose-700 bg-rose-50 shadow-2xs">
+              Expirée (7j)
             </Tag>
           );
         }

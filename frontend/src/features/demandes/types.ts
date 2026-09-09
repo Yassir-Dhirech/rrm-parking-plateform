@@ -129,7 +129,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE";
+export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
 
 export type StatutSla =
   | "DANS_LES_DELAIS"

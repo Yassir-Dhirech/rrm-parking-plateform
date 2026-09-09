@@ -41,7 +41,13 @@ import { type DemandeDetail } from "../types";
 import { searchPublicDemandeByRef, updatePublicDemande } from "../../../api/demandes";
 import { getPublicParkings } from "../../../api/parkings";
 import { useQuery } from "@tanstack/react-query";
-import { formatDate } from "../../../lib/dateUtils";
+import { useNavigate } from "react-router-dom";
+import {
+  formatDate,
+  getExpirationDateFormatted,
+  getValidityDaysRemaining,
+  isDossierExpired,
+} from "../../../lib/dateUtils";
 
 interface PublicSuiviDemandeModalProps {
   open: boolean;
@@ -54,6 +60,7 @@ export function PublicSuiviDemandeModal({
   onClose,
   initialReference = "",
 }: PublicSuiviDemandeModalProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState(initialReference);
   const [demande, setDemande] = useState<DemandeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -201,7 +208,25 @@ export function PublicSuiviDemandeModal({
     }
   };
 
+  const isExpired = demande
+    ? demande.statut === "EXPIREE" ||
+      (isDossierExpired(demande.dateCreation, 7) &&
+        demande.statut !== "PAIEMENT_ENREGISTRE" &&
+        demande.statut !== "VALIDEE")
+    : false;
+
+  const expirationDate = demande ? getExpirationDateFormatted(demande.dateCreation, 7) : "";
+  const daysRemaining = demande ? getValidityDaysRemaining(demande.dateCreation, 7) : 0;
+
   const getStatusTag = (statut: string) => {
+    if (isExpired) {
+      return (
+        <Tag color="default" className="font-bold px-3 py-1 rounded-full text-rose-700 bg-rose-50 border-rose-200">
+          <CloseCircleOutlined /> Annulé (Délai 7j Dépassé)
+        </Tag>
+      );
+    }
+
     switch (statut) {
       case "SOUMISE":
         return <Tag color="blue" className="font-bold px-3 py-1 rounded-full"><ClockCircleOutlined /> Dossier Soumis</Tag>;
@@ -215,6 +240,8 @@ export function PublicSuiviDemandeModal({
         return <Tag color="green" className="font-bold px-3 py-1 rounded-full"><CheckCircleOutlined /> Abonnement Actif</Tag>;
       case "REJETEE":
         return <Tag color="red" className="font-bold px-3 py-1 rounded-full"><CloseCircleOutlined /> Dossier à Régulariser</Tag>;
+      case "EXPIREE":
+        return <Tag color="default" className="font-bold px-3 py-1 rounded-full text-rose-700 bg-rose-50 border-rose-200"><CloseCircleOutlined /> Annulé (Délai 7j Dépassé)</Tag>;
       default:
         return <Tag color="default">{statut}</Tag>;
     }
@@ -282,7 +309,7 @@ export function PublicSuiviDemandeModal({
         {/* Dossier Found Content */}
         {!isLoading && demande && (
           <div className="space-y-5 animate-fade-in">
-            {/* Header Card with Status and The Requested Modify Button */}
+            {/* Header Card with Status and Action Buttons */}
             <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white/95 shadow-sm">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
                 <div>
@@ -297,8 +324,20 @@ export function PublicSuiviDemandeModal({
                   </div>
                 </div>
 
-                {/* THE REQUESTED BUTTON: Modifier mes informations */}
-                {!isEditing ? (
+                {/* ACTION BUTTON: Modifier (if valid) OR Nouvelle Demande (if expired) */}
+                {isExpired ? (
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => {
+                      onClose();
+                      navigate("/public/abonnements");
+                    }}
+                    className="bg-secondary hover:bg-secondary/90 rounded-xl font-bold px-4 h-10 shadow-sm flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                  >
+                    Nouvelle Demande
+                  </Button>
+                ) : !isEditing ? (
                   <Button
                     type="primary"
                     icon={<EditOutlined />}
@@ -318,8 +357,57 @@ export function PublicSuiviDemandeModal({
                 )}
               </div>
 
+              {/* Expiration or Validity Alert */}
+              {isExpired ? (
+                <Alert
+                  type="error"
+                  showIcon
+                  icon={<CloseCircleOutlined />}
+                  className="mt-3 rounded-xl border-rose-300 bg-rose-50/90"
+                  message={
+                    <span className="font-extrabold text-rose-900">
+                      Dossier Expiré & Réservation Annulée (Délai de 7 jours dépassé)
+                    </span>
+                  }
+                  description={
+                    <div className="text-xs text-rose-800 space-y-1.5 mt-1">
+                      <p className="mb-0">
+                        Ce dossier a été déposé le <strong>{formatDate(demande.dateCreation)}</strong> et a dépassé le délai légal de validité de 7 jours (échu le <strong>{expirationDate}</strong>).
+                      </p>
+                      <p className="mb-0 font-semibold">
+                        Conformément au règlement RRM, les réservations non payées au guichet sous 7 jours sont automatiquement annulées et la place réservée est libérée. Veuillez soumettre une nouvelle souscription.
+                      </p>
+                    </div>
+                  }
+                />
+              ) : (
+                demande.statut !== "PAIEMENT_ENREGISTRE" && demande.statut !== "VALIDEE" && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    icon={<ClockCircleOutlined />}
+                    className="mt-3 rounded-xl border-amber-300 bg-amber-50/80"
+                    message={
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <span className="font-bold text-amber-900">
+                          Délai de Validité du Dossier : {daysRemaining > 0 ? `${daysRemaining} jour(s) restant(s)` : "Dernier jour avant annulation"}
+                        </span>
+                        <span className="text-xs font-bold text-amber-800">
+                          Date limite de règlement : {expirationDate}
+                        </span>
+                      </div>
+                    }
+                    description={
+                      <span className="text-xs text-amber-900">
+                        Prière de vous présenter au guichet RRM du parking avant le <strong>{expirationDate}</strong> pour régler votre abonnement. Passé ce délai de 7 jours, le dossier est automatiquement annulé et effacé.
+                      </span>
+                    }
+                  />
+                )
+              )}
+
               {/* Rejection / Action Required Alert */}
-              {demande.statut === "REJETEE" && (
+              {!isExpired && demande.statut === "REJETEE" && (
                 <Alert
                   type="error"
                   showIcon
@@ -340,13 +428,13 @@ export function PublicSuiviDemandeModal({
               <div className="mt-4 pt-2">
                 <Steps
                   size="small"
-                  current={getStepCurrent(demande.statut)}
-                  status={demande.statut === "REJETEE" ? "error" : "process"}
+                  current={isExpired ? 2 : getStepCurrent(demande.statut)}
+                  status={isExpired ? "error" : demande.statut === "REJETEE" ? "error" : "process"}
                   items={[
                     { title: "Dossier Soumis", description: formatDate(demande.dateCreation) },
-                    { title: "Contrôle RRM", description: demande.statut === "REJETEE" ? "Régularisation" : "Examen pièces" },
-                    { title: "Règlement Guichet", description: demande.paiementInfo ? "Confirmé" : "En attente" },
-                    { title: "Badge Actif", description: demande.numeroCarteAbonne || "À délivrer" },
+                    { title: "Contrôle RRM", description: isExpired ? "Délai Dépassé" : demande.statut === "REJETEE" ? "Régularisation" : "Examen pièces" },
+                    { title: "Règlement Guichet", description: isExpired ? "Annulé (7j Dépassés)" : demande.paiementInfo ? "Confirmé" : `Avant le ${expirationDate}` },
+                    { title: "Badge Actif", description: isExpired ? "Non attribué" : demande.numeroCarteAbonne || "À délivrer" },
                   ]}
                 />
               </div>
@@ -702,6 +790,21 @@ export function PublicSuiviDemandeModal({
                       <Tag color={(demande.paiementInfo?.modePaiement || demande.modePaiement) === "CHEQUE" ? "purple" : "green"} className="font-bold m-0">
                         {(demande.paiementInfo?.modePaiement || demande.modePaiement) === "CHEQUE" ? "Chèque Bancaire" : "Espèces (Guichet RRM)"}
                       </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Validité du Dossier">
+                      {isExpired ? (
+                        <Tag color="red" className="font-bold m-0">
+                          Expiré le {expirationDate} (Délai 7j Dépassé)
+                        </Tag>
+                      ) : demande.statut === "VALIDEE" || demande.statut === "PAIEMENT_ENREGISTRE" ? (
+                        <Tag color="green" className="font-bold m-0">
+                          Règlement Confirmé
+                        </Tag>
+                      ) : (
+                        <Tag color="gold" className="font-bold m-0">
+                          {daysRemaining > 0 ? `${daysRemaining} jour(s) restants` : "Dernier jour"} (Jusqu'au {expirationDate})
+                        </Tag>
+                      )}
                     </Descriptions.Item>
                   </Descriptions>
                 </Card>
