@@ -1,68 +1,40 @@
 services:
-  # 1. Base de données relationnelle MySQL 8.0
-  mysql:
-    image: mysql:8.0
-    container_name: rrm-mysql
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: rrm_db
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/init-db:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-
-  # 2. Interface web phpMyAdmin
+  # 1. Interface web phpMyAdmin connectée en DIRECT à TiDB Cloud
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: rrm-phpmyadmin
     restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
     environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: rootpassword
+      PMA_HOST: gateway01.eu-central-1.prod.aws.tidbcloud.com
+      PMA_PORT: 4000
+      PMA_USER: 2wc4nHiW6bLvdfS.root
+      PMA_PASSWORD: MbkMZvpObv0CSmHy
+      PMA_SSL: "true"
       UPLOAD_LIMIT: 64M
     ports:
       - "8080:80"
 
-  # 3. Backend API Spring Boot (Java 21)
+  # 2. Backend API Spring Boot connecté en DIRECT à TiDB Cloud
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: rrm-backend
     restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rrm_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      RRM_TARIFF_INIT_ENABLED: "true"
-      RRM_BOOTSTRAP_ENABLED: "true"
-      RRM_ADMIN_EMAIL: admin@rrm.ma
-      RRM_ADMIN_PASSWORD: Admin12345678!
+      SPRING_DATASOURCE_URL: jdbc:mysql://gateway01.eu-central-1.prod.aws.tidbcloud.com:4000/rrm_db?sslMode=VERIFY_IDENTITY
+      SPRING_DATASOURCE_USERNAME: 2wc4nHiW6bLvdfS.root
+      SPRING_DATASOURCE_PASSWORD: MbkMZvpObv0CSmHy
+      RRM_TARIFF_INIT_ENABLED: "false"
+      RRM_BOOTSTRAP_ENABLED: "false"
       RRM_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
       RRM_STORAGE_PATH: /app/storage
     volumes:
       - backend_storage:/app/storage
 
-  # 4. Frontend SPA React & Nginx Reverse Proxy
+  # 3. Frontend SPA React & Nginx Reverse Proxy
   frontend:
     build:
       context: ./frontend
@@ -75,7 +47,5 @@ services:
       - "5173:80"
 
 volumes:
-  mysql_data:
-    name: rrm_mysql_data
   backend_storage:
     name: rrm_backend_storage
