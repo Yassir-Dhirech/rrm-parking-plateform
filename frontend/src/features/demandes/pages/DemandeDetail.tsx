@@ -39,6 +39,7 @@ import {
   FileImageOutlined,
 } from "@ant-design/icons";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
+import { RecuPaiementModal } from "../../../components/recu/RecuPaiementModal";
 import {
   getDemandeByIdMock,
   validerDemandeMock,
@@ -155,6 +156,7 @@ export function DemandeDetail() {
   const basePath = role ? roleConfig[role].homePath : "";
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [recuModalOpen, setRecuModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectType, setRejectType] = useState<"DOSSIER" | "PAIEMENT">("DOSSIER");
   const [raison, setRaison] = useState("");
@@ -185,6 +187,7 @@ export function DemandeDetail() {
       });
       setPaymentModalOpen(false);
       paymentForm.resetFields();
+      setRecuModalOpen(true);
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
     },
@@ -621,14 +624,14 @@ export function DemandeDetail() {
               )}
             </Descriptions>
 
-            <div style={{ marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ marginTop: 16 }}>
               <Button
                 type="primary"
                 icon={<FileDoneOutlined />}
-                onClick={() => message.info("Génération du reçu de paiement client en cours...")}
-                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                onClick={() => setRecuModalOpen(true)}
+                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
               >
-                Imprimer Reçu de Paiement
+                Reçu de Paiement (Imprimer / Email)
               </Button>
             </div>
           </>
@@ -897,6 +900,37 @@ export function DemandeDetail() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal: Reçu de Paiement Officiel (Impression & Envoi Email) */}
+      <RecuPaiementModal
+        open={recuModalOpen}
+        onClose={() => setRecuModalOpen(false)}
+        data={
+          data?.paiementInfo
+            ? {
+                referenceQuittance: `RCU-2026-${String(data.id).padStart(6, "0")}`,
+                demandeReference: data.reference,
+                datePaiement: data.paiementInfo.datePaiement,
+                clientNom: data.clientNom,
+                clientEmail: data.email,
+                clientTelephone: data.telephone,
+                clientCinOuIce: data.typeClient === "ENTREPRISE" ? data.ice : data.cin,
+                typeClient: data.typeClient,
+                parkingNom: data.parkingNom,
+                formuleNom: data.forfaitNom,
+                immatriculation: data.immatriculation,
+                dureeMois: data.dureeMois,
+                montantAbonnement: montantBaseAbo,
+                fraisCarteRfid: fraisCarteRfid,
+                montantTotal: data.paiementInfo.montant,
+                modePaiement: data.paiementInfo.modePaiement as any,
+                numeroCheque: data.paiementInfo.numeroCheque,
+                banque: data.paiementInfo.banque,
+                caissierNom: data.paiementInfo.validePar || `${userName ?? "Agent Guichet"} (${role})`,
+              }
+            : null
+        }
+      />
     </div>
   );
 }
