@@ -51,12 +51,8 @@ export interface TarifParkingPublicResponse {
  * Parkings affichés sur la carte publique.
  * Inclut les parkings actifs et suspendus.
  */
-export async function getPublicParkings():
-Promise<Parking[]> {
-  const response = await client.get<Parking[]>(
-    "/public/parkings"
-  );
-
+export async function getPublicParkings(): Promise<Parking[]> {
+  const response = await client.get<Parking[]>("/public/parkings");
   return response.data;
 }
 
@@ -67,12 +63,10 @@ Promise<Parking[]> {
  * Retourne uniquement les parkings actifs
  * ayant des places d'abonnement disponibles.
  */
-export async function getParkingsDisponiblesAbonnement():
-Promise<Parking[]> {
+export async function getParkingsDisponiblesAbonnement(): Promise<Parking[]> {
   const response = await client.get<Parking[]>(
     "/public/parkings/disponibles-abonnement"
   );
-
   return response.data;
 }
 
@@ -82,19 +76,12 @@ Promise<Parking[]> {
 export async function getTarifsParking(
   parkingId: number
 ): Promise<TarifParkingPublicResponse[]> {
-  if (
-    !Number.isInteger(parkingId) ||
-    parkingId <= 0
-  ) {
-    throw new Error(
-      "L'identifiant du parking est invalide"
-    );
+  if (!Number.isInteger(parkingId) || parkingId <= 0) {
+    throw new Error("L'identifiant du parking est invalide");
   }
 
-  const response =
-    await client.get<TarifParkingPublicResponse[]>(
-      `/public/parkings/${parkingId}/tarifs`
-    );
-
+  const response = await client.get<TarifParkingPublicResponse[]>(
+    `/public/parkings/${parkingId}/tarifs`
+  );
   return response.data;
 }
