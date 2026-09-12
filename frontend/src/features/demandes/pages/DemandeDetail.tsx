@@ -19,6 +19,8 @@ import {
   Row,
   Col,
   Image,
+  Popconfirm,
+  Tooltip,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -37,6 +39,7 @@ import {
   IdcardOutlined,
   CarOutlined,
   FileImageOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
 import { RecuPaiementModal } from "../../../components/recu/RecuPaiementModal";
@@ -147,6 +150,31 @@ function generateCarteGriseSvgUrl(nom: string, immat: string, vehicule: string):
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
+const MOTIFS_REFUS_DOSSIER = [
+  { value: "Copie de la Carte Nationale d'Identité (CIN) illisible ou tronquée", label: "Copie CIN illisible ou tronquée" },
+  { value: "Copie de la Carte Grise illisible ou verso manquant", label: "Copie Carte Grise illisible ou incomplète" },
+  { value: "Non-concordance entre le titulaire de la carte grise et la CIN fournie", label: "Non-concordance titulaire carte grise et CIN" },
+  { value: "Numéro d'immatriculation saisi non conforme au certificat d'immatriculation", label: "Immatriculation non conforme à la carte grise" },
+  { value: "Type ou gabarit de véhicule non admissible pour ce parking", label: "Type de véhicule non admissible pour ce parking" },
+  { value: "Document d'identité ou certificat d'immatriculation périmé", label: "Document d'identité ou certificat périmé" },
+  { value: "Justificatif de domicile manquant ou non recevable", label: "Justificatif de domicile non conforme" },
+  { value: "Document d'entreprise (ICE / RC) incomplet ou non certifié", label: "Document entreprise (ICE / RC) non conforme" },
+  { value: "Dossier en doublon ou abonnement déjà actif pour ce véhicule", label: "Dossier en doublon / abonnement déjà actif" },
+  { value: "AUTRE", label: "Autre motif (préciser ci-dessous)" },
+];
+
+const MOTIFS_REFUS_PAIEMENT = [
+  { value: "Chèque non signé ou signature manifestement non conforme", label: "Chèque non signé ou signature non conforme" },
+  { value: "Montant en lettres et en chiffres non concordants sur le chèque", label: "Montants lettres et chiffres discordants sur le chèque" },
+  { value: "Chèque non libellé à l'ordre exact de Rabat Région Mobilité (RRM)", label: "Ordre du chèque incorrect (doit être Rabat Région Mobilité)" },
+  { value: "Date d'émission du chèque dépassée ou erronée", label: "Date d'émission du chèque dépassée" },
+  { value: "Coupures d'espèces non conformes ou détériorées", label: "Billets d'espèces refusés ou détériorés" },
+  { value: "Montant présenté inférieur au total exigible", label: "Montant remis insuffisant par rapport au total exigible" },
+  { value: "Refus du client de s'acquitter des frais obligatoires de carte RFID (50 DH)", label: "Refus de règlement des frais de carte RFID (50 DH)" },
+  { value: "Chèque de garantie ou d'acompte non accepté (règlement intégral requis)", label: "Chèque de garantie ou d'acompte non accepté" },
+  { value: "AUTRE", label: "Autre motif (préciser ci-dessous)" },
+];
+
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
   const demandeId = Number(id);
@@ -159,7 +187,8 @@ export function DemandeDetail() {
   const [recuModalOpen, setRecuModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectType, setRejectType] = useState<"DOSSIER" | "PAIEMENT">("DOSSIER");
-  const [raison, setRaison] = useState("");
+  const [selectedMotif, setSelectedMotif] = useState<string>("");
+  const [autreMotif, setAutreMotif] = useState<string>("");
   
   const [paymentForm] = Form.useForm<PaymentInfoInput>();
   const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECES";
@@ -193,12 +222,16 @@ export function DemandeDetail() {
     },
   });
 
-  // Action 2: Valider la conformité du dossier (Superviseur UNIQUEMENT) -> statut = VALIDEE
+  // Action 2: Valider la conformité du dossier (Agent, Superviseur ou Responsable) -> statut = VALIDEE
   const validerDossierMutation = useMutation<void, Error, void>({
     mutationFn: () =>
-      validerDemandeMock(demandeId, undefined, `${userName ?? "Utilisateur"} (${role})`),
+      validerDemandeMock(
+        demandeId,
+        undefined,
+        `${userName ?? "Utilisateur"} (${role === "AGENT" ? "Agent Guichet" : (role ?? "Opérateur")})`
+      ),
     onSuccess: () => {
-      message.success("Conformité du dossier validée avec succès par le superviseur !");
+      message.success("Conformité du dossier validée avec succès ! Les informations sont vérifiées et l'abonnement est activé.");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
     },
@@ -207,34 +240,61 @@ export function DemandeDetail() {
     },
   });
 
+  const getFullRaisonRejet = () => {
+    if (!selectedMotif) return autreMotif.trim();
+    if (selectedMotif === "AUTRE") return autreMotif.trim();
+    if (autreMotif.trim()) {
+      return `${selectedMotif} — Note : ${autreMotif.trim()}`;
+    }
+    return selectedMotif;
+  };
+
   const rejeterMutation = useMutation({
-    mutationFn: () => rejeterDemandeMock(demandeId, `[Refus ${rejectType}] ${raison}`),
-    onSuccess: () => {
-      message.success(`Demande rejetée (${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier non conforme"})`);
+    mutationFn: (finalReason: string) =>
+      rejeterDemandeMock(demandeId, `[Refus ${rejectType}] ${finalReason}`),
+    onSuccess: (_, finalReason) => {
+      message.success(
+        `Demande rejetée (${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier non conforme"})`
+      );
       sendClientNotificationMock({
         channel: "BOTH",
-        typeEvenement: rejectType === "PAIEMENT" ? "CHEQUE_REFUSE" : "CHEQUE_REFUSE",
+        typeEvenement: "CHEQUE_REFUSE",
         destinataireNom: data?.clientNom || "Client Souscripteur",
         destinataireEmail: data?.email || "client.rrm@example.com",
         destinataireTelephone: data?.telephone || "0612345678",
         sujet: `RRM - Information urgente : ${rejectType === "PAIEMENT" ? "Paiement non conforme" : "Dossier incomplet"}`,
-        contenu: `Bonjour ${data?.clientNom || "Client"}, votre dossier ${data?.reference} nécessite une régularisation. Motif : ${raison}.`,
+        contenu: `Bonjour ${data?.clientNom || "Client"}, votre dossier ${data?.reference} nécessite une régularisation. Motif : ${finalReason}.`,
       });
       setRejectModalOpen(false);
-      setRaison("");
+      setSelectedMotif("");
+      setAutreMotif("");
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
     },
   });
 
+  const handleConfirmReject = () => {
+    const finalReason = getFullRaisonRejet();
+    if (!finalReason) {
+      message.warning("Veuillez sélectionner un motif de refus ou préciser la raison.");
+      return;
+    }
+    rejeterMutation.mutate(finalReason);
+  };
+
   if (isLoading || !data) {
     return <Card loading />;
   }
 
-  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAIEMENT_ENREGISTRE" || data.statut === "VALIDEE";
+  const isPaiementDone =
+    Boolean(data.paiementInfo) ||
+    data.statut === "PAIEMENT_ENREGISTRE" ||
+    data.statut === "VALIDEE" ||
+    data.typeDemande === "CHANGEMENT_PARKING";
   const isDossierValide = data.statut === "VALIDEE";
   const isAgent = role === "AGENT";
   const isSuperviseur = role === "SUPERVISEUR";
+  const canValiderDossier = isAgent || isSuperviseur || role === "RESPONSABLE" || role === "ADMIN_SI";
 
   const currentStep = isDossierValide ? 2 : isPaiementDone ? 1 : 0;
 
@@ -256,6 +316,8 @@ export function DemandeDetail() {
 
   const handleOpenRejectModal = (type: "DOSSIER" | "PAIEMENT") => {
     setRejectType(type);
+    setSelectedMotif("");
+    setAutreMotif("");
     setRejectModalOpen(true);
   };
 
@@ -697,40 +759,49 @@ export function DemandeDetail() {
               {/* ÉTAPE 2: Validation Dossier */}
               <div style={{ padding: 14, background: "#ffffff", borderRadius: 6, border: "1px solid #cbd5e1" }}>
                 <h5 style={{ margin: "0 0 10px 0", color: "#2563eb", fontSize: 13, fontWeight: 700 }}>
-                  <FolderOutlined /> {role === "RESPONSABLE" ? "Validation du Dossier" : "Étape 2 : Validation Dossier"}
+                  <FolderOutlined /> {role === "RESPONSABLE" ? "Validation du Dossier" : "Étape 2 : Validation Dossier (Conformité)"}
                 </h5>
                 
-                {isAgent && (
-                  <Button disabled icon={<LockOutlined />}>
-                    Validation en attente
-                  </Button>
-                )}
-
-                {(isSuperviseur || role === "RESPONSABLE") && (
+                {canValiderDossier ? (
                   <Space wrap>
                     {isPaiementDone ? (
-                      <Button
-                        type="primary"
-                        icon={<CheckCircleOutlined />}
-                        onClick={() => validerDossierMutation.mutate()}
-                        loading={validerDossierMutation.isPending}
-                        style={{ backgroundColor: "#2563eb", borderColor: "#2563eb" }}
+                      <Popconfirm
+                        title="Valider la conformité du dossier"
+                        description="Confirmez-vous que les pièces justificatives et les informations du souscripteur sont complètes et correctes ?"
+                        onConfirm={() => validerDossierMutation.mutate()}
+                        okText="Oui, valider le dossier"
+                        cancelText="Annuler"
+                        okButtonProps={{ style: { backgroundColor: "#2563eb" } }}
                       >
-                        Valider & Activer Dossier
-                      </Button>
+                        <Button
+                          type="primary"
+                          icon={<CheckCircleOutlined />}
+                          loading={validerDossierMutation.isPending}
+                          style={{ backgroundColor: "#2563eb", borderColor: "#2563eb", fontWeight: 700 }}
+                        >
+                          Valider Conformité (Informations correctes)
+                        </Button>
+                      </Popconfirm>
                     ) : (
-                      <Button disabled icon={<LockOutlined />}>
-                        En attente du paiement
-                      </Button>
+                      <Tooltip title="Veuillez d'abord encaisser le paiement (Étape 1) avant de valider la conformité du dossier.">
+                        <Button disabled icon={<LockOutlined />}>
+                          En attente du paiement
+                        </Button>
+                      </Tooltip>
                     )}
                     <Button
                       danger
-                      size="small"
+                      size="middle"
                       onClick={() => handleOpenRejectModal("DOSSIER")}
+                      style={{ fontWeight: 600 }}
                     >
-                      Refuser Dossier
+                      Refuser Dossier (Non conforme)
                     </Button>
                   </Space>
+                ) : (
+                  <Button disabled icon={<LockOutlined />}>
+                    Réservé aux agents et superviseurs
+                  </Button>
                 )}
               </div>
             </div>
@@ -873,30 +944,82 @@ export function DemandeDetail() {
 
       {/* Modal: Refuser la demande */}
       <Modal
-        title={`Refuser la demande (${rejectType === "PAIEMENT" ? "Non-conformité Paiement" : "Dossier incomplet"})`}
+        title={
+          <Space>
+            <StopOutlined style={{ color: "#ef4444" }} />
+            <span>
+              {rejectType === "PAIEMENT"
+                ? "Refus du Paiement au Guichet"
+                : "Refus de Conformité du Dossier"}
+            </span>
+          </Space>
+        }
         open={rejectModalOpen}
         onCancel={() => setRejectModalOpen(false)}
-        onOk={() => rejeterMutation.mutate()}
+        onOk={handleConfirmReject}
         confirmLoading={rejeterMutation.isPending}
-        okText="Confirmer le Refus & Notifier Client"
-        okButtonProps={{ danger: true }}
+        okText="Confirmer le Refus & Notifier Souscripteur"
+        okButtonProps={{ danger: true, style: { fontWeight: 700 } }}
+        width={600}
       >
-        <p style={{ color: "#64748b", fontSize: 13, marginBottom: 8 }}>
-          Saisir le motif du refus :
-        </p>
-        <Input.TextArea
-          placeholder="Motif du refus..."
-          value={raison}
-          onChange={(e) => setRaison(e.target.value)}
-          rows={3}
-        />
-        <div style={{ marginTop: 16, padding: 12, backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-          <div style={{ fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "#475569" }}>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", color: "#334155", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+            Motif principal du refus (sélectionner dans la liste) :
+          </label>
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Sélectionner le motif le plus probable..."
+            value={selectedMotif || undefined}
+            onChange={(val) => setSelectedMotif(val)}
+            options={rejectType === "PAIEMENT" ? MOTIFS_REFUS_PAIEMENT : MOTIFS_REFUS_DOSSIER}
+            size="large"
+          />
+        </div>
+
+        {(selectedMotif === "AUTRE" || selectedMotif) && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", color: "#334155", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+              {selectedMotif === "AUTRE" ? (
+                <>
+                  <span style={{ color: "#ef4444", marginRight: 4 }}>*</span>
+                  Préciser le motif spécifique (Obligatoire) :
+                </>
+              ) : (
+                "Précisions ou commentaires complémentaires (Facultatif) :"
+              )}
+            </label>
+            <Input.TextArea
+              placeholder={
+                selectedMotif === "AUTRE"
+                  ? "Saisissez ici le motif précis du refus..."
+                  : "Ajoutez d'éventuelles précisions ou consignes pour le client..."
+              }
+              value={autreMotif}
+              onChange={(e) => setAutreMotif(e.target.value)}
+              rows={3}
+            />
+          </div>
+        )}
+
+        {/* Aperçu direct du message envoyé */}
+        {getFullRaisonRejet() && (
+          <div style={{ padding: 12, backgroundColor: "#fff1f2", borderRadius: 8, border: "1px solid #fecdd3", marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#9f1239", marginBottom: 4 }}>
+              Motif exact consigné dans le dossier et transmis au souscripteur :
+            </div>
+            <div style={{ fontSize: 12, color: "#881337", fontWeight: 500 }}>
+              « {getFullRaisonRejet()} »
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: 12, backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+          <div style={{ fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "#334155" }}>
             <NotificationOutlined style={{ color: "#d97706" }} />
-            Notification Automatique Client (SMS & Email)
+            Notification Automatique du Souscripteur (SMS & Email)
           </div>
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
-            Le souscripteur recevra immédiatement une notification SMS et un Email détaillant le motif du refus.
+            Un SMS et un Email détaillant ce motif seront automatiquement envoyés au souscripteur (<strong>{data.clientNom}</strong> — {data.email} / {data.telephone}) afin qu'il puisse régulariser son dossier.
           </div>
         </div>
       </Modal>

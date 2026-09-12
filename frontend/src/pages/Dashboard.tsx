@@ -274,7 +274,7 @@ export function Dashboard() {
                 14 Demandes en attente de vérification & encaissement
               </h3>
               <p className="text-slate-300 text-xs mt-1 mb-0 font-medium">
-                Vérifiez les pièces justificatives (CIN/Carte Grise) et enregistrez les paiements au guichet.
+                Vérifiez la conformité des pièces (CIN/Carte Grise), enregistrez les règlements et validez les dossiers d'abonnement.
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
