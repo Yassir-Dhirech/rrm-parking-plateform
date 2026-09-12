@@ -83,10 +83,10 @@ public class OtpEmissionService {
     private void verifierCanalPublic(
             CanalOtp canal
     ) {
-        if (canal != CanalOtp.SMS
-                && canal != CanalOtp.WHATSAPP) {
+        if (canal != CanalOtp.EMAIL
+                && canal != CanalOtp.SMS) {
             throw new IllegalArgumentException(
-                    "Le canal OTP public doit être SMS ou WHATSAPP"
+                    "Le canal OTP public doit être EMAIL ou SMS"
             );
         }
     }
@@ -97,7 +97,7 @@ public class OtpEmissionService {
         if (destination == null
                 || destination.isBlank()) {
             throw new IllegalArgumentException(
-                    "Le numéro de téléphone destinataire est obligatoire"
+                    "La destination OTP est obligatoire"
             );
         }
     }

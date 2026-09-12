@@ -105,10 +105,18 @@ public class DemandeAbonnementRegulierService {
                     fichiersCrees
             );
 
+            String destinationOtp = switch (requete.canalOtp()) {
+                case EMAIL -> client.getEmail();
+                case SMS -> client.getTelephone();
+                default -> throw new IllegalArgumentException(
+                        "Le canal OTP doit être EMAIL ou SMS"
+                );
+            };
+
             OtpGenere otp = otpEmissionService.emettre(
                     demande,
                     requete.canalOtp(),
-                    client.getTelephone()
+                    destinationOtp
             );
 
             return new DemandeAbonnementRegulierResponse(

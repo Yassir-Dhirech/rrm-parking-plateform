@@ -161,6 +161,10 @@ export function PublicQrForm() {
   // Form Instance
   const [form] = Form.useForm();
 
+
+
+  const smsOtpEnabled =
+  import.meta.env.VITE_SMS_OTP_ENABLED === "true";
   // Account Lookup State for RENEW / TRANSFER / DUPLICATE
   const [lookupQuery, setLookupQuery] = useState("");
   const [isSearchingLookup, setIsSearchingLookup] = useState(false);
@@ -174,10 +178,12 @@ export function PublicQrForm() {
   const [isSubmittingBackend, setIsSubmittingBackend] = useState<boolean>(false);
 
   // Form Live Watchers for Summary Calculation
+  // Form Live Watchers for Summary Calculation
   const watchedParkingId = Form.useWatch("parkingId", form);
   const watchedFormuleCode = Form.useWatch("formuleCode", form);
   const watchedDureeMois = Form.useWatch("dureeMois", form);
   const watchedModePaiement = Form.useWatch("modePaiement", form);
+  const watchedCanalOtp = Form.useWatch("canalOtp", form);
 
   // Persistent Form Values state across unmounting steps
   const [formValues, setFormValues] = useState<any>({
@@ -193,6 +199,7 @@ export function PublicQrForm() {
     ice: "",
     rc: "",
     nomContact: "",
+    canalOtp: "EMAIL",
     parkingId: undefined,
     formuleCode: "24H7J",
     dureeMois: 3,
@@ -209,6 +216,11 @@ export function PublicQrForm() {
       formuleCode: watchedFormuleCode || formValues.formuleCode || raw.formuleCode,
       dureeMois: watchedDureeMois || formValues.dureeMois || raw.dureeMois,
       modePaiement: watchedModePaiement || formValues.modePaiement || raw.modePaiement,
+      canalOtp:
+        watchedCanalOtp ||
+        formValues.canalOtp ||
+        raw.canalOtp ||
+        "EMAIL",
     };
   }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedModePaiement]);
 
@@ -565,6 +577,25 @@ const {
 
         const plateObj = parsePlate(consolidated.immatriculation);
 
+        const tarifParkingId = Number(
+          consolidated.tarifParkingId
+        );
+
+        if (
+          !Number.isInteger(tarifParkingId) ||
+          tarifParkingId <= 0
+        ) {
+          message.error(
+            "Veuillez sélectionner un parking, un forfait et une durée"
+          );
+          return;
+        }
+
+        const canalOtp =
+          consolidated.canalOtp === "SMS"
+            ? "SMS"
+            : "EMAIL";
+
         const demandeReq: DemandeAbonnementRegulierRequest = {
           nom: consolidated.nom,
           prenom: consolidated.prenom,
@@ -578,7 +609,8 @@ const {
           modele: consolidated.modele,
           couleur: consolidated.couleur,
           typeVehicule: consolidated.typeVehicule || "VOITURE",
-          tarifParkingId: Number(consolidated.tarifParkingId || consolidated.parkingId || 48),
+          tarifParkingId,
+          canalOtp,
           modePaiement: (consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE") as ModePaiement,
           conditionsAcceptees: Boolean(consolidated.acceptTerms),
         };
@@ -595,14 +627,12 @@ const {
           const res = await creerDemandeAbonnementRegulier(demandeReq, documents);
           setBackendDemandeResponse(res);
           setIsOtpModalOpen(true);
-          message.success("Demande créée avec succès ! Code OTP généré.");
+          message.success("Demande créée avec succès ! Code OTP envoyé.");
         } catch (err) {
           message.error(extraireMessageErreur(err));
         } finally {
           setIsSubmittingBackend(false);
         }
-      } else {
-        setIsOtpModalOpen(true);
       }
     } catch {
       message.error("Veuillez remplir les champs obligatoires et accepter les conditions d'utilisation.");
@@ -1653,6 +1683,32 @@ const {
                 </Form.Item>
               )}
 
+{typeDemande === "NEW" && (
+  <Form.Item
+    name="canalOtp"
+    label="Réception du code de vérification"
+    initialValue="EMAIL"
+    rules={[
+      {
+        required: true,
+        message: "Veuillez choisir le canal de réception du code",
+      },
+    ]}
+  >
+    <Radio.Group buttonStyle="solid">
+      <Radio.Button value="EMAIL">
+        E-mail
+      </Radio.Button>
+
+      <Radio.Button
+        value="SMS"
+        disabled={!smsOtpEnabled}
+      >
+        SMS {!smsOtpEnabled && "(bientôt disponible)"}
+      </Radio.Button>
+    </Radio.Group>
+  </Form.Item>
+)}
               {/* Cheque Specimen Example when Cheque is chosen */}
               {watchedModePaiement === "CHEQUE" && (
                 <div className="mb-4">

@@ -10,7 +10,7 @@ import {
 
 export type ModePaiement = "ESPECE" | "CHEQUE";
 
-export type CanalOtp = "SMS" | "WHATSAPP" | "EMAIL";
+export type CanalOtp = "EMAIL" | "SMS";
 
 export type StatutDemandeApi =
   | "SOUMISE"
@@ -42,7 +42,7 @@ export interface DemandeAbonnementRegulierRequest {
 
   tarifParkingId: number;
   modePaiement: ModePaiement;
-  canalOtp?: CanalOtp;
+  canalOtp: CanalOtp;
   conditionsAcceptees: boolean;
 }
 

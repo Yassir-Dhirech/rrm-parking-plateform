@@ -59,6 +59,13 @@ services:
       RRM_ADMIN_PASSWORD: Admin12345678!
       RRM_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
       RRM_STORAGE_PATH: /app/storage
+      RRM_OTP_PROVIDER: ${RRM_OTP_PROVIDER:-brevo}
+      RRM_BREVO_ENABLED: ${RRM_BREVO_ENABLED:-true}
+      RRM_BREVO_API_KEY: ${RRM_BREVO_API_KEY}
+      RRM_BREVO_SMS_SENDER: ${RRM_BREVO_SMS_SENDER:-RRM}
+      RRM_BREVO_SENDER_EMAIL: ${RRM_BREVO_SENDER_EMAIL}
+      RRM_BREVO_SENDER_NAME: ${RRM_BREVO_SENDER_NAME:-RRM Parking}
+      RRM_BREVO_SMS_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
     volumes:
       - backend_storage:/app/storage
 
@@ -67,12 +74,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_SMS_OTP_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
     container_name: rrm-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
       - "5173:80"
+
 
 volumes:
   mysql_data:
