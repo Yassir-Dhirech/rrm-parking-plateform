@@ -69,7 +69,7 @@ export function FacturesList() {
       abonnementRef: "ABO-2026-000001",
       clientNom: "Karim El Amrani",
       montantTtc: 1440,
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
     });
     setIsGenerateModalOpen(true);
   };
@@ -83,7 +83,7 @@ export function FacturesList() {
         abonnementRef: found.reference,
         clientNom: found.clientNom,
         montantTtc: montant,
-        modePaiement: found.type === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
+        modePaiement: found.type === "ENTREPRISE" ? "CHEQUE" : "ESPECE",
       });
     }
   };
@@ -151,7 +151,7 @@ export function FacturesList() {
       dataIndex: "modePaiement",
       key: "modePaiement",
       filters: [
-        { text: "Espèces", value: "ESPECES" },
+        { text: "Espèces", value: "ESPECE" },
         { text: "Chèque", value: "CHEQUE" },
       ],
       onFilter: (value: any, record: FactureListItem) => record.modePaiement === value,
@@ -296,7 +296,7 @@ export function FacturesList() {
             abonnementRef: "ABO-2026-000001",
             clientNom: "Karim El Amrani",
             montantTtc: 1440,
-            modePaiement: "ESPECES",
+            modePaiement: "ESPECE",
           }}
         >
           <Form.Item
@@ -343,7 +343,7 @@ export function FacturesList() {
           >
             <Select
               options={[
-                { value: "ESPECES", label: "Espèces (Guichet RRM)" },
+                { value: "ESPECE", label: "Espèces (Guichet RRM)" },
                 { value: "CHEQUE", label: "Chèque Bancaire (Certifié)" },
               ]}
             />

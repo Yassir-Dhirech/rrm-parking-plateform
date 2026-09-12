@@ -5,6 +5,7 @@ import com.rrm.parking.demande.service.otp.OtpEnvoiService;
 import com.rrm.parking.integration.brevo.config.BrevoProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -15,11 +16,11 @@ import org.springframework.web.client.RestClientException;
         name = "app.otp.provider",
         havingValue = "brevo"
 )
-public class BrevoSmsOtpEnvoiService
-        implements OtpEnvoiService {
+public class BrevoSmsOtpEnvoiService implements OtpEnvoiService {
 
     private final RestClient brevoRestClient;
     private final BrevoProperties properties;
+    private final BrevoEmailEnvoiService brevoEmailEnvoiService;
 
     @Override
     public void envoyer(
@@ -27,14 +28,58 @@ public class BrevoSmsOtpEnvoiService
             String destination,
             String code
     ) {
-        if (canal != CanalOtp.SMS) {
+        if (canal == null) {
             throw new IllegalArgumentException(
-                    "Brevo SMS ne prend actuellement en charge que le canal SMS"
+                    "Le canal OTP est obligatoire"
             );
         }
 
-        String numeroNormalise =
-                normaliserNumero(destination);
+        switch (canal) {
+            case EMAIL -> envoyerEmail(destination, code);
+            case SMS -> envoyerSms(destination, code);
+            default -> throw new IllegalArgumentException(
+                    "Le canal OTP doit être EMAIL ou SMS"
+            );
+        }
+    }
+
+    private void envoyerEmail(
+            String destination,
+            String code
+    ) {
+        if (destination == null || destination.isBlank()) {
+            throw new IllegalArgumentException(
+                    "L'adresse e-mail destinataire est obligatoire"
+            );
+        }
+
+        String contenuHtml = """
+                <p>Bonjour,</p>
+                <p>Votre code de vérification RRM est :</p>
+                <p style="font-size:24px;font-weight:bold;">%s</p>
+                <p>Ce code est valable pendant 10 minutes.</p>
+                <p>Si vous n'avez pas effectué cette demande, ignorez ce message.</p>
+                """.formatted(code);
+
+        brevoEmailEnvoiService.envoyer(
+                destination,
+                "Client RRM",
+                "Votre code de vérification RRM",
+                contenuHtml
+        );
+    }
+
+    private void envoyerSms(
+            String destination,
+            String code
+    ) {
+        if (!properties.smsEnabled()) {
+            throw new IllegalStateException(
+                    "L'envoi OTP par SMS n'est pas encore activé"
+            );
+        }
+
+        String numeroNormalise = normaliserNumero(destination);
 
         String contenu =
                 "RRM : votre code de vérification est "
@@ -55,33 +100,27 @@ public class BrevoSmsOtpEnvoiService
             brevoRestClient
                     .post()
                     .uri("/v3/transactionalSMS/send")
-                    .contentType(
-                            org.springframework.http.MediaType.APPLICATION_JSON
-                    )
+                    .contentType(MediaType.APPLICATION_JSON)
                     .body(requete)
                     .retrieve()
                     .toBodilessEntity();
 
         } catch (RestClientException exception) {
             throw new IllegalStateException(
-                    "Échec de l'envoi du code OTP par Brevo",
+                    "Échec de l'envoi du code OTP par SMS avec Brevo",
                     exception
             );
         }
     }
 
-    private String normaliserNumero(
-            String destination
-    ) {
-        if (destination == null
-                || destination.isBlank()) {
+    private String normaliserNumero(String destination) {
+        if (destination == null || destination.isBlank()) {
             throw new IllegalArgumentException(
                     "Le numéro destinataire est obligatoire"
             );
         }
 
-        String numero =
-                destination.replaceAll("[^0-9]", "");
+        String numero = destination.replaceAll("[^0-9]", "");
 
         if (numero.startsWith("00")) {
             numero = numero.substring(2);

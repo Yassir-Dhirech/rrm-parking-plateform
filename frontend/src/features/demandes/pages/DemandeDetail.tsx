@@ -38,6 +38,8 @@ import {
   CarOutlined,
   FileImageOutlined,
 } from "@ant-design/icons";
+import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
+import { RecuPaiementModal } from "../../../components/recu/RecuPaiementModal";
 import {
   getDemandeByIdMock,
   validerDemandeMock,
@@ -154,12 +156,13 @@ export function DemandeDetail() {
   const basePath = role ? roleConfig[role].homePath : "";
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [recuModalOpen, setRecuModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectType, setRejectType] = useState<"DOSSIER" | "PAIEMENT">("DOSSIER");
   const [raison, setRaison] = useState("");
   
   const [paymentForm] = Form.useForm<PaymentInfoInput>();
-  const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECES";
+  const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECE";
 
   const { data, isLoading } = useQuery({
     queryKey: ["demande", demandeId],
@@ -184,6 +187,7 @@ export function DemandeDetail() {
       });
       setPaymentModalOpen(false);
       paymentForm.resetFields();
+      setRecuModalOpen(true);
       queryClient.invalidateQueries({ queryKey: ["demande", demandeId] });
       queryClient.invalidateQueries({ queryKey: ["demandes"] });
     },
@@ -227,7 +231,7 @@ export function DemandeDetail() {
     return <Card loading />;
   }
 
-  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAIEMENT_ENREGISTRE" || data.statut === "VALIDEE";
+  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAYEE" || data.statut === "VALIDEE";
   const isDossierValide = data.statut === "VALIDEE";
   const isAgent = role === "AGENT";
   const isSuperviseur = role === "SUPERVISEUR";
@@ -244,7 +248,7 @@ export function DemandeDetail() {
   const handleOpenPaymentModal = () => {
     paymentForm.resetFields();
     paymentForm.setFieldsValue({
-      modePaiement: data.typeClient === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
+      modePaiement: data.typeClient === "ENTREPRISE" ? "CHEQUE" : "ESPECE",
       montant: montantTotalExige,
     });
     setPaymentModalOpen(true);
@@ -300,7 +304,7 @@ export function DemandeDetail() {
           />
         </div>
 
-        {data.statut === "REJETEE" && data.raisonRejet && (
+        {data.statut === "REFUSEE" && data.raisonRejet && (
           <Alert
             type="error"
             message="Motif du rejet"
@@ -323,16 +327,16 @@ export function DemandeDetail() {
             </Col>
 
             <Col xs={24} md={8}>
-              <div style={{ fontSize: 12, color: "#64748b" }}>Durée Traitement (SLA 7 Jours) :</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Durée Traitement :</div>
               {data.dureeTraitementJours !== undefined ? (
                 <strong style={{ fontSize: 14, color: "#16a34a" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  {data.dureeTraitementJours} Jours ({formatDate(data.dateTraitement ?? "")})
+                  {data.dureeTraitementJours} Jours — {formatDate(data.dateTraitement ?? "")}
                 </strong>
               ) : (
                 <strong style={{ fontSize: 14, color: "#0284c7" }}>
                   <ClockCircleOutlined style={{ marginRight: 4 }} />
-                  En cours ({data.slaRestantJours ?? 5}j restants)
+                  En cours — {data.slaRestantJours ?? 5}j restants
                 </strong>
               )}
             </Col>
@@ -479,18 +483,18 @@ export function DemandeDetail() {
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Formule Tarifaire">
-                <Tag color="blue">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+                <Tag color="blue">{data.forfaitNom || "Pass Permanent 24h/7j"}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Durée Souscription">
                 {data.dureeMois || 6} Mois
               </Descriptions.Item>
               <Descriptions.Item label="Immatriculation">
-                <Tag color="cyan">{data.immatriculation}</Tag> ({data.typeVehicule || "Voiture"})
+                <Tag color="cyan">{data.immatriculation}</Tag> — {data.typeVehicule || "Voiture"}
               </Descriptions.Item>
               <Descriptions.Item label="Frais d'Émission Carte RFID">
                 <Tag color="orange" style={{ fontWeight: 700 }}>+50 MAD TTC</Tag>
                 <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
-                  (Nouvelle carte obligatoire pour tout premier abonné)
+                  Nouvelle carte pour premier abonné
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="Montant Total Net" span={2}>
@@ -498,7 +502,7 @@ export function DemandeDetail() {
                   {montantTotalExige} MAD TTC
                 </strong>
                 <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
-                  (Abonnement : {montantBaseAbo} MAD + Badge RFID : 50 MAD)
+                  Abonnement : {montantBaseAbo} MAD + Badge RFID : 50 MAD
                 </span>
               </Descriptions.Item>
             </Descriptions>
@@ -515,7 +519,7 @@ export function DemandeDetail() {
                 <strong>{data.parkingNom}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Formule">
-                <Tag color="purple">{data.forfaitNom || "Pass Permanent (24h / 7j)"}</Tag>
+                <Tag color="purple">{data.forfaitNom || "Pass Permanent 24h/7j"}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Période Prolongation">
                 {data.dureeMois || 12} Mois
@@ -524,9 +528,9 @@ export function DemandeDetail() {
                 <Tag color="cyan">{data.immatriculation}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Frais de Carte RFID">
-                <Tag color="green" style={{ fontWeight: 700 }}>0 MAD (Exonéré)</Tag>
+                <Tag color="green" style={{ fontWeight: 700 }}>0 MAD — Exonéré</Tag>
                 <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>
-                  (Même carte physique conservée et réactivée)
+                  Même carte physique conservée
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="Montant Renouvellement Total" span={2}>
@@ -620,21 +624,42 @@ export function DemandeDetail() {
               )}
             </Descriptions>
 
-            <div style={{ marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ marginTop: 16 }}>
               <Button
                 type="primary"
                 icon={<FileDoneOutlined />}
-                onClick={() => message.info("Génération du reçu de paiement client en cours...")}
-                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                onClick={() => setRecuModalOpen(true)}
+                style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
               >
-                Imprimer Reçu de Paiement
+                Reçu de Paiement (Imprimer / Email)
               </Button>
             </div>
           </>
         )}
 
+        {/* Alerte Dossier Expiré */}
+        {data.statut === "EXPIREE" && (
+          <div style={{ marginTop: 20 }}>
+            <Alert
+              type="error"
+              showIcon
+              message="Dossier Expiré & Réservation Annulée (Délai 7 Jours Échu)"
+              description={
+                <div>
+                  <p style={{ margin: 0 }}>
+                    Le délai légal de validité de 7 jours alloué pour le règlement au guichet RRM est dépassé.
+                  </p>
+                  <p style={{ margin: "4px 0 0 0", fontWeight: 600 }}>
+                    La place pré-réservée a été automatiquement libérée dans le quota du parking et ce dossier est clos/annulé. Aucun encaissement n'est permis sur ce dossier.
+                  </p>
+                </div>
+              }
+            />
+          </div>
+        )}
+
         {/* Section Actions Métier */}
-        {!isDossierValide && data.statut !== "REJETEE" && (
+        {!isDossierValide && data.statut !== "REFUSEE" && data.statut !== "EXPIREE" && (
           <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <div style={{ display: "grid", gridTemplateColumns: role === "RESPONSABLE" ? "1fr" : "1fr 1fr", gap: 16 }}>
               {/* ÉTAPE 1: Encaissement - strictly for AGENT and SUPERVISEUR, completely removed for RESPONSABLE */}
@@ -725,11 +750,12 @@ export function DemandeDetail() {
         onCancel={() => setPaymentModalOpen(false)}
         footer={null}
         destroyOnClose
+        width={currentPaymentMode === "CHEQUE" ? 640 : 520}
       >
         <Form
           form={paymentForm}
           layout="vertical"
-          initialValues={{ modePaiement: "ESPECES", montant: 450 }}
+          initialValues={{ modePaiement: "ESPECE", montant: 450 }}
           onFinish={handlePaymentSubmit}
         >
           <Form.Item
@@ -746,7 +772,7 @@ export function DemandeDetail() {
             ) : (
               <Select
                 options={[
-                  { label: "Espèces (Guichet)", value: "ESPECES" },
+                  { label: "Espèces", value: "ESPECE" },
                   { label: "Chèque Bancaire", value: "CHEQUE" },
                 ]}
               />
@@ -755,7 +781,7 @@ export function DemandeDetail() {
 
           <Form.Item
             name="montant"
-            label="Montant (MAD)"
+            label="Montant en MAD"
             rules={[{ required: true, message: "Veuillez entrer le montant" }]}
             tooltip="Le montant de l'abonnement est fixe et non modifiable"
           >
@@ -769,7 +795,7 @@ export function DemandeDetail() {
                 label="Numéro de Chèque"
                 rules={[{ required: true, message: "Numéro de chèque requis" }]}
               >
-                <Input placeholder="Ex: CHQ-987654" />
+                <Input placeholder="Ex: 0123456" />
               </Form.Item>
               <Form.Item
                 name="banque"
@@ -781,6 +807,16 @@ export function DemandeDetail() {
                   options={BANK_OPTIONS}
                 />
               </Form.Item>
+
+              {/* Specimen Guide for Agent Verification */}
+              <div className="mb-4">
+                <ChequeSpecimenCard
+                  compact
+                  montant={montantTotalExige}
+                  clientNom={data.clientNom}
+                  typeClient={data.typeClient}
+                />
+              </div>
             </>
           )}
 
@@ -800,7 +836,7 @@ export function DemandeDetail() {
             }}
           >
             <div style={{ fontWeight: 700, color: fraisCarteRfid > 0 ? "#92400e" : "#166534", marginBottom: 4 }}>
-              Détail du Montant Encaissé (Règle Tarifaire RRM) :
+              Détail du Montant Encaissé :
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
               <span style={{ color: "#475569" }}>Coût de l'Abonnement :</span>
@@ -809,7 +845,7 @@ export function DemandeDetail() {
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ color: "#475569" }}>Frais d'Émission Carte RFID :</span>
               <strong style={{ color: fraisCarteRfid > 0 ? "#b45309" : "#16a34a" }}>
-                {fraisCarteRfid > 0 ? `+${fraisCarteRfid} MAD (Nouvelle Carte / Duplicata)` : "0 MAD (Même Carte Conservée)"}
+                {fraisCarteRfid > 0 ? `+${fraisCarteRfid} MAD — Nouvelle Carte` : "0 MAD — Même Carte Conservée"}
               </strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #cbd5e1", paddingTop: 4, fontWeight: 800 }}>
@@ -864,6 +900,37 @@ export function DemandeDetail() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal: Reçu de Paiement Officiel (Impression & Envoi Email) */}
+      <RecuPaiementModal
+        open={recuModalOpen}
+        onClose={() => setRecuModalOpen(false)}
+        data={
+          data?.paiementInfo
+            ? {
+                referenceQuittance: `RCU-2026-${String(data.id).padStart(6, "0")}`,
+                demandeReference: data.reference,
+                datePaiement: data.paiementInfo.datePaiement,
+                clientNom: data.clientNom,
+                clientEmail: data.email,
+                clientTelephone: data.telephone,
+                clientCinOuIce: data.typeClient === "ENTREPRISE" ? data.ice : data.cin,
+                typeClient: data.typeClient,
+                parkingNom: data.parkingNom,
+                formuleNom: data.forfaitNom,
+                immatriculation: data.immatriculation,
+                dureeMois: data.dureeMois,
+                montantAbonnement: montantBaseAbo,
+                fraisCarteRfid: fraisCarteRfid,
+                montantTotal: data.paiementInfo.montant,
+                modePaiement: data.paiementInfo.modePaiement as any,
+                numeroCheque: data.paiementInfo.numeroCheque,
+                banque: data.paiementInfo.banque,
+                caissierNom: data.paiementInfo.validePar || `${userName ?? "Agent Guichet"} (${role})`,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

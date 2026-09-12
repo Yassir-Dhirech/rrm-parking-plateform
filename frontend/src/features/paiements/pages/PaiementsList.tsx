@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Table, Card, Typography, Tag, Space, Button } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { EyeOutlined, FileDoneOutlined, DollarOutlined } from "@ant-design/icons";
+import { EyeOutlined, FileDoneOutlined, DollarOutlined, PrinterOutlined } from "@ant-design/icons";
 import { getPaiementsMock } from "../../../api/paiementsMock";
 import type { PaiementListItem } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -9,6 +10,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
 import { modePaiementLabels } from "../../../lib/enums";
 import { formatDate } from "../../../lib/dateUtils";
+import { RecuPaiementModal, type RecuPaiementData } from "../../../components/recu/RecuPaiementModal";
 
 const { Title, Text } = Typography;
 
@@ -17,10 +19,27 @@ export function PaiementsList() {
   const navigate = useNavigate();
   const basePath = role ? roleConfig[role].homePath : "";
 
+  const [selectedRecu, setSelectedRecu] = useState<RecuPaiementData | null>(null);
+  const [isRecuModalOpen, setIsRecuModalOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["paiements"],
     queryFn: getPaiementsMock,
   });
+
+  const handleOpenRecu = (record: PaiementListItem) => {
+    setSelectedRecu({
+      referenceQuittance: record.reference,
+      datePaiement: record.datePaiement,
+      clientNom: record.clientNom,
+      clientEmail: "client.rrm@example.com",
+      montantAbonnement: record.montantAbonnement || record.montant - (record.fraisCarteRfid || 0),
+      fraisCarteRfid: record.fraisCarteRfid,
+      montantTotal: record.montant,
+      modePaiement: record.modePaiement as any,
+    });
+    setIsRecuModalOpen(true);
+  };
 
   const columns = [
     {
@@ -131,6 +150,14 @@ export function PaiementsList() {
           </Button>
           <Button
             size="small"
+            icon={<PrinterOutlined style={{ color: "#16a34a" }} />}
+            onClick={() => handleOpenRecu(record)}
+            style={{ fontWeight: 600, color: "#16a34a", borderColor: "#86efac" }}
+          >
+            Reçu
+          </Button>
+          <Button
+            size="small"
             type="primary"
             ghost
             icon={<FileDoneOutlined />}
@@ -144,28 +171,36 @@ export function PaiementsList() {
   ];
 
   return (
-    <Card>
-      <div style={{ marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0, color: "#003566" }}>
-          <DollarOutlined style={{ marginRight: 8, color: "#16a34a" }} />
-          Encaissements & Règlements
-        </Title>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Suivi de l'ensemble des encaissements guichet avec tarification détaillée et factures rattachées (Règle des 50 DH pour carte RFID neuve).
-        </Text>
-      </div>
+    <>
+      <Card>
+        <div style={{ marginBottom: 16 }}>
+          <Title level={4} style={{ margin: 0, color: "#003566" }}>
+            <DollarOutlined style={{ marginRight: 8, color: "#16a34a" }} />
+            Encaissements & Règlements
+          </Title>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Suivi de l'ensemble des encaissements guichet avec tarification détaillée et factures rattachées (Règle des 50 DH pour carte RFID neuve).
+          </Text>
+        </div>
 
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data}
-        loading={isLoading}
-        scroll={{ x: "max-content" }}
-        onRow={(record) => ({
-          onClick: () => navigate(`${basePath}/paiements/${record.id}`),
-          style: { cursor: "pointer" },
-        })}
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={data}
+          loading={isLoading}
+          scroll={{ x: "max-content" }}
+          onRow={(record) => ({
+            onClick: () => navigate(`${basePath}/paiements/${record.id}`),
+            style: { cursor: "pointer" },
+          })}
+        />
+      </Card>
+
+      <RecuPaiementModal
+        open={isRecuModalOpen}
+        onClose={() => setIsRecuModalOpen(false)}
+        data={selectedRecu}
       />
-    </Card>
+    </>
   );
 }

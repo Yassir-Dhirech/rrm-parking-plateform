@@ -57,10 +57,10 @@ export function DemandesList() {
   // Filter demandes for table view by tab, parking, and search text
   const filteredData = parkingScopedData.filter((item) => {
     if (activeTab === "SOUMISE" && item.statut !== "SOUMISE") return false;
-    if (activeTab === "PAIEMENT_ENREGISTRE" && item.statut !== "PAIEMENT_ENREGISTRE") return false;
-    if (activeTab === "EN_COURS" && item.statut !== "EN_COURS") return false;
+    if (activeTab === "PAYEE" && item.statut !== "PAYEE") return false;
+    if (activeTab === "SOUMISE" && item.statut !== "SOUMISE") return false;
     if (activeTab === "VALIDEE" && item.statut !== "VALIDEE") return false;
-    if (activeTab === "REJETEE" && item.statut !== "REJETEE") return false;
+    if (activeTab === "REFUSEE" && item.statut !== "REFUSEE") return false;
 
     if (searchText.trim()) {
       const q = searchText.toLowerCase();
@@ -79,7 +79,7 @@ export function DemandesList() {
 
   const totalSouscriptions = parkingScopedData.length;
   const countSoumises = parkingScopedData.filter((d) => d.statut === "SOUMISE").length;
-  const countPaiementEnregistre = parkingScopedData.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
+  const countPaiementEnregistre = parkingScopedData.filter((d) => d.statut === "PAYEE").length;
   const countValidees = parkingScopedData.filter((d) => d.statut === "VALIDEE").length;
 
   const columns = [
@@ -123,9 +123,10 @@ export function DemandesList() {
       key: "statut",
       filters: [
         { text: "En Attente Paiement", value: "SOUMISE" },
-        { text: "Paiement Enregistré", value: "PAIEMENT_ENREGISTRE" },
+        { text: "Paiement Enregistré", value: "PAYEE" },
         { text: "Validée", value: "VALIDEE" },
-        { text: "Rejetée", value: "REJETEE" },
+        { text: "Rejetée", value: "REFUSEE" },
+        { text: "Expirée (7j)", value: "EXPIREE" },
       ],
       onFilter: (value: any, record: DemandeListItem) => record.statut === value,
       render: (statut: string) => {
@@ -136,7 +137,7 @@ export function DemandesList() {
             </Tag>
           );
         }
-        if (statut === "PAIEMENT_ENREGISTRE") {
+        if (statut === "PAYEE") {
           return (
             <Tag color="cyan" className="font-extrabold px-2.5 py-0.5 rounded-full border-none shadow-2xs">
               Paiement Enregistré
@@ -150,10 +151,17 @@ export function DemandesList() {
             </Tag>
           );
         }
-        if (statut === "REJETEE") {
+        if (statut === "REFUSEE") {
           return (
             <Tag color="red" className="font-extrabold px-2.5 py-0.5 rounded-full border-none shadow-2xs">
               Rejetée
+            </Tag>
+          );
+        }
+        if (statut === "EXPIREE") {
+          return (
+            <Tag color="default" className="font-extrabold px-2.5 py-0.5 rounded-full border-rose-200 text-rose-700 bg-rose-50 shadow-2xs">
+              Expirée (7j)
             </Tag>
           );
         }
@@ -328,9 +336,9 @@ export function DemandesList() {
                   options={[
                     { value: "ALL", label: `Tous les Statuts (${parkingScopedData.length})` },
                     { value: "SOUMISE", label: `En Attente Paiement (${countSoumises})` },
-                    { value: "PAIEMENT_ENREGISTRE", label: `Paiements Enregistrés (${countPaiementEnregistre})` },
+                    { value: "PAYEE", label: `Paiements Enregistrés (${countPaiementEnregistre})` },
                     { value: "VALIDEE", label: `Validées (${countValidees})` },
-                    { value: "REJETEE", label: "Rejetées" },
+                    { value: "REFUSEE", label: "Rejetées" },
                   ]}
                 />
 

@@ -17,7 +17,7 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000001",
     paiementReference: "PAY-2026-000001",
     paiementId: 1,
-    modePaiement: "ESPECES",
+    modePaiement: "ESPECE",
     libellePrestation: "Souscription Initiale 6 Mois (+50 DH Badge RFID)",
     genereePar: "Agent Rachid (Guichet)",
     signeePar: "M. Samir El Amrani (Directeur Exploitation)",
@@ -60,7 +60,7 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000003",
     paiementReference: "PAY-2026-000003",
     paiementId: 3,
-    modePaiement: "ESPECES",
+    modePaiement: "ESPECE",
     libellePrestation: "Pass Diurne 08h-20h (Trimestre)",
     genereePar: "Agent Hassan (Guichet)",
   },
@@ -80,7 +80,7 @@ const mockFactures: FactureDetail[] = [
     abonnementReference: "ABO-2026-000001", // Second distinct payment for same subscriber -> New distinct Facture!
     paiementReference: "PAY-2026-000004",
     paiementId: 4,
-    modePaiement: "ESPECES",
+    modePaiement: "ESPECE",
     libellePrestation: "Renouvellement 6 Mois (0 DH Badge - Même carte réutilisée)",
     genereePar: "Agent Rachid (Guichet)",
     signeePar: "M. Samir El Amrani (Directeur Exploitation)",
@@ -153,7 +153,7 @@ export interface CreerFacturePayload {
   paiementReference?: string;
   paiementId?: number;
   genereePar?: string;
-  modePaiement?: "ESPECES" | "CHEQUE";
+  modePaiement?: "ESPECE" | "CHEQUE" | "ESPECE";
   libellePrestation?: string;
 }
 
@@ -187,7 +187,7 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
     abonnementReference: payload.abonnementReference,
     paiementReference: payload.paiementReference || `PAY-2026-${String(newId).padStart(6, "0")}`,
     paiementId: payload.paiementId || newId,
-    modePaiement: payload.modePaiement || "ESPECES",
+    modePaiement: (payload.modePaiement === "ESPECE" ? "ESPECE" : payload.modePaiement) || "ESPECE",
     libellePrestation: payload.libellePrestation || "Règlement Abonnement de Stationnement",
     genereePar: payload.genereePar || "Superviseur Exploitation",
   };

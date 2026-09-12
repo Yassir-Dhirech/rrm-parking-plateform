@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rrm-parking-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://gateway01.eu-central-1.prod.aws.tidbcloud.com:4000/rrm_db?sslMode=VERIFY_IDENTITY
+      - key: SPRING_DATASOURCE_USERNAME
+        value: 2wc4nHiW6bLvdfS.root
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: MbkMZvpObv0CSmHy
+      - key: APP_JWT_SECRET
+        value: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - key: PORT
+        value: 8081

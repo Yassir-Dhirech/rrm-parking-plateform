@@ -74,17 +74,48 @@ export async function getContratByIdMock(id: number): Promise<ContratDetail | un
   );
 }
 
-export async function signerContratMock(id: number): Promise<ContratDetail> {
-  const contrat = mockContrats.find((c) => c.id === id);
+export interface UpdateSituationContratPayload {
+  id: number;
+  nouveauStatut: ContratDetail["statut"];
+  dateSignaturePhysique?: string;
+  signataireNom?: string;
+  referencePhysique?: string;
+  observations?: string;
+}
+
+export async function updateSituationContratMock(payload: UpdateSituationContratPayload): Promise<ContratDetail> {
+  const contrat = mockContrats.find((c) => c.id === payload.id);
   if (!contrat) throw new Error("Contrat introuvable");
 
-  contrat.statut = "SIGNE";
-  contrat.dateSignature = formatDate(new Date().toISOString());
-  contrat.signePar = "Responsable RRM";
-  return {
-    ...contrat,
-    dateDebut: formatDate(contrat.dateDebut),
-    dateFin: formatDate(contrat.dateFin),
-    dateSignature: formatDate(contrat.dateSignature),
-  };
+  contrat.statut = payload.nouveauStatut;
+  if (payload.nouveauStatut === "SIGNE") {
+    contrat.dateSignature = payload.dateSignaturePhysique ? formatDate(payload.dateSignaturePhysique) : formatDate(new Date().toISOString());
+    contrat.signePar = payload.signataireNom || "Responsable RRM";
+  } else if (payload.nouveauStatut === "EN_ATTENTE_SIGNATURE") {
+    contrat.dateSignature = undefined;
+    contrat.signePar = undefined;
+  }
+  if (payload.referencePhysique) contrat.referencePhysique = payload.referencePhysique;
+  if (payload.observations) contrat.observations = payload.observations;
+
+  return new Promise((resolve) =>
+    setTimeout(
+      () =>
+        resolve({
+          ...contrat,
+          dateDebut: formatDate(contrat.dateDebut),
+          dateFin: formatDate(contrat.dateFin),
+          dateSignature: contrat.dateSignature ? formatDate(contrat.dateSignature) : undefined,
+        }),
+      300
+    )
+  );
+}
+
+export async function signerContratMock(id: number): Promise<ContratDetail> {
+  return updateSituationContratMock({
+    id,
+    nouveauStatut: "SIGNE",
+    signataireNom: "Responsable RRM",
+  });
 }
