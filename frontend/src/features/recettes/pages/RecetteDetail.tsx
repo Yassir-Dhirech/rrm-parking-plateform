@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert, Input, Tooltip } from "antd";
+import { Card, Descriptions, Button, Space, Table, Modal, message, Spin, Typography, Tag, Row, Col, Alert, Input, Tooltip, Select } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircleOutlined, PrinterOutlined, SendOutlined, BankOutlined, FileTextOutlined, DollarOutlined, StopOutlined, LinkOutlined, UserOutlined } from "@ant-design/icons";
 import { getRecetteByIdMock, markRecetteAsCompletedMock, markRecetteAsReceivedMock, rejeterChequeEtSuspendreCarteMock } from "../../../api/recettesMock";
@@ -11,6 +11,16 @@ import { formatDate } from "../../../lib/dateUtils";
 import type { RecetteJournee, ChequeRemiseDetail } from "../types";
 
 const { Title, Text } = Typography;
+
+const MOTIFS_REJET_CHEQUE = [
+  { value: "Chèque sans provision (défaut de provision suffisante)", label: "Chèque sans provision suffisante" },
+  { value: "Signature non conforme au spécimen déposé en banque", label: "Signature non conforme au spécimen bancaire" },
+  { value: "Compte bancaire émetteur clôturé ou bloqué", label: "Compte bancaire clôturé ou bloqué" },
+  { value: "Opposition bancaire formelle pour perte ou vol de chéquier", label: "Opposition bancaire (perte / vol)" },
+  { value: "Montant ou ordre raturé sans mention approbative", label: "Montant ou ordre raturé / altéré" },
+  { value: "Chèque prescrit (délai légal de présentation dépassé)", label: "Chèque prescrit (délai légal dépassé)" },
+  { value: "AUTRE", label: "Autre motif bancaire (préciser ci-dessous)" },
+];
 
 export function RecetteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -96,7 +106,17 @@ export function RecetteDetail() {
 
   const [selectedCheque, setSelectedCheque] = useState<ChequeRemiseDetail | null>(null);
   const [isRejetModalOpen, setIsRejetModalOpen] = useState(false);
-  const [motifRejetInput, setMotifRejetInput] = useState("");
+  const [selectedMotifCheque, setSelectedMotifCheque] = useState<string>("");
+  const [autreMotifCheque, setAutreMotifCheque] = useState<string>("");
+
+  const getFullMotifRejetCheque = () => {
+    if (!selectedMotifCheque) return autreMotifCheque.trim();
+    if (selectedMotifCheque === "AUTRE") return autreMotifCheque.trim();
+    if (autreMotifCheque.trim()) {
+      return `${selectedMotifCheque} — Note : ${autreMotifCheque.trim()}`;
+    }
+    return selectedMotifCheque;
+  };
 
   const rejeterChequeMutation = useMutation({
     mutationFn: (values: { chequeId: number; motifRejet: string }) =>
@@ -105,13 +125,15 @@ export function RecetteDetail() {
       message.warning("Chèque marqué comme REJETÉ. L'abonnement et la carte d'accès ont été automatiquement suspendus !");
       queryClient.invalidateQueries({ queryKey: ["recette", recetteId] });
       setIsRejetModalOpen(false);
-      setMotifRejetInput("");
+      setSelectedMotifCheque("");
+      setAutreMotifCheque("");
     },
   });
 
   const handleOpenRejetModal = (cheque: ChequeRemiseDetail) => {
     setSelectedCheque(cheque);
-    setMotifRejetInput("");
+    setSelectedMotifCheque("");
+    setAutreMotifCheque("");
     setIsRejetModalOpen(true);
   };
 
@@ -345,23 +367,25 @@ export function RecetteDetail() {
         open={isRejetModalOpen}
         onCancel={() => setIsRejetModalOpen(false)}
         onOk={() => {
-          if (!motifRejetInput.trim()) {
-            message.error("Veuillez spécifier le motif du rejet par la banque.");
+          const finalMotif = getFullMotifRejetCheque();
+          if (!finalMotif) {
+            message.error("Veuillez sélectionner un motif de rejet ou préciser la raison.");
             return;
           }
           if (selectedCheque) {
-            rejeterChequeMutation.mutate({ chequeId: selectedCheque.id, motifRejet: motifRejetInput });
+            rejeterChequeMutation.mutate({ chequeId: selectedCheque.id, motifRejet: finalMotif });
           }
         }}
         confirmLoading={rejeterChequeMutation.isPending}
         okText="Confirmer le Rejet & Suspendre la Carte"
-        okButtonProps={{ danger: true }}
+        okButtonProps={{ danger: true, style: { fontWeight: 700 } }}
         cancelText="Annuler"
+        width={580}
       >
         <Alert
           type="error"
           showIcon
-          message="Présomption de Validité Lelevée — Procédure d'Impayé"
+          message="Présomption de Validité Levée — Procédure d'Impayé"
           description="Les chèques sont présumés valides à la remise pour délivrer la carte d'accès. La confirmation du rejet par la banque entraînera la SUSPENSION IMMÉDIATE de la carte et de l'abonnement associé, et transmettra une alerte d'urgence à l'Agent et au Superviseur."
           style={{ marginBottom: 16 }}
         />
@@ -377,17 +401,55 @@ export function RecetteDetail() {
           </Descriptions>
         )}
 
-        <div style={{ marginTop: 12 }}>
-          <label style={{ fontWeight: 600, display: "block", marginBottom: 6 }}>
-            Motif de Rejet par la Banque :
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontWeight: 700, display: "block", marginBottom: 6, color: "#334155" }}>
+            Motif de rejet bancaire (menu déroulant) :
           </label>
-          <Input.TextArea
-            rows={3}
-            placeholder="Ex: Chèque sans provision, signature non conforme, compte clôturé..."
-            value={motifRejetInput}
-            onChange={(e) => setMotifRejetInput(e.target.value)}
+          <Select
+            style={{ width: "100%" }}
+            placeholder="Sélectionner le motif bancaire..."
+            value={selectedMotifCheque || undefined}
+            onChange={(val) => setSelectedMotifCheque(val)}
+            options={MOTIFS_REJET_CHEQUE}
+            size="large"
           />
         </div>
+
+        {(selectedMotifCheque === "AUTRE" || selectedMotifCheque) && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontWeight: 700, display: "block", marginBottom: 6, color: "#334155" }}>
+              {selectedMotifCheque === "AUTRE" ? (
+                <>
+                  <span style={{ color: "#ef4444", marginRight: 4 }}>*</span>
+                  Préciser le motif spécifique (Obligatoire) :
+                </>
+              ) : (
+                "Précisions ou références bancaires complémentaires (Facultatif) :"
+              )}
+            </label>
+            <Input.TextArea
+              rows={3}
+              placeholder={
+                selectedMotifCheque === "AUTRE"
+                  ? "Saisir le motif bancaire exact..."
+                  : "N° d'avis d'impayé, agence ou remarques complémentaires..."
+              }
+              value={autreMotifCheque}
+              onChange={(e) => setAutreMotifCheque(e.target.value)}
+            />
+          </div>
+        )}
+
+        {getFullMotifRejetCheque() && (
+          <div style={{ padding: 12, backgroundColor: "#fff1f2", borderRadius: 8, border: "1px solid #fecdd3" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#9f1239", marginBottom: 4 }}>
+              Motif de rejet enregistré pour ce chèque :
+            </div>
+            <div style={{ fontSize: 12, color: "#881337", fontWeight: 500 }}>
+              « {getFullMotifRejetCheque()} »
+            </div>
+          </div>
+        )}
       </Modal>
     </Space>
   );
