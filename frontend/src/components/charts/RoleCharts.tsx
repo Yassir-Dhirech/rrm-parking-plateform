@@ -55,8 +55,8 @@ export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, rece
    ==================================================================== */
 function AgentCharts({ filters, demandes = [] }: { filters: GlobalFilters; demandes?: DemandeListItem[] }) {
   const soumises = demandes.filter((d) => d.statut === "SOUMISE").length;
-  const enPaiement = demandes.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
-  const validees = demandes.filter((d) => d.statut === "VALIDEE" || d.statut === "COMPLETEE").length;
+  const enPaiement = demandes.filter((d) => d.statut === "PAYEE").length;
+  const validees = demandes.filter((d) => d.statut === "VALIDEE").length;
   const total = (soumises + enPaiement + validees) || 1;
 
   const demandesData = [

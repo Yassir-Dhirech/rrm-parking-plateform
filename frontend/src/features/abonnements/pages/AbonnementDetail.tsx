@@ -79,7 +79,7 @@ export function AbonnementDetail() {
         abonnementReference: data?.reference || `ABO-2026-${String(abonnementId).padStart(6, "0")}`,
         montantTtc,
         fraisCarteRfid: fraisBadge,
-        modePaiement: values.modePaiement || "ESPECES",
+        modePaiement: values.modePaiement || "ESPECE",
         libellePrestation: values.libellePrestation || (isRenewal ? "Renouvellement Période d'Abonnement" : "Remplacement Badge RFID Duplicata"),
         genereePar: `${userName || "Agent Guichet"} — ${role || "AGENT"}`,
       });
@@ -371,7 +371,7 @@ export function AbonnementDetail() {
                 typePrestation: "RENOUVELLEMENT",
                 libellePrestation: "Renouvellement Période — 0 DH",
                 montantTtc: data?.type === "STAFF" ? 0 : (data?.type === "ENTREPRISE" ? 54000 : 1440),
-                modePaiement: data?.type === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
+                modePaiement: data?.type === "ENTREPRISE" ? "CHEQUE" : "ESPECE",
               });
               setIsNouveauPaiementModalOpen(true);
             }}
@@ -440,7 +440,7 @@ export function AbonnementDetail() {
               dataIndex: "modePaiement",
               key: "modePaiement",
               filters: [
-                { text: "Espèces", value: "ESPECES" },
+                { text: "Espèces", value: "ESPECE" },
                 { text: "Chèque", value: "CHEQUE" },
               ],
               onFilter: (value: any, record: any) => record.modePaiement === value,
@@ -738,7 +738,7 @@ export function AbonnementDetail() {
             rules={[{ required: true, message: "Sélectionnez le mode de paiement" }]}
           >
             <Select>
-              <Option value="ESPECES">Espèces</Option>
+              <Option value="ESPECE">Espèces</Option>
               <Option value="CHEQUE">Chèque Bancaire Certifié</Option>
             </Select>
           </Form.Item>

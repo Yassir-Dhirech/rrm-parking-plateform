@@ -162,7 +162,7 @@ export function DemandeDetail() {
   const [raison, setRaison] = useState("");
   
   const [paymentForm] = Form.useForm<PaymentInfoInput>();
-  const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECES";
+  const currentPaymentMode = Form.useWatch("modePaiement", paymentForm) ?? "ESPECE";
 
   const { data, isLoading } = useQuery({
     queryKey: ["demande", demandeId],
@@ -231,7 +231,7 @@ export function DemandeDetail() {
     return <Card loading />;
   }
 
-  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAIEMENT_ENREGISTRE" || data.statut === "VALIDEE";
+  const isPaiementDone = Boolean(data.paiementInfo) || data.statut === "PAYEE" || data.statut === "VALIDEE";
   const isDossierValide = data.statut === "VALIDEE";
   const isAgent = role === "AGENT";
   const isSuperviseur = role === "SUPERVISEUR";
@@ -248,7 +248,7 @@ export function DemandeDetail() {
   const handleOpenPaymentModal = () => {
     paymentForm.resetFields();
     paymentForm.setFieldsValue({
-      modePaiement: data.typeClient === "ENTREPRISE" ? "CHEQUE" : "ESPECES",
+      modePaiement: data.typeClient === "ENTREPRISE" ? "CHEQUE" : "ESPECE",
       montant: montantTotalExige,
     });
     setPaymentModalOpen(true);
@@ -304,7 +304,7 @@ export function DemandeDetail() {
           />
         </div>
 
-        {data.statut === "REJETEE" && data.raisonRejet && (
+        {data.statut === "REFUSEE" && data.raisonRejet && (
           <Alert
             type="error"
             message="Motif du rejet"
@@ -659,7 +659,7 @@ export function DemandeDetail() {
         )}
 
         {/* Section Actions Métier */}
-        {!isDossierValide && data.statut !== "REJETEE" && data.statut !== "EXPIREE" && (
+        {!isDossierValide && data.statut !== "REFUSEE" && data.statut !== "EXPIREE" && (
           <div style={{ marginTop: 20, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <div style={{ display: "grid", gridTemplateColumns: role === "RESPONSABLE" ? "1fr" : "1fr 1fr", gap: 16 }}>
               {/* ÉTAPE 1: Encaissement - strictly for AGENT and SUPERVISEUR, completely removed for RESPONSABLE */}
@@ -755,7 +755,7 @@ export function DemandeDetail() {
         <Form
           form={paymentForm}
           layout="vertical"
-          initialValues={{ modePaiement: "ESPECES", montant: 450 }}
+          initialValues={{ modePaiement: "ESPECE", montant: 450 }}
           onFinish={handlePaymentSubmit}
         >
           <Form.Item
@@ -772,7 +772,7 @@ export function DemandeDetail() {
             ) : (
               <Select
                 options={[
-                  { label: "Espèces", value: "ESPECES" },
+                  { label: "Espèces", value: "ESPECE" },
                   { label: "Chèque Bancaire", value: "CHEQUE" },
                 ]}
               />

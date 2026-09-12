@@ -128,7 +128,7 @@ export function PublicSuiviDemandeModal({
       forfaitNom: demande.forfaitNom || (isCorp ? "Pass Permanent Corporate 24h/7j (650 DH/m/place)" : "Pass Permanent 24h/7j (600 DH/mois)"),
       dureeMois: demande.dureeMois || (isCorp ? 240 : 3),
       nombreAbonnements: demande.nombreAbonnements || 1,
-      modePaiement: demande.paiementInfo?.modePaiement || demande.modePaiement || (isCorp ? "CHEQUE" : "ESPECES"),
+      modePaiement: demande.paiementInfo?.modePaiement || demande.modePaiement || (isCorp ? "CHEQUE" : "ESPECE"),
       commentaireCorrection: demande.commentaireCorrection || "",
     });
     setIsEditing(true);
@@ -193,16 +193,14 @@ export function PublicSuiviDemandeModal({
   const getStepCurrent = (statut: string) => {
     switch (statut) {
       case "SOUMISE":
-      case "CORRIGEE":
         return 0;
-      case "EN_COURS":
+      case "EN_ATTENTE_PAIEMENT":
+      case "REFUSEE":
         return 1;
-      case "PAIEMENT_ENREGISTRE":
+      case "PAYEE":
         return 2;
       case "VALIDEE":
         return 3;
-      case "REJETEE":
-        return 1;
       default:
         return 0;
     }
@@ -211,7 +209,7 @@ export function PublicSuiviDemandeModal({
   const isExpired = demande
     ? demande.statut === "EXPIREE" ||
       (isDossierExpired(demande.dateCreation, 7) &&
-        demande.statut !== "PAIEMENT_ENREGISTRE" &&
+        demande.statut !== "PAYEE" &&
         demande.statut !== "VALIDEE")
     : false;
 
@@ -230,15 +228,20 @@ export function PublicSuiviDemandeModal({
     switch (statut) {
       case "SOUMISE":
         return <Tag color="blue" className="font-bold px-3 py-1 rounded-full"><ClockCircleOutlined /> Dossier Soumis</Tag>;
-      case "CORRIGEE":
-        return <Tag color="cyan" className="font-bold px-3 py-1 rounded-full"><CheckCircleOutlined /> Modifié par le Client</Tag>;
-      case "EN_COURS":
-        return <Tag color="orange" className="font-bold px-3 py-1 rounded-full"><ClockCircleOutlined /> Instruction en Cours</Tag>;
-      case "PAIEMENT_ENREGISTRE":
+      case "PAYEE":
         return <Tag color="purple" className="font-bold px-3 py-1 rounded-full"><BankOutlined /> Paiement Enregistré au Guichet</Tag>;
       case "VALIDEE":
         return <Tag color="green" className="font-bold px-3 py-1 rounded-full"><CheckCircleOutlined /> Abonnement Actif</Tag>;
-      case "REJETEE":
+      case "EN_ATTENTE_PAIEMENT":
+          return (
+            <Tag
+              color="orange"
+              className="font-bold px-3 py-1 rounded-full"
+            >
+              <ClockCircleOutlined /> En attente de paiement
+            </Tag>
+          );
+      case "REFUSEE":
         return <Tag color="red" className="font-bold px-3 py-1 rounded-full"><CloseCircleOutlined /> Dossier à Régulariser</Tag>;
       case "EXPIREE":
         return <Tag color="default" className="font-bold px-3 py-1 rounded-full text-rose-700 bg-rose-50 border-rose-200"><CloseCircleOutlined /> Annulé (Délai 7j Dépassé)</Tag>;
@@ -381,7 +384,7 @@ export function PublicSuiviDemandeModal({
                   }
                 />
               ) : (
-                demande.statut !== "PAIEMENT_ENREGISTRE" && demande.statut !== "VALIDEE" && (
+                demande.statut !== "PAYEE" && demande.statut !== "VALIDEE" && (
                   <Alert
                     type="warning"
                     showIcon
@@ -407,7 +410,7 @@ export function PublicSuiviDemandeModal({
               )}
 
               {/* Rejection / Action Required Alert */}
-              {!isExpired && demande.statut === "REJETEE" && (
+              {!isExpired && demande.statut === "REFUSEE" && (
                 <Alert
                   type="error"
                   showIcon
@@ -429,10 +432,10 @@ export function PublicSuiviDemandeModal({
                 <Steps
                   size="small"
                   current={isExpired ? 2 : getStepCurrent(demande.statut)}
-                  status={isExpired ? "error" : demande.statut === "REJETEE" ? "error" : "process"}
+                  status={isExpired ? "error" : demande.statut === "REFUSEE" ? "error" : "process"}
                   items={[
                     { title: "Dossier Soumis", description: formatDate(demande.dateCreation) },
-                    { title: "Contrôle RRM", description: isExpired ? "Délai Dépassé" : demande.statut === "REJETEE" ? "Régularisation" : "Examen pièces" },
+                    { title: "Contrôle RRM", description: isExpired ? "Délai Dépassé" : demande.statut === "REFUSEE" ? "Régularisation" : "Examen pièces" },
                     { title: "Règlement Guichet", description: isExpired ? "Annulé (7j Dépassés)" : demande.paiementInfo ? "Confirmé" : `Avant le ${expirationDate}` },
                     { title: "Badge Actif", description: isExpired ? "Non attribué" : demande.numeroCarteAbonne || "À délivrer" },
                   ]}
@@ -673,7 +676,7 @@ export function PublicSuiviDemandeModal({
                         >
                           <Radio.Group className="w-full">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <Radio value="ESPECES" className="border border-slate-200 rounded-xl p-3 bg-white hover:border-secondary flex items-center">
+                              <Radio value="ESPECE" className="border border-slate-200 rounded-xl p-3 bg-white hover:border-secondary flex items-center">
                                 <span className="font-bold text-slate-800">Espèces au Guichet RRM</span>
                               </Radio>
                               <Radio value="CHEQUE" className="border border-slate-200 rounded-xl p-3 bg-white hover:border-secondary flex items-center">
@@ -796,7 +799,7 @@ export function PublicSuiviDemandeModal({
                         <Tag color="red" className="font-bold m-0">
                           Expiré le {expirationDate} (Délai 7j Dépassé)
                         </Tag>
-                      ) : demande.statut === "VALIDEE" || demande.statut === "PAIEMENT_ENREGISTRE" ? (
+                      ) : demande.statut === "VALIDEE" || demande.statut === "PAYEE" ? (
                         <Tag color="green" className="font-bold m-0">
                           Règlement Confirmé
                         </Tag>

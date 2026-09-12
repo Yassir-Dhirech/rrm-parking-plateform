@@ -203,7 +203,7 @@ export function PublicQrForm() {
     parkingId: undefined,
     formuleCode: "24H7J",
     dureeMois: 3,
-    modePaiement: "ESPECES",
+    modePaiement: "ESPECE",
   });
 
   // Consolidated live recap data merging form values and real-time form inputs
@@ -314,7 +314,7 @@ const {
       parkingId: parkings[0]?.id || 1,
       formuleCode: "24H7J",
       dureeMois: 6,
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       acceptTerms: true,
     };
 
@@ -470,7 +470,7 @@ const {
   const totalFraisCarte = fraisCarteUnitaire * cardMultiplier;
   const totalPrice = baseAbonnementPrice + totalFraisCarte;
 
-  const currentPaymentMode = recapData.modePaiement || watchedModePaiement || (typeDemande === "CORPORATE" ? "CHEQUE" : "ESPECES");
+  const currentPaymentMode = recapData.modePaiement || watchedModePaiement || (typeDemande === "CORPORATE" ? "CHEQUE" : "ESPECE");
 
   const getFormuleLabel = (code: string) => {
     if (typeDemande === "CORPORATE") {
@@ -1673,11 +1673,11 @@ const {
                 <Form.Item
                   name="modePaiement"
                   label="Mode de Règlement Homologué"
-                  initialValue="ESPECES"
+                  initialValue="ESPECE"
                   rules={[{ required: true }]}
                 >
                   <Radio.Group buttonStyle="solid">
-                    <Radio.Button value="ESPECES">Espèces (Au guichet RRM)</Radio.Button>
+                    <Radio.Button value="ESPECE">Espèces (Au guichet RRM)</Radio.Button>
                     <Radio.Button value="CHEQUE">Chèque Bancaire (Au guichet RRM)</Radio.Button>
                   </Radio.Group>
                 </Form.Item>

@@ -1,6 +1,13 @@
 import { Tag } from "antd";
 
-type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
+type StatutDemande =
+  | "SOUMISE"
+  | "EN_ATTENTE_PAIEMENT"
+  | "PAYEE"
+  | "VALIDEE"
+  | "REFUSEE"
+  | "EXPIREE"
+  | "ANNULEE";
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
@@ -20,11 +27,9 @@ const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
   EN_COURS: "gold",
   EN_ATTENTE_PAIEMENT: "warning",
-  PAIEMENT_ENREGISTRE: "cyan",
+  PAYEE: "cyan",
   VALIDEE: "green",
-  REJETEE: "red",
-  CORRIGEE: "orange",
-  COMPLETEE: "default",
+  REFUSEE: "red",
   EN_ATTENTE: "blue",
   ACTIF: "green",
   SUSPENDU: "orange",
@@ -55,11 +60,7 @@ const labelMap: Record<AnyStatut, string> = {
   SOUMISE: "Soumise",
   EN_COURS: "En cours",
   EN_ATTENTE_PAIEMENT: "En attente de paiement (Guichet)",
-  PAIEMENT_ENREGISTRE: "Paiement Enregistré",
-  VALIDEE: "Validée",
-  REJETEE: "Rejetée",
-  CORRIGEE: "Corrigée",
-  COMPLETEE: "Complétée",
+  PAYEE: "Paiement enregistré",
   EN_ATTENTE: "En attente",
   ACTIF: "Actif",
   SUSPENDU: "Suspendu",
@@ -67,6 +68,8 @@ const labelMap: Record<AnyStatut, string> = {
   RESILIE: "Résilié",
   CONFIRME: "Confirmé",
   ANNULE: "Annulé",
+  VALIDEE: "Validée",
+  REFUSEE: "Refusée",
   BROUILLON: "Brouillon",
   EMISE: "Émise",
   SIGNEE: "Signée",

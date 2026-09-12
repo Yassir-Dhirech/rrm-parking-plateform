@@ -12,16 +12,16 @@ export type ModePaiement = "ESPECE" | "CHEQUE";
 
 export type CanalOtp = "EMAIL" | "SMS";
 
-export type StatutDemandeApi =
+export type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
-  | "EN_ATTENTE_CONFIRMATION_PAIEMENT"
-  | "EN_INSTRUCTION"
-  | "EN_ATTENTE_VALIDATION_SUPERVISEUR"
-  | "EN_ATTENTE_VALIDATION_RESPONSABLE"
+  | "PAYEE"
   | "VALIDEE"
   | "REFUSEE"
+  | "EXPIREE"
   | "ANNULEE";
+
+export type StatutDemandeApi = StatutDemande;
 
 export interface DemandeAbonnementRegulierRequest {
   nom: string;
@@ -38,7 +38,7 @@ export interface DemandeAbonnementRegulierRequest {
   modele?: string;
   couleur?: string;
 
-  typeVehicule: string | TypeVehicule;
+  typeVehicule: TypeVehicule;
 
   tarifParkingId: number;
   modePaiement: ModePaiement;
@@ -55,7 +55,7 @@ export interface DocumentsDemande {
 
 export interface DemandeAbonnementRegulierResponse {
   reference: string;
-  statut: StatutDemandeApi | string;
+  statut: StatutDemande;
   dateSoumission: string;
   dateExpirationOtp: string;
   tentativesRestantes: number;
@@ -66,7 +66,7 @@ export interface DemandeAbonnementRegulierResponse {
 export interface ValidationOtpResponse {
   reference: string;
   otpValide: boolean;
-  statutDemande: StatutDemandeApi | string;
+  statutDemande: StatutDemande;
   tentativesRestantes: number;
   dateValidation: string | null;
   message: string;
@@ -129,7 +129,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
+
 
 export type StatutSla =
   | "DANS_LES_DELAIS"
@@ -182,7 +182,7 @@ export type BankOption =
  * L'API réelle de paiement utilisera ModePaiement.
  */
 export interface PaymentInfoInput {
-  modePaiement: "ESPECES" | "CHEQUE" | "ESPECE";
+  modePaiement: ModePaiement;
   montant: number;
   numeroCheque?: string;
   banque?: BankOption;
@@ -197,7 +197,7 @@ export interface DemandeDetail
   immatriculation: string;
   marque?: string;
   modele?: string;
-  typeVehicule: string;
+  typeVehicule: TypeVehicule;
 
   typeClient?: TypeClient;
   cin?: string;
@@ -217,7 +217,7 @@ export interface DemandeDetail
   dureeMois?: number;
   nombreAbonnements?: number;
   montantTotal?: number;
-  modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
+  modePaiement?: ModePaiement;
   raisonRejet?: string;
   commentaireCorrection?: string;
 

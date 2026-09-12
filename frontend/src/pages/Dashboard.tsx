@@ -107,7 +107,7 @@ export function Dashboard() {
   const recettesEnAttente = filteredRecettes.filter((r) => r.statut === "EN_COURS").length;
   const contratsEnAttenteSign = filteredContrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
   const demandesSoumises = filteredDemandes.filter((d) => d.statut === "SOUMISE").length;
-  const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
+  const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAYEE").length;
   const demandesValidees = filteredDemandes.filter((d) => d.statut === "VALIDEE").length;
   const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
   const parkingsCount = filteredParkings.length;

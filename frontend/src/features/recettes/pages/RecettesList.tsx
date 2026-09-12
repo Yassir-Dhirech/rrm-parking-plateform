@@ -53,7 +53,7 @@ export function RecettesList() {
 
   // Payments selected calculation
   const paiementsCoches = paiementsAEncasser.filter((p) => selectedPaiementIds.includes(p.id));
-  const montantEspecesCoche = paiementsCoches.filter((p) => p.modePaiement === "ESPECES").reduce((a, b) => a + b.montant, 0);
+  const montantEspecesCoche = paiementsCoches.filter((p) => p.modePaiement === "ESPECE").reduce((a, b) => a + b.montant, 0);
   const mePaiementsChequeCoche = paiementsCoches.filter((p) => p.modePaiement === "CHEQUE");
   const montantChequesCoche = mePaiementsChequeCoche.reduce((a, b) => a + b.montant, 0);
   const totalRecetteCalculee = montantEspecesCoche + montantChequesCoche;
@@ -90,8 +90,8 @@ export function RecettesList() {
       dataIndex: "modePaiement",
       key: "modePaiement",
       render: (mode: string) => (
-        <Tag color={mode === "ESPECES" ? "green" : "purple"}>
-          {mode === "ESPECES" ? "Espèces" : "Chèque"}
+        <Tag color={mode === "ESPECE" ? "green" : "purple"}>
+          {mode === "ESPECE" ? "Espèces" : "Chèque"}
         </Tag>
       ),
     },
