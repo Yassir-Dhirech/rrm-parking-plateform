@@ -4,12 +4,13 @@ import { formatDate } from "../lib/dateUtils";
 export const mockRecettes: RecetteHebdoDetail[] = [
   {
     id: 1,
-    reference: "REC-2026-W31-P01",
+    reference: "REC-2026-09-12-P01",
     parkingNom: "Parking Agdal Gare",
     parkingId: 1,
-    semaineAnnee: "Semaine 31 (2026)",
-    dateDebut: "27/07/2026",
-    dateFin: "02/08/2026",
+    dateRecette: "12/09/2026",
+    semaineAnnee: "Arrêté du 12/09/2026",
+    dateDebut: "12/09/2026",
+    dateFin: "12/09/2026",
     totalHebdo: 48500,
     totalEspeces: 20000,
     totalCheques: 18000,
@@ -18,36 +19,31 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     statut: "RECEIVED",
     superviseurNom: "M. Samir El Amrani",
     validePar: "M. Samir El Amrani (Superviseur)",
-    dateValidation: "03/08/2026",
+    dateValidation: "12/09/2026",
     transmisPar: "M. Samir El Amrani (Bordereau #BD-2026-083)",
-    dateTransmission: "03/08/2026 10:30",
+    dateTransmission: "12/09/2026 10:30",
     comptableNom: "Mme. Fatine Chraibi (Comptabilité RRM)",
-    dateEncaissementComptable: "03/08/2026 14:45",
+    dateEncaissementComptable: "12/09/2026 14:45",
     quittanceNumero: "QUIT-2026-00481",
     commentaires: "Versement de 20 000 MAD en espèces et 3 chèques physiques (18 000 MAD) réceptionné et confirmé par la comptabilité.",
     detailJours: [
-      { date: "27/07/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 4000, totalJournee: 7000, nombreTransactions: 24 },
-      { date: "28/07/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 3500, totalJournee: 12000, nombreTransactions: 19 },
-      { date: "29/07/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 3000, totalJournee: 7000, nombreTransactions: 28 },
-      { date: "30/07/2026", montantEspeces: 2000, montantCheque: 7200, montantCarte: 5000, totalJournee: 14200, nombreTransactions: 22 },
-      { date: "31/07/2026", montantEspeces: 3500, montantCheque: 4800, montantCarte: 4500, totalJournee: 12800, nombreTransactions: 30 },
-      { date: "01/08/2026", montantEspeces: 3000, montantCheque: 0, montantCarte: 3500, totalJournee: 6500, nombreTransactions: 21 },
-      { date: "02/08/2026", montantEspeces: 2000, montantCheque: 0, montantCarte: 4000, totalJournee: 6000, nombreTransactions: 18 },
+      { date: "12/09/2026", montantEspeces: 20000, montantCheque: 18000, montantCarte: 9500, totalJournee: 48500, nombreTransactions: 56 },
     ],
     chequesRemis: [
-      { id: 1, referencePaiement: "PAI-2026-0812", numeroCheque: "CHQ-0019283", banque: "Attijariwafa Bank", emetteur: "Société Atlas Trans SARL", montant: 6000, datePaiement: "28/07/2026" },
-      { id: 2, referencePaiement: "PAI-2026-0834", numeroCheque: "CHQ-8820192", banque: "BMCE Bank", emetteur: "Société Rabat Logistique", montant: 7200, datePaiement: "30/07/2026" },
-      { id: 3, referencePaiement: "PAI-2026-0855", numeroCheque: "CHQ-4459102", banque: "Banque Populaire", emetteur: "Imprimerie Agdal", montant: 4800, datePaiement: "31/07/2026" },
+      { id: 1, referencePaiement: "PAI-2026-0812", numeroCheque: "CHQ-0019283", banque: "Attijariwafa Bank", emetteur: "Société Atlas Trans SARL", montant: 6000, datePaiement: "12/09/2026" },
+      { id: 2, referencePaiement: "PAI-2026-0834", numeroCheque: "CHQ-8820192", banque: "BMCE Bank", emetteur: "Société Rabat Logistique", montant: 7200, datePaiement: "12/09/2026" },
+      { id: 3, referencePaiement: "PAI-2026-0855", numeroCheque: "CHQ-4459102", banque: "Banque Populaire", emetteur: "Imprimerie Agdal", montant: 4800, datePaiement: "12/09/2026" },
     ],
   },
   {
     id: 2,
-    reference: "REC-2026-W32-P01",
+    reference: "REC-2026-09-11-P01",
     parkingNom: "Parking Agdal Gare",
     parkingId: 1,
-    semaineAnnee: "Semaine 32 (2026)",
-    dateDebut: "03/08/2026",
-    dateFin: "09/08/2026",
+    dateRecette: "11/09/2026",
+    semaineAnnee: "Arrêté du 11/09/2026",
+    dateDebut: "11/09/2026",
+    dateFin: "11/09/2026",
     totalHebdo: 32400,
     totalEspeces: 12400,
     totalCheques: 12000,
@@ -56,30 +52,27 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani",
     validePar: "M. Samir El Amrani",
-    dateValidation: "10/08/2026",
+    dateValidation: "11/09/2026",
     transmisPar: "M. Samir El Amrani (Bordereau #BD-2026-089)",
-    dateTransmission: "10/08/2026 09:15",
-    commentaires: "Recette complétée par le superviseur et transmise au service financier. 12 400 DH liquide + 2 chèques physiques.",
+    dateTransmission: "11/09/2026 17:15",
+    commentaires: "Recette arrêtée au 11/09/2026 par le superviseur et transmise à la comptabilité. 12 400 DH liquide + 2 chèques physiques.",
     detailJours: [
-      { date: "03/08/2026", montantEspeces: 2200, montantCheque: 6000, montantCarte: 3800, totalJournee: 12000, nombreTransactions: 20 },
-      { date: "04/08/2026", montantEspeces: 1800, montantCheque: 0, montantCarte: 4200, totalJournee: 6000, nombreTransactions: 21 },
-      { date: "05/08/2026", montantEspeces: 3100, montantCheque: 0, montantCarte: 2900, totalJournee: 6000, nombreTransactions: 19 },
-      { date: "06/08/2026", montantEspeces: 2500, montantCheque: 6000, montantCarte: 4700, totalJournee: 13200, nombreTransactions: 25 },
-      { date: "07/08/2026", montantEspeces: 2800, montantCheque: 0, montantCarte: 4400, totalJournee: 7200, nombreTransactions: 26 },
+      { date: "11/09/2026", montantEspeces: 12400, montantCheque: 12000, montantCarte: 8000, totalJournee: 32400, nombreTransactions: 38 },
     ],
     chequesRemis: [
-      { id: 10, referencePaiement: "PAI-2026-0888", numeroCheque: "CHQ-7712039", banque: "CIH Bank", emetteur: "Tech Solutions SARL", montant: 6000, datePaiement: "03/08/2026" },
-      { id: 11, referencePaiement: "PAI-2026-0899", numeroCheque: "CHQ-3310492", banque: "Société Générale", emetteur: "Cabinet Benali & Associés", montant: 6000, datePaiement: "06/08/2026" },
+      { id: 10, referencePaiement: "PAI-2026-0888", numeroCheque: "CHQ-7712039", banque: "CIH Bank", emetteur: "Tech Solutions SARL", montant: 6000, datePaiement: "11/09/2026" },
+      { id: 11, referencePaiement: "PAI-2026-0899", numeroCheque: "CHQ-3310492", banque: "Société Générale", emetteur: "Cabinet Benali & Associés", montant: 6000, datePaiement: "11/09/2026" },
     ],
   },
   {
     id: 3,
-    reference: "REC-2026-W33-P01",
+    reference: "REC-2026-09-10-P02",
     parkingNom: "Parking Hassan II",
     parkingId: 2,
-    semaineAnnee: "Semaine 33 (2026)",
-    dateDebut: "10/08/2026",
-    dateFin: "16/08/2026",
+    dateRecette: "10/09/2026",
+    semaineAnnee: "Arrêté du 10/09/2026",
+    dateDebut: "10/09/2026",
+    dateFin: "10/09/2026",
     totalHebdo: 24500,
     totalEspeces: 14500,
     totalCheques: 10000,
@@ -88,12 +81,10 @@ export const mockRecettes: RecetteHebdoDetail[] = [
     statut: "EN_COURS",
     superviseurNom: "M. Youssef Tazi",
     detailJours: [
-      { date: "10/08/2026", montantEspeces: 3500, montantCheque: 10000, montantCarte: 0, totalJournee: 13500, nombreTransactions: 14 },
-      { date: "11/08/2026", montantEspeces: 4000, montantCheque: 0, montantCarte: 0, totalJournee: 4000, nombreTransactions: 16 },
-      { date: "12/08/2026", montantEspeces: 7000, montantCheque: 0, montantCarte: 0, totalJournee: 7000, nombreTransactions: 22 },
+      { date: "10/09/2026", montantEspeces: 14500, montantCheque: 10000, montantCarte: 0, totalJournee: 24500, nombreTransactions: 28 },
     ],
     chequesRemis: [
-      { id: 20, referencePaiement: "PAI-2026-0910", numeroCheque: "CHQ-5591028", banque: "Attijariwafa Bank", emetteur: "Maroc Telecom Agency", montant: 10000, datePaiement: "10/08/2026" },
+      { id: 20, referencePaiement: "PAI-2026-0910", numeroCheque: "CHQ-5591028", banque: "Attijariwafa Bank", emetteur: "Maroc Telecom Agency", montant: 10000, datePaiement: "10/09/2026" },
     ],
   },
 ];
@@ -101,6 +92,7 @@ export const mockRecettes: RecetteHebdoDetail[] = [
 export async function getRecettesMock(): Promise<RecetteHebdoListItem[]> {
   return new Promise((resolve) => setTimeout(() => resolve(mockRecettes.map((r) => ({
     ...r,
+    dateRecette: formatDate(r.dateRecette || r.dateDebut),
     dateDebut: formatDate(r.dateDebut),
     dateFin: formatDate(r.dateFin),
   }))), 300));
@@ -112,6 +104,7 @@ export async function getRecetteByIdMock(id: number): Promise<RecetteHebdoDetail
   return new Promise((resolve) =>
     setTimeout(() => resolve({
       ...r,
+      dateRecette: formatDate(r.dateRecette || r.dateDebut),
       dateDebut: formatDate(r.dateDebut),
       dateFin: formatDate(r.dateFin),
       dateValidation: r.dateValidation ? formatDate(r.dateValidation) : undefined,
@@ -181,22 +174,26 @@ export async function getPaiementsAEncasserMock(parkingId?: number): Promise<Pai
 export async function creerRecetteSupervisorMock(input: {
   parkingId: number;
   parkingNom: string;
-  semaineAnnee: string;
+  dateRecette?: string;
+  semaineAnnee?: string;
   paiementsChoisis: PaiementAEncasserRecette[];
 }): Promise<RecetteHebdoDetail> {
   const totalEspeces = input.paiementsChoisis.filter(p => p.modePaiement === "ESPECES").reduce((a, b) => a + b.montant, 0);
   const chequesPaiements = input.paiementsChoisis.filter(p => p.modePaiement === "CHEQUE");
   const totalCheques = chequesPaiements.reduce((a, b) => a + b.montant, 0);
   const totalHebdo = totalEspeces + totalCheques;
+  const targetDate = input.dateRecette || formatDate(new Date().toISOString());
+  const dateSuffix = targetDate.replace(/\//g, "-");
 
   const newRecette: RecetteHebdoDetail = {
     id: mockRecettes.length + 1,
-    reference: `REC-2026-W34-P0${input.parkingId}`,
+    reference: `REC-${dateSuffix}-P0${input.parkingId}`,
     parkingId: input.parkingId,
     parkingNom: input.parkingNom,
-    semaineAnnee: input.semaineAnnee || "Semaine 34 (2026)",
-    dateDebut: formatDate(new Date().toISOString()),
-    dateFin: formatDate(new Date().toISOString()),
+    dateRecette: targetDate,
+    semaineAnnee: `Arrêté du ${targetDate}`,
+    dateDebut: targetDate,
+    dateFin: targetDate,
     totalHebdo,
     totalEspeces,
     totalCheques,
@@ -205,12 +202,12 @@ export async function creerRecetteSupervisorMock(input: {
     statut: "COMPLETED",
     superviseurNom: "M. Samir El Amrani (Superviseur)",
     validePar: "M. Samir El Amrani (Superviseur)",
-    dateValidation: formatDate(new Date().toISOString()),
+    dateValidation: targetDate,
     transmisPar: "M. Samir El Amrani (Bordereau #BD-" + Math.floor(100 + Math.random() * 900) + ")",
-    dateTransmission: formatDate(new Date().toISOString()),
+    dateTransmission: targetDate,
     detailJours: [
       {
-        date: formatDate(new Date().toISOString()),
+        date: targetDate,
         montantEspeces: totalEspeces,
         montantCheque: totalCheques,
         montantCarte: 0,

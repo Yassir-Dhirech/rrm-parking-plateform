@@ -138,7 +138,7 @@ export function Dashboard() {
       case "SUPERVISEUR":
         return [
           { title: "Demandes à Approuver (Final)", value: demandesPaiementEnregistre, prefix: <SafetyCertificateOutlined />, color: "#2563eb" },
-          { title: "Recettes Hebdo à Valider", value: recettesEnAttente, prefix: <ClockCircleOutlined />, color: "#d97706" },
+          { title: "Recettes à Valider", value: recettesEnAttente, prefix: <ClockCircleOutlined />, color: "#d97706" },
           { title: "Cartes d'Accès à Activer", value: demandesPaiementEnregistre + 4, prefix: <CreditCardOutlined />, color: "#9333ea" },
           { title: "Taux de Conformité Dossiers", value: 96.4, suffix: "%", prefix: <CheckCircleOutlined />, color: "#10b981" },
         ];
@@ -200,7 +200,7 @@ export function Dashboard() {
                   </Tag>
                 </div>
                 <h3 className="text-lg font-black text-slate-900 m-0 mt-0.5">
-                  {globalCompletedCount} Recettes Hebdomadaires à Valider
+                  {globalCompletedCount} Recettes à Valider
                 </h3>
               </div>
             </div>
@@ -343,12 +343,12 @@ export function Dashboard() {
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[11px] text-amber-700 font-extrabold uppercase tracking-wider block">
-                  Recette Semaine S34
+                  Arrêté de Recette
                 </span>
                 <span className="text-2xl font-black text-amber-600 leading-none block mt-1">
-                  Génération Dû
+                  À Clôturer
                 </span>
-                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">Clôture hebdomadaire requise</p>
+                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">Génération par date requise</p>
               </div>
               <Button size="small" type="primary" onClick={() => navigate(`${basePath}/recettes`)} className="rounded-lg font-bold bg-amber-600 border-none">
                 Générer

@@ -31,9 +31,10 @@ export interface RecetteHebdoListItem {
   reference: string;
   parkingNom: string;
   parkingId: number;
-  semaineAnnee: string;
-  dateDebut: string;
-  dateFin: string;
+  dateRecette?: string;
+  semaineAnnee?: string;
+  dateDebut?: string;
+  dateFin?: string;
   totalHebdo: number;
   totalEspeces: number;
   totalCheques: number;

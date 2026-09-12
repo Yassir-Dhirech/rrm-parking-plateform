@@ -58,7 +58,7 @@ export function RecetteDetail() {
   const handleMarkAsCompleted = () => {
     Modal.confirm({
       title: "Finaliser l'Arrêté de Recette",
-      content: `Clôturer la collecte en cours pour ${recette.parkingNom} — ${recette.semaineAnnee} et transmettre l'arrêté de caisse de ${recette.totalHebdo.toLocaleString("fr-FR")} DH au statut Complété ?`,
+      content: `Clôturer la collecte pour ${recette.parkingNom} — ${recette.dateRecette || formatDate(recette.dateDebut)} et transmettre l'arrêté de caisse de ${recette.totalHebdo.toLocaleString("fr-FR")} DH au statut Complété ?`,
       okText: "Finaliser la Recette",
       cancelText: "Annuler",
       onOk: () => markCompletedMutation.mutateAsync(recette.id),
@@ -218,11 +218,11 @@ export function RecetteDetail() {
       <Card extra={<StatusBadge statut={recette.statut} />}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>Arrêté & Bordereau de Recette Hebdomadaire : {recette.reference}</Title>
-            <Text type="secondary">Parking : {recette.parkingNom} — Période : {recette.semaineAnnee}</Text>
+            <Title level={4} style={{ margin: 0 }}>Arrêté & Bordereau de Recette : {recette.reference}</Title>
+            <Text type="secondary">Parking : {recette.parkingNom} — Date de Recette : {recette.dateRecette || formatDate(recette.dateDebut)}</Text>
           </div>
           <Tag color="geekblue" style={{ fontSize: 16, padding: "6px 14px", borderRadius: 8 }}>
-            Total Hebdo : {recette.totalHebdo.toLocaleString("fr-FR")} DH TTC
+            Total Recette : {recette.totalHebdo.toLocaleString("fr-FR")} DH TTC
           </Tag>
         </div>
 
@@ -250,7 +250,7 @@ export function RecetteDetail() {
           <Alert
             type="warning"
             showIcon
-            message="Statut : EN_COURS — Collecte Hebdomadaire Active en Cours"
+            message="Statut : EN_COURS — Collecte Active en Cours"
             description="Les encaissements quotidiens s'accumulent au niveau du guichet. Le superviseur peut finaliser et clôturer cet arrêté de caisse pour le passer au statut COMPLETED."
             style={{ marginBottom: 20 }}
           />
@@ -258,9 +258,9 @@ export function RecetteDetail() {
 
         <Descriptions bordered column={2} style={{ marginBottom: 20 }}>
           <Descriptions.Item label="Parking">{recette.parkingNom}</Descriptions.Item>
-          <Descriptions.Item label="Période Hebdomadaire">{recette.semaineAnnee}</Descriptions.Item>
-          <Descriptions.Item label="Date de Début">{formatDate(recette.dateDebut)}</Descriptions.Item>
-          <Descriptions.Item label="Date de Fin">{formatDate(recette.dateFin)}</Descriptions.Item>
+          <Descriptions.Item label="Date de Recette">{recette.dateRecette || formatDate(recette.dateDebut)}</Descriptions.Item>
+          <Descriptions.Item label="Date d'Arrêté">{recette.dateRecette || formatDate(recette.dateDebut)}</Descriptions.Item>
+          <Descriptions.Item label="Date de Saisie">{formatDate(recette.dateDebut)}</Descriptions.Item>
           <Descriptions.Item label="Superviseur Référent">{recette.superviseurNom || "M. Samir El Amrani"}</Descriptions.Item>
           <Descriptions.Item label="Transmission Comptable">{recette.transmisPar || "En attente"}</Descriptions.Item>
           {recette.validePar && (
@@ -346,7 +346,7 @@ export function RecetteDetail() {
       )}
 
       {/* Daily Collections Detail */}
-      <Card title="Détail des Encaissements Quotidiens de la Semaine">
+      <Card title="Détail des Encaissements Quotidiens">
         <Table<RecetteJournee>
           columns={columnsDetail}
           dataSource={recette.detailJours}

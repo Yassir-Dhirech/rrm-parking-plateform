@@ -51,8 +51,8 @@ const initialNotifications: AppNotification[] = [
   // SUPERVISEUR
   {
     id: "notif-3",
-    title: "Recette Hebdomadaire à Valider",
-    message: "La recette de la Semaine 32 pour Parking Agdal Gare (32 400 MAD) attend votre validation.",
+    title: "Arrêté de Recette à Valider",
+    message: "La recette du 11/09/2026 pour Parking Agdal Gare (32 400 MAD) attend votre validation.",
     timestamp: "Il y a 25 min",
     type: "warning",
     category: "RECETTES",
