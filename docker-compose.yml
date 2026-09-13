@@ -35,7 +35,7 @@ services:
       PMA_PASSWORD: ${RRM_DB_PASSWORD}
       UPLOAD_LIMIT: 64M
     ports:
-      - "8080:80"
+      - "${RRM_PHPMYADMIN_PORT:-8080}:80"
 
   # 3. Backend Spring Boot (Java 21) connecté au MySQL local
   backend:
