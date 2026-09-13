@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${RRM_DB_PASSWORD}
       MYSQL_DATABASE: rrm_db
     ports:
       - "3307:3306"
@@ -32,7 +32,7 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: rootpassword
+      PMA_PASSWORD: ${RRM_DB_PASSWORD}
       UPLOAD_LIMIT: 64M
     ports:
       - "8080:80"
@@ -52,12 +52,13 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rrm_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_DATASOURCE_PASSWORD: ${RRM_DB_PASSWORD}
+      RRM_BOOTSTRAP_ENABLED: ${RRM_BOOTSTRAP_ENABLED:-false}
       RRM_TARIFF_INIT_ENABLED: "true"
-      RRM_BOOTSTRAP_ENABLED: "true"
-      RRM_ADMIN_EMAIL: admin@rrm.ma
-      RRM_ADMIN_PASSWORD: Admin12345678!
-      RRM_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+
+      RRM_ADMIN_EMAIL: ${RRM_ADMIN_EMAIL:-}
+      RRM_ADMIN_PASSWORD: ${RRM_ADMIN_PASSWORD:-}
+      RRM_JWT_SECRET: ${RRM_JWT_SECRET}
       RRM_STORAGE_PATH: /app/storage
       RRM_OTP_PROVIDER: ${RRM_OTP_PROVIDER:-brevo}
       RRM_BREVO_ENABLED: ${RRM_BREVO_ENABLED:-true}
