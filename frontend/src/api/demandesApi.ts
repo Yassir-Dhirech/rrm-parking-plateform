@@ -1,10 +1,12 @@
-import { API_BASE_URL } from "./client";
+import axios from "axios";
+import client, { API_BASE_URL } from "./client";
 import type {
   DemandeAbonnementRegulierRequest,
   DocumentsDemande,
   DemandeAbonnementRegulierResponse,
   ValidationOtpResponse,
   ApiProblemDetails,
+  DemandeRechercheResponse,
 } from "../features/demandes/types";
 
 export async function creerDemandeAbonnementRegulier(
@@ -68,7 +70,55 @@ export async function validerOtp(
   return body as ValidationOtpResponse;
 }
 
+export async function rechercherDemandesParReference(
+  reference: string
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/recherche",
+    {
+      params: {
+        reference: reference.trim(),
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function rechercherDemandesParCin(
+  cin: string
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/recherche",
+    {
+      params: {
+        cin: cin.trim(),
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function listerDemandesEnAttentePaiement(): Promise<
+  DemandeRechercheResponse[]
+> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/en-attente-paiement"
+  );
+
+  return response.data;
+}
+
 export function extraireMessageErreur(error: unknown): string {
+  if (axios.isAxiosError<ApiProblemDetails>(error)) {
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === "string" && detail.trim()) {
+      return detail;
+    }
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&

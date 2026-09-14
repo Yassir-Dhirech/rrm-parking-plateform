@@ -62,6 +62,29 @@ public class SecurityDataInitializer
 
         roleRepository.save(roleAdministrateur);
 
+        attribuerPermissionAuxRoles(
+                CodePermission.DEMANDE_CONSULTER,
+                CodeRole.AGENT_ADMINISTRATIF,
+                CodeRole.SUPERVISEUR,
+                CodeRole.RESPONSABLE_STATIONNEMENT
+        );
+
+        attribuerPermissionAuxRoles(
+                CodePermission.DEMANDE_MODIFIER,
+                CodeRole.AGENT_ADMINISTRATIF
+        );
+
+        attribuerPermissionAuxRoles(
+                CodePermission.PAIEMENT_ENREGISTRER,
+                CodeRole.AGENT_ADMINISTRATIF
+        );
+
+        attribuerPermissionAuxRoles(
+                CodePermission.DEMANDE_VALIDER,
+                CodeRole.SUPERVISEUR,
+                CodeRole.RESPONSABLE_STATIONNEMENT
+        );
+
         if (!enabled) {
             return;
         }
@@ -94,6 +117,25 @@ public class SecurityDataInitializer
                     administrateur
             );
         }
+    }
+
+    private void attribuerPermissionAuxRoles(
+            CodePermission codePermission,
+            CodeRole... codesRoles
+    ) {
+        Permission permission = permissionRepository
+                .findByCode(codePermission)
+                .orElseThrow();
+
+        Arrays.stream(codesRoles)
+                .forEach(codeRole -> {
+                    Role role = roleRepository
+                            .findByCode(codeRole)
+                            .orElseThrow();
+
+                    role.ajouterPermission(permission);
+                    roleRepository.save(role);
+                });
     }
 
     private Permission obtenirOuCreerPermission(

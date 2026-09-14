@@ -30,6 +30,7 @@ import { PublicParkingsPage } from "../pages/PublicParkingsPage";
 import { InternalParkingsMapPage } from "../features/parkings/pages/InternalParkingsMapPage";
 import { PublicTarifsPage } from "../pages/PublicTarifsPage";
 import { ScrollToTop } from "../components/ui/ScrollToTop";
+import { RechercheDemandes } from "../features/demandes/pages/RechercheDemandes";
 
 function RootLayout() {
   return (
@@ -49,8 +50,18 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
     extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/demandes`, element: <DemandesList /> },
-      { path: `${roleConfig[role].homePath}/demandes/:id`, element: <DemandeDetail /> },
+      {
+        path: `${roleConfig[role].homePath}/demandes/recherche`,
+        element: <RechercheDemandes />,
+      },
+      {
+        path: `${roleConfig[role].homePath}/demandes`,
+        element: <DemandesList />,
+      },
+      {
+        path: `${roleConfig[role].homePath}/demandes/:id`,
+        element: <DemandeDetail />,
+      },
     );
   }
 
@@ -98,6 +109,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "ADMIN_SI") {
     extraRoutes.push(
+        {
+              path: "/admin/demandes/recherche",
+              element: <RechercheDemandes />,
+            },
       { path: "/admin/utilisateurs", element: <UtilisateursList /> },
       { path: "/admin/parkings", element: <ParkingsList /> },
       { path: "/admin/tarifs", element: <PlansTarifairesList /> },
