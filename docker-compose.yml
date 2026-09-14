@@ -20,7 +20,7 @@ services:
       retries: 10
       start_period: 15s
 
-  # 2. phpMyAdmin local sur http://localhost:8080
+  # 2. phpMyAdmin local sur http://localhost:8082
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: rrm-phpmyadmin
@@ -35,7 +35,7 @@ services:
       PMA_PASSWORD: ${RRM_DB_PASSWORD}
       UPLOAD_LIMIT: 64M
     ports:
-      - "8080:80"
+      - "8082:80"
 
   # 3. Backend Spring Boot (Java 21) connecté au MySQL local
   backend:
