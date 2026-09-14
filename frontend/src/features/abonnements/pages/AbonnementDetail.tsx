@@ -135,6 +135,8 @@ export function AbonnementDetail() {
         fraisCarteRfid: fraisBadge,
         modePaiement: values.modePaiement || "ESPECES",
         libellePrestation: values.libellePrestation || (isRenewal ? "Renouvellement Période d'Abonnement" : "Remplacement Badge RFID Duplicata"),
+        dateEmission: data?.dateDebut,
+        dateDebutAbonnement: data?.dateDebut,
         genereePar: `${userName || "Agent Guichet"} — ${role || "AGENT"}`,
       });
     },
@@ -634,7 +636,7 @@ export function AbonnementDetail() {
               ),
             },
             {
-              title: "Date Émission",
+              title: "Date de Facturation",
               dataIndex: "dateEmission",
               key: "dateEmission",
               sorter: (a: any, b: any) => {

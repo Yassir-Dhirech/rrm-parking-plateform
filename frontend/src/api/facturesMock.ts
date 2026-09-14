@@ -1,5 +1,6 @@
 import type { FactureListItem, FactureDetail } from "../features/factures/types";
 import { formatDate } from "../lib/dateUtils";
+import { getAbonnementsMock } from "./abonnementsMock";
 
 const mockFactures: FactureDetail[] = [
   {
@@ -13,7 +14,7 @@ const mockFactures: FactureDetail[] = [
     montantTva: 248.33,
     statut: "SIGNEE",
     clientNom: "Karim El Amrani",
-    dateEmission: "15/01/2026",
+    dateEmission: "20/03/2026", // Date de facturation identique à dateDebut ABO-2026-000001
     abonnementReference: "ABO-2026-000001",
     paiementReference: "PAY-2026-000001",
     paiementId: 1,
@@ -21,7 +22,7 @@ const mockFactures: FactureDetail[] = [
     libellePrestation: "Souscription Initiale 6 Mois (+50 DH Badge RFID)",
     genereePar: "Agent Rachid (Guichet)",
     signeePar: "M. Samir El Amrani (Directeur Exploitation)",
-    dateSignature: "16/01/2026",
+    dateSignature: "21/03/2026",
     nombreCartes: 1,
   },
   {
@@ -36,7 +37,7 @@ const mockFactures: FactureDetail[] = [
     montantTva: 9083.33,
     statut: "EMISE",
     clientNom: "Société Atlas Trans",
-    dateEmission: "01/06/2025",
+    dateEmission: "01/06/2025", // Date de facturation identique à dateDebut ABO-2026-000002
     abonnementReference: "ABO-2026-000002",
     paiementReference: "PAY-2026-000002",
     paiementId: 2,
@@ -56,7 +57,7 @@ const mockFactures: FactureDetail[] = [
     montantTva: 133.33,
     statut: "EMISE",
     clientNom: "Sara Bennis",
-    dateEmission: "30/07/2026",
+    dateEmission: "01/10/2025", // Date de facturation identique à dateDebut ABO-2026-000003
     abonnementReference: "ABO-2026-000003",
     paiementReference: "PAY-2026-000003",
     paiementId: 3,
@@ -76,15 +77,15 @@ const mockFactures: FactureDetail[] = [
     montantTva: 240.00,
     statut: "SIGNEE",
     clientNom: "Karim El Amrani",
-    dateEmission: "15/07/2026",
-    abonnementReference: "ABO-2026-000001", // Second distinct payment for same subscriber -> New distinct Facture!
+    dateEmission: "20/09/2026", // Date de facturation identique au début du renouvellement
+    abonnementReference: "ABO-2026-000001",
     paiementReference: "PAY-2026-000004",
     paiementId: 4,
     modePaiement: "ESPECES",
     libellePrestation: "Renouvellement 6 Mois (0 DH Badge - Même carte réutilisée)",
     genereePar: "Agent Rachid (Guichet)",
     signeePar: "M. Samir El Amrani (Directeur Exploitation)",
-    dateSignature: "16/07/2026",
+    dateSignature: "20/09/2026",
   },
 ];
 
@@ -136,7 +137,7 @@ export async function getFactureByIdMock(id: number): Promise<FactureDetail> {
     montantTva,
     statut: "EMISE",
     clientNom: isCorp ? "Société Atlas Trans" : "Karim El Amrani",
-    dateEmission: formatDate("15/01/2026"),
+    dateEmission: formatDate("20/03/2026"),
     abonnementReference: `ABO-2026-00000${id}`,
     paiementReference: `PAY-2026-00000${id}`,
     paiementId: id,
@@ -155,6 +156,8 @@ export interface CreerFacturePayload {
   genereePar?: string;
   modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
   libellePrestation?: string;
+  dateEmission?: string;
+  dateDebutAbonnement?: string;
 }
 
 export async function creerFactureMock(payload: CreerFacturePayload): Promise<FactureDetail> {
@@ -163,6 +166,19 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
   const now = new Date();
   const dateFormatted = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
   const numero = `FACT-RRM-${now.getFullYear()}-${String(newId).padStart(6, "0")}`;
+
+  // Règle RRM : La date de facturation est identique à la date de début de l'abonnement
+  let dateFacturation = payload.dateEmission || payload.dateDebutAbonnement;
+  if (!dateFacturation && payload.abonnementReference) {
+    const abos = await getAbonnementsMock();
+    const foundAbo = abos.find((a) => a.reference === payload.abonnementReference);
+    if (foundAbo?.dateDebut) {
+      dateFacturation = foundAbo.dateDebut;
+    }
+  }
+  if (!dateFacturation) {
+    dateFacturation = dateFormatted;
+  }
 
   const fraisCarteRfid = payload.fraisCarteRfid !== undefined ? payload.fraisCarteRfid : 50;
   const montantTtc = payload.montantTtc;
@@ -183,7 +199,7 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
     montantTva,
     statut: "EMISE",
     clientNom: payload.clientNom,
-    dateEmission: dateFormatted,
+    dateEmission: formatDate(dateFacturation),
     abonnementReference: payload.abonnementReference,
     paiementReference: payload.paiementReference || `PAY-2026-${String(newId).padStart(6, "0")}`,
     paiementId: payload.paiementId || newId,

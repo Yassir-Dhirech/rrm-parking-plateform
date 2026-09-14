@@ -237,7 +237,7 @@ export function ResponsableDashboardView() {
       clientNom: "Sara Bennis",
       montantTtc: 800,
       fraisBadge: 0,
-      dateEmission: "30/07/2026",
+      dateEmission: "01/10/2025",
     },
   ];
 

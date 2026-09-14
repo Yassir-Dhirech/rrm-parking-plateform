@@ -141,7 +141,7 @@ export function FactureDetail() {
               {data.numero}
             </div>
             <div className="text-xs text-slate-500 font-medium">
-              Date d'Émission : <strong>{formatDate(data.dateEmission)}</strong>
+              Date de Facturation : <strong>{formatDate(data.dateEmission)}</strong>
             </div>
           </div>
         </div>
