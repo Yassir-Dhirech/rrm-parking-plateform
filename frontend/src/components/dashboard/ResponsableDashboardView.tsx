@@ -17,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
 import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
+import { getConsolidatedRevenue } from "../../lib/chiffreAffairesService";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
@@ -61,11 +62,11 @@ export function ResponsableDashboardView() {
       statutColor: "#ef4444", // Red
       statutText: "Alerte Saturation",
       statut: "CRITIQUE",
-      caMensuel: 228500,
-      caAbos: 180500,
-      caTickets: 48000,
-      caEspeces: 132530,
-      caCheques: 95970,
+      caMensuel: 235000,
+      caAbos: 165000,
+      caTickets: 70000,
+      caEspeces: 141000,
+      caCheques: 94000,
       contratsCorporate: 5,
       retentionRate: 96.2,
       slaHours: 16.5,
@@ -85,11 +86,11 @@ export function ResponsableDashboardView() {
       statutColor: "#f59e0b", // Amber
       statutText: "Forte Affluence",
       statut: "ELEVEE",
-      caMensuel: 295000,
-      caAbos: 225000,
-      caTickets: 70000,
-      caEspeces: 171100,
-      caCheques: 123900,
+      caMensuel: 155000,
+      caAbos: 110000,
+      caTickets: 45000,
+      caEspeces: 85250,
+      caCheques: 69750,
       contratsCorporate: 7,
       retentionRate: 94.8,
       slaHours: 19.2,
@@ -109,11 +110,11 @@ export function ResponsableDashboardView() {
       statutColor: "#0284c7", // Sky Blue
       statutText: "Charge Nominale",
       statut: "OPTIMAL",
-      caMensuel: 138000,
-      caAbos: 104000,
-      caTickets: 34000,
-      caEspeces: 80040,
-      caCheques: 57960,
+      caMensuel: 98000,
+      caAbos: 72000,
+      caTickets: 26000,
+      caEspeces: 53900,
+      caCheques: 44100,
       contratsCorporate: 4,
       retentionRate: 93.5,
       slaHours: 18.0,
@@ -133,11 +134,11 @@ export function ResponsableDashboardView() {
       statutColor: "#10b981", // Emerald
       statutText: "Fluide & Disponible",
       statut: "FLUIDE",
-      caMensuel: 87000,
-      caAbos: 70500,
-      caTickets: 16500,
-      caEspeces: 50460,
-      caCheques: 36540,
+      caMensuel: 60000,
+      caAbos: 44000,
+      caTickets: 16000,
+      caEspeces: 33000,
+      caCheques: 27000,
       contratsCorporate: 2,
       retentionRate: 92.0,
       slaHours: 21.0,
@@ -162,6 +163,9 @@ export function ResponsableDashboardView() {
   const totalCA = displayedParkings.reduce((sum, p) => sum + p.caMensuel, 0);
   const totalCAAbos = displayedParkings.reduce((sum, p) => sum + p.caAbos, 0);
   const totalCATickets = displayedParkings.reduce((sum, p) => sum + p.caTickets, 0);
+
+  // Synchronisation dynamique avec la Comptabilité
+  const consolidatedData = getConsolidatedRevenue(selectedSiteFilter);
 
   const totalCorporateCount = displayedParkings.reduce((sum, p) => sum + p.contratsCorporate, 0);
   const totalAbosParticuliers = displayedParkings.reduce((sum, p) => sum + p.abosParticulier, 0);
@@ -337,10 +341,16 @@ export function ResponsableDashboardView() {
                 <DollarOutlined />
               </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
-              <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
-              <span>•</span>
-              <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
+                <span>•</span>
+                <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium flex items-center justify-between pt-0.5">
+                <span className="text-emerald-600">Visa Cpt. : {(consolidatedData.recettesValideesComptable / 1000).toFixed(1)}k MAD</span>
+                <span className="text-amber-600">En cours : {(consolidatedData.recettesEnAttenteVisa / 1000).toFixed(1)}k MAD</span>
+              </div>
             </div>
           </div>
         </Col>
