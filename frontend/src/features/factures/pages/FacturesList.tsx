@@ -188,7 +188,7 @@ export function FacturesList() {
       render: (statut: FactureListItem["statut"]) => <StatusBadge statut={statut} />,
     },
     {
-      title: "Date Émission",
+      title: "Date de Facturation",
       dataIndex: "dateEmission",
       key: "dateEmission",
       sorter: (a: FactureListItem, b: FactureListItem) => parseDate(a.dateEmission) - parseDate(b.dateEmission),
