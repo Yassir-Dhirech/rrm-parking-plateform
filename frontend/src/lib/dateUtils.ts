@@ -1,8 +1,16 @@
 /**
- * Formats any date string (ISO YYYY-MM-DD, YYYY-MM-DD HH:mm, etc.) into standard DD/MM/YYYY format.
+ * Formats any date string (ISO YYYY-MM-DD, YYYY-MM-DD HH:mm, etc.) or Date object into standard DD/MM/YYYY format.
  */
-export function formatDate(dateStr?: string | null): string {
+export function formatDate(dateStr?: string | Date | null): string {
   if (!dateStr) return "-";
+
+  if (dateStr instanceof Date) {
+    if (isNaN(dateStr.getTime())) return "-";
+    const day = String(dateStr.getDate()).padStart(2, "0");
+    const month = String(dateStr.getMonth() + 1).padStart(2, "0");
+    const year = dateStr.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   // Already formatted as DD/MM/YYYY or DD/MM/YYYY HH:mm
   if (/^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) {
@@ -88,3 +96,29 @@ export function isDossierExpired(creationDate?: string | Date | null, maxDays = 
   const expirationMs = base.getTime() + maxDays * 24 * 60 * 60 * 1000;
   return now.getTime() > expirationMs;
 }
+
+/**
+ * Calculates remaining days until an expiration date.
+ * Returns negative value if already expired.
+ */
+export function calculerJoursRestantsAbonnement(dateFin?: string | Date | null): number {
+  const target = dateFin instanceof Date ? dateFin : parseDateSafe(dateFin);
+  if (!target) return 0;
+  const now = new Date();
+  // Reset hours to start of day for clean day difference
+  const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diffMs = targetDay - nowDay;
+  return Math.round(diffMs / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Formats a date subtracting N days, returning DD/MM/YYYY.
+ */
+export function soustraireJoursDate(dateRef?: string | Date | null, jours = 0): string {
+  const base = dateRef instanceof Date ? dateRef : parseDateSafe(dateRef);
+  if (!base) return formatDate(new Date());
+  const res = new Date(base.getTime() - jours * 24 * 60 * 60 * 1000);
+  return formatDate(res);
+}
+
