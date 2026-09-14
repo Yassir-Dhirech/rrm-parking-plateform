@@ -221,28 +221,44 @@ export function DemandesList() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {role === "RESPONSABLE" && (
-            <div className="bg-slate-200/80 p-1 rounded-xl flex gap-1">
-              <button
-                onClick={() => setMainView("LIST")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  mainView === "LIST" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Liste des Demandes
-              </button>
-              <button
-                onClick={() => setMainView("SLA_AUDIT")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  mainView === "SLA_AUDIT" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Audit SLA & Performance
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
+          onClick={() =>
+            navigate(`${basePath}/demandes/recherche`)
+          }
+          className="rounded-xl font-bold"
+        >
+          Rechercher une demande
+        </Button>
+
+        {role === "RESPONSABLE" && (
+          <div className="bg-slate-200/80 p-1 rounded-xl flex gap-1">
+            <button
+              onClick={() => setMainView("LIST")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                mainView === "LIST"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Liste des Demandes
+            </button>
+
+            <button
+              onClick={() => setMainView("SLA_AUDIT")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                mainView === "SLA_AUDIT"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Audit SLA & Performance
+            </button>
+          </div>
+        )}
+      </div>
       </div>
 
       {/* KPI Summary Cards Grid */}

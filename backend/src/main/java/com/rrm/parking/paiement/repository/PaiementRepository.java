@@ -30,4 +30,9 @@ public interface PaiementRepository
     List<Paiement> findByModePaiement(
             ModePaiement modePaiement
     );
+
+    boolean existsByDemandeIdAndStatut(
+            Long demandeId,
+            StatutPaiement statut
+    );
 }

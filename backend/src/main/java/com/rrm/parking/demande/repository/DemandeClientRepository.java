@@ -3,6 +3,11 @@ package com.rrm.parking.demande.repository;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.enums.StatutDemande;
 import org.springframework.data.jpa.repository.JpaRepository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -30,5 +35,15 @@ public interface DemandeClientRepository
     List<DemandeClient>
     findByStatutOrderByDateValidationOtpAsc(
             StatutDemande statut
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select demande
+        from DemandeClient demande
+        where demande.id = :id
+        """)
+    Optional<DemandeClient> findByIdPourPaiement(
+            @Param("id") Long id
     );
 }

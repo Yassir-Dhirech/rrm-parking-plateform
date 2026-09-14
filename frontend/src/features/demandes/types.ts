@@ -23,6 +23,42 @@ export type StatutDemande =
 
 export type StatutDemandeApi = StatutDemande;
 
+export type CanalInitiation =
+  | "EN_LIGNE"
+  | "ASSISTE_PAR_AGENT";
+
+export type TypeDemandeRecherche =
+  | "NOUVEL_ABONNEMENT_REGULIER"
+  | "RENOUVELLEMENT_REGULIER"
+  | "CHANGEMENT_PARKING"
+  | "CHANGEMENT_VEHICULE"
+  | "NOUVEAU_CONTRAT_CORPORATE"
+  | "AUTRE";
+
+export type TypeClientRecherche =
+  | "PARTICULIER"
+  | "ENTREPRISE"
+  | "INCONNU";
+
+export interface DemandeRechercheResponse {
+  id: number;
+  reference: string;
+  typeDemande: TypeDemandeRecherche;
+  statut: StatutDemande;
+  canalInitiation: CanalInitiation;
+
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string | null;
+
+  clientId: number;
+  typeClient: TypeClientRecherche;
+  nomClient: string | null;
+  identifiantClient: string | null;
+  email: string | null;
+  telephone: string | null;
+}
+
 export interface DemandeAbonnementRegulierRequest {
   nom: string;
   prenom: string;
