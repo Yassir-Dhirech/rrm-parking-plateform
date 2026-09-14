@@ -16,7 +16,6 @@ import {
   PieChartOutlined,
   ToolOutlined,
   AimOutlined,
-  FileDoneOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +33,7 @@ import type { AuditLog } from "../features/admin/types";
 import { ResponsableDashboardView } from "../components/dashboard/ResponsableDashboardView";
 import { ReportingDashboardView } from "../components/dashboard/ReportingDashboardView";
 import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
+import { getConsolidatedRevenue } from "../lib/chiffreAffairesService";
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -115,15 +115,9 @@ export function Dashboard() {
   // Global network figures for Comptable Header (permanent network cash oversight, invariant to filter)
   const globalRecettesCompleted = recettes.filter((r) => r.statut === "COMPLETED");
   const globalCompletedCount = globalRecettesCompleted.length || 3;
-  const globalTotalSoumis = globalRecettesCompleted.length
-    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalHebdo || 0), 0)
-    : 61250;
-  const globalTotalEspeces = globalRecettesCompleted.length
-    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalEspeces || 0), 0)
-    : 42850;
-  const globalTotalCheques = globalRecettesCompleted.length
-    ? globalRecettesCompleted.reduce((sum, r) => sum + (r.totalCheques || 0), 0)
-    : 18400;
+
+  // Données financières consolidées et synchronisées (Source Unique de Vérité)
+  const consolidatedData = getConsolidatedRevenue(filters.parkingId);
 
   // Cartes KPIs Personnalisées par Rôle
   const getRoleKpis = (currentRole: Role) => {
@@ -144,17 +138,17 @@ export function Dashboard() {
         ];
       case "RESPONSABLE":
         return [
-          { title: "CA Mensuel Cumulé", value: totalCAHebdo || 548000, suffix: "MAD", prefix: <DollarOutlined />, color: "#003566" },
+          { title: "Chiffre d'Affaires Consolidé", value: consolidatedData.caTotal, suffix: "MAD", prefix: <DollarOutlined />, color: "#003566" },
           { title: "SLA Traitement Moyen (Cible < 24h)", value: "18h 42m", prefix: <AimOutlined />, color: "#10b981" },
           { title: "Contrats Corporate à Signer", value: contratsEnAttenteSign, prefix: <FileTextOutlined />, color: "#982B5E" },
           { title: "Parkings en Exploitation", value: parkingsCount, prefix: <ClockCircleOutlined />, color: "#d97706" },
         ];
       case "COMPTABLE":
         return [
-          { title: "Recettes à Rapprocher", value: recettesCompleted, prefix: <ExclamationCircleOutlined />, color: "#d97706" },
-          { title: "Encaissements du Jour", value: totalEncaissementsGuichet, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
-          { title: "Montant Chèques en Caisse", value: Math.round(totalEncaissementsGuichet * 0.4), suffix: "MAD", prefix: <BankOutlined />, color: "#003566" },
-          { title: "Factures Impayées / En Attente", value: 6, prefix: <FileDoneOutlined />, color: "#ef4444" },
+          { title: "Chiffre d'Affaires Consolidé", value: consolidatedData.caTotal, suffix: "MAD", prefix: <DollarOutlined />, color: "#003566" },
+          { title: "Recettes à Rapprocher", value: recettesCompleted || (consolidatedData.recettesEnAttenteVisa > 0 ? 1 : 0), prefix: <ExclamationCircleOutlined />, color: "#d97706" },
+          { title: "Recettes Encaissées (Visa OK)", value: consolidatedData.recettesValideesComptable, suffix: "MAD", prefix: <CheckCircleOutlined />, color: "#10b981" },
+          { title: "Montant Chèques en Caisse", value: consolidatedData.caCheques, suffix: "MAD", prefix: <BankOutlined />, color: "#9333ea" },
         ];
       case "RESP_REPORTING":
         return [
@@ -191,16 +185,19 @@ export function Dashboard() {
                 <BankOutlined />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-black uppercase text-amber-800 tracking-wider">
                     Caisse & Recouvrement Réseau
                   </span>
                   <Tag color="volcano" className="font-bold text-[10px] m-0 px-2 py-0.5 rounded-full">
                     Visa Physique Requis
                   </Tag>
+                  <Tag color="blue" className="font-bold text-[10px] m-0 px-2 py-0.5 rounded-full">
+                    CA Réseau : {consolidatedData.caTotal.toLocaleString("fr-FR")} MAD
+                  </Tag>
                 </div>
                 <h3 className="text-lg font-black text-slate-900 m-0 mt-0.5">
-                  {globalCompletedCount} Recettes à Valider
+                  {globalCompletedCount} Recettes en Attente de Rapprochement
                 </h3>
               </div>
             </div>
@@ -217,40 +214,52 @@ export function Dashboard() {
           </div>
 
           {/* Bottom Financial Metrics Grid: Permanent network-wide cash oversight */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
-                Total Soumis à Encaisser
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-blue-800 block">
+                Chiffre d'Affaires Réseau
               </span>
-              <div className="text-xl font-black text-slate-900 mt-1">
-                {globalTotalSoumis.toLocaleString("fr-FR")} MAD
+              <div className="text-xl font-black text-blue-950 mt-1">
+                {consolidatedData.caTotal.toLocaleString("fr-FR")} MAD
               </div>
-              <span className="text-[11px] text-slate-500 font-semibold block mt-0.5">
-                Bordereaux superviseurs en attente
+              <span className="text-[11px] text-blue-700 font-semibold block mt-0.5">
+                Aligné avec le Responsable
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 block">
+                Recettes en Attente de Visa
+              </span>
+              <div className="text-xl font-black text-amber-950 mt-1">
+                {(consolidatedData.recettesEnAttenteVisa || 32400).toLocaleString("fr-FR")} MAD
+              </div>
+              <span className="text-[11px] text-amber-700 font-semibold block mt-0.5">
+                Bordereaux superviseurs à valider
               </span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70">
               <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 block">
-                Espèces en Enveloppes
+                Recettes Encaissées (Visa OK)
               </span>
               <div className="text-xl font-black text-emerald-950 mt-1">
-                {globalTotalEspeces.toLocaleString("fr-FR")} MAD
+                {(consolidatedData.recettesValideesComptable || 48500).toLocaleString("fr-FR")} MAD
               </div>
               <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
-                Comptage physique & scellés
+                Comptabilisées & Quittancées
               </span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/70">
               <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
-                Chèques Bancaires
+                Factures Fiscales Émises
               </span>
               <div className="text-xl font-black text-purple-950 mt-1">
-                {globalTotalCheques.toLocaleString("fr-FR")} MAD
+                {(consolidatedData.facturesFiscalesEmises || 58230).toLocaleString("fr-FR")} MAD
               </div>
               <span className="text-[11px] text-purple-700 font-semibold block mt-0.5">
-                Rapprochement bordereaux & quittances
+                Contrats Corporate signés
               </span>
             </div>
           </div>

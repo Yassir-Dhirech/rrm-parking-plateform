@@ -63,7 +63,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
     homePath: "/responsable",
     title: "Espace Responsable",
     kpis: [
-      { key: "caMensuel", title: "CA Mensuel Cumulé", color: "#003566", suffix: "DH" },
+      { key: "caMensuel", title: "Chiffre d'Affaires Consolidé", color: "#003566", suffix: "MAD" },
       { key: "contratsSigner", title: "Contrats Corporate à Signer", color: "#982B5E" },
       { key: "tauxOccupation", title: "Taux d'Occupation Global", color: "#10b981", suffix: "%" },
       { key: "parkingsExploitation", title: "Parkings en Exploitation", color: "#2563eb" },
@@ -83,10 +83,10 @@ export const roleConfig: Record<Role, RoleConfig> = {
     homePath: "/comptable",
     title: "Espace Comptable",
     kpis: [
-      { key: "encaissementsJour", title: "Encaissements du Jour", color: "#10b981", suffix: "DH" },
-      { key: "facturesRetard", title: "Factures en Retard / À Recouvrer", color: "#ef4444" },
+      { key: "caConsolide", title: "Chiffre d'Affaires Consolidé", color: "#003566", suffix: "MAD" },
       { key: "recettesRapprocher", title: "Recettes à Rapprocher", color: "#d97706" },
-      { key: "chequesCaisse", title: "Montant Chèques en Caisse", color: "#003566", suffix: "DH" },
+      { key: "encaissementsValides", title: "Recettes Encaissées (Visa OK)", color: "#10b981", suffix: "MAD" },
+      { key: "chequesCaisse", title: "Montant Chèques en Caisse", color: "#9333ea", suffix: "MAD" },
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
