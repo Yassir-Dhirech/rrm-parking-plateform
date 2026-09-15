@@ -1,11 +1,20 @@
-import { Table, Card, Typography, Button } from "antd";
-import { useQuery } from "@tanstack/react-query";
-import { getContratsMock } from "../../../api/contratsMock";
-import { type ContratListItem } from "../types";
+import { useState } from "react";
+import { Table, Card, Typography, Button, Tag, Space, Tooltip } from "antd";
+import {
+  ScanOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getContratsMock, enregistrerScanContratMock } from "../../../api/contratsMock";
+import { type ContratListItem, type ContratScanInfo } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
+import { ScannerContratModal } from "../components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../components/VisualiserScanContratModal";
 
 const { Title } = Typography;
 
@@ -13,10 +22,23 @@ export function ContratsList() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const basePath = role ? roleConfig[role].homePath : "";
+  const queryClient = useQueryClient();
+
+  const [selectedContratToScan, setSelectedContratToScan] = useState<ContratListItem | null>(null);
+  const [selectedContratToView, setSelectedContratToView] = useState<ContratListItem | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["contrats"],
     queryFn: getContratsMock,
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: ({ id, scanInfo }: { id: number; scanInfo: ContratScanInfo }) =>
+      enregistrerScanContratMock(id, scanInfo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+      setSelectedContratToScan(null);
+    },
   });
 
   const columns = [
@@ -75,20 +97,73 @@ export function ContratsList() {
       ),
     },
     {
-      title: "Action",
+      title: "Scan Contrat",
+      key: "scanInfo",
+      render: (_: any, record: ContratListItem) => {
+        if (record.scanInfo?.scanne) {
+          return (
+            <Tooltip title={`Numérisé le ${record.scanInfo.dateScan} par ${record.scanInfo.scannePar}`}>
+              <Tag
+                color="success"
+                icon={<CheckCircleOutlined />}
+                style={{ cursor: "pointer", fontWeight: 600 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedContratToView(record);
+                }}
+              >
+                Numérisé ({record.scanInfo.nombrePages}p)
+              </Tag>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
+            À scanner
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Actions",
       key: "action",
       render: (_: any, record: ContratListItem) => (
-        <Button
-          type="primary"
-          size="small"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            navigate(`${basePath}/contrats/${record.id}`);
-          }}
-          style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 6 }}
-        >
-          Gérer Situation
-        </Button>
+        <Space onClick={(e) => e.stopPropagation()}>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => navigate(`${basePath}/contrats/${record.id}`)}
+            style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700, borderRadius: 6 }}
+          >
+            Détails
+          </Button>
+
+          {record.scanInfo?.scanne ? (
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => setSelectedContratToView(record)}
+              style={{ borderColor: "#006398", color: "#006398", fontWeight: 600, borderRadius: 6 }}
+            >
+              Scan
+            </Button>
+          ) : role === "RESPONSABLE" ? (
+            <Button
+              size="small"
+              icon={<ScanOutlined />}
+              onClick={() => setSelectedContratToScan(record)}
+              style={{
+                backgroundColor: "#0284c7",
+                borderColor: "#0284c7",
+                color: "#ffffff",
+                fontWeight: 700,
+                borderRadius: 6,
+              }}
+            >
+              Scanner
+            </Button>
+          ) : null}
+        </Space>
       ),
     },
   ];
@@ -109,6 +184,29 @@ export function ContratsList() {
           style: { cursor: "pointer" },
         })}
       />
+
+      {/* Modal Scanner Contrat */}
+      {selectedContratToScan && (
+        <ScannerContratModal
+          open={!!selectedContratToScan}
+          onClose={() => setSelectedContratToScan(null)}
+          contratReference={selectedContratToScan.reference}
+          entrepriseNom={selectedContratToScan.entrepriseNom}
+          onScanSuccess={(scanInfo: ContratScanInfo) =>
+            scanMutation.mutate({ id: selectedContratToScan.id, scanInfo })
+          }
+        />
+      )}
+
+      {/* Modal Visualiser Scan */}
+      {selectedContratToView && (
+        <VisualiserScanContratModal
+          open={!!selectedContratToView}
+          onClose={() => setSelectedContratToView(null)}
+          contrat={selectedContratToView}
+          scanInfo={selectedContratToView.scanInfo}
+        />
+      )}
     </Card>
   );
 }

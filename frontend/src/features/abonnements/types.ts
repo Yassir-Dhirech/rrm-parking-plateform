@@ -1,3 +1,5 @@
+import type { ContratScanInfo } from "../contrats/types";
+
 export type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 
 export type TypeAbonnement = "REGULIER" | "ENTREPRISE" | "STAFF";
@@ -39,8 +41,11 @@ export interface EcheancierRelanceInfo {
 export interface AbonnementDetail extends AbonnementListItem {
   vehiculeImmatriculation?: string;
   planTarifaireNom?: string;
+  nombreAbonnements?: number;
   contratReference?: string;
+  contratId?: number;
+  contratScanInfo?: ContratScanInfo;
   montantTotal: number;
   motifSuspension?: string;
   echeancierRelance?: EcheancierRelanceInfo;
-}
+}

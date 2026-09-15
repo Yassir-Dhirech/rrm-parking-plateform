@@ -8,13 +8,19 @@ import {
   ClockCircleOutlined,
   StopOutlined,
   SafetyCertificateOutlined,
+  ScanOutlined,
+  FilePdfOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getContratByIdMock, updateSituationContratMock } from "../../../api/contratsMock";
+import { getContratByIdMock, updateSituationContratMock, enregistrerScanContratMock } from "../../../api/contratsMock";
 import { useAuth } from "../../../context/AuthContext";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import dayjs from "dayjs";
 import { formatDate } from "../../../lib/dateUtils";
+import { ScannerContratModal } from "../components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../components/VisualiserScanContratModal";
+import type { ContratScanInfo } from "../types";
 
 const { Title, Text } = Typography;
 
@@ -26,6 +32,8 @@ export function ContratDetail() {
   const contratId = Number(id);
 
   const [isSituationModalOpen, setIsSituationModalOpen] = useState(false);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [isViewerModalOpen, setIsViewerModalOpen] = useState(false);
   const [situationForm] = Form.useForm();
   const [selectedStatut, setSelectedStatut] = useState<string>("SIGNE");
 
@@ -47,6 +55,15 @@ export function ContratDetail() {
       message.error("Erreur lors de la mise à jour de la situation du contrat.");
     },
   });
+
+  const scanMutation = useMutation({
+    mutationFn: (scanInfo: ContratScanInfo) => enregistrerScanContratMock(contratId, scanInfo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contrat", contratId] });
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+    },
+  });
+
 
   if (isLoading) return <Spin size="large" />;
   if (!contrat) return <Card>Contrat introuvable</Card>;
@@ -158,6 +175,113 @@ export function ContratDetail() {
             </Descriptions.Item>
           )}
         </Descriptions>
+      </Card>
+
+      <Card
+        title={
+          <Space>
+            <ScanOutlined style={{ color: "#006398", fontSize: 18 }} />
+            <span style={{ fontWeight: 700, color: "#003566" }}>
+              Numérisation & Archivage Électronique du Contrat (Scan GED)
+            </span>
+          </Space>
+        }
+        extra={
+          <Space>
+            {contrat.scanInfo?.scanne ? (
+              <>
+                <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                  Contrat Numérisé & Archivé
+                </Tag>
+                <Button
+                  icon={<EyeOutlined />}
+                  onClick={() => setIsViewerModalOpen(true)}
+                  style={{ borderColor: "#006398", color: "#006398", fontWeight: 600 }}
+                >
+                  Visualiser le Scan
+                </Button>
+                {role === "RESPONSABLE" && (
+                  <Button
+                    icon={<ScanOutlined />}
+                    onClick={() => setIsScannerModalOpen(true)}
+                  >
+                    Re-scanner
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                  En Attente de Numérisation
+                </Tag>
+                {role === "RESPONSABLE" && (
+                  <Button
+                    type="primary"
+                    icon={<ScanOutlined />}
+                    onClick={() => setIsScannerModalOpen(true)}
+                    style={{
+                      backgroundColor: "#0284c7",
+                      borderColor: "#0284c7",
+                      fontWeight: 700,
+                      borderRadius: 8,
+                    }}
+                  >
+                    Scanner le Contrat
+                  </Button>
+                )}
+              </>
+            )}
+          </Space>
+        }
+      >
+        {contrat.scanInfo?.scanne ? (
+          <Descriptions bordered column={2} size="small">
+            <Descriptions.Item label="Fichier Numérisé">
+              <Space>
+                <FilePdfOutlined style={{ color: "#dc2626", fontSize: 18 }} />
+                <strong>{contrat.scanInfo.nomFichier}</strong>
+                <Tag color="blue">{contrat.scanInfo.tailleFichier}</Tag>
+                <Tag color="purple">{contrat.scanInfo.nombrePages} Pages (Recto-Verso)</Tag>
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Date de Numérisation">
+              {formatDate(contrat.scanInfo.dateScan)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Opérateur / Responsable">
+              {contrat.scanInfo.scannePar}
+            </Descriptions.Item>
+            <Descriptions.Item label="Parapheur / Classement Physique">
+              <Tag color="geekblue" style={{ fontWeight: 600 }}>
+                {contrat.scanInfo.referenceParapheur || "Parapheur Général"}
+              </Tag>
+            </Descriptions.Item>
+            {contrat.scanInfo.notesScan && (
+              <Descriptions.Item label="Notes de Numérisation" span={2}>
+                <Text type="secondary">{contrat.scanInfo.notesScan}</Text>
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        ) : (
+          <div style={{ textAlign: "center", padding: "24px 16px", background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+            <ScanOutlined style={{ fontSize: 36, color: "#94a3b8", marginBottom: 8 }} />
+            <div style={{ fontWeight: 600, color: "#475569", marginBottom: 4 }}>
+              Aucun exemplaire papier numérisé pour cette convention
+            </div>
+            <Text type="secondary" style={{ fontSize: 13, display: "block", marginBottom: 12 }}>
+              Le Responsable d'exploitation doit numériser l'exemplaire original signé et paraphé par la Direction RRM et l'Entreprise cliente.
+            </Text>
+            {role === "RESPONSABLE" && (
+              <Button
+                type="primary"
+                icon={<ScanOutlined />}
+                onClick={() => setIsScannerModalOpen(true)}
+                style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", fontWeight: 700 }}
+              >
+                Lancer la Numérisation Scanner / Upload
+              </Button>
+            )}
+          </div>
+        )}
       </Card>
 
       <Card title={<Space><FileTextOutlined style={{ color: "#006398" }} /><span>Véhicules Rattachés à la Flotte</span></Space>}>
@@ -290,6 +414,23 @@ export function ContratDetail() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Modal Scanner Contrat */}
+      <ScannerContratModal
+        open={isScannerModalOpen}
+        onClose={() => setIsScannerModalOpen(false)}
+        contratReference={contrat.reference}
+        entrepriseNom={contrat.entrepriseNom}
+        onScanSuccess={(scanInfo: ContratScanInfo) => scanMutation.mutate(scanInfo)}
+      />
+
+      {/* Modal Visualiser Scan */}
+      <VisualiserScanContratModal
+        open={isViewerModalOpen}
+        onClose={() => setIsViewerModalOpen(false)}
+        contrat={contrat}
+        scanInfo={contrat.scanInfo}
+      />
     </Space>
   );
 }

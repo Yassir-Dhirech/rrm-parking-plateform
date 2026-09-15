@@ -19,6 +19,9 @@ import {
   SendOutlined,
   BellOutlined,
   ClockCircleOutlined,
+  ScanOutlined,
+  EyeOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import {
   getAbonnementByIdMock,
@@ -35,6 +38,13 @@ import {
   getClientNotificationLogsMock,
   getExpirationNotificationTemplate,
 } from "../../../api/clientNotificationsMock";
+import {
+  getContratByIdMock,
+  enregistrerScanContratMock,
+} from "../../../api/contratsMock";
+import { ScannerContratModal } from "../../contrats/components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../../contrats/components/VisualiserScanContratModal";
+import type { ContratScanInfo } from "../../contrats/types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -67,10 +77,35 @@ export function AbonnementDetail() {
   const [relanceForm] = Form.useForm();
   const watchedPalierRelance = Form.useWatch("palier", relanceForm);
 
+  const [isContratScannerModalOpen, setIsContratScannerModalOpen] = useState(false);
+  const [isContratViewerModalOpen, setIsContratViewerModalOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["abonnement", abonnementId],
     queryFn: () => getAbonnementByIdMock(abonnementId),
   });
+
+  const { data: contratAssocie } = useQuery({
+    queryKey: ["contrat", data?.contratId],
+    queryFn: () => getContratByIdMock(data?.contratId!),
+    enabled: !!data?.contratId,
+  });
+
+  const scanContratMutation = useMutation({
+    mutationFn: (scanInfo: ContratScanInfo) => {
+      const cId = data?.contratId || 3;
+      return enregistrerScanContratMock(cId, scanInfo);
+    },
+    onSuccess: () => {
+      message.success("Contrat corporate scanné et archivé avec succès !");
+      queryClient.invalidateQueries({ queryKey: ["abonnement", abonnementId] });
+      queryClient.invalidateQueries({ queryKey: ["contrat", data?.contratId] });
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+      setIsContratScannerModalOpen(false);
+    },
+  });
+
+  const effectiveScanInfo = contratAssocie?.scanInfo || data?.contratScanInfo;
 
   const { data: facturesAssociees = [], isLoading: isLoadingFactures } = useQuery({
     queryKey: ["factures_abonnement", data?.reference],
@@ -401,6 +436,123 @@ export function AbonnementDetail() {
           )}
         </Descriptions>
       </Card>
+
+      {/* Convention Cadre & Scan Contrat Corporate Flotte (Pour les Abonnements Entreprise) */}
+      {data.type === "ENTREPRISE" && (
+        <Card
+          style={{ marginTop: 20 }}
+          className="rounded-2xl shadow-xs border border-slate-200"
+          title={
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <Space>
+                <ScanOutlined style={{ color: "#006398", fontSize: 20 }} />
+                <span style={{ fontSize: "1rem", fontWeight: 800, color: "#003566" }}>
+                  Convention Cadre 20 Ans & Numérisation Contrat Corporate Flotte
+                </span>
+              </Space>
+              <Space>
+                {effectiveScanInfo?.scanne ? (
+                  <>
+                    <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                      Contrat Numérisé & Archivé
+                    </Tag>
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => setIsContratViewerModalOpen(true)}
+                      style={{ borderColor: "#006398", color: "#006398", fontWeight: 600 }}
+                    >
+                      Visualiser le Scan
+                    </Button>
+                    {role === "RESPONSABLE" && (
+                      <Button
+                        icon={<ScanOutlined />}
+                        onClick={() => setIsContratScannerModalOpen(true)}
+                      >
+                        Re-scanner
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                      En Attente de Numérisation
+                    </Tag>
+                    {role === "RESPONSABLE" && (
+                      <Button
+                        type="primary"
+                        icon={<ScanOutlined />}
+                        onClick={() => setIsContratScannerModalOpen(true)}
+                        style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", fontWeight: 700, borderRadius: 8 }}
+                      >
+                        Scanner le Contrat
+                      </Button>
+                    )}
+                  </>
+                )}
+              </Space>
+            </div>
+          }
+        >
+          <Descriptions bordered column={{ xs: 1, sm: 2, md: 2 }} size="middle">
+            <Descriptions.Item label="Référence Convention / Contrat">
+              <Space>
+                <strong>{data.contratReference || contratAssocie?.reference || "CTR-2026-0003"}</strong>
+                {data.contratId && (
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => navigate(`${basePath}/contrats/${data.contratId}`)}
+                    style={{ padding: 0, fontWeight: 600 }}
+                  >
+                    Voir Dossier Contrat
+                  </Button>
+                )}
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Quota Flotte Réservée">
+              <Tag color="blue" style={{ fontWeight: 700 }}>
+                {data.nombreAbonnements || contratAssocie?.nombrePlaces || 1} Places Flotte Entreprise
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Entreprise Souscriptrice">
+              {data.clientNom}
+            </Descriptions.Item>
+            <Descriptions.Item label="Statut de la Convention">
+              <Tag color="cyan" style={{ fontWeight: 600 }}>
+                {contratAssocie?.statut === "SIGNE" ? "Signé Physiquement & En Vigueur" : "Convention Cadre 20 Ans Active"}
+              </Tag>
+            </Descriptions.Item>
+            {effectiveScanInfo?.scanne ? (
+              <>
+                <Descriptions.Item label="Fichier Numérisé & Pages">
+                  <Space>
+                    <FilePdfOutlined style={{ color: "#dc2626", fontSize: 18 }} />
+                    <strong>{effectiveScanInfo.nomFichier}</strong>
+                    <Tag color="purple">{effectiveScanInfo.nombrePages} Pages</Tag>
+                    <Tag color="blue">{effectiveScanInfo.tailleFichier}</Tag>
+                  </Space>
+                </Descriptions.Item>
+                <Descriptions.Item label="Date du Scan & Opérateur">
+                  {formatDate(effectiveScanInfo.dateScan)} (par {effectiveScanInfo.scannePar})
+                </Descriptions.Item>
+                {effectiveScanInfo.referenceParapheur && (
+                  <Descriptions.Item label="Classement Physique Parapheur" span={2}>
+                    <Tag color="geekblue" style={{ fontWeight: 600 }}>{effectiveScanInfo.referenceParapheur}</Tag>
+                  </Descriptions.Item>
+                )}
+              </>
+            ) : (
+              <Descriptions.Item label="Statut GED" span={2}>
+                <div style={{ padding: "8px 12px", background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                  <Text type="secondary">
+                    L'exemplaire physique original du contrat corporate n'a pas encore été numérisé. Le Responsable d'exploitation peut procéder au scan ou téléversement du PDF signé.
+                  </Text>
+                </div>
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        </Card>
+      )}
 
       {/* Échéancier de Relance & Notifications d'Expiration (3 Paliers : J-10, J-4, Non Valide) */}
       <Card
@@ -1053,6 +1205,45 @@ export function AbonnementDetail() {
           )}
         </Form>
       </Modal>
+
+      {/* Modal Scanner Contrat Corporate */}
+      {data && data.type === "ENTREPRISE" && (
+        <ScannerContratModal
+          open={isContratScannerModalOpen}
+          onClose={() => setIsContratScannerModalOpen(false)}
+          contratReference={data.contratReference || contratAssocie?.reference || "CTR-2026-0003"}
+          entrepriseNom={data.clientNom}
+          onScanSuccess={(scanInfo: ContratScanInfo) => scanContratMutation.mutate(scanInfo)}
+        />
+      )}
+
+      {/* Modal Visualiser Scan Contrat Corporate */}
+      {data && data.type === "ENTREPRISE" && (
+        <VisualiserScanContratModal
+          open={isContratViewerModalOpen}
+          onClose={() => setIsContratViewerModalOpen(false)}
+          contrat={
+            contratAssocie || {
+              id: data.contratId || 3,
+              reference: data.contratReference || "CTR-2026-0003",
+              entrepriseNom: data.clientNom,
+              iceEntreprise: "001234567890012",
+              parkingNom: data.parkingNom,
+              nombrePlaces: data.nombreAbonnements || 1,
+              dateDebut: data.dateDebut,
+              dateFin: data.dateFin,
+              montantMensuelHT: data.montantTotal ? data.montantTotal / 1.2 : 550,
+              montantMensuelTTC: data.montantTotal || 660,
+              statut: "SIGNE",
+              vehicules: [],
+              dateSignature: "01/01/2026",
+              signePar: "Direction RRM & Représentant Entreprise",
+              referencePhysique: "PARAPH-CORP-2026",
+            }
+          }
+          scanInfo={effectiveScanInfo}
+        />
+      )}
     </div>
   );
 }
