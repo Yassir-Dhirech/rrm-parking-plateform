@@ -23,6 +23,107 @@ export type StatutDemande =
 
 export type StatutDemandeApi = StatutDemande;
 
+export type CanalInitiation =
+  | "EN_LIGNE"
+  | "ASSISTE_PAR_AGENT";
+
+export type TypeDemandeRecherche =
+  | "NOUVEL_ABONNEMENT_REGULIER"
+  | "RENOUVELLEMENT_REGULIER"
+  | "CHANGEMENT_PARKING"
+  | "CHANGEMENT_VEHICULE"
+  | "NOUVEAU_CONTRAT_CORPORATE"
+  | "AUTRE";
+
+export type TypeClientRecherche =
+  | "PARTICULIER"
+  | "ENTREPRISE"
+  | "INCONNU";
+
+export interface DemandeRechercheResponse {
+  id: number;
+  reference: string;
+  typeDemande: TypeDemandeRecherche;
+  statut: StatutDemande;
+  canalInitiation: CanalInitiation;
+
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string | null;
+
+  clientId: number;
+  typeClient: TypeClientRecherche;
+  nomClient: string | null;
+  identifiantClient: string | null;
+  email: string | null;
+  telephone: string | null;
+}
+
+export type TypePieceJointe =
+  | "CIN_RECTO"
+  | "CIN_VERSO"
+  | "CARTE_GRISE_RECTO"
+  | "CARTE_GRISE_VERSO";
+
+export type StatutPieceJointe =
+  | "TELEVERSEE"
+  | "VALIDEE"
+  | "REJETEE"
+  | "ARCHIVEE";
+
+export interface PieceJointeDetailResponse {
+  id: number;
+  reference: string;
+  typePiece: TypePieceJointe;
+  statut: StatutPieceJointe;
+  nomFichierOriginal: string;
+  typeMime: string;
+  tailleOctets: number;
+  dateDepot: string;
+  contenuUrl: string;
+}
+
+export interface DemandeDetailResponse {
+  id: number;
+  reference: string;
+  typeDemande: "NOUVEL_ABONNEMENT_REGULIER";
+  statut: StatutDemande;
+  canalInitiation: CanalInitiation;
+
+  dateCreation: string;
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string;
+  motifRefus: string | null;
+
+  clientId: number;
+  typeClient: TypeClientRecherche;
+  clientNom: string;
+  cin: string;
+  email: string;
+  telephone: string;
+
+  vehiculeId: number;
+  immatriculation: string;
+  marque: string | null;
+  modele: string | null;
+  couleur: string | null;
+  typeVehicule: TypeVehicule;
+
+  tarifParkingId: number;
+  parkingId: number;
+  parkingNom: string;
+  forfaitId: number;
+  forfaitNom: string;
+  dureeMois: number;
+  prixHT: number;
+  tauxTVA: number;
+  montantAbonnementTTC: number;
+  modePaiementSouhaite: ModePaiement;
+
+  piecesJointes: PieceJointeDetailResponse[];
+}
+
 export interface DemandeAbonnementRegulierRequest {
   nom: string;
   prenom: string;

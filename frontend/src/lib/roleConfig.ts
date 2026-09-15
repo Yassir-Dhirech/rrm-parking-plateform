@@ -14,6 +14,7 @@ interface MenuItem {
   key: string;
   label: string;
   path: string;
+  requiredAuthority?: string;
 }
 
 interface RoleConfig {
@@ -34,10 +35,27 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "demandesTraitees", title: "Demandes Traitées Aujourd'hui", color: "#003566" },
     ],
     menuItems: [
-      { key: "dashboard", label: "Tableau de bord", path: "/agent" },
-      { key: "carte-parkings", label: "Carte des Parkings", path: "/agent/carte-parkings" },
-      { key: "demandes", label: "Demandes", path: "/agent/demandes" },
-      { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" },
+      {
+        key: "dashboard",
+        label: "Tableau de bord",
+        path: "/agent",
+      },
+      {
+        key: "carte-parkings",
+        label: "Carte des parkings",
+        path: "/agent/carte-parkings",
+      },
+      {
+        key: "demandes",
+        label: "Liste des demandes",
+        path: "/agent/demandes",
+        requiredAuthority: "DEMANDE_CONSULTER",
+      },
+      {
+        key: "cartes",
+        label: "Cartes d'accès",
+        path: "/agent/cartes",
+      },
     ],
   },
   SUPERVISEUR: {

@@ -4,6 +4,7 @@ import { RoleLayout } from "../layouts/RoleLayout";
 import { Dashboard } from "../pages/Dashboard";
 import { LoginPage } from "../features/auth/LoginPage";
 import { Unauthorized } from "../pages/Unauthorized";
+
 import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig, type Role } from "../lib/roleConfig";
@@ -30,6 +31,9 @@ import { PublicParkingsPage } from "../pages/PublicParkingsPage";
 import { InternalParkingsMapPage } from "../features/parkings/pages/InternalParkingsMapPage";
 import { PublicTarifsPage } from "../pages/PublicTarifsPage";
 import { ScrollToTop } from "../components/ui/ScrollToTop";
+import {
+  EspaceDemandesAgent,
+} from "../features/demandes/pages/EspaceDemandesAgent";
 
 function RootLayout() {
   return (
@@ -47,12 +51,25 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     { path: `${roleConfig[role].homePath}/carte-parkings`, element: <InternalParkingsMapPage /> },
   ];
 
-  if (role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE") {
-    extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/demandes`, element: <DemandesList /> },
-      { path: `${roleConfig[role].homePath}/demandes/:id`, element: <DemandeDetail /> },
-    );
-  }
+ if (
+   role === "AGENT"
+   || role === "SUPERVISEUR"
+   || role === "RESPONSABLE"
+ ) {
+   extraRoutes.push(
+     {
+       path: `${roleConfig[role].homePath}/demandes`,
+       element:
+         role === "AGENT"
+           ? <EspaceDemandesAgent />
+           : <DemandesList />,
+     },
+     {
+       path: `${roleConfig[role].homePath}/demandes/:id`,
+       element: <DemandeDetail />,
+     },
+   );
+ }
 
   if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
     extraRoutes.push(
@@ -101,9 +118,12 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
       { path: "/admin/utilisateurs", element: <UtilisateursList /> },
       { path: "/admin/parkings", element: <ParkingsList /> },
       { path: "/admin/tarifs", element: <PlansTarifairesList /> },
-      { path: "/admin/logs", element: <AuditLogsList /> }
+      { path: "/admin/logs", element: <AuditLogsList /> },
     );
   }
+
+
+
 
   return {
     element: <ProtectedRoute allowedRoles={[role]} />,

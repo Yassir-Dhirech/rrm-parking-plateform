@@ -42,6 +42,21 @@ public class StockageLocalDocumentService
     }
 
     @Override
+    public byte[] lire(String storageKey) {
+        Path fichier = resoudreChemin(storageKey);
+
+        try {
+            return Files.readAllBytes(fichier);
+        } catch (IOException exception) {
+            throw new StockageDocumentException(
+                    "Impossible de lire le fichier",
+                    exception
+            );
+        }
+    }
+
+
+    @Override
     public FichierStocke stocker(
             MultipartFile fichier,
             String dossier

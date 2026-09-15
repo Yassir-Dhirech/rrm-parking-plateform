@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { getCurrentUser, login } from "../../api/auth";
-import { type Role, roleConfig } from "../../lib/roleConfig";
+import type { Role } from "../../lib/roleConfig";
 import { message } from "antd";
 import {
   LockOutlined,
@@ -53,8 +53,19 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const executeLogin = (token: string, role: Role, name?: string) => {
-    setAuth(token, role, name ?? roleConfig[role].title);
+  const executeLogin = (
+    token: string,
+    role: Role,
+    name: string,
+    authorities: string[],
+  ) => {
+    setAuth(
+      token,
+      role,
+      name,
+      authorities,
+    );
+
     navigate(roleHomeRoute[role] ?? "/login");
   };
 
@@ -81,7 +92,12 @@ export function LoginPage() {
         return;
       }
 
-      executeLogin(accessToken, role, currentUser.email);
+      executeLogin(
+        accessToken,
+        role,
+        currentUser.email,
+        currentUser.authorities,
+      );
     } catch (error) {
       localStorage.removeItem("token");
 

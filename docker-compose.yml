@@ -67,8 +67,22 @@ services:
       RRM_BREVO_SENDER_EMAIL: ${RRM_BREVO_SENDER_EMAIL}
       RRM_BREVO_SENDER_NAME: ${RRM_BREVO_SENDER_NAME:-RRM Parking}
       RRM_BREVO_SMS_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+
+
+      RRM_AGENT_BOOTSTRAP_ENABLED: ${RRM_AGENT_BOOTSTRAP_ENABLED:-false}
+      RRM_AGENT_EMAIL: ${RRM_AGENT_EMAIL:-}
+      RRM_AGENT_PASSWORD: ${RRM_AGENT_PASSWORD:-}
+      RRM_AGENT_NOM: ${RRM_AGENT_NOM:-Agent}
+      RRM_AGENT_PRENOM: ${RRM_AGENT_PRENOM:-Administratif}
+
+
+      RRM_STORAGE_TYPE: google-drive
+      RRM_GOOGLE_DRIVE_FOLDER_ID: 1sG05PhR8PiMwJz-9Sz1Y6Q1dE94eSrMK
+      RRM_GOOGLE_DRIVE_CREDENTIALS_PATH: /app/secrets/google-drive-oauth.json
+      RRM_GOOGLE_DRIVE_TOKENS_PATH: /app/secrets/google-drive-tokens
     volumes:
       - backend_storage:/app/storage
+      - ./backend/secrets:/app/secrets
 
   # 4. Frontend React SPA & Nginx Reverse Proxy
   frontend:

@@ -354,7 +354,7 @@ public class DemandeAbonnementRegulierService {
         FichierStocke fichierStocke =
                 stockageDocumentService.stocker(
                         fichier,
-                        dossier
+                        dossier + "/" + type.name()
                 );
 
         fichiersCrees.add(

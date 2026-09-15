@@ -34,6 +34,21 @@ public class SecurityDataInitializer
     @Value("${app.bootstrap.enabled:false}")
     private boolean enabled;
 
+    @Value("${app.bootstrap.agent-enabled:false}")
+    private boolean agentEnabled;
+
+    @Value("${app.bootstrap.agent-email:}")
+    private String agentEmail;
+
+    @Value("${app.bootstrap.agent-password:}")
+    private String agentPassword;
+
+    @Value("${app.bootstrap.agent-nom:Agent}")
+    private String agentNom;
+
+    @Value("${app.bootstrap.agent-prenom:Administratif}")
+    private String agentPrenom;
+
     @Value("${app.bootstrap.admin-email:}")
     private String adminEmail;
 
@@ -62,37 +77,49 @@ public class SecurityDataInitializer
 
         roleRepository.save(roleAdministrateur);
 
-        if (!enabled) {
-            return;
+        Role roleAgent = roleRepository
+                .findByCode(CodeRole.AGENT_ADMINISTRATIF)
+                .orElseThrow();
+
+        roleAgent.getPermissions().clear();
+
+        permissions.stream()
+                .filter(permission ->
+                        permission.getCode() == CodePermission.DEMANDE_CONSULTER
+                                || permission.getCode() == CodePermission.DEMANDE_MODIFIER
+                                || permission.getCode() == CodePermission.PAIEMENT_ENREGISTRER
+                )
+                .forEach(permission ->
+                        roleAgent.getPermissions().add(permission)
+                );
+
+        roleRepository.save(roleAgent);
+
+        if (enabled) {
+            verifierConfiguration();
+
+            String emailNormalise = adminEmail
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+
+            Utilisateur administrateur =
+                    utilisateurRepository
+                            .findByEmailIgnoreCase(emailNormalise)
+                            .orElseGet(() ->
+                                    creerAdministrateur(
+                                            emailNormalise,
+                                            roleAdministrateur
+                                    )
+                            );
+
+            if (!administrateur.getRoles().contains(roleAdministrateur)) {
+                administrateur.ajouterRole(roleAdministrateur);
+                utilisateurRepository.save(administrateur);
+            }
         }
 
-        verifierConfiguration();
-
-        String emailNormalise = adminEmail
-                .trim()
-                .toLowerCase(Locale.ROOT);
-
-        Utilisateur administrateur =
-                utilisateurRepository
-                        .findByEmailIgnoreCase(emailNormalise)
-                        .orElseGet(() ->
-                                creerAdministrateur(
-                                        emailNormalise,
-                                        roleAdministrateur
-                                )
-                        );
-
-        if (!administrateur
-                .getRoles()
-                .contains(roleAdministrateur)) {
-
-            administrateur.ajouterRole(
-                    roleAdministrateur
-            );
-
-            utilisateurRepository.save(
-                    administrateur
-            );
+        if (agentEnabled) {
+            initialiserAgent(roleAgent);
         }
     }
 
@@ -167,6 +194,68 @@ public class SecurityDataInitializer
         return utilisateurRepository.save(
                 administrateur
         );
+    }
+
+    private void initialiserAgent(Role roleAgent) {
+        verifierConfigurationAgent();
+
+        String emailNormalise = agentEmail
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        Utilisateur agent = utilisateurRepository
+                .findByEmailIgnoreCase(emailNormalise)
+                .orElseGet(() -> creerAgent(
+                        emailNormalise,
+                        roleAgent
+                ));
+
+        if (!agent.getRoles().contains(roleAgent)) {
+            agent.ajouterRole(roleAgent);
+            utilisateurRepository.save(agent);
+        }
+    }
+
+    private Utilisateur creerAgent(
+            String email,
+            Role roleAgent
+    ) {
+        Utilisateur agent = new Utilisateur();
+
+        agent.setNom(agentNom.trim());
+        agent.setPrenom(agentPrenom.trim());
+        agent.setEmail(email);
+        agent.setMotDePasseHash(
+                passwordEncoder.encode(agentPassword)
+        );
+        agent.setStatut(StatutUtilisateur.ACTIF);
+        agent.ajouterRole(roleAgent);
+
+        return utilisateurRepository.save(agent);
+    }
+
+    private void verifierConfigurationAgent() {
+        if (agentEmail == null
+                || agentEmail.isBlank()
+                || !agentEmail.contains("@")) {
+            throw new IllegalStateException(
+                    "RRM_AGENT_EMAIL est invalide"
+            );
+        }
+
+        if (agentPassword == null
+                || agentPassword.length() < 12) {
+            throw new IllegalStateException(
+                    "RRM_AGENT_PASSWORD doit contenir au moins 12 caractères"
+            );
+        }
+
+        if (agentNom == null || agentNom.isBlank()
+                || agentPrenom == null || agentPrenom.isBlank()) {
+            throw new IllegalStateException(
+                    "Le nom et le prénom de l'agent sont obligatoires"
+            );
+        }
     }
 
     private void verifierConfiguration() {
