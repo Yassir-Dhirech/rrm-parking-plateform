@@ -1,6 +1,7 @@
 import type { FactureListItem, FactureDetail } from "../features/factures/types";
 import { formatDate } from "../lib/dateUtils";
 import { getAbonnementsMock } from "./abonnementsMock";
+import { addNotificationMock } from "./notificationsMock";
 
 const mockFactures: FactureDetail[] = [
   {
@@ -210,6 +211,16 @@ export async function creerFactureMock(payload: CreerFacturePayload): Promise<Fa
 
   mockFactures.unshift(newFacture);
 
+  // Notification automatique pour le Superviseur et le Responsable
+  addNotificationMock({
+    title: "Nouvelle Facture à Signer",
+    message: `La facture ${numero} (${newFacture.clientNom} - ${montantTtc.toLocaleString("fr-FR")} MAD) a été émise et requiert votre visa / signature.`,
+    type: "warning",
+    category: "PAIEMENT",
+    link: `/superviseur/factures/${newId}`,
+    targetRole: "SUPERVISEUR",
+  });
+
   return newFacture;
 }
 
@@ -220,12 +231,37 @@ export async function getFacturesByAbonnementRefMock(abonnementReference: string
   return mockFactures.filter((f) => f.abonnementReference?.trim().toUpperCase() === refClean);
 }
 
-export async function signerFactureMock(id: number): Promise<void> {
+export async function signerFactureMock(id: number, signataire?: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = mockFactures.find((f) => f.id === id);
   if (found) {
     found.statut = "SIGNEE";
-    found.signeePar = "M. Samir El Amrani (Directeur Exploitation)";
+    found.signeePar = signataire || "M. Samir El Amrani (Superviseur Exploitation)";
     found.dateSignature = formatDate(new Date().toISOString());
+
+    // Notification au Superviseur confirmant la signature
+    addNotificationMock({
+      title: "Facture Signée & Validée",
+      message: `La facture ${found.numero} (${found.clientNom}) a été validée et signée électroniquement par ${found.signeePar}.`,
+      type: "success",
+      category: "PAIEMENT",
+      link: `/superviseur/factures/${found.id}`,
+      targetRole: "SUPERVISEUR",
+    });
+  }
+}
+
+export async function notifierPourSignatureMock(id: number, demandeur?: string): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const found = mockFactures.find((f) => f.id === id);
+  if (found) {
+    addNotificationMock({
+      title: "Rappel : Signature de Facture Requise",
+      message: `${demandeur || "L'agent de guichet"} a transmis la facture ${found.numero} (${found.clientNom} - ${found.montantTtc.toLocaleString("fr-FR")} MAD) pour signature prioritaire par le Superviseur.`,
+      type: "warning",
+      category: "PAIEMENT",
+      link: `/superviseur/factures/${found.id}`,
+      targetRole: "SUPERVISEUR",
+    });
   }
 }

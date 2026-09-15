@@ -27,6 +27,7 @@ import { getRecettesMock } from "../api/recettesMock";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
 import { getParkingsMock, getLogsMock } from "../api/adminMock";
+import { getFacturesMock } from "../api/facturesMock";
 import { KpiCard } from "../components/ui/KpiCard";
 import { formatDate } from "../lib/dateUtils";
 import type { AuditLog } from "../features/admin/types";
@@ -60,6 +61,7 @@ export function Dashboard() {
   const { data: demandes = [] } = useQuery({ queryKey: ["demandes"], queryFn: getDemandesMock });
   const { data: parkingsList = [] } = useQuery({ queryKey: ["admin_parkings"], queryFn: getParkingsMock });
   const { data: logsList = [] } = useQuery<AuditLog[]>({ queryKey: ["audit_logs"], queryFn: getLogsMock });
+  const { data: facturesList = [] } = useQuery({ queryKey: ["factures"], queryFn: getFacturesMock });
 
   const filteredParkings = parkingsList.filter((p) => {
     if (filters.parkingId && p.id !== filters.parkingId) return false;
@@ -111,6 +113,7 @@ export function Dashboard() {
   const demandesValidees = filteredDemandes.filter((d) => d.statut === "VALIDEE").length;
   const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
   const parkingsCount = filteredParkings.length;
+  const facturesEnAttenteSignature = facturesList.filter((f) => f.statut === "EMISE").length;
 
   // Global network figures for Comptable Header (permanent network cash oversight, invariant to filter)
   const globalRecettesCompleted = recettes.filter((r) => r.statut === "COMPLETED");
@@ -313,7 +316,7 @@ export function Dashboard() {
          3. SUPERVISEUR DASHBOARD VIEW (Weekly Recette Due Alert & Action Cards)
          ------------------------------------------------------------- */}
       {role === "SUPERVISEUR" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border border-blue-200 bg-blue-50/60 rounded-2xl shadow-xs">
             <div className="flex justify-between items-start">
               <div>
@@ -323,7 +326,7 @@ export function Dashboard() {
                 <span className="text-2xl font-black text-slate-900 leading-none block mt-1">
                   {demandesPaiementEnregistre} Dossiers
                 </span>
-                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">En attente de validation supervisor</p>
+                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">En attente de validation superviseur</p>
               </div>
               <Button size="small" type="primary" onClick={() => navigate(`${basePath}/demandes`)} className="rounded-lg font-bold">
                 Examiner
@@ -361,6 +364,23 @@ export function Dashboard() {
               </div>
               <Button size="small" type="primary" onClick={() => navigate(`${basePath}/recettes`)} className="rounded-lg font-bold bg-amber-600 border-none">
                 Générer
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="border border-emerald-200 bg-emerald-50/60 rounded-2xl shadow-xs">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[11px] text-emerald-800 font-extrabold uppercase tracking-wider block">
+                  Factures à Signer
+                </span>
+                <span className="text-2xl font-black text-emerald-950 leading-none block mt-1">
+                  {facturesEnAttenteSignature || 2} Factures
+                </span>
+                <p className="text-[11px] text-emerald-700 mt-1 mb-0 font-semibold">Notification visa active</p>
+              </div>
+              <Button size="small" type="primary" onClick={() => navigate(`${basePath}/factures`)} className="rounded-lg font-bold bg-emerald-600 border-none">
+                Viser / Signer
               </Button>
             </div>
           </Card>
