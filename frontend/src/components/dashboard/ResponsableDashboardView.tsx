@@ -11,6 +11,10 @@ import {
   DownOutlined,
   EnvironmentOutlined,
   ReloadOutlined,
+  ScanOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -18,14 +22,38 @@ import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
 import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
 import { getConsolidatedRevenue } from "../../lib/chiffreAffairesService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getContratsMock, enregistrerScanContratMock } from "../../api/contratsMock";
+import { ScannerContratModal } from "../../features/contrats/components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../../features/contrats/components/VisualiserScanContratModal";
+import type { ContratScanInfo } from "../../features/contrats/types";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
   const { userName } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<number | null>(null);
   const [plansModalOpen, setPlansModalOpen] = useState(false);
   const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<any | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [selectedContratToScan, setSelectedContratToScan] = useState<any | null>(null);
+  const [selectedContratToView, setSelectedContratToView] = useState<any | null>(null);
+
+  const { data: contratsList = [] } = useQuery({
+    queryKey: ["contrats"],
+    queryFn: getContratsMock,
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: ({ id, scanInfo }: { id: number; scanInfo: ContratScanInfo }) =>
+      enregistrerScanContratMock(id, scanInfo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+      setSelectedContratToScan(null);
+      message.success("Contrat corporate numérisé et archivé avec succès !");
+    },
+  });
 
   const handleResetFilter = () => {
     setIsRefreshing(true);
@@ -245,9 +273,19 @@ export function ResponsableDashboardView() {
     },
   ];
 
-  const filteredContracts = selectedSiteFilter
+  const filteredContracts = (selectedSiteFilter
     ? pendingContracts.filter((c) => c.parkingId === selectedSiteFilter)
-    : pendingContracts;
+    : pendingContracts
+  ).map((c) => {
+    const matched = contratsList.find(
+      (item) => item.id === c.id || item.entrepriseNom.toLowerCase().includes(c.entrepriseNom.toLowerCase())
+    );
+    return {
+      ...c,
+      scanInfo: matched?.scanInfo,
+      matchedContratId: matched?.id || c.id,
+    };
+  });
 
   const filteredFactures = selectedSiteFilter
     ? pendingFactures.filter((f) => f.parkingId === selectedSiteFilter)
@@ -650,19 +688,65 @@ export function ResponsableDashboardView() {
                   ),
                 },
                 {
-                  title: "Action",
+                  title: "Scan Contrat",
+                  key: "scanInfo",
+                  render: (_, record: any) => {
+                    if (record.scanInfo?.scanne) {
+                      return (
+                        <Tooltip title={`Numérisé le ${record.scanInfo.dateScan} par ${record.scanInfo.scannePar}`}>
+                          <Tag
+                            color="success"
+                            icon={<CheckCircleOutlined />}
+                            style={{ cursor: "pointer", fontWeight: 600 }}
+                            onClick={() => setSelectedContratToView(record)}
+                          >
+                            Numérisé ({record.scanInfo.nombrePages}p)
+                          </Tag>
+                        </Tooltip>
+                      );
+                    }
+                    return (
+                      <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
+                        À Scanner
+                      </Tag>
+                    );
+                  },
+                },
+                {
+                  title: "Actions",
                   key: "action",
                   render: (_, record: any) => (
-                    <Button
-                      size="small"
-                      type="primary"
-                      icon={<SafetyCertificateOutlined />}
-                      onClick={() => navigate(`/responsable/contrats/${record.id}`)}
-                      style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
-                      className="rounded-lg"
-                    >
-                      Gérer Situation
-                    </Button>
+                    <Space>
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<SafetyCertificateOutlined />}
+                        onClick={() => navigate(`/responsable/contrats/${record.matchedContratId || record.id}`)}
+                        style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+                        className="rounded-lg"
+                      >
+                        Situation
+                      </Button>
+                      {record.scanInfo?.scanne ? (
+                        <Button
+                          size="small"
+                          icon={<EyeOutlined />}
+                          onClick={() => setSelectedContratToView(record)}
+                          style={{ borderColor: "#006398", color: "#006398", fontWeight: 600 }}
+                        >
+                          Scan
+                        </Button>
+                      ) : (
+                        <Button
+                          size="small"
+                          icon={<ScanOutlined />}
+                          onClick={() => setSelectedContratToScan(record)}
+                          style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", color: "#ffffff", fontWeight: 700 }}
+                        >
+                          Scanner
+                        </Button>
+                      )}
+                    </Space>
                   ),
                 },
               ]}
@@ -751,6 +835,48 @@ export function ResponsableDashboardView() {
         onClose={() => setPlansModalOpen(false)}
         parking={selectedParkingForPlans}
       />
+
+      {/* Modal Scanner Contrat Corporate */}
+      {selectedContratToScan && (
+        <ScannerContratModal
+          open={!!selectedContratToScan}
+          onClose={() => setSelectedContratToScan(null)}
+          contratReference={selectedContratToScan.reference}
+          entrepriseNom={selectedContratToScan.entrepriseNom}
+          onScanSuccess={(scanInfo: ContratScanInfo) =>
+            scanMutation.mutate({
+              id: selectedContratToScan.matchedContratId || selectedContratToScan.id,
+              scanInfo,
+            })
+          }
+        />
+      )}
+
+      {/* Modal Visualiser Scan */}
+      {selectedContratToView && (
+        <VisualiserScanContratModal
+          open={!!selectedContratToView}
+          onClose={() => setSelectedContratToView(null)}
+          contrat={{
+            id: selectedContratToView.matchedContratId || selectedContratToView.id,
+            reference: selectedContratToView.reference,
+            entrepriseNom: selectedContratToView.entrepriseNom,
+            iceEntreprise: "001234567890012",
+            parkingNom: selectedContratToView.parkingNom || "Parking Agdal Gare",
+            nombrePlaces: selectedContratToView.nombreAbonnements || 10,
+            dateDebut: selectedContratToView.dateCreation || "01/01/2026",
+            dateFin: "31/12/2045",
+            montantMensuelHT: selectedContratToView.montantMensuel || 6500,
+            montantMensuelTTC: (selectedContratToView.montantMensuel || 6500) * 1.2,
+            statut: "SIGNE",
+            vehicules: [],
+            dateSignature: "01/01/2026",
+            signePar: "Direction RRM & Représentant Entreprise",
+            referencePhysique: "PARAPH-CORP-2026",
+          }}
+          scanInfo={selectedContratToView.scanInfo}
+        />
+      )}
     </div>
   );
 }

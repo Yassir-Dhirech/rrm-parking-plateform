@@ -6,6 +6,7 @@ import type {
 } from "../features/abonnements/types";
 import { formatDate, calculerJoursRestantsAbonnement, soustraireJoursDate } from "../lib/dateUtils";
 import { reserverPlaceParkingMock } from "./adminMock";
+import { mockContrats } from "./contratsMock";
 
 export function evaluerEcheancierAbonnement(
   _reference: string,
@@ -292,6 +293,9 @@ export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetai
   const dateFin = formatDate(found?.dateFin || "15/07/2026");
   const echeancierRelance = evaluerEcheancierAbonnement(reference, dateFin);
 
+  const isCorporate = found?.type === "ENTREPRISE";
+  const matchedContrat = isCorporate ? mockContrats.find((c) => c.id === 3 || c.entrepriseNom.includes("Atlas")) : undefined;
+
   return {
     id,
     reference,
@@ -303,9 +307,12 @@ export async function getAbonnementByIdMock(id: number): Promise<AbonnementDetai
     dateFin,
     traiteParNom: found?.traiteParNom,
     dateTraitement: found?.dateTraitement,
-    vehiculeImmatriculation: "12345-A-6",
-    planTarifaireNom: found?.type === "STAFF" ? "Pass Exonéré Staff RRM" : "Voiture - 6 mois",
-    montantTotal: found?.type === "STAFF" ? 0 : 1200,
+    vehiculeImmatriculation: isCorporate ? "Flotte 10 Véhicules" : "12345-A-6",
+    planTarifaireNom: found?.type === "STAFF" ? "Pass Exonéré Staff RRM" : isCorporate ? "Pass Flotte Corporate 20 Ans" : "Voiture - 6 mois",
+    contratId: matchedContrat?.id,
+    contratReference: matchedContrat?.reference,
+    contratScanInfo: matchedContrat?.scanInfo,
+    montantTotal: found?.type === "STAFF" ? 0 : isCorporate ? 6500 : 1200,
     motifSuspension: suspendedMotifs[id] || (found?.statut === "SUSPENDU" ? "Suspension administrative" : undefined),
     echeancierRelance,
   };

@@ -1,5 +1,17 @@
 export type StatutContrat = "EN_ATTENTE_SIGNATURE" | "SIGNE" | "RESILIE" | "EXPIRE";
 
+export interface ContratScanInfo {
+  scanne: boolean;
+  dateScan?: string;
+  scannePar?: string;
+  nomFichier?: string;
+  tailleFichier?: string;
+  nombrePages?: number;
+  referenceParapheur?: string;
+  scanUrl?: string;
+  notesScan?: string;
+}
+
 export interface VehiculeContrat {
   id: number;
   immatriculation: string;
@@ -17,6 +29,7 @@ export interface ContratListItem {
   nombrePlaces: number;
   montantMensuelTTC: number;
   statut: StatutContrat;
+  scanInfo?: ContratScanInfo;
 }
 
 export interface ContratDetail extends ContratListItem {
@@ -31,4 +44,5 @@ export interface ContratDetail extends ContratListItem {
   referencePhysique?: string;
   observations?: string;
   pdfUrl?: string;
-}
+  scanInfo?: ContratScanInfo;
+}
