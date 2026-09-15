@@ -11,7 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.rrm.parking.demande.dto.response.DemandeDetailResponse;
+import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.document.repository.PieceJointeRepository;
+import org.hibernate.Hibernate;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,6 +27,9 @@ public class DemandeRechercheService {
 
     private final ClientParticulierRepository
             clientParticulierRepository;
+
+    private final PieceJointeRepository
+            pieceJointeRepository;
 
     @Transactional(readOnly = true)
     public List<DemandeRechercheResponse> rechercher(
@@ -129,6 +135,37 @@ public class DemandeRechercheService {
                 .stream()
                 .map(DemandeRechercheResponse::depuis)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DemandeDetailResponse obtenirDetail(
+            Long id
+    ) {
+        DemandeClient demande =
+                demandeClientRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Demande introuvable"
+                                )
+                        );
+
+        DemandeClient demandeReelle =
+                (DemandeClient) Hibernate.unproxy(demande);
+
+        if (!(demandeReelle
+                instanceof DemandeNouvelAbonnementRegulier reguliere)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_IMPLEMENTED,
+                    "Le détail de ce type de demande n’est pas encore disponible"
+            );
+        }
+
+        return DemandeDetailResponse.depuis(
+                reguliere,
+                pieceJointeRepository
+                        .findByDemandeIdOrderByDateDepotDesc(id)
+        );
     }
 
     private boolean estRenseignee(

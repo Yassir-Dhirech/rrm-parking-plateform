@@ -29,6 +29,8 @@ import "./RoleLayout.css";
 
 const menuIconMap: Record<string, React.ReactNode> = {
   dashboard: <DashboardOutlined />,
+  "recherche-demandes": <FileTextOutlined />,
+    paiements: <FileDoneOutlined />,
   "carte-parkings": <EnvironmentOutlined />,
   demandes: <FileTextOutlined />,
   abonnements: <SolutionOutlined />,
@@ -45,7 +47,12 @@ const menuIconMap: Record<string, React.ReactNode> = {
 export function RoleLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, userName, logout } = useAuth();
+const {
+  role,
+  userName,
+  logout,
+  hasAuthority,
+} = useAuth();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [messagerieOpen, setMessagerieOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -73,14 +80,31 @@ export function RoleLayout() {
 
   const config = roleConfig[role];
 
+  const visibleMenuItems = config.menuItems.filter(
+    (item) =>
+      !item.requiredAuthority
+      || hasAuthority(item.requiredAuthority),
+  );
+
+  const menuItems = config.menuItems.filter(
+    (item) =>
+      !item.requiredAuthority
+      || hasAuthority(item.requiredAuthority),
+  );
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const selectedKey = config.menuItems.find((item) =>
-    location.pathname.startsWith(item.path) && item.path !== config.homePath
-  )?.key ?? (location.pathname === config.homePath ? "dashboard" : undefined);
+  const selectedKey =
+    [...visibleMenuItems]
+      .sort((a, b) => b.path.length - a.path.length)
+      .find((item) =>
+        item.path === config.homePath
+          ? location.pathname === item.path
+          : location.pathname.startsWith(item.path),
+      )?.key;
 
   return (
     <div className="bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white">
@@ -200,7 +224,7 @@ export function RoleLayout() {
 
         {/* Main Navigation Items */}
         <div className="flex-1 overflow-y-auto px-3 flex flex-col gap-1 custom-scrollbar">
-          {config.menuItems.map((item) => {
+          {menuItems.map((item) => {
             const isSelected = selectedKey === item.key;
             const icon = menuIconMap[item.key] || <DashboardOutlined />;
 
@@ -303,7 +327,7 @@ export function RoleLayout() {
           </div>
 
           <div className="flex-1 overflow-y-auto flex flex-col gap-1">
-            {config.menuItems.map((item) => {
+            {menuItems.map((item) => {
               const isSelected = selectedKey === item.key;
               const icon = menuIconMap[item.key] || <DashboardOutlined />;
 
