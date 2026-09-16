@@ -21,8 +21,8 @@ public record DemandeAbonnementRegulierRequest(
 
         @NotBlank(message = "Le téléphone est obligatoire")
         @Pattern(
-                regexp = "^(?:0[67][0-9]{8}|\\+[1-9][0-9]{7,14})$",
-                message = "Le téléphone doit être un numéro marocain mobile ou un numéro international au format + indicatif"
+                regexp = "^(?:0?[67][0-9]{8}|\\+[1-9][0-9]{7,14})$",
+                message = "Le téléphone doit être un mobile marocain avec ou sans zéro initial, ou un numéro international au format + indicatif"
         )
         String telephone,
 
@@ -33,19 +33,22 @@ public record DemandeAbonnementRegulierRequest(
 
         @NotBlank(message = "Le numéro d'immatriculation est obligatoire")
         @Pattern(
-                regexp = "^[0-9]{3,6}$",
-                message = "Le numéro d'immatriculation doit contenir entre 3 et 6 chiffres"
+                regexp = "^[0-9]{3,7}$",
+                message = "Le numéro d'immatriculation doit contenir entre 3 et 7 chiffres"
         )
         String numeroImmatriculation,
 
         @NotBlank(message = "La série d'immatriculation est obligatoire")
-        @Size(max = 5)
+        @Pattern(
+                regexp = "^\\p{L}$",
+                message = "La série d'immatriculation doit contenir une seule lettre"
+        )
         String serieImmatriculation,
 
         @NotBlank(message = "Le code région est obligatoire")
         @Pattern(
-                regexp = "^[0-9]{1,3}$",
-                message = "Le code région doit contenir entre 1 et 3 chiffres"
+                regexp = "^[0-9]{1,2}$",
+                message = "Le code région doit contenir entre 1 et 2 chiffres"
         )
         String codeRegion,
 

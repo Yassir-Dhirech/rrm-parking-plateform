@@ -18,6 +18,10 @@ import {
 } from "antd";
 import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import {
+  isValidMoroccanPlate,
+  parseMoroccanPlate,
+} from "../../../lib/moroccanPlate";
+import {
   PlusCircleOutlined,
   SyncOutlined,
   SwapOutlined,
@@ -55,6 +59,18 @@ import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCar
 const { Option } = Select;
 
 type TypeDemande = "NEW" | "RENEW" | "TRANSFER" | "DUPLICATE" | "CORPORATE";
+
+const PHONE_PATTERN = /^(?:0?[67][0-9]{8}|\+[1-9][0-9]{7,14})$/;
+const PHONE_RULES = [
+  { required: true, message: "Le téléphone est requis." },
+  {
+    pattern: PHONE_PATTERN,
+    message: "Saisissez 0615914461, 615914461 ou un numéro international (+indicatif).",
+  },
+];
+
+const normalizePhoneInput = (value?: string) =>
+  value?.replace(/[\s.()-]/g, "");
 
 // Custom Scan Upload Cadre with File Attached State
 interface ScanUploadFieldProps {
@@ -537,16 +553,6 @@ const {
     return null;
   };
 
-  const parsePlate = (plateStr: string) => {
-    if (!plateStr) return { numeroImmatriculation: "", serieImmatriculation: "A", codeRegion: "1" };
-    const parts = plateStr.split(/\s*[|-]\s*/).map((s) => s.trim());
-    return {
-      numeroImmatriculation: parts[0] || "",
-      serieImmatriculation: parts[1] || "A",
-      codeRegion: parts[2] || "1",
-    };
-  };
-
   const handleNextToOtp = async () => {
     try {
       const values = await form.validateFields();
@@ -575,7 +581,7 @@ const {
           return;
         }
 
-        const plateObj = parsePlate(consolidated.immatriculation);
+        const plateObj = parseMoroccanPlate(consolidated.immatriculation);
 
         const tarifParkingId = Number(
           consolidated.tarifParkingId
@@ -1123,7 +1129,8 @@ const {
                           <Form.Item
                             name="telephone"
                             label="Téléphone Professionnel"
-                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                            rules={PHONE_RULES}
+                            normalize={normalizePhoneInput}
                           >
                             <Input placeholder="06 61 00 00 00" className="rounded-xl py-2" />
                           </Form.Item>
@@ -1343,7 +1350,8 @@ const {
                           <Form.Item
                             name="telephone"
                             label="Numéro de Téléphone Mobile"
-                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                            rules={PHONE_RULES}
+                            normalize={normalizePhoneInput}
                           >
                             <Input placeholder="0661234567" className="rounded-xl py-2" />
                           </Form.Item>
@@ -1450,7 +1458,19 @@ const {
                           <Form.Item
                             name="immatriculation"
                             label="Matricule du Véhicule (Plaque Marocaine LPR)"
-                            rules={[{ required: true, message: "L'immatriculation est requise." }]}
+                            rules={[
+                              { required: true, message: "L'immatriculation est requise." },
+                              {
+                                validator: (_, value) =>
+                                  isValidMoroccanPlate(value)
+                                    ? Promise.resolve()
+                                    : Promise.reject(
+                                        new Error(
+                                          "Le matricule doit contenir 3 à 7 chiffres, une lettre et un code ville de 1 à 2 chiffres."
+                                        )
+                                      ),
+                              },
+                            ]}
                           >
                             <MoroccanPlateInput />
                           </Form.Item>

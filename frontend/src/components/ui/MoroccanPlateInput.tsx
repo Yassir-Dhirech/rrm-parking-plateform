@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { Input, Select } from "antd";
+import { parseMoroccanPlate } from "../../lib/moroccanPlate";
 
 export const MOROCCAN_PLATE_LETTERS = [
-  { value: "أ (A)", label: "أ — Series A" },
-  { value: "ب (B)", label: "ب — Series B" },
-  { value: "د (D)", label: "د — Series D" },
-  { value: "هـ (H)", label: "هـ — Series H" },
-  { value: "و (W)", label: "و — Series W" },
-  { value: "ز (Z)", label: "ز — Series Z" },
-  { value: "ح (H)", label: "ح — Series H" },
-  { value: "ط (T)", label: "ط — Series T" },
-  { value: "ي (Y)", label: "ي — Series Y" },
-  { value: "ك (K)", label: "ك — Series K" },
-  { value: "ل (L)", label: "ل — Series L" },
-  { value: "م (M)", label: "م — Series M" },
-  { value: "ن (N)", label: "ن — Series N" },
-  { value: "ص (S)", label: "ص — Series S" },
-  { value: "ع (E)", label: "ع — Series E" },
-  { value: "ف (F)", label: "ف — Series F" },
-  { value: "ق (Q)", label: "ق — Series Q" },
-  { value: "ر (R)", label: "ر — Series R" },
-  { value: "ش (CH)", label: "ش — Series CH" },
+  { value: "أ", label: "أ — Série A" },
+  { value: "ب", label: "ب — Série B" },
+  { value: "د", label: "د — Série D" },
+  { value: "ه", label: "ه — Série H" },
+  { value: "و", label: "و — Série W" },
+  { value: "ز", label: "ز — Série Z" },
+  { value: "ح", label: "ح — Série H" },
+  { value: "ط", label: "ط — Série T" },
+  { value: "ي", label: "ي — Série Y" },
+  { value: "ك", label: "ك — Série K" },
+  { value: "ل", label: "ل — Série L" },
+  { value: "م", label: "م — Série M" },
+  { value: "ن", label: "ن — Série N" },
+  { value: "ص", label: "ص — Série S" },
+  { value: "ع", label: "ع — Série E" },
+  { value: "ف", label: "ف — Série F" },
+  { value: "ق", label: "ق — Série Q" },
+  { value: "ر", label: "ر — Série R" },
+  { value: "ش", label: "ش — Série CH" },
 ];
 
 interface MoroccanPlateInputProps {
@@ -34,14 +35,12 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
   onChange,
   disabled = false,
 }) => {
-  // Parse initial value "12345 | أ (A) | 1" or "12345 | A | 1"
   const parseValue = (val: string) => {
-    if (!val) return { num: "", letter: "أ (A)", region: "1" };
-    const parts = val.split("|").map((s) => s.trim());
+    const parsed = parseMoroccanPlate(val);
     return {
-      num: parts[0] || "",
-      letter: parts[1] || "أ (A)",
-      region: parts[2] || "1",
+      num: parsed.numeroImmatriculation,
+      letter: parsed.serieImmatriculation || "أ",
+      region: parsed.codeRegion || "1",
     };
   };
 
@@ -58,14 +57,14 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
   }, [value]);
 
   const updatePlate = (n: string, l: string, r: string) => {
-    const formatted = `${n || "12345"} | ${l || "أ (A)"} | ${r || "1"}`;
+    const formatted = `${n} | ${l || "أ"} | ${r}`;
     if (onChange) {
       onChange(formatted);
     }
   };
 
   const handleNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, ""); // digits only
+    const val = e.target.value.replace(/\D/g, "").slice(0, 7);
     setNumPart(val);
     updatePlate(val, letterPart, regionPart);
   };
@@ -76,7 +75,7 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
   };
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, "").slice(0, 3); // max 3 digits
+    const val = e.target.value.replace(/\D/g, "").slice(0, 2);
     setRegionPart(val);
     updatePlate(numPart, letterPart, val);
   };
@@ -92,7 +91,7 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
           </label>
           <Input
             placeholder="Ex: 12345"
-            maxLength={6}
+            maxLength={7}
             value={numPart}
             onChange={handleNumChange}
             disabled={disabled}
@@ -114,14 +113,14 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
           />
         </div>
 
-        {/* Case 3: Code Région (Max 3 chiffres) */}
+        {/* Case 3: Code Région (1 à 2 chiffres) */}
         <div className="col-span-3">
           <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
-            3. Région (&le; 3)
+            3. Région (1–2)
           </label>
           <Input
             placeholder="1"
-            maxLength={3}
+            maxLength={2}
             value={regionPart}
             onChange={handleRegionChange}
             disabled={disabled}
@@ -139,7 +138,7 @@ export const MoroccanPlateInput: React.FC<MoroccanPlateInputProps> = ({
         <div className="font-extrabold text-sm tracking-widest space-x-2 text-slate-900">
           <span>{numPart || "12345"}</span>
           <span className="text-secondary font-black">|</span>
-          <span>{letterPart || "أ (A)"}</span>
+          <span>{letterPart || "أ"}</span>
           <span className="text-secondary font-black">|</span>
           <span>{regionPart || "1"}</span>
         </div>
