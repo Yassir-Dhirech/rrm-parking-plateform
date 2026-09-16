@@ -1,4 +1,4 @@
-parkingCode;forfaitCode;libelle;placeReservee;prixMensuelHT
+parkingCode;forfaitCode;libelle;placeReservee;prixMensuelTTC
 BAB_EL_HAD;NUIT_5J_20H_08H;Nuit 5j/7 hors week-end 20h-08h;false;300.00
 BAB_EL_HAD;NUIT_7J_20H_08H;Nuit 7j/7 20h-08h;false;350.00
 BAB_EL_HAD;NUIT_5J_WE_24H;Nuit 5j/7 20h-08h et week-end 24h/24;false;450.00

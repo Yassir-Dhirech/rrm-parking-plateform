@@ -60,8 +60,9 @@ export async function getPublicParkings(): Promise<Parking[]> {
  * Parkings affichés dans la liste de choix
  * du formulaire d'abonnement.
  *
- * Retourne uniquement les parkings actifs
- * ayant des places d'abonnement disponibles.
+ * Retourne tous les parkings actifs.
+ * Le frontend laisse les parkings complets visibles,
+ * mais empêche leur sélection.
  */
 export async function getParkingsDisponiblesAbonnement(): Promise<Parking[]> {
   const response = await client.get<Parking[]>(

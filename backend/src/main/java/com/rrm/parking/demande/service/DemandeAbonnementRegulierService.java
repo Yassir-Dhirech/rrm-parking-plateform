@@ -394,7 +394,11 @@ public class DemandeAbonnementRegulierService {
                 .trim()
                 .replaceAll("[\\s.()-]", "");
 
-        if (valeur.startsWith("0")) {
+        if (valeur.matches("^[67][0-9]{8}$")) {
+            return "+212" + valeur;
+        }
+
+        if (valeur.matches("^0[67][0-9]{8}$")) {
             return "+212" + valeur.substring(1);
         }
 

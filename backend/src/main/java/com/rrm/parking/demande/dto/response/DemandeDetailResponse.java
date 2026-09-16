@@ -11,6 +11,7 @@ import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.entity.Forfait;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import com.rrm.parking.vehicule.entity.Vehicule;
 import com.rrm.parking.vehicule.enums.TypeVehicule;
 import org.hibernate.Hibernate;
@@ -56,6 +57,8 @@ public record DemandeDetailResponse(
         BigDecimal prixHT,
         BigDecimal tauxTVA,
         BigDecimal montantAbonnementTTC,
+        BigDecimal fraisCarteTTC,
+        BigDecimal montantTotalTTC,
         ModePaiement modePaiementSouhaite,
 
         List<PieceJointeInfo> piecesJointes
@@ -75,6 +78,8 @@ public record DemandeDetailResponse(
         TarifParking tarif = demande.getTarifParking();
         Parking parking = tarif.getParking();
         Forfait forfait = tarif.getForfait();
+        DecompteNouvelAbonnement decompte =
+                DecompteNouvelAbonnement.depuis(tarif);
 
         return new DemandeDetailResponse(
                 demande.getId(),
@@ -111,7 +116,9 @@ public record DemandeDetailResponse(
                 tarif.getDureeEnMois(),
                 tarif.getPrixHT(),
                 tarif.getTauxTVA(),
-                tarif.calculerMontantTotalTTC(),
+                decompte.montantAbonnementTTC(),
+                decompte.fraisCarteTTC(),
+                decompte.montantTotalTTC(),
                 demande.getModePaiementSouhaite(),
 
                 pieces.stream()

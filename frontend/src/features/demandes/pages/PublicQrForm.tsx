@@ -18,6 +18,10 @@ import {
 } from "antd";
 import { MoroccanPlateInput } from "../../../components/ui/MoroccanPlateInput";
 import {
+  isValidMoroccanPlate,
+  parseMoroccanPlate,
+} from "../../../lib/moroccanPlate";
+import {
   PlusCircleOutlined,
   SyncOutlined,
   SwapOutlined,
@@ -55,6 +59,18 @@ import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCar
 const { Option } = Select;
 
 type TypeDemande = "NEW" | "RENEW" | "TRANSFER" | "DUPLICATE" | "CORPORATE";
+
+const PHONE_PATTERN = /^(?:0?[67][0-9]{8}|\+[1-9][0-9]{7,14})$/;
+const PHONE_RULES = [
+  { required: true, message: "Le téléphone est requis." },
+  {
+    pattern: PHONE_PATTERN,
+    message: "Saisissez 0615914461, 615914461 ou un numéro international (+indicatif).",
+  },
+];
+
+const normalizePhoneInput = (value?: string) =>
+  value?.replace(/[\s.()-]/g, "");
 
 // Custom Scan Upload Cadre with File Attached State
 interface ScanUploadFieldProps {
@@ -182,6 +198,7 @@ export function PublicQrForm() {
   const watchedParkingId = Form.useWatch("parkingId", form);
   const watchedFormuleCode = Form.useWatch("formuleCode", form);
   const watchedDureeMois = Form.useWatch("dureeMois", form);
+  const watchedTarifParkingId = Form.useWatch("tarifParkingId", form);
   const watchedModePaiement = Form.useWatch("modePaiement", form);
   const watchedCanalOtp = Form.useWatch("canalOtp", form);
 
@@ -201,8 +218,8 @@ export function PublicQrForm() {
     nomContact: "",
     canalOtp: "EMAIL",
     parkingId: undefined,
-    formuleCode: "24H7J",
-    dureeMois: 3,
+    formuleCode: undefined,
+    dureeMois: undefined,
     modePaiement: "ESPECE",
   });
 
@@ -215,6 +232,10 @@ export function PublicQrForm() {
       parkingId: watchedParkingId || formValues.parkingId || raw.parkingId,
       formuleCode: watchedFormuleCode || formValues.formuleCode || raw.formuleCode,
       dureeMois: watchedDureeMois || formValues.dureeMois || raw.dureeMois,
+      tarifParkingId:
+        watchedTarifParkingId ??
+        formValues.tarifParkingId ??
+        raw.tarifParkingId,
       modePaiement: watchedModePaiement || formValues.modePaiement || raw.modePaiement,
       canalOtp:
         watchedCanalOtp ||
@@ -222,7 +243,7 @@ export function PublicQrForm() {
         raw.canalOtp ||
         "EMAIL",
     };
-  }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedModePaiement]);
+  }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedTarifParkingId, watchedModePaiement]);
 
 
 
@@ -231,10 +252,7 @@ export function PublicQrForm() {
     queryFn: getParkingsDisponiblesAbonnement,
   });
 
-const parkingIdSelectionne =
-  typeof watchedParkingId === "number"
-    ? watchedParkingId
-    : Number(watchedParkingId);
+const parkingIdSelectionne = Number(recapData.parkingId);
 
 const {
   data: tarifsParking = [],
@@ -247,6 +265,37 @@ const {
     parkingIdSelectionne > 0 &&
     typeDemande === "NEW",
 });
+
+  const forfaitsDisponibles = useMemo(() => {
+    const forfaitsUniques = new Map<
+      string,
+      { code: string; libelle: string }
+    >();
+
+    tarifsParking.forEach((tarif) => {
+      if (!forfaitsUniques.has(tarif.forfaitCode)) {
+        forfaitsUniques.set(tarif.forfaitCode, {
+          code: tarif.forfaitCode,
+          libelle: tarif.forfaitLibelle,
+        });
+      }
+    });
+
+    return Array.from(forfaitsUniques.values());
+  }, [tarifsParking]);
+
+  const dureesDisponibles = useMemo(
+    () =>
+      tarifsParking
+        .filter((tarif) => tarif.forfaitCode === watchedFormuleCode)
+        .sort((premier, second) => premier.dureeEnMois - second.dureeEnMois),
+    [tarifsParking, watchedFormuleCode]
+  );
+
+  const tarifSelectionne = tarifsParking.find(
+    (tarif) =>
+      tarif.tarifParkingId === Number(recapData.tarifParkingId)
+  );
 
 
 
@@ -393,7 +442,12 @@ const {
   const handleValidateParkingAndGoToRecap = async () => {
     try {
       if (typeDemande === "NEW") {
-        await form.validateFields(["parkingId", "tarifParkingId"]);
+        await form.validateFields([
+          "parkingId",
+          "formuleCode",
+          "dureeMois",
+          "tarifParkingId",
+        ]);
         const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
         if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
           message.error("Veuillez sélectionner un parking, une formule et une durée.");
@@ -457,10 +511,20 @@ const {
 
   const parkingIdRecapitulatif = Number(recapData.parkingId || watchedParkingId);
   const selectedParking = parkings.find((p: any) => p.id === parkingIdRecapitulatif);
-  const selectedParkingName = selectedParking?.nom || "Parking Agdal Gare (Rabat)";
-  const totalMonths = typeDemande === "CORPORATE" ? 240 : (recapData.dureeMois || watchedDureeMois || 3);
+  const selectedParkingName = selectedParking?.nom || "Non sélectionné";
+  const totalMonths =
+    typeDemande === "CORPORATE"
+      ? 240
+      : typeDemande === "NEW"
+        ? tarifSelectionne?.dureeEnMois || 0
+        : recapData.dureeMois || watchedDureeMois || 3;
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
-  const baseAbonnementPrice = typeDemande === "DUPLICATE" ? 0 : getMonthlyPrice() * totalMonths * cardMultiplier;
+  const baseAbonnementPrice =
+    typeDemande === "DUPLICATE"
+      ? 0
+      : typeDemande === "NEW"
+        ? tarifSelectionne?.montantTotalTTC || 0
+        : getMonthlyPrice() * totalMonths * cardMultiplier;
 
   // RRM Business Rule:
   // - New subscriber (NEW / CORPORATE): requires new RFID card(s) => +50 DH per card
@@ -537,16 +601,6 @@ const {
     return null;
   };
 
-  const parsePlate = (plateStr: string) => {
-    if (!plateStr) return { numeroImmatriculation: "", serieImmatriculation: "A", codeRegion: "1" };
-    const parts = plateStr.split(/\s*[|-]\s*/).map((s) => s.trim());
-    return {
-      numeroImmatriculation: parts[0] || "",
-      serieImmatriculation: parts[1] || "A",
-      codeRegion: parts[2] || "1",
-    };
-  };
-
   const handleNextToOtp = async () => {
     try {
       const values = await form.validateFields();
@@ -575,7 +629,7 @@ const {
           return;
         }
 
-        const plateObj = parsePlate(consolidated.immatriculation);
+        const plateObj = parseMoroccanPlate(consolidated.immatriculation);
 
         const tarifParkingId = Number(
           consolidated.tarifParkingId
@@ -1123,7 +1177,8 @@ const {
                           <Form.Item
                             name="telephone"
                             label="Téléphone Professionnel"
-                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                            rules={PHONE_RULES}
+                            normalize={normalizePhoneInput}
                           >
                             <Input placeholder="06 61 00 00 00" className="rounded-xl py-2" />
                           </Form.Item>
@@ -1343,7 +1398,8 @@ const {
                           <Form.Item
                             name="telephone"
                             label="Numéro de Téléphone Mobile"
-                            rules={[{ required: true, message: "Le téléphone est requis." }]}
+                            rules={PHONE_RULES}
+                            normalize={normalizePhoneInput}
                           >
                             <Input placeholder="0661234567" className="rounded-xl py-2" />
                           </Form.Item>
@@ -1450,7 +1506,19 @@ const {
                           <Form.Item
                             name="immatriculation"
                             label="Matricule du Véhicule (Plaque Marocaine LPR)"
-                            rules={[{ required: true, message: "L'immatriculation est requise." }]}
+                            rules={[
+                              { required: true, message: "L'immatriculation est requise." },
+                              {
+                                validator: (_, value) =>
+                                  isValidMoroccanPlate(value)
+                                    ? Promise.resolve()
+                                    : Promise.reject(
+                                        new Error(
+                                          "Le matricule doit contenir 3 à 7 chiffres, une lettre et un code ville de 1 à 2 chiffres."
+                                        )
+                                      ),
+                              },
+                            ]}
                           >
                             <MoroccanPlateInput />
                           </Form.Item>
@@ -1543,71 +1611,148 @@ const {
                 label="Sélectionnez le Parking Souhaité à Rabat"
                 rules={[{ required: true, message: "Veuillez choisir un parking." }]}
               >
-                <Select placeholder="Choisir un ouvrage..." size="large" className="rounded-xl">
-                  {parkings.map((parking) => (
-                    <Option key={parking.id} value={parking.id}>
-                      {parking.nom} — {parking.placesDisponiblesAbonnements} places disponibles
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="tarifParkingId"
-                label="Formule et durée de l'abonnement"
-                rules={[
-                  {
-                    required: true,
-                    message: "Veuillez sélectionner une formule et une durée.",
-                  },
-                ]}
-              >
                 <Select
-                  placeholder={
-                    parkingIdSelectionne > 0
-                      ? "Choisir une formule et une durée..."
-                      : "Sélectionnez d'abord un parking"
-                  }
+                  placeholder="Choisir un ouvrage..."
                   size="large"
                   className="rounded-xl"
-                  loading={chargementTarifs}
-                  disabled={!parkingIdSelectionne || chargementTarifs}
-                  onChange={(tarifParkingId: number) => {
-                    const tarifSelectionne = tarifsParking.find(
-                      (tarif) =>
-                        tarif.tarifParkingId === tarifParkingId
-                    );
-
-                    if (!tarifSelectionne) {
-                      return;
-                    }
-
+                  onChange={(parkingId: number) => {
                     form.setFieldsValue({
-                      formuleCode: tarifSelectionne.forfaitCode,
-                      dureeMois: tarifSelectionne.dureeEnMois,
+                      tarifParkingId: undefined,
+                      formuleCode: undefined,
+                      dureeMois: undefined,
                     });
 
                     setFormValues((precedentes: any) => ({
                       ...precedentes,
-                      tarifParkingId,
-                      formuleCode: tarifSelectionne.forfaitCode,
-                      dureeMois: tarifSelectionne.dureeEnMois,
+                      parkingId,
+                      tarifParkingId: undefined,
+                      formuleCode: undefined,
+                      dureeMois: undefined,
                     }));
                   }}
                 >
-                  {tarifsParking.map((tarif) => (
+                  {parkings.map((parking) => (
                     <Option
-                      key={tarif.tarifParkingId}
-                      value={tarif.tarifParkingId}
+                      key={parking.id}
+                      value={parking.id}
+                      disabled={!parking.souscriptionDisponible}
                     >
-                      {tarif.forfaitLibelle} — {tarif.dureeEnMois} mois —
-                      {" "}{tarif.montantTotalTTC} DH TTC
+                      {parking.nom}
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
 
-              {typeDemande === "CORPORATE" ? (
+              {typeDemande === "NEW" ? (
+                <>
+                  <Form.Item
+                    name="tarifParkingId"
+                    hidden
+                    rules={[
+                      {
+                        required: true,
+                        message: "Veuillez sélectionner une formule et une durée.",
+                      },
+                    ]}
+                  >
+                    <Input />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="formuleCode"
+                    label="Forfait d'abonnement"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Veuillez sélectionner un forfait.",
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder={
+                        parkingIdSelectionne > 0
+                          ? "Choisir un forfait..."
+                          : "Sélectionnez d'abord un parking"
+                      }
+                      size="large"
+                      className="rounded-xl"
+                      loading={chargementTarifs}
+                      disabled={!parkingIdSelectionne || chargementTarifs}
+                      onChange={(formuleCode: string) => {
+                        form.setFieldsValue({
+                          dureeMois: undefined,
+                          tarifParkingId: undefined,
+                        });
+
+                        setFormValues((precedentes: any) => ({
+                          ...precedentes,
+                          formuleCode,
+                          dureeMois: undefined,
+                          tarifParkingId: undefined,
+                        }));
+                      }}
+                    >
+                      {forfaitsDisponibles.map((forfait) => (
+                        <Option key={forfait.code} value={forfait.code}>
+                          {forfait.libelle}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="dureeMois"
+                    label="Durée de l'abonnement"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Veuillez sélectionner une durée.",
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder={
+                        watchedFormuleCode
+                          ? "Choisir une durée..."
+                          : "Sélectionnez d'abord un forfait"
+                      }
+                      size="large"
+                      className="rounded-xl"
+                      disabled={!watchedFormuleCode || chargementTarifs}
+                      onChange={(dureeMois: number) => {
+                        const tarif = dureesDisponibles.find(
+                          (option) => option.dureeEnMois === dureeMois
+                        );
+
+                        if (!tarif) {
+                          form.setFieldValue("tarifParkingId", undefined);
+                          return;
+                        }
+
+                        form.setFieldValue(
+                          "tarifParkingId",
+                          tarif.tarifParkingId
+                        );
+
+                        setFormValues((precedentes: any) => ({
+                          ...precedentes,
+                          dureeMois,
+                          tarifParkingId: tarif.tarifParkingId,
+                        }));
+                      }}
+                    >
+                      {dureesDisponibles.map((tarif) => (
+                        <Option
+                          key={tarif.tarifParkingId}
+                          value={tarif.dureeEnMois}
+                        >
+                          {tarif.dureeEnMois} mois — {tarif.montantTotalTTC} DH TTC
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </>
+              ) : typeDemande === "CORPORATE" ? (
                 <div className="max-w-[260px]">
                   <Form.Item
                     name="dureeMois"
@@ -1729,7 +1874,7 @@ const {
                 className={`p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
                   totalFraisCarte > 0 ? "bg-amber-50/90 border-amber-200" : "bg-emerald-50/90 border-emerald-200"
                 }`}
-              >formuleCode
+              >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${
@@ -1949,7 +2094,9 @@ const {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
                       <span className="text-slate-600 font-semibold">Formule Souscrite :</span>
                       <strong className="text-slate-900 text-sm">
-                        {getFormuleLabel(recapData.formuleCode || watchedFormuleCode || "24H7J")}
+                        {typeDemande === "NEW"
+                          ? tarifSelectionne?.forfaitLibelle || "Non sélectionnée"
+                          : getFormuleLabel(recapData.formuleCode || watchedFormuleCode || "24H7J")}
                       </strong>
                     </div>
 

@@ -58,13 +58,7 @@ public class ParkingPublicService {
 
         return construireReponses(
                 EnumSet.of(StatutParking.ACTIF)
-        )
-                .stream()
-                .filter(
-                        ParkingPublicResponse
-                                ::souscriptionDisponible
-                )
-                .toList();
+        );
     }
 
     @Transactional(readOnly = true)
