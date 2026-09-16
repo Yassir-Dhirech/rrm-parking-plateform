@@ -1,6 +1,7 @@
 package com.rrm.parking.paiement.dto.response;
 
 import com.rrm.parking.demande.enums.StatutDemande;
+import com.rrm.parking.facturation.entity.Recu;
 import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
@@ -26,12 +27,17 @@ public record EnregistrementPaiementResponse(
 
         StatutDemande statutDemande,
 
-        LocalDateTime dateConfirmation
+        LocalDateTime dateConfirmation,
+
+        Long recuId,
+
+        String numeroRecu
 
 ) {
 
     public static EnregistrementPaiementResponse depuis(
-            Paiement paiement
+            Paiement paiement,
+            Recu recu
     ) {
         return new EnregistrementPaiementResponse(
                 paiement.getId(),
@@ -42,7 +48,9 @@ public record EnregistrementPaiementResponse(
                 paiement.getModePaiement(),
                 paiement.getStatut(),
                 paiement.getDemande().getStatut(),
-                paiement.getDateConfirmation()
+                paiement.getDateConfirmation(),
+                recu.getId(),
+                recu.getNumero()
         );
     }
 }

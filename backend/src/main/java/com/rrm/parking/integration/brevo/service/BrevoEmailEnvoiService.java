@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -30,21 +31,85 @@ public class BrevoEmailEnvoiService
             String sujet,
             String contenuHtml
     ) {
-        BrevoEmailRequest requete =
-                new BrevoEmailRequest(
-                        new Expediteur(
-                                properties.senderName(),
-                                properties.senderEmail()
-                        ),
-                        List.of(
-                                new Destinataire(
-                                        destinataire,
-                                        nomDestinataire
-                                )
-                        ),
+        envoyerRequete(
+                creerRequete(
+                        destinataire,
+                        nomDestinataire,
                         sujet,
-                        contenuHtml
-                );
+                        contenuHtml,
+                        null
+                )
+        );
+    }
+
+    @Override
+    public void envoyerAvecPieceJointe(
+            String destinataire,
+            String nomDestinataire,
+            String sujet,
+            String contenuHtml,
+            byte[] contenuPieceJointe,
+            String nomPieceJointe
+    ) {
+        if (contenuPieceJointe == null
+                || contenuPieceJointe.length == 0) {
+            throw new IllegalArgumentException(
+                    "La pièce jointe est vide"
+            );
+        }
+
+        if (nomPieceJointe == null
+                || nomPieceJointe.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Le nom de la pièce jointe est obligatoire"
+            );
+        }
+
+        PieceJointe pieceJointe = new PieceJointe(
+                Base64.getEncoder().encodeToString(
+                        contenuPieceJointe
+                ),
+                nomPieceJointe
+        );
+
+        envoyerRequete(
+                creerRequete(
+                        destinataire,
+                        nomDestinataire,
+                        sujet,
+                        contenuHtml,
+                        List.of(pieceJointe)
+                )
+        );
+    }
+
+    private BrevoEmailRequest creerRequete(
+            String destinataire,
+            String nomDestinataire,
+            String sujet,
+            String contenuHtml,
+            List<PieceJointe> piecesJointes
+    ) {
+        return new BrevoEmailRequest(
+                new Expediteur(
+                        properties.senderName(),
+                        properties.senderEmail()
+                ),
+                List.of(
+                        new Destinataire(
+                                destinataire,
+                                nomDestinataire
+                        )
+                ),
+                sujet,
+                contenuHtml,
+                piecesJointes
+        );
+    }
+
+    private void envoyerRequete(
+            BrevoEmailRequest requete
+    ) {
 
         try {
             brevoRestClient
@@ -67,7 +132,8 @@ public class BrevoEmailEnvoiService
             Expediteur sender,
             List<Destinataire> to,
             String subject,
-            String htmlContent
+            String htmlContent,
+            List<PieceJointe> attachment
     ) {
     }
 
@@ -79,6 +145,12 @@ public class BrevoEmailEnvoiService
 
     private record Destinataire(
             String email,
+            String name
+    ) {
+    }
+
+    private record PieceJointe(
+            String content,
             String name
     ) {
     }

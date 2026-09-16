@@ -6,16 +6,20 @@ import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
+import com.rrm.parking.facturation.entity.Recu;
+import com.rrm.parking.facturation.repository.RecuRepository;
 import com.rrm.parking.paiement.dto.request.EnregistrementPaiementRequest;
 import com.rrm.parking.paiement.dto.response.EnregistrementPaiementResponse;
 import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
+import com.rrm.parking.paiement.event.PaiementConfirmeEvent;
 import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,8 @@ public class PaiementService {
     private final PaiementRepository paiementRepository;
     private final DemandeClientRepository demandeClientRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final RecuRepository recuRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public EnregistrementPaiementResponse enregistrer(
@@ -102,8 +108,20 @@ public class PaiementService {
         Paiement paiementEnregistre =
                 paiementRepository.save(paiement);
 
+        Recu recu = recuRepository.save(
+                new Recu(
+                        genererNumeroRecu(),
+                        paiementEnregistre
+                )
+        );
+
+        eventPublisher.publishEvent(
+                new PaiementConfirmeEvent(recu.getId())
+        );
+
         return EnregistrementPaiementResponse.depuis(
-                paiementEnregistre
+                paiementEnregistre,
+                recu
         );
     }
 
@@ -175,5 +193,25 @@ public class PaiementService {
         } while (paiementRepository.existsByReference(reference));
 
         return reference;
+    }
+
+    private String genererNumeroRecu() {
+        String date = LocalDate.now().format(
+                DateTimeFormatter.BASIC_ISO_DATE
+        );
+
+        String numero;
+
+        do {
+            numero = "REC-"
+                    + date
+                    + "-"
+                    + UUID.randomUUID()
+                    .toString()
+                    .substring(0, 8)
+                    .toUpperCase(Locale.ROOT);
+        } while (recuRepository.existsByNumero(numero));
+
+        return numero;
     }
 }
