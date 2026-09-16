@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -34,7 +35,9 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { formatDate } from "../../../lib/dateUtils";
 import { roleConfig } from "../../../lib/roleConfig";
+import { PaiementModal } from "../components/PaiementModal";
 import type {
+  EnregistrementPaiementResponse,
   PieceJointeDetailResponse,
   TypePieceJointe,
 } from "../types";
@@ -256,7 +259,11 @@ function DocumentCard({
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, hasAuthority } = useAuth();
+  const queryClient = useQueryClient();
+  const [paiementOuvert, setPaiementOuvert] = useState(false);
+  const [paiementEnregistre, setPaiementEnregistre] =
+    useState<EnregistrementPaiementResponse | null>(null);
 
   const demandeId = Number(id);
   const idValide =
@@ -370,6 +377,26 @@ export function DemandeDetail() {
       (piece) => piece.typePiece === typePiece
     );
 
+  const peutEnregistrerPaiement =
+    data.statut === "EN_ATTENTE_PAIEMENT" &&
+    hasAuthority("PAIEMENT_ENREGISTRER");
+
+  const traiterPaiementEnregistre = async (
+    paiement: EnregistrementPaiementResponse
+  ) => {
+    setPaiementEnregistre(paiement);
+    setPaiementOuvert(false);
+
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["demande-detail", demandeId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["demandes", "en-attente-paiement"],
+      }),
+    ]);
+  };
+
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto" }}>
       <Button
@@ -442,6 +469,16 @@ export function DemandeDetail() {
             showIcon
             message="Motif du refus"
             description={data.motifRefus}
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        {paiementEnregistre && (
+          <Alert
+            type="success"
+            showIcon
+            message="Paiement enregistré"
+            description={`Paiement ${paiementEnregistre.reference} confirmé pour ${formaterMontant(paiementEnregistre.montant)} MAD.`}
             style={{ marginBottom: 20 }}
           />
         )}
@@ -673,18 +710,53 @@ export function DemandeDetail() {
           </Image.PreviewGroup>
         </Card>
 
-        <Alert
-          type="info"
-          showIcon
-          message="Consultation du dossier"
-          description={
-            <>
-              Cette page affiche uniquement les données réelles du
-              backend. Les actions de paiement, validation et refus
-              seront activées lorsque leurs endpoints backend seront
-              disponibles.
-            </>
-          }
+        {peutEnregistrerPaiement ? (
+          <Card
+            size="small"
+            title="Action de paiement"
+            style={{ borderColor: "#86efac" }}
+          >
+            <Space
+              direction="vertical"
+              size="middle"
+              style={{ width: "100%" }}
+            >
+              <Alert
+                type="info"
+                showIcon
+                message={`Mode prévu : ${data.modePaiementSouhaite}`}
+                description={`Montant à encaisser : ${formaterMontant(data.montantAbonnementTTC)} MAD`}
+              />
+
+              <Button
+                type="primary"
+                icon={<DollarOutlined />}
+                onClick={() => setPaiementOuvert(true)}
+              >
+                Enregistrer le paiement
+              </Button>
+            </Space>
+          </Card>
+        ) : (
+          <Alert
+            type="info"
+            showIcon
+            message="Consultation du dossier"
+            description={
+              paiementTermine
+                ? "Le paiement de cette demande a déjà été enregistré."
+                : "Aucune action de paiement n’est disponible pour votre profil ou pour le statut actuel."
+            }
+          />
+        )}
+
+        <PaiementModal
+          demande={data}
+          ouvert={paiementOuvert}
+          onFermer={() => setPaiementOuvert(false)}
+          onSucces={(paiement) => {
+            void traiterPaiementEnregistre(paiement);
+          }}
         />
       </Card>
     </div>

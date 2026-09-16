@@ -8,6 +8,8 @@ import type {
   ApiProblemDetails,
   DemandeRechercheResponse,
   DemandeDetailResponse,
+  EnregistrementPaiementRequest,
+  EnregistrementPaiementResponse,
 } from "../features/demandes/types";
 
 export async function creerDemandeAbonnementRegulier(
@@ -117,6 +119,19 @@ export async function obtenirDetailDemande(
   const response = await client.get<DemandeDetailResponse>(
     `/demandes/${id}`
   );
+
+  return response.data;
+}
+
+export async function enregistrerPaiement(
+  demandeId: number,
+  requete: EnregistrementPaiementRequest
+): Promise<EnregistrementPaiementResponse> {
+  const response =
+    await client.post<EnregistrementPaiementResponse>(
+      `/demandes/${demandeId}/paiements`,
+      requete
+    );
 
   return response.data;
 }

@@ -10,6 +10,30 @@ import {
 
 export type ModePaiement = "ESPECE" | "CHEQUE";
 
+export type StatutPaiement =
+  | "EN_ATTENTE"
+  | "CONFIRME"
+  | "REJETE"
+  | "ANNULE";
+
+export interface EnregistrementPaiementRequest {
+  numeroCheque: string | null;
+  banqueCheque: string | null;
+  dateEmissionCheque: string | null;
+}
+
+export interface EnregistrementPaiementResponse {
+  id: number;
+  reference: string;
+  demandeId: number;
+  referenceDemande: string;
+  montant: number;
+  modePaiement: ModePaiement;
+  statutPaiement: StatutPaiement;
+  statutDemande: StatutDemande;
+  dateConfirmation: string;
+}
+
 export type CanalOtp = "EMAIL" | "SMS";
 
 export type StatutDemande =
