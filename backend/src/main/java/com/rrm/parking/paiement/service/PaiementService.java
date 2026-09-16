@@ -28,6 +28,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaiementService {
 
+    private static final BigDecimal FRAIS_CARTE_NEUVE_TTC =
+            new BigDecimal("50.00");
+
     private final PaiementRepository paiementRepository;
     private final DemandeClientRepository demandeClientRepository;
     private final UtilisateurRepository utilisateurRepository;
@@ -86,7 +89,8 @@ public class PaiementService {
 
         BigDecimal montant = demandeReguliere
                 .getTarifParking()
-                .calculerMontantTotalTTC();
+                .calculerMontantTotalTTC()
+                .add(FRAIS_CARTE_NEUVE_TTC);
 
         Paiement paiement = creerPaiement(
                 modePaiement,

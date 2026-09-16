@@ -90,7 +90,8 @@ class PaiementServiceTest {
 
         assertEquals(ModePaiement.ESPECE, paiement.getModePaiement());
         assertEquals(StatutPaiement.CONFIRME, paiement.getStatut());
-        assertEquals(new BigDecimal("1200.00"), paiement.getMontant());
+        assertEquals(new BigDecimal("1250.00"), paiement.getMontant());
+        assertEquals(new BigDecimal("1250.00"), response.montant());
         assertEquals(StatutDemande.PAYEE, response.statutDemande());
     }
 
