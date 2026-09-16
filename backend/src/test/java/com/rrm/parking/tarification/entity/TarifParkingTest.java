@@ -20,4 +20,17 @@ class TarifParkingTest {
         assertThat(tarif.calculerMontantTotalTTC())
                 .isEqualByComparingTo(new BigDecimal("900.00"));
     }
+
+    @Test
+    void multiplieLePrixMensuelTtcArrondiSansCreerUnCentimeParasite() {
+        TarifParking tarif = new TarifParking();
+        tarif.setPrixHT(new BigDecimal("291.67"));
+        tarif.setTauxTVA(new BigDecimal("20.00"));
+        tarif.setDureeEnMois(3);
+
+        assertThat(tarif.calculerPrixTTC())
+                .isEqualByComparingTo(new BigDecimal("350.00"));
+        assertThat(tarif.calculerMontantTotalTTC())
+                .isEqualByComparingTo(new BigDecimal("1050.00"));
+    }
 }

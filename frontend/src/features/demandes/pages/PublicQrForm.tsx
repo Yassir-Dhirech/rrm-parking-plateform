@@ -232,6 +232,10 @@ export function PublicQrForm() {
       parkingId: watchedParkingId || formValues.parkingId || raw.parkingId,
       formuleCode: watchedFormuleCode || formValues.formuleCode || raw.formuleCode,
       dureeMois: watchedDureeMois || formValues.dureeMois || raw.dureeMois,
+      tarifParkingId:
+        watchedTarifParkingId ??
+        formValues.tarifParkingId ??
+        raw.tarifParkingId,
       modePaiement: watchedModePaiement || formValues.modePaiement || raw.modePaiement,
       canalOtp:
         watchedCanalOtp ||
@@ -239,7 +243,7 @@ export function PublicQrForm() {
         raw.canalOtp ||
         "EMAIL",
     };
-  }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedModePaiement]);
+  }, [formValues, form, currentStep, watchedParkingId, watchedFormuleCode, watchedDureeMois, watchedTarifParkingId, watchedModePaiement]);
 
 
 
@@ -248,10 +252,7 @@ export function PublicQrForm() {
     queryFn: getParkingsDisponiblesAbonnement,
   });
 
-const parkingIdSelectionne =
-  typeof watchedParkingId === "number"
-    ? watchedParkingId
-    : Number(watchedParkingId);
+const parkingIdSelectionne = Number(recapData.parkingId);
 
 const {
   data: tarifsParking = [],
@@ -292,7 +293,8 @@ const {
   );
 
   const tarifSelectionne = tarifsParking.find(
-    (tarif) => tarif.tarifParkingId === Number(watchedTarifParkingId)
+    (tarif) =>
+      tarif.tarifParkingId === Number(recapData.tarifParkingId)
   );
 
 

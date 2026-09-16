@@ -12,6 +12,8 @@ public record DemandeOtpValideeEvent(
         String parkingAdresse,
         String forfaitLibelle,
         Integer dureeEnMois,
+        BigDecimal montantAbonnementTtc,
+        BigDecimal fraisCarteTtc,
         BigDecimal montantTotalTtc,
         String modePaiement,
         LocalDate dateLimitePaiement

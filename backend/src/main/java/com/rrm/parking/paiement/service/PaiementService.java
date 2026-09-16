@@ -12,6 +12,7 @@ import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.repository.PaiementRepository;
+import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PaiementService {
-
-    private static final BigDecimal FRAIS_CARTE_NEUVE_TTC =
-            new BigDecimal("50.00");
 
     private final PaiementRepository paiementRepository;
     private final DemandeClientRepository demandeClientRepository;
@@ -87,10 +85,9 @@ public class PaiementService {
         ModePaiement modePaiement =
                 demandeReguliere.getModePaiementSouhaite();
 
-        BigDecimal montant = demandeReguliere
-                .getTarifParking()
-                .calculerMontantTotalTTC()
-                .add(FRAIS_CARTE_NEUVE_TTC);
+        BigDecimal montant = DecompteNouvelAbonnement
+                .depuis(demandeReguliere.getTarifParking())
+                .montantTotalTTC();
 
         Paiement paiement = creerPaiement(
                 modePaiement,

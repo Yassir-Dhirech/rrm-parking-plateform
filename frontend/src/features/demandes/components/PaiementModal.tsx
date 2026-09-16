@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { Alert, Form, Input, Modal } from "antd";
+import { Alert, Descriptions, Form, Input, Modal } from "antd";
 import { enregistrerPaiement, extraireMessageErreur } from "../../../api/demandesApi";
 import type {
   DemandeDetailResponse,
@@ -83,6 +83,35 @@ export function PaiementModal({
             : "Le paiement sera confirmé immédiatement."
         }
         style={{ marginBottom: 16 }}
+      />
+
+      <Descriptions
+        title="Détail du montant à encaisser"
+        size="small"
+        column={1}
+        bordered
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            key: "abonnement",
+            label: "Abonnement TTC",
+            children: `${demande.montantAbonnementTTC.toLocaleString("fr-FR")} MAD`,
+          },
+          {
+            key: "carte",
+            label: "Carte d’accès TTC",
+            children: `${demande.fraisCarteTTC.toLocaleString("fr-FR")} MAD`,
+          },
+          {
+            key: "total",
+            label: "Total à encaisser",
+            children: (
+              <strong>
+                {demande.montantTotalTTC.toLocaleString("fr-FR")} MAD TTC
+              </strong>
+            ),
+          },
+        ]}
       />
 
       <Form<PaiementFormValues>

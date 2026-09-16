@@ -625,18 +625,22 @@ export function DemandeDetail() {
 
             <Descriptions.Item
               label="Montant abonnement TTC"
-              span={2}
             >
+              {formaterMontant(data.montantAbonnementTTC)} MAD
+            </Descriptions.Item>
+
+            <Descriptions.Item label="Carte d’accès TTC">
+              {formaterMontant(data.fraisCarteTTC)} MAD
+            </Descriptions.Item>
+
+            <Descriptions.Item label="Montant total à payer" span={2}>
               <strong
                 style={{
                   color: "#15803d",
                   fontSize: 17,
                 }}
               >
-                {formaterMontant(
-                  data.montantAbonnementTTC
-                )}{" "}
-                MAD
+                {formaterMontant(data.montantTotalTTC)} MAD TTC
               </strong>
             </Descriptions.Item>
           </Descriptions>
@@ -725,7 +729,7 @@ export function DemandeDetail() {
                 type="info"
                 showIcon
                 message={`Mode prévu : ${data.modePaiementSouhaite}`}
-                description={`Montant à encaisser : ${formaterMontant(data.montantAbonnementTTC)} MAD`}
+                description={`Montant à encaisser : ${formaterMontant(data.montantTotalTTC)} MAD TTC`}
               />
 
               <Button

@@ -143,6 +143,8 @@ export interface DemandeDetailResponse {
   prixHT: number;
   tauxTVA: number;
   montantAbonnementTTC: number;
+  fraisCarteTTC: number;
+  montantTotalTTC: number;
   modePaiementSouhaite: ModePaiement;
 
   piecesJointes: PieceJointeDetailResponse[];
