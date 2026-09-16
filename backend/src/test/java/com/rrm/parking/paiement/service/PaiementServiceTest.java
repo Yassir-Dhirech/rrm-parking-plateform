@@ -4,12 +4,15 @@ import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
+import com.rrm.parking.facturation.entity.Recu;
+import com.rrm.parking.facturation.repository.RecuRepository;
 import com.rrm.parking.paiement.dto.request.EnregistrementPaiementRequest;
 import com.rrm.parking.paiement.dto.response.EnregistrementPaiementResponse;
 import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutCheque;
 import com.rrm.parking.paiement.enums.StatutPaiement;
+import com.rrm.parking.paiement.event.PaiementConfirmeEvent;
 import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,6 +50,15 @@ class PaiementServiceTest {
     private UtilisateurRepository utilisateurRepository;
 
     @Mock
+    private RecuRepository recuRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private Recu recuEnregistre;
+
+    @Mock
     private DemandeNouvelAbonnementRegulier demande;
 
     @Mock
@@ -61,7 +74,9 @@ class PaiementServiceTest {
         paiementService = new PaiementService(
                 paiementRepository,
                 demandeClientRepository,
-                utilisateurRepository
+                utilisateurRepository,
+                recuRepository,
+                eventPublisher
         );
     }
 
@@ -86,6 +101,13 @@ class PaiementServiceTest {
         verify(paiementRepository).save(captor.capture());
         verify(demande).marquerPayee(agent);
 
+        ArgumentCaptor<Recu> recuCaptor =
+                ArgumentCaptor.forClass(Recu.class);
+        verify(recuRepository).save(recuCaptor.capture());
+        verify(eventPublisher).publishEvent(
+                new PaiementConfirmeEvent(99L)
+        );
+
         Paiement paiement = captor.getValue();
 
         assertEquals(ModePaiement.ESPECE, paiement.getModePaiement());
@@ -93,6 +115,9 @@ class PaiementServiceTest {
         assertEquals(new BigDecimal("1250.00"), paiement.getMontant());
         assertEquals(new BigDecimal("1250.00"), response.montant());
         assertEquals(StatutDemande.PAYEE, response.statutDemande());
+        assertEquals(paiement, recuCaptor.getValue().getPaiement());
+        assertEquals(99L, response.recuId());
+        assertEquals("REC-20260916-TEST", response.numeroRecu());
     }
 
     @Test
@@ -173,6 +198,13 @@ class PaiementServiceTest {
                 .thenReturn(false);
         when(paiementRepository.save(any(Paiement.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        when(recuRepository.existsByNumero(anyString()))
+                .thenReturn(false);
+        when(recuRepository.save(any(Recu.class)))
+                .thenReturn(recuEnregistre);
+        when(recuEnregistre.getId()).thenReturn(99L);
+        when(recuEnregistre.getNumero())
+                .thenReturn("REC-20260916-TEST");
         when(demande.getId()).thenReturn(10L);
         when(demande.getReference()).thenReturn("DEM-20260915-TEST");
     }
