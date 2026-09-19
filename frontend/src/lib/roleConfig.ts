@@ -101,10 +101,15 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/responsable/demandes",
         requiredAuthority: "DEMANDE_VALIDER",
       },
+      {
+        key: "demandes-validees",
+        label: "Demandes validées / Facturation",
+        path: "/responsable/demandes-validees",
+        requiredAuthority: "DEMANDE_VALIDER",
+      },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "recettes", label: "Recettes Hebdo", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
-      { key: "factures", label: "Factures", path: "/responsable/factures" },
     ],
   },
   COMPTABLE: {
