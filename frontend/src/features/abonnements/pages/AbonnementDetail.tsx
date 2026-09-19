@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography, Checkbox, Table, InputNumber } from "antd";
+import { Card, Descriptions, Button, Modal, Form, Input, Select, Alert, Tag, message, Breadcrumb, Typography, Checkbox, Table, InputNumber, Steps, Space } from "antd";
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
@@ -16,6 +16,12 @@ import {
   CheckCircleOutlined,
   FileDoneOutlined,
   PlusOutlined,
+  SendOutlined,
+  BellOutlined,
+  ClockCircleOutlined,
+  ScanOutlined,
+  EyeOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import {
   getAbonnementByIdMock,
@@ -27,7 +33,18 @@ import {
   getFacturesByAbonnementRefMock,
   creerFactureMock,
 } from "../../../api/facturesMock";
-import { sendClientNotificationMock } from "../../../api/clientNotificationsMock";
+import {
+  sendClientNotificationMock,
+  getClientNotificationLogsMock,
+  getExpirationNotificationTemplate,
+} from "../../../api/clientNotificationsMock";
+import {
+  getContratByIdMock,
+  enregistrerScanContratMock,
+} from "../../../api/contratsMock";
+import { ScannerContratModal } from "../../contrats/components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../../contrats/components/VisualiserScanContratModal";
+import type { ContratScanInfo } from "../../contrats/types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -56,15 +73,87 @@ export function AbonnementDetail() {
   const watchedNouveauModePaiement = Form.useWatch("modePaiement", nouveauPaiementForm);
   const watchedNouveauMontant = Form.useWatch("montantTtc", nouveauPaiementForm);
 
+  const [isRelanceModalOpen, setIsRelanceModalOpen] = useState(false);
+  const [relanceForm] = Form.useForm();
+  const watchedPalierRelance = Form.useWatch("palier", relanceForm);
+
+  const [isContratScannerModalOpen, setIsContratScannerModalOpen] = useState(false);
+  const [isContratViewerModalOpen, setIsContratViewerModalOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["abonnement", abonnementId],
     queryFn: () => getAbonnementByIdMock(abonnementId),
   });
 
+  const { data: contratAssocie } = useQuery({
+    queryKey: ["contrat", data?.contratId],
+    queryFn: () => getContratByIdMock(data?.contratId!),
+    enabled: !!data?.contratId,
+  });
+
+  const scanContratMutation = useMutation({
+    mutationFn: (scanInfo: ContratScanInfo) => {
+      const cId = data?.contratId || 3;
+      return enregistrerScanContratMock(cId, scanInfo);
+    },
+    onSuccess: () => {
+      message.success("Contrat corporate scanné et archivé avec succès !");
+      queryClient.invalidateQueries({ queryKey: ["abonnement", abonnementId] });
+      queryClient.invalidateQueries({ queryKey: ["contrat", data?.contratId] });
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+      setIsContratScannerModalOpen(false);
+    },
+  });
+
+  const effectiveScanInfo = contratAssocie?.scanInfo || data?.contratScanInfo;
+
   const { data: facturesAssociees = [], isLoading: isLoadingFactures } = useQuery({
     queryKey: ["factures_abonnement", data?.reference],
     queryFn: () => getFacturesByAbonnementRefMock(data?.reference || ""),
     enabled: !!data?.reference,
+  });
+
+  const { data: notificationLogs = [] } = useQuery({
+    queryKey: ["client_notifications", data?.reference, data?.clientNom],
+    queryFn: () =>
+      getClientNotificationLogsMock({
+        abonnementReference: data?.reference,
+        destinataireNom: data?.clientNom,
+      }),
+    enabled: !!data?.reference || !!data?.clientNom,
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: (values: {
+      palier: "J_MOINS_10" | "J_MOINS_4" | "EXPIRE";
+      channel: "EMAIL" | "SMS" | "BOTH";
+      sujet?: string;
+      contenu?: string;
+    }) => {
+      const template = getExpirationNotificationTemplate(
+        values.palier,
+        data?.clientNom || "Client Souscripteur",
+        data?.parkingNom || "Parking RRM",
+        data?.dateFin || ""
+      );
+
+      return sendClientNotificationMock({
+        abonnementReference: data?.reference,
+        channel: values.channel || "BOTH",
+        typeEvenement: template.typeEvenement,
+        destinataireNom: data?.clientNom || "Client Souscripteur",
+        destinataireEmail: "contact@client.ma",
+        destinataireTelephone: "0661000000",
+        sujet: values.sujet || template.sujet,
+        contenu: values.contenu || template.contenu,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client_notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["abonnement", abonnementId] });
+      setIsRelanceModalOpen(false);
+      relanceForm.resetFields();
+    },
   });
 
   const creerPaiementUlterieurMutation = useMutation({
@@ -81,6 +170,8 @@ export function AbonnementDetail() {
         fraisCarteRfid: fraisBadge,
         modePaiement: values.modePaiement || "ESPECE",
         libellePrestation: values.libellePrestation || (isRenewal ? "Renouvellement Période d'Abonnement" : "Remplacement Badge RFID Duplicata"),
+        dateEmission: data?.dateDebut,
+        dateDebutAbonnement: data?.dateDebut,
         genereePar: `${userName || "Agent Guichet"} — ${role || "AGENT"}`,
       });
     },
@@ -346,6 +437,289 @@ export function AbonnementDetail() {
         </Descriptions>
       </Card>
 
+      {/* Convention Cadre & Scan Contrat Corporate Flotte (Pour les Abonnements Entreprise) */}
+      {data.type === "ENTREPRISE" && (
+        <Card
+          style={{ marginTop: 20 }}
+          className="rounded-2xl shadow-xs border border-slate-200"
+          title={
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <Space>
+                <ScanOutlined style={{ color: "#006398", fontSize: 20 }} />
+                <span style={{ fontSize: "1rem", fontWeight: 800, color: "#003566" }}>
+                  Convention Cadre 20 Ans & Numérisation Contrat Corporate Flotte
+                </span>
+              </Space>
+              <Space>
+                {effectiveScanInfo?.scanne ? (
+                  <>
+                    <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                      Contrat Numérisé & Archivé
+                    </Tag>
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => setIsContratViewerModalOpen(true)}
+                      style={{ borderColor: "#006398", color: "#006398", fontWeight: 600 }}
+                    >
+                      Visualiser le Scan
+                    </Button>
+                    {role === "RESPONSABLE" && (
+                      <Button
+                        icon={<ScanOutlined />}
+                        onClick={() => setIsContratScannerModalOpen(true)}
+                      >
+                        Re-scanner
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600, padding: "4px 8px" }}>
+                      En Attente de Numérisation
+                    </Tag>
+                    {role === "RESPONSABLE" && (
+                      <Button
+                        type="primary"
+                        icon={<ScanOutlined />}
+                        onClick={() => setIsContratScannerModalOpen(true)}
+                        style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", fontWeight: 700, borderRadius: 8 }}
+                      >
+                        Scanner le Contrat
+                      </Button>
+                    )}
+                  </>
+                )}
+              </Space>
+            </div>
+          }
+        >
+          <Descriptions bordered column={{ xs: 1, sm: 2, md: 2 }} size="middle">
+            <Descriptions.Item label="Référence Convention / Contrat">
+              <Space>
+                <strong>{data.contratReference || contratAssocie?.reference || "CTR-2026-0003"}</strong>
+                {data.contratId && (
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => navigate(`${basePath}/contrats/${data.contratId}`)}
+                    style={{ padding: 0, fontWeight: 600 }}
+                  >
+                    Voir Dossier Contrat
+                  </Button>
+                )}
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Quota Flotte Réservée">
+              <Tag color="blue" style={{ fontWeight: 700 }}>
+                {data.nombreAbonnements || contratAssocie?.nombrePlaces || 1} Places Flotte Entreprise
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Entreprise Souscriptrice">
+              {data.clientNom}
+            </Descriptions.Item>
+            <Descriptions.Item label="Statut de la Convention">
+              <Tag color="cyan" style={{ fontWeight: 600 }}>
+                {contratAssocie?.statut === "SIGNE" ? "Signé Physiquement & En Vigueur" : "Convention Cadre 20 Ans Active"}
+              </Tag>
+            </Descriptions.Item>
+            {effectiveScanInfo?.scanne ? (
+              <>
+                <Descriptions.Item label="Fichier Numérisé & Pages">
+                  <Space>
+                    <FilePdfOutlined style={{ color: "#dc2626", fontSize: 18 }} />
+                    <strong>{effectiveScanInfo.nomFichier}</strong>
+                    <Tag color="purple">{effectiveScanInfo.nombrePages} Pages</Tag>
+                    <Tag color="blue">{effectiveScanInfo.tailleFichier}</Tag>
+                  </Space>
+                </Descriptions.Item>
+                <Descriptions.Item label="Date du Scan & Opérateur">
+                  {formatDate(effectiveScanInfo.dateScan)} (par {effectiveScanInfo.scannePar})
+                </Descriptions.Item>
+                {effectiveScanInfo.referenceParapheur && (
+                  <Descriptions.Item label="Classement Physique Parapheur" span={2}>
+                    <Tag color="geekblue" style={{ fontWeight: 600 }}>{effectiveScanInfo.referenceParapheur}</Tag>
+                  </Descriptions.Item>
+                )}
+              </>
+            ) : (
+              <Descriptions.Item label="Statut GED" span={2}>
+                <div style={{ padding: "8px 12px", background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                  <Text type="secondary">
+                    L'exemplaire physique original du contrat corporate n'a pas encore été numérisé. Le Responsable d'exploitation peut procéder au scan ou téléversement du PDF signé.
+                  </Text>
+                </div>
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        </Card>
+      )}
+
+      {/* Échéancier de Relance & Notifications d'Expiration (3 Paliers : J-10, J-4, Non Valide) */}
+      <Card
+        style={{ marginTop: 20 }}
+        className="rounded-2xl shadow-xs border border-slate-200"
+        title={
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <Space>
+              <BellOutlined style={{ color: "#0284c7", fontSize: 20 }} />
+              <span style={{ fontSize: "1rem", fontWeight: 800, color: "#003566" }}>
+                Échéancier de Relance & Notifications d'Expiration (3 Paliers)
+              </span>
+            </Space>
+            {data.echeancierRelance && (
+              <Space>
+                {data.echeancierRelance.estExpire ? (
+                  <Tag color="red" icon={<StopOutlined />} style={{ fontWeight: 700, padding: "4px 10px" }}>
+                    Abonnement Expiré (Non Valide)
+                  </Tag>
+                ) : data.echeancierRelance.joursRestants <= 4 ? (
+                  <Tag color="volcano" icon={<WarningOutlined />} style={{ fontWeight: 700, padding: "4px 10px" }}>
+                    Urgence Relance 2 (J-4) — {data.echeancierRelance.joursRestants} jour(s) restant(s)
+                  </Tag>
+                ) : data.echeancierRelance.joursRestants <= 10 ? (
+                  <Tag color="gold" icon={<ClockCircleOutlined />} style={{ fontWeight: 700, padding: "4px 10px" }}>
+                    Relance 1 Active (J-10) — {data.echeancierRelance.joursRestants} jours restants
+                  </Tag>
+                ) : (
+                  <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontWeight: 700, padding: "4px 10px" }}>
+                    Valide — {data.echeancierRelance.joursRestants} jours restants
+                  </Tag>
+                )}
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={() => {
+                    relanceForm.setFieldsValue({
+                      palier: data.echeancierRelance?.estExpire
+                        ? "EXPIRE"
+                        : data.echeancierRelance && data.echeancierRelance.joursRestants <= 4
+                        ? "J_MOINS_4"
+                        : "J_MOINS_10",
+                      channel: "BOTH",
+                    });
+                    setIsRelanceModalOpen(true);
+                  }}
+                  style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", fontWeight: 700, borderRadius: 8 }}
+                >
+                  Déclencher Relance Client
+                </Button>
+              </Space>
+            )}
+          </div>
+        }
+      >
+        <Alert
+          type="info"
+          showIcon
+          icon={<BellOutlined />}
+          message="Politique RRM de Relance d'Abonnement (3 Notifications Obligatoires)"
+          description="Afin d'éviter toute rupture de service, chaque abonné reçoit 3 notifications avant et lors de l'expiration : 1ère Relance préventive à 10 jours (J-10), 2ème Relance urgente à 4 jours (J-4), et 3ème Notification formelle d'expiration et de suspension du badge RFID à l'échéance."
+          style={{ marginBottom: 24, borderRadius: 10 }}
+        />
+
+        {data.echeancierRelance && (
+          <div style={{ marginBottom: 24, padding: "16px 20px", backgroundColor: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+            <Steps
+              current={
+                data.echeancierRelance.estExpire
+                  ? 2
+                  : data.echeancierRelance.joursRestants <= 4
+                  ? 1
+                  : data.echeancierRelance.joursRestants <= 10
+                  ? 0
+                  : -1
+              }
+              items={data.echeancierRelance.etapes.map((etape) => ({
+                title: <span style={{ fontWeight: 700, fontSize: 13 }}>{etape.titre}</span>,
+                subTitle: (
+                  <Tag color={etape.estEnvoyee ? "cyan" : etape.estAtteinte ? "gold" : "default"} style={{ fontWeight: 600 }}>
+                    {etape.estEnvoyee ? "Transmise" : etape.estAtteinte ? "Échéance Atteinte" : "Programmée"}
+                  </Tag>
+                ),
+                description: (
+                  <div style={{ fontSize: 12, marginTop: 6, lineHeight: 1.5 }}>
+                    <div><strong>Date Cible :</strong> {etape.datePrevue}</div>
+                    {etape.dateDernierEnvoi && (
+                      <div style={{ color: "#0284c7", fontWeight: 600 }}>
+                        <CheckCircleOutlined style={{ marginRight: 4 }} />
+                        Envoyée le {etape.dateDernierEnvoi} (Email & SMS)
+                      </div>
+                    )}
+                    {!etape.estEnvoyee && (
+                      <div style={{ color: "#64748b" }}>
+                        <ClockCircleOutlined style={{ marginRight: 4 }} />
+                        En attente d'échéance
+                      </div>
+                    )}
+                  </div>
+                ),
+                status: etape.estEnvoyee ? "finish" : etape.estAtteinte ? "process" : "wait",
+              }))}
+            />
+          </div>
+        )}
+
+        {/* Historique des Notifications transmises */}
+        <div style={{ marginTop: 20 }}>
+          <div style={{ fontWeight: 700, marginBottom: 10, color: "#1e293b", fontSize: 13 }}>
+            Journal des Relances & Notifications transmises à {data.clientNom} :
+          </div>
+          <Table
+            dataSource={notificationLogs}
+            rowKey="id"
+            size="small"
+            pagination={{ pageSize: 4 }}
+            columns={[
+              {
+                title: "Date d'Envoi",
+                dataIndex: "dateEnvoi",
+                key: "dateEnvoi",
+                width: 150,
+                render: (d: string) => <span style={{ fontWeight: 600 }}>{d}</span>,
+              },
+              {
+                title: "Événement / Palier",
+                dataIndex: "typeEvenement",
+                key: "typeEvenement",
+                width: 190,
+                render: (type: string) => {
+                  if (type === "EXPIRATION_J10") return <Tag color="gold" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>Relance 1 (J-10)</Tag>;
+                  if (type === "EXPIRATION_J4") return <Tag color="volcano" icon={<WarningOutlined />} style={{ fontWeight: 600 }}>Relance 2 Urgente (J-4)</Tag>;
+                  if (type === "EXPIRATION_TERMINEE") return <Tag color="red" icon={<StopOutlined />} style={{ fontWeight: 600 }}>Notification 3 (Expiré)</Tag>;
+                  return <Tag color="blue">{type}</Tag>;
+                },
+              },
+              {
+                title: "Canal",
+                dataIndex: "channel",
+                key: "channel",
+                width: 130,
+                render: (c: string) => (
+                  <Tag color={c === "BOTH" ? "geekblue" : c === "SMS" ? "green" : "purple"} style={{ fontWeight: 600 }}>
+                    {c === "BOTH" ? "Email & SMS" : c}
+                  </Tag>
+                ),
+              },
+              {
+                title: "Sujet du Message",
+                dataIndex: "sujet",
+                key: "sujet",
+                render: (s: string) => <span style={{ fontWeight: 600, color: "#003566" }}>{s}</span>,
+              },
+              {
+                title: "Statut",
+                dataIndex: "statutEnvoi",
+                key: "statutEnvoi",
+                width: 110,
+                render: (s: string) => (
+                  <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontWeight: 600 }}>{s}</Tag>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </Card>
+
       {/* 1 Facture par Paiement Encaissé (Règle de traçabilité comptable et fiscale RRM) */}
       <Card
         style={{ marginTop: 20 }}
@@ -414,7 +788,7 @@ export function AbonnementDetail() {
               ),
             },
             {
-              title: "Date Émission",
+              title: "Date de Facturation",
               dataIndex: "dateEmission",
               key: "dateEmission",
               sorter: (a: any, b: any) => {
@@ -769,6 +1143,107 @@ export function AbonnementDetail() {
           </div>
         </Form>
       </Modal>
+
+      {/* Modal de Déclenchement de Relance Client (3 Paliers) */}
+      <Modal
+        title={
+          <Space>
+            <SendOutlined style={{ color: "#0284c7" }} />
+            <span>Déclencher une Relance d'Expiration — {data?.clientNom}</span>
+          </Space>
+        }
+        open={isRelanceModalOpen}
+        onCancel={() => setIsRelanceModalOpen(false)}
+        onOk={() => relanceForm.submit()}
+        confirmLoading={sendNotificationMutation.isPending}
+        okText="Envoyer la Notification"
+        cancelText="Annuler"
+        width={600}
+      >
+        <Form
+          form={relanceForm}
+          layout="vertical"
+          onFinish={(values) => sendNotificationMutation.mutate(values)}
+          initialValues={{ palier: "J_MOINS_10", channel: "BOTH" }}
+        >
+          <Form.Item
+            name="palier"
+            label="Sélectionner le Palier d'Alerte"
+            rules={[{ required: true, message: "Veuillez sélectionner le palier" }]}
+          >
+            <Select>
+              <Option value="J_MOINS_10">Palier 1 : 1ère Relance Préventive (10 jours avant fin)</Option>
+              <Option value="J_MOINS_4">Palier 2 : 2ème Relance Urgente (4 jours avant fin)</Option>
+              <Option value="EXPIRE">Palier 3 : Notification d'Expiration & Suspension Badge</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="channel"
+            label="Canal de Transmission"
+            rules={[{ required: true, message: "Veuillez choisir le canal" }]}
+          >
+            <Select>
+              <Option value="BOTH">Email & SMS (Recommandé RRM)</Option>
+              <Option value="EMAIL">Email uniquement</Option>
+              <Option value="SMS">SMS uniquement</Option>
+            </Select>
+          </Form.Item>
+
+          {data && (
+            <div style={{ backgroundColor: "#f8fafc", padding: 14, borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: "#334155", marginBottom: 6 }}>
+                Aperçu du message transmis au souscripteur :
+              </div>
+              <div style={{ fontSize: 12, color: "#0369a1", fontWeight: 700, marginBottom: 6 }}>
+                {getExpirationNotificationTemplate(watchedPalierRelance || "J_MOINS_10", data.clientNom, data.parkingNom, data.dateFin).sujet}
+              </div>
+              <div style={{ fontSize: 11, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>
+                {getExpirationNotificationTemplate(watchedPalierRelance || "J_MOINS_10", data.clientNom, data.parkingNom, data.dateFin).contenu}
+              </div>
+            </div>
+          )}
+        </Form>
+      </Modal>
+
+      {/* Modal Scanner Contrat Corporate */}
+      {data && data.type === "ENTREPRISE" && (
+        <ScannerContratModal
+          open={isContratScannerModalOpen}
+          onClose={() => setIsContratScannerModalOpen(false)}
+          contratReference={data.contratReference || contratAssocie?.reference || "CTR-2026-0003"}
+          entrepriseNom={data.clientNom}
+          onScanSuccess={(scanInfo: ContratScanInfo) => scanContratMutation.mutate(scanInfo)}
+        />
+      )}
+
+      {/* Modal Visualiser Scan Contrat Corporate */}
+      {data && data.type === "ENTREPRISE" && (
+        <VisualiserScanContratModal
+          open={isContratViewerModalOpen}
+          onClose={() => setIsContratViewerModalOpen(false)}
+          contrat={
+            contratAssocie || {
+              id: data.contratId || 3,
+              reference: data.contratReference || "CTR-2026-0003",
+              entrepriseNom: data.clientNom,
+              iceEntreprise: "001234567890012",
+              parkingNom: data.parkingNom,
+              nombrePlaces: data.nombreAbonnements || 1,
+              dateDebut: data.dateDebut,
+              dateFin: data.dateFin,
+              montantMensuelHT: data.montantTotal ? data.montantTotal / 1.2 : 550,
+              montantMensuelTTC: data.montantTotal || 660,
+              statut: "SIGNE",
+              vehicules: [],
+              dateSignature: "01/01/2026",
+              signePar: "Direction RRM & Représentant Entreprise",
+              referencePhysique: "PARAPH-CORP-2026",
+            }
+          }
+          scanInfo={effectiveScanInfo}
+        />
+      )}
     </div>
   );
 }

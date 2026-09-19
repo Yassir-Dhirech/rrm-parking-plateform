@@ -11,20 +11,49 @@ import {
   DownOutlined,
   EnvironmentOutlined,
   ReloadOutlined,
+  ScanOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
 import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
+import { getConsolidatedRevenue } from "../../lib/chiffreAffairesService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getContratsMock, enregistrerScanContratMock } from "../../api/contratsMock";
+import { ScannerContratModal } from "../../features/contrats/components/ScannerContratModal";
+import { VisualiserScanContratModal } from "../../features/contrats/components/VisualiserScanContratModal";
+import type { ContratScanInfo } from "../../features/contrats/types";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
   const { userName } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<number | null>(null);
   const [plansModalOpen, setPlansModalOpen] = useState(false);
   const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<any | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [selectedContratToScan, setSelectedContratToScan] = useState<any | null>(null);
+  const [selectedContratToView, setSelectedContratToView] = useState<any | null>(null);
+
+  const { data: contratsList = [] } = useQuery({
+    queryKey: ["contrats"],
+    queryFn: getContratsMock,
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: ({ id, scanInfo }: { id: number; scanInfo: ContratScanInfo }) =>
+      enregistrerScanContratMock(id, scanInfo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contrats"] });
+      setSelectedContratToScan(null);
+      message.success("Contrat corporate numérisé et archivé avec succès !");
+    },
+  });
 
   const handleResetFilter = () => {
     setIsRefreshing(true);
@@ -61,11 +90,11 @@ export function ResponsableDashboardView() {
       statutColor: "#ef4444", // Red
       statutText: "Alerte Saturation",
       statut: "CRITIQUE",
-      caMensuel: 228500,
-      caAbos: 180500,
-      caTickets: 48000,
-      caEspeces: 132530,
-      caCheques: 95970,
+      caMensuel: 235000,
+      caAbos: 165000,
+      caTickets: 70000,
+      caEspeces: 141000,
+      caCheques: 94000,
       contratsCorporate: 5,
       retentionRate: 96.2,
       slaHours: 16.5,
@@ -85,11 +114,11 @@ export function ResponsableDashboardView() {
       statutColor: "#f59e0b", // Amber
       statutText: "Forte Affluence",
       statut: "ELEVEE",
-      caMensuel: 295000,
-      caAbos: 225000,
-      caTickets: 70000,
-      caEspeces: 171100,
-      caCheques: 123900,
+      caMensuel: 155000,
+      caAbos: 110000,
+      caTickets: 45000,
+      caEspeces: 85250,
+      caCheques: 69750,
       contratsCorporate: 7,
       retentionRate: 94.8,
       slaHours: 19.2,
@@ -109,11 +138,11 @@ export function ResponsableDashboardView() {
       statutColor: "#0284c7", // Sky Blue
       statutText: "Charge Nominale",
       statut: "OPTIMAL",
-      caMensuel: 138000,
-      caAbos: 104000,
-      caTickets: 34000,
-      caEspeces: 80040,
-      caCheques: 57960,
+      caMensuel: 98000,
+      caAbos: 72000,
+      caTickets: 26000,
+      caEspeces: 53900,
+      caCheques: 44100,
       contratsCorporate: 4,
       retentionRate: 93.5,
       slaHours: 18.0,
@@ -133,11 +162,11 @@ export function ResponsableDashboardView() {
       statutColor: "#10b981", // Emerald
       statutText: "Fluide & Disponible",
       statut: "FLUIDE",
-      caMensuel: 87000,
-      caAbos: 70500,
-      caTickets: 16500,
-      caEspeces: 50460,
-      caCheques: 36540,
+      caMensuel: 60000,
+      caAbos: 44000,
+      caTickets: 16000,
+      caEspeces: 33000,
+      caCheques: 27000,
       contratsCorporate: 2,
       retentionRate: 92.0,
       slaHours: 21.0,
@@ -162,6 +191,9 @@ export function ResponsableDashboardView() {
   const totalCA = displayedParkings.reduce((sum, p) => sum + p.caMensuel, 0);
   const totalCAAbos = displayedParkings.reduce((sum, p) => sum + p.caAbos, 0);
   const totalCATickets = displayedParkings.reduce((sum, p) => sum + p.caTickets, 0);
+
+  // Synchronisation dynamique avec la Comptabilité
+  const consolidatedData = getConsolidatedRevenue(selectedSiteFilter);
 
   const totalCorporateCount = displayedParkings.reduce((sum, p) => sum + p.contratsCorporate, 0);
   const totalAbosParticuliers = displayedParkings.reduce((sum, p) => sum + p.abosParticulier, 0);
@@ -237,13 +269,23 @@ export function ResponsableDashboardView() {
       clientNom: "Sara Bennis",
       montantTtc: 800,
       fraisBadge: 0,
-      dateEmission: "30/07/2026",
+      dateEmission: "01/10/2025",
     },
   ];
 
-  const filteredContracts = selectedSiteFilter
+  const filteredContracts = (selectedSiteFilter
     ? pendingContracts.filter((c) => c.parkingId === selectedSiteFilter)
-    : pendingContracts;
+    : pendingContracts
+  ).map((c) => {
+    const matched = contratsList.find(
+      (item) => item.id === c.id || item.entrepriseNom.toLowerCase().includes(c.entrepriseNom.toLowerCase())
+    );
+    return {
+      ...c,
+      scanInfo: matched?.scanInfo,
+      matchedContratId: matched?.id || c.id,
+    };
+  });
 
   const filteredFactures = selectedSiteFilter
     ? pendingFactures.filter((f) => f.parkingId === selectedSiteFilter)
@@ -337,10 +379,16 @@ export function ResponsableDashboardView() {
                 <DollarOutlined />
               </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
-              <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
-              <span>•</span>
-              <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
+                <span>•</span>
+                <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium flex items-center justify-between pt-0.5">
+                <span className="text-emerald-600">Visa Cpt. : {(consolidatedData.recettesValideesComptable / 1000).toFixed(1)}k MAD</span>
+                <span className="text-amber-600">En cours : {(consolidatedData.recettesEnAttenteVisa / 1000).toFixed(1)}k MAD</span>
+              </div>
             </div>
           </div>
         </Col>
@@ -640,19 +688,65 @@ export function ResponsableDashboardView() {
                   ),
                 },
                 {
-                  title: "Action",
+                  title: "Scan Contrat",
+                  key: "scanInfo",
+                  render: (_, record: any) => {
+                    if (record.scanInfo?.scanne) {
+                      return (
+                        <Tooltip title={`Numérisé le ${record.scanInfo.dateScan} par ${record.scanInfo.scannePar}`}>
+                          <Tag
+                            color="success"
+                            icon={<CheckCircleOutlined />}
+                            style={{ cursor: "pointer", fontWeight: 600 }}
+                            onClick={() => setSelectedContratToView(record)}
+                          >
+                            Numérisé ({record.scanInfo.nombrePages}p)
+                          </Tag>
+                        </Tooltip>
+                      );
+                    }
+                    return (
+                      <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
+                        À Scanner
+                      </Tag>
+                    );
+                  },
+                },
+                {
+                  title: "Actions",
                   key: "action",
                   render: (_, record: any) => (
-                    <Button
-                      size="small"
-                      type="primary"
-                      icon={<SafetyCertificateOutlined />}
-                      onClick={() => navigate(`/responsable/contrats/${record.id}`)}
-                      style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
-                      className="rounded-lg"
-                    >
-                      Gérer Situation
-                    </Button>
+                    <Space>
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<SafetyCertificateOutlined />}
+                        onClick={() => navigate(`/responsable/contrats/${record.matchedContratId || record.id}`)}
+                        style={{ backgroundColor: "#006398", borderColor: "#006398", fontWeight: 700 }}
+                        className="rounded-lg"
+                      >
+                        Situation
+                      </Button>
+                      {record.scanInfo?.scanne ? (
+                        <Button
+                          size="small"
+                          icon={<EyeOutlined />}
+                          onClick={() => setSelectedContratToView(record)}
+                          style={{ borderColor: "#006398", color: "#006398", fontWeight: 600 }}
+                        >
+                          Scan
+                        </Button>
+                      ) : (
+                        <Button
+                          size="small"
+                          icon={<ScanOutlined />}
+                          onClick={() => setSelectedContratToScan(record)}
+                          style={{ backgroundColor: "#0284c7", borderColor: "#0284c7", color: "#ffffff", fontWeight: 700 }}
+                        >
+                          Scanner
+                        </Button>
+                      )}
+                    </Space>
                   ),
                 },
               ]}
@@ -741,6 +835,48 @@ export function ResponsableDashboardView() {
         onClose={() => setPlansModalOpen(false)}
         parking={selectedParkingForPlans}
       />
+
+      {/* Modal Scanner Contrat Corporate */}
+      {selectedContratToScan && (
+        <ScannerContratModal
+          open={!!selectedContratToScan}
+          onClose={() => setSelectedContratToScan(null)}
+          contratReference={selectedContratToScan.reference}
+          entrepriseNom={selectedContratToScan.entrepriseNom}
+          onScanSuccess={(scanInfo: ContratScanInfo) =>
+            scanMutation.mutate({
+              id: selectedContratToScan.matchedContratId || selectedContratToScan.id,
+              scanInfo,
+            })
+          }
+        />
+      )}
+
+      {/* Modal Visualiser Scan */}
+      {selectedContratToView && (
+        <VisualiserScanContratModal
+          open={!!selectedContratToView}
+          onClose={() => setSelectedContratToView(null)}
+          contrat={{
+            id: selectedContratToView.matchedContratId || selectedContratToView.id,
+            reference: selectedContratToView.reference,
+            entrepriseNom: selectedContratToView.entrepriseNom,
+            iceEntreprise: "001234567890012",
+            parkingNom: selectedContratToView.parkingNom || "Parking Agdal Gare",
+            nombrePlaces: selectedContratToView.nombreAbonnements || 10,
+            dateDebut: selectedContratToView.dateCreation || "01/01/2026",
+            dateFin: "31/12/2045",
+            montantMensuelHT: selectedContratToView.montantMensuel || 6500,
+            montantMensuelTTC: (selectedContratToView.montantMensuel || 6500) * 1.2,
+            statut: "SIGNE",
+            vehicules: [],
+            dateSignature: "01/01/2026",
+            signePar: "Direction RRM & Représentant Entreprise",
+            referencePhysique: "PARAPH-CORP-2026",
+          }}
+          scanInfo={selectedContratToView.scanInfo}
+        />
+      )}
     </div>
   );
 }

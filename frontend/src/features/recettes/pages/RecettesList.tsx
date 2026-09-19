@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Table, Card, Typography, Row, Col, Statistic, Tag, Button, Modal, Select, message, Alert, Space } from "antd";
+import { Table, Card, Typography, Row, Col, Statistic, Tag, Button, Modal, Select, message, Alert, Space, DatePicker } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import dayjs, { type Dayjs } from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { getRecettesMock, getPaiementsAEncasserMock, creerRecetteSupervisorMock, type PaiementAEncasserRecette } from "../../../api/recettesMock";
 import type { RecetteHebdoListItem } from "../types";
@@ -23,6 +24,7 @@ export function RecettesList() {
   const [selectedParkingId, setSelectedParkingId] = useState<number>(1);
   const [selectedParkingNom, setSelectedParkingNom] = useState<string>("Parking Agdal Gare");
   const [selectedPaiementIds, setSelectedPaiementIds] = useState<React.Key[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
 
   const { data, isLoading } = useQuery({
     queryKey: ["recettes"],
@@ -38,7 +40,7 @@ export function RecettesList() {
   const createRecetteMutation = useMutation({
     mutationFn: creerRecetteSupervisorMock,
     onSuccess: (newRecette) => {
-      message.success(`Recette hebdomadaire ${newRecette.reference} pour ${newRecette.parkingNom} générée avec succès !`);
+      message.success(`Arrêté de recette ${newRecette.reference} du ${newRecette.dateRecette} pour ${newRecette.parkingNom} généré avec succès !`);
       setIsModalOpen(false);
       setSelectedPaiementIds([]);
       queryClient.invalidateQueries({ queryKey: ["recettes"] });
@@ -60,6 +62,7 @@ export function RecettesList() {
 
   const handleOpenModal = () => {
     setSelectedPaiementIds([]);
+    setSelectedDate(dayjs());
     setIsModalOpen(true);
   };
 
@@ -69,10 +72,11 @@ export function RecettesList() {
       return;
     }
 
+    const dateFormatted = selectedDate.format("DD/MM/YYYY");
     createRecetteMutation.mutate({
       parkingId: selectedParkingId,
       parkingNom: selectedParkingNom,
-      semaineAnnee: "Semaine 34 — 2026",
+      dateRecette: dateFormatted,
       paiementsChoisis: paiementsCoches,
     });
   };
@@ -141,10 +145,16 @@ export function RecettesList() {
       sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.parkingNom.localeCompare(b.parkingNom),
     },
     {
-      title: "Période",
-      dataIndex: "semaineAnnee",
-      key: "semaineAnnee",
-      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.semaineAnnee.localeCompare(b.semaineAnnee),
+      title: "Date de Recette",
+      dataIndex: "dateRecette",
+      key: "dateRecette",
+      sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) =>
+        (a.dateRecette || a.dateDebut || "").localeCompare(b.dateRecette || b.dateDebut || ""),
+      render: (val: string, record: RecetteHebdoListItem) => (
+        <Tag color="cyan" style={{ fontWeight: 700, fontSize: 12, padding: "2px 8px" }}>
+          {val || record.dateDebut || record.semaineAnnee}
+        </Tag>
+      ),
     },
     {
       title: "Total Espèces",
@@ -166,7 +176,7 @@ export function RecettesList() {
       ),
     },
     {
-      title: "Recette Totale Hebdo",
+      title: "Recette Totale",
       dataIndex: "totalHebdo",
       key: "totalHebdo",
       sorter: (a: RecetteHebdoListItem, b: RecetteHebdoListItem) => a.totalHebdo - b.totalHebdo,
@@ -190,8 +200,8 @@ export function RecettesList() {
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <Title level={4} style={{ margin: 0 }}>Gestion & Remise des Recettes Hebdomadaires</Title>
-          <Text type="secondary">Centralisation des encaissements Espèces et Chèques par le Superviseur vers la Comptabilité</Text>
+          <Title level={4} style={{ margin: 0 }}>Gestion & Remise des Recettes par Date</Title>
+          <Text type="secondary">Centralisation des arrêtés de recette par date d'encaissement et versement vers la Comptabilité</Text>
         </div>
         {(role === "SUPERVISEUR" || role === "RESPONSABLE") && (
           <Button
@@ -200,7 +210,7 @@ export function RecettesList() {
             onClick={handleOpenModal}
             style={{ backgroundColor: "#0284c7" }}
           >
-            Créer un Arrêté de Recette par Sélection
+            Créer un Arrêté de Recette (Par Date)
           </Button>
         )}
       </div>
@@ -209,7 +219,7 @@ export function RecettesList() {
         <Col xs={24} sm={6}>
           <Card size="small" style={{ backgroundColor: "#f0f9ff", borderColor: "#bae6fd" }}>
             <Statistic
-              title="Recette Hebdo Cumulée"
+              title="Recettes Cumulées"
               value={totalGlobal}
               suffix="DH"
               prefix={<DollarOutlined style={{ color: "#0284c7" }} />}
@@ -266,7 +276,7 @@ export function RecettesList() {
 
       {/* MODALE DE GÉNÉRATION PAR LE SUPERVISEUR */}
       <Modal
-        title="Créer un Arrêté de Recette Hebdomadaire"
+        title="Créer un Arrêté de Recette par Date Spécifique"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         width={900}
@@ -282,14 +292,14 @@ export function RecettesList() {
             onClick={handleGenerateRecetteSubmit}
             style={{ backgroundColor: "#0284c7" }}
           >
-            Générer l'Arrêté de Recette — {totalRecetteCalculee.toLocaleString("fr-FR")} DH
+            Générer l'Arrêté du {selectedDate.format("DD/MM/YYYY")} — {totalRecetteCalculee.toLocaleString("fr-FR")} DH
           </Button>,
         ]}
       >
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Alert
-            message="Procédure de la Recette Hebdomadaire"
-            description="Sélectionnez le parking, puis cochez dans la liste ci-dessous les paiements récupérés auprès des agents."
+            message="Procédure de Recette par Date Spécifique"
+            description="Sélectionnez le parking et la date d'arrêté, puis cochez dans la liste ci-dessous les paiements récupérés auprès des agents."
             type="info"
             showIcon
           />
@@ -314,8 +324,15 @@ export function RecettesList() {
               </Select>
             </Col>
             <Col span={12}>
-              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Période de la Recette :</label>
-              <Tag color="geekblue" style={{ fontSize: 14, padding: "6px 12px" }}>Semaine 34 — 2026</Tag>
+              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Date d'Arrêté de la Recette :</label>
+              <DatePicker
+                size="large"
+                style={{ width: "100%" }}
+                format="DD/MM/YYYY"
+                value={selectedDate}
+                onChange={(d) => d && setSelectedDate(d)}
+                allowClear={false}
+              />
             </Col>
           </Row>
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Table, Card, Typography, Tag, Button, Modal, Form, Input, Select, Radio, Checkbox, message, Segmented, Row, Col, Alert } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, SafetyCertificateOutlined, UserOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, BellOutlined, StopOutlined, WarningOutlined } from "@ant-design/icons";
 import { getAbonnementsMock, createStaffAbonnementMock, type CreateStaffAbonnementInput } from "../../../api/abonnementsMock";
 import type { AbonnementListItem, TypeAbonnement } from "../types";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -175,6 +175,45 @@ export function AbonnementsList() {
       key: "dateFin",
       sorter: (a: AbonnementListItem, b: AbonnementListItem) => new Date(a.dateFin).getTime() - new Date(b.dateFin).getTime(),
       render: (d: string) => formatDate(d),
+    },
+    {
+      title: "Relance Expiration",
+      key: "relanceStatut",
+      filters: [
+        { text: "Valide (> 10j)", value: "VALIDE" },
+        { text: "Relance 1 (J-10)", value: "RELANCE_J10" },
+        { text: "Relance 2 Urgente (J-4)", value: "RELANCE_J4" },
+        { text: "Expiré (Non valide)", value: "EXPIRE" },
+      ],
+      onFilter: (value: any, record: AbonnementListItem) => record.relanceStatut === value,
+      render: (_: any, record: AbonnementListItem) => {
+        if (record.statut === "EXPIRE" || record.relanceStatut === "EXPIRE") {
+          return (
+            <Tag color="red" icon={<StopOutlined />} style={{ fontWeight: 600 }}>
+              Expiré — Notifié
+            </Tag>
+          );
+        }
+        if (record.relanceStatut === "RELANCE_J4") {
+          return (
+            <Tag color="volcano" icon={<WarningOutlined />} style={{ fontWeight: 600 }}>
+              Relance 2 (J-4)
+            </Tag>
+          );
+        }
+        if (record.relanceStatut === "RELANCE_J10") {
+          return (
+            <Tag color="gold" icon={<BellOutlined />} style={{ fontWeight: 600 }}>
+              Relance 1 (J-10)
+            </Tag>
+          );
+        }
+        return (
+          <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontWeight: 600 }}>
+            Valide
+          </Tag>
+        );
+      },
     },
     {
       title: "Action",

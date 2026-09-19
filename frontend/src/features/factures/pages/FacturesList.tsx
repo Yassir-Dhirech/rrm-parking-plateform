@@ -9,6 +9,8 @@ import {
   PrinterOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
 import { getFacturesMock, creerFactureMock } from "../../../api/facturesMock";
 import { getAbonnementsMock } from "../../../api/abonnementsMock";
@@ -52,8 +54,9 @@ export function FacturesList() {
   const createMutation = useMutation({
     mutationFn: creerFactureMock,
     onSuccess: (newFacture) => {
-      message.success(`Facture ${newFacture.numero} générée avec succès !`);
+      message.success(`Facture ${newFacture.numero} générée avec succès ! Notification transmise au Superviseur.`);
       queryClient.invalidateQueries({ queryKey: ["factures"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       setIsGenerateModalOpen(false);
       generateForm.resetFields();
       navigate(`${basePath}/factures/${newFacture.id}`);
@@ -188,7 +191,7 @@ export function FacturesList() {
       render: (statut: FactureListItem["statut"]) => <StatusBadge statut={statut} />,
     },
     {
-      title: "Date Émission",
+      title: "Date de Facturation",
       dataIndex: "dateEmission",
       key: "dateEmission",
       sorter: (a: FactureListItem, b: FactureListItem) => parseDate(a.dateEmission) - parseDate(b.dateEmission),
@@ -207,6 +210,17 @@ export function FacturesList() {
           >
             Détail
           </Button>
+          {(role === "SUPERVISEUR" || role === "RESPONSABLE") && record.statut === "EMISE" && (
+            <Button
+              size="small"
+              type="primary"
+              icon={<SafetyCertificateOutlined />}
+              onClick={() => navigate(`${basePath}/factures/${record.id}`)}
+              style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
+            >
+              Viser
+            </Button>
+          )}
           <Button
             size="small"
             icon={<PrinterOutlined />}
@@ -259,6 +273,25 @@ export function FacturesList() {
             Consultez, filtrez, triez et téléchargez les factures réglementaires conformes aux encaissements RRM.
           </Text>
         </div>
+
+        {data && data.some((f) => f.statut === "EMISE") && (
+          <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <BellOutlined className="text-amber-600 text-base" />
+              <div>
+                <span className="text-xs font-black text-amber-900 block">
+                  {data.filter((f) => f.statut === "EMISE").length} facture(s) en attente de visa et signature
+                </span>
+                <span className="text-[11px] text-amber-700 font-medium">
+                  Le Superviseur et la Direction sont notifiés pour apposer leur visa réglementaire avant remise client.
+                </span>
+              </div>
+            </div>
+            <Tag color="volcano" className="font-bold m-0 px-2 py-0.5 rounded-full shrink-0 text-xs">
+              Signature Requise
+            </Tag>
+          </div>
+        )}
 
         <Table
           rowKey="id"

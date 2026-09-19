@@ -8,8 +8,9 @@ import {
   MailOutlined,
   CheckCircleOutlined,
   SafetyCertificateOutlined,
+  BellOutlined,
 } from "@ant-design/icons";
-import { getFactureByIdMock, signerFactureMock } from "../../../api/facturesMock";
+import { getFactureByIdMock, signerFactureMock, notifierPourSignatureMock } from "../../../api/facturesMock";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
 import { roleConfig } from "../../../lib/roleConfig";
@@ -18,7 +19,7 @@ import { formatDate } from "../../../lib/dateUtils";
 export function FactureDetail() {
   const { id } = useParams<{ id: string }>();
   const factureId = Number(id);
-  const { role } = useAuth();
+  const { role, userName } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const basePath = role ? roleConfig[role].homePath : "";
@@ -29,11 +30,26 @@ export function FactureDetail() {
   });
 
   const signerMutation = useMutation({
-    mutationFn: () => signerFactureMock(factureId),
+    mutationFn: () => {
+      const signataireTitle =
+        role === "SUPERVISEUR"
+          ? `${userName || "M. Samir El Amrani"} (Superviseur Exploitation)`
+          : `${userName || "M. Samir El Amrani"} (Directeur Exploitation)`;
+      return signerFactureMock(factureId, signataireTitle);
+    },
     onSuccess: () => {
-      message.success("Facture signée et validée avec succès !");
+      message.success("Facture signée et visée avec succès !");
       queryClient.invalidateQueries({ queryKey: ["facture", factureId] });
       queryClient.invalidateQueries({ queryKey: ["factures"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const notifyMutation = useMutation({
+    mutationFn: () => notifierPourSignatureMock(factureId, userName ? `${userName} (${role})` : undefined),
+    onSuccess: () => {
+      message.success("Notification de signature envoyée avec succès au Superviseur !");
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
@@ -41,7 +57,7 @@ export function FactureDetail() {
     return <Card loading />;
   }
 
-  const canSigner = role === "RESPONSABLE" && data.statut === "EMISE";
+  const canSigner = (role === "RESPONSABLE" || role === "SUPERVISEUR") && data.statut === "EMISE";
 
   const handlePrint = () => {
     window.print();
@@ -92,6 +108,17 @@ export function FactureDetail() {
             Envoyer par Email
           </Button>
 
+          {data.statut === "EMISE" && (
+            <Button
+              icon={<BellOutlined />}
+              onClick={() => notifyMutation.mutate()}
+              loading={notifyMutation.isPending}
+              className="rounded-xl font-bold border-amber-500 text-amber-800 bg-amber-50/50 hover:bg-amber-100"
+            >
+              Notifier Superviseur
+            </Button>
+          )}
+
           {canSigner && (
             <Button
               type="primary"
@@ -101,7 +128,7 @@ export function FactureDetail() {
               style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", fontWeight: 700 }}
               className="rounded-xl"
             >
-              Signer la facture
+              {role === "SUPERVISEUR" ? "Viser & Signer (Superviseur)" : "Signer la facture"}
             </Button>
           )}
         </Space>
@@ -141,7 +168,7 @@ export function FactureDetail() {
               {data.numero}
             </div>
             <div className="text-xs text-slate-500 font-medium">
-              Date d'Émission : <strong>{formatDate(data.dateEmission)}</strong>
+              Date de Facturation : <strong>{formatDate(data.dateEmission)}</strong>
             </div>
           </div>
         </div>
@@ -183,12 +210,17 @@ export function FactureDetail() {
             <Descriptions.Item label="Validation Signature" span={2}>
               {data.statut === "SIGNEE" ? (
                 <Tag color="green" className="font-bold inline-flex items-center gap-1">
-                  <SafetyCertificateOutlined /> Signée & Validée ({data.dateSignature})
+                  <SafetyCertificateOutlined /> Signée & Validée ({data.dateSignature}){data.signeePar ? ` — ${data.signeePar}` : ""}
                 </Tag>
               ) : (
-                <Tag color="orange" className="font-bold">
-                  En Attente de Signature Directeur
-                </Tag>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Tag color="orange" className="font-bold">
+                    En Attente de Visa & Signature
+                  </Tag>
+                  <Tag color="blue" className="font-bold inline-flex items-center gap-1">
+                    <BellOutlined /> Notification Superviseur Active
+                  </Tag>
+                </div>
               )}
             </Descriptions.Item>
           </Descriptions>
