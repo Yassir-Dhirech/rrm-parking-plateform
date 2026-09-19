@@ -105,10 +105,18 @@ public class DemandeAbonnementRegulierService {
                     fichiersCrees
             );
 
+            String destinationOtp = switch (requete.canalOtp()) {
+                case EMAIL -> client.getEmail();
+                case SMS -> client.getTelephone();
+                default -> throw new IllegalArgumentException(
+                        "Le canal OTP doit être EMAIL ou SMS"
+                );
+            };
+
             OtpGenere otp = otpEmissionService.emettre(
                     demande,
                     requete.canalOtp(),
-                    client.getTelephone()
+                    destinationOtp
             );
 
             return new DemandeAbonnementRegulierResponse(
@@ -346,7 +354,7 @@ public class DemandeAbonnementRegulierService {
         FichierStocke fichierStocke =
                 stockageDocumentService.stocker(
                         fichier,
-                        dossier
+                        dossier + "/" + type.name()
                 );
 
         fichiersCrees.add(
@@ -386,7 +394,11 @@ public class DemandeAbonnementRegulierService {
                 .trim()
                 .replaceAll("[\\s.()-]", "");
 
-        if (valeur.startsWith("0")) {
+        if (valeur.matches("^[67][0-9]{8}$")) {
+            return "+212" + valeur;
+        }
+
+        if (valeur.matches("^0[67][0-9]{8}$")) {
             return "+212" + valeur.substring(1);
         }
 

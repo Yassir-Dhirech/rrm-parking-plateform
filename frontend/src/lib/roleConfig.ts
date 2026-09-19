@@ -14,6 +14,7 @@ interface MenuItem {
   key: string;
   label: string;
   path: string;
+  requiredAuthority?: string;
 }
 
 interface RoleConfig {
@@ -34,10 +35,39 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "demandesTraitees", title: "Demandes Traitées Aujourd'hui", color: "#003566" },
     ],
     menuItems: [
-      { key: "dashboard", label: "Tableau de bord", path: "/agent" },
-      { key: "carte-parkings", label: "Carte des Parkings", path: "/agent/carte-parkings" },
-      { key: "demandes", label: "Demandes", path: "/agent/demandes" },
-      { key: "cartes", label: "Cartes d'accès", path: "/agent/cartes" },
+      {
+        key: "dashboard",
+        label: "Tableau de bord",
+        path: "/agent",
+      },
+      {
+        key: "carte-parkings",
+        label: "Carte des parkings",
+        path: "/agent/carte-parkings",
+      },
+      {
+        key: "demandes",
+        label: "Liste des demandes",
+        path: "/agent/demandes",
+        requiredAuthority: "DEMANDE_CONSULTER",
+      },
+      {
+        key: "cartes",
+        label: "Cartes d'accès",
+        path: "/agent/cartes",
+      },
+      {
+        key: "impressions-cartes",
+        label: "Demandes d'impression",
+        path: "/agent/impressions-cartes",
+        requiredAuthority: "CARTE_IMPRIMER",
+      },
+      {
+        key: "remises-cartes",
+        label: "Cartes à remettre",
+        path: "/agent/remises-cartes",
+        requiredAuthority: "CARTE_REMETTRE",
+      },
     ],
   },
   SUPERVISEUR: {
@@ -52,11 +82,22 @@ export const roleConfig: Record<Role, RoleConfig> = {
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/superviseur" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/superviseur/carte-parkings" },
-      { key: "demandes", label: "Demandes", path: "/superviseur/demandes" },
+      {
+        key: "demandes",
+        label: "Demandes à valider",
+        path: "/superviseur/demandes",
+        requiredAuthority: "DEMANDE_VALIDER",
+      },
       { key: "abonnements", label: "Abonnements", path: "/superviseur/abonnements" },
       { key: "recettes", label: "Recettes", path: "/superviseur/recettes" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
       { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
+      {
+        key: "activations-cartes",
+        label: "Activation et test des cartes",
+        path: "/superviseur/activations-cartes",
+        requiredAuthority: "CARTE_ACTIVER",
+      },
     ],
   },
   RESPONSABLE: {
@@ -72,11 +113,21 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "dashboard", label: "Tableau de bord", path: "/responsable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/responsable/carte-parkings" },
       { key: "parkings", label: "Gestion Parkings", path: "/responsable/parkings" },
-      { key: "demandes", label: "Demandes", path: "/responsable/demandes" },
+      {
+        key: "demandes",
+        label: "Demandes à valider",
+        path: "/responsable/demandes",
+        requiredAuthority: "DEMANDE_VALIDER",
+      },
+      {
+        key: "demandes-validees",
+        label: "Demandes validées / Facturation",
+        path: "/responsable/demandes-validees",
+        requiredAuthority: "DEMANDE_VALIDER",
+      },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
-      { key: "factures", label: "Factures", path: "/responsable/factures" },
     ],
   },
   COMPTABLE: {

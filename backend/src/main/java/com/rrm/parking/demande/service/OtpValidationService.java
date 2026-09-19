@@ -9,10 +9,9 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.event.DemandeOtpValideeEvent;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import org.springframework.context.ApplicationEventPublisher;
 import com.rrm.parking.client.repository.ClientParticulierRepository;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.VerificationOtp;
 import com.rrm.parking.demande.enums.StatutOtp;
@@ -158,17 +157,8 @@ public class OtpValidationService {
         TarifParking tarif =
                 demandeReguliere.getTarifParking();
 
-        BigDecimal montantTotalTtc =
-                tarif.calculerPrixTTC()
-                        .multiply(
-                                BigDecimal.valueOf(
-                                        tarif.getDureeEnMois()
-                                )
-                        )
-                        .setScale(
-                                2,
-                                RoundingMode.HALF_UP
-                        );
+        DecompteNouvelAbonnement decompte =
+                DecompteNouvelAbonnement.depuis(tarif);
 
         eventPublisher.publishEvent(
                 new DemandeOtpValideeEvent(
@@ -179,7 +169,9 @@ public class OtpValidationService {
                         tarif.getParking().getAdresse(),
                         tarif.getForfait().getLibelle(),
                         tarif.getDureeEnMois(),
-                        montantTotalTtc,
+                        decompte.montantAbonnementTTC(),
+                        decompte.fraisCarteTTC(),
+                        decompte.montantTotalTTC(),
                         demandeReguliere
                                 .getModePaiementSouhaite()
                                 .name(),

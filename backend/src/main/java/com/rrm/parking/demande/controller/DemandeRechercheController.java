@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.rrm.parking.demande.dto.response.DemandeDetailResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -50,6 +52,39 @@ public class DemandeRechercheController {
         return ResponseEntity.ok(
                 demandeRechercheService
                         .listerDemandesEnAttentePaiement()
+        );
+    }
+
+    @GetMapping("/a-valider")
+    @PreAuthorize(
+            "hasAuthority('DEMANDE_VALIDER')"
+    )
+    public ResponseEntity<List<DemandeRechercheResponse>>
+    listerAValider(
+            @RequestParam(required = false)
+            String recherche,
+
+            @RequestParam(defaultValue = "ANCIEN")
+            String ordre
+    ) {
+        return ResponseEntity.ok(
+                demandeRechercheService.listerDemandesAValider(
+                        recherche,
+                        ordre
+                )
+        );
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize(
+            "hasAuthority('DEMANDE_CONSULTER')"
+    )
+    public ResponseEntity<DemandeDetailResponse>
+    obtenirDetail(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                demandeRechercheService.obtenirDetail(id)
         );
     }
 }

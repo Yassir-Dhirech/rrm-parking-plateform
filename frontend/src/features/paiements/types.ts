@@ -1,5 +1,5 @@
 export type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
-export type ModePaiement = "ESPECES" | "CHEQUE" ;
+export type ModePaiement = "ESPECE" | "CHEQUE" ;
 
 export interface PaiementListItem {
   id: number;

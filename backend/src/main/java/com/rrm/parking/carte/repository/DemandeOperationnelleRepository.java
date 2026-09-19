@@ -19,6 +19,11 @@ public interface DemandeOperationnelleRepository
             String reference
     );
 
+    boolean existsByCarteAccesIdAndTypeOperation(
+            Long carteAccesId,
+            TypeOperationCarte typeOperation
+    );
+
     List<DemandeOperationnelle>
     findByCarteAccesIdOrderByDateCreationDesc(
             Long carteAccesId
@@ -30,6 +35,12 @@ public interface DemandeOperationnelleRepository
 
     List<DemandeOperationnelle> findByTypeOperation(
             TypeOperationCarte typeOperation
+    );
+
+    List<DemandeOperationnelle>
+    findByTypeOperationAndStatutInOrderByDateCreationAsc(
+            TypeOperationCarte typeOperation,
+            List<StatutDemandeOperationnelle> statuts
     );
 
     List<DemandeOperationnelle>

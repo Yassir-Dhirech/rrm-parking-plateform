@@ -7,13 +7,19 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
-
-import java.time.LocalDate;
+import java.util.Optional;
 
 public interface TarifParkingRepository
         extends JpaRepository<TarifParking, Long> {
 
     boolean existsByParkingIdAndForfaitIdAndDureeEnMoisAndDateDebutValidite(
+            Long parkingId,
+            Long forfaitId,
+            Integer dureeEnMois,
+            LocalDate dateDebutValidite
+    );
+
+    Optional<TarifParking> findByParkingIdAndForfaitIdAndDureeEnMoisAndDateDebutValidite(
             Long parkingId,
             Long forfaitId,
             Integer dureeEnMois,

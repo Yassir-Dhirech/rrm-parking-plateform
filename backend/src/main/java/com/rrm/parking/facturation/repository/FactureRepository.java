@@ -18,6 +18,10 @@ public interface FactureRepository
             Long paiementId
     );
 
+    Optional<Facture> findByPaiementDemandeId(
+            Long demandeId
+    );
+
     boolean existsByPaiementId(
             Long paiementId
     );

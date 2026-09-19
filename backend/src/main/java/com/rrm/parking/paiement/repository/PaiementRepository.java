@@ -15,6 +15,16 @@ public interface PaiementRepository
 
     boolean existsByReference(String reference);
 
+    boolean existsByDemandeIdAndStatut(
+            Long demandeId,
+            StatutPaiement statut
+    );
+
+    Optional<Paiement> findByDemandeIdAndStatut(
+            Long demandeId,
+            StatutPaiement statut
+    );
+
     List<Paiement> findByDemandeIdOrderByDateCreationDesc(
             Long demandeId
     );

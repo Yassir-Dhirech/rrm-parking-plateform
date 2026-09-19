@@ -1,6 +1,7 @@
 package com.rrm.parking.carte.entity;
 
 import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
+import com.rrm.parking.carte.enums.StatutCarteAcces;
 import com.rrm.parking.carte.enums.TypeOperationCarte;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
@@ -271,6 +272,24 @@ public class DemandeOperationnelle {
         );
     }
 
+    public void terminerRemise(Utilisateur utilisateur) {
+        verifierExecution(
+                TypeOperationCarte.REMISE,
+                utilisateur
+        );
+
+        if (carteAcces.getStatut() != StatutCarteAcces.ACTIVE) {
+            throw new IllegalStateException(
+                    "Seule une carte active peut être remise au client"
+            );
+        }
+
+        terminer(
+                utilisateur,
+                "Carte remise au client"
+        );
+    }
+
     public void terminerSuspension(
             Utilisateur utilisateur
     ) {
@@ -406,7 +425,7 @@ public class DemandeOperationnelle {
             case ACTIVATION ->
                     carteAcces.demanderActivation();
 
-            case SUSPENSION, DESACTIVATION -> {
+            case REMISE, SUSPENSION, DESACTIVATION -> {
                 // La carte changera d'état lors de l'exécution.
             }
         }

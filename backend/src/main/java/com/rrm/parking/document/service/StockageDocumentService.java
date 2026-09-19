@@ -10,4 +10,6 @@ public interface StockageDocumentService {
     );
 
     void supprimerSiExiste(String storageKey);
+
+    byte[] lire(String storageKey);
 }
