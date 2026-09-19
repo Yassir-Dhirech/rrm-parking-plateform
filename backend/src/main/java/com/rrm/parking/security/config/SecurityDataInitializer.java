@@ -119,6 +119,7 @@ public class SecurityDataInitializer
                                 || permission.getCode() == CodePermission.DEMANDE_MODIFIER
                                 || permission.getCode() == CodePermission.PAIEMENT_ENREGISTRER
                                 || permission.getCode() == CodePermission.CARTE_IMPRIMER
+                                || permission.getCode() == CodePermission.CARTE_REMETTRE
                 )
                 .forEach(permission ->
                         roleAgent.getPermissions().add(permission)

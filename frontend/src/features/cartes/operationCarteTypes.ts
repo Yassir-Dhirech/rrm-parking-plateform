@@ -1,4 +1,4 @@
-export type TypeOperationCarte = "IMPRESSION" | "ACTIVATION";
+export type TypeOperationCarte = "IMPRESSION" | "ACTIVATION" | "REMISE";
 
 export interface DemandeOperationnelleCarte {
   id: number;

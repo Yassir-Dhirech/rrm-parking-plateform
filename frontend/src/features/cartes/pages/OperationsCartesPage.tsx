@@ -6,9 +6,11 @@ import { CheckCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import {
   declarerCarteActivee,
   declarerCarteImprimee,
+  confirmerRemiseCarte,
   extraireErreurOperationCarte,
   listerDemandesActivation,
   listerDemandesImpression,
+  listerCartesARemettre,
 } from "../../../api/operationsCartesApi";
 import type { DemandeOperationnelleCarte, TypeOperationCarte } from "../operationCarteTypes";
 
@@ -17,23 +19,36 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
   const [selection, setSelection] = useState<DemandeOperationnelleCarte | null>(null);
   const [numeroCarte, setNumeroCarte] = useState("");
   const impression = type === "IMPRESSION";
+  const activation = type === "ACTIVATION";
   const queryKey = ["operations-cartes", type];
   const query = useQuery({
     queryKey,
-    queryFn: impression ? listerDemandesImpression : listerDemandesActivation,
+    queryFn: impression
+      ? listerDemandesImpression
+      : activation
+        ? listerDemandesActivation
+        : listerCartesARemettre,
   });
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!selection) throw new Error("Aucune demande sélectionnée");
-      return impression
-        ? declarerCarteImprimee(selection.id, numeroCarte)
-        : declarerCarteActivee(selection.id);
+      if (impression) {
+        return declarerCarteImprimee(selection.id, numeroCarte);
+      }
+      if (activation) {
+        return declarerCarteActivee(selection.id);
+      }
+      return confirmerRemiseCarte(selection.id);
     },
     onSuccess: async () => {
-      message.success(impression
-        ? "Carte déclarée imprimée. La demande d'activation a été créée."
-        : "Carte activée et testée. Le client sera informé par e-mail.");
+      message.success(
+        impression
+          ? "Carte déclarée imprimée. La demande d'activation a été créée."
+          : activation
+            ? "Carte activée et testée. Le client sera informé par e-mail."
+            : "La récupération de la carte a été confirmée."
+      );
       setSelection(null);
       setNumeroCarte("");
       await queryClient.invalidateQueries({ queryKey });
@@ -58,7 +73,11 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
       fixed: "right",
       render: (_, row) => (
         <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => setSelection(row)}>
-          {impression ? "Déclarer imprimée" : "Déclarer activée et testée"}
+          {impression
+            ? "Déclarer imprimée"
+            : activation
+              ? "Déclarer activée et testée"
+              : "Confirmer la récupération"}
         </Button>
       ),
     },
@@ -68,12 +87,18 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
     <section className="space-y-5">
       <div>
         <h1 className="text-2xl font-black text-slate-900">
-          {impression ? "Demandes d'impression des cartes" : "Demandes d'activation et de test"}
+          {impression
+            ? "Demandes d'impression des cartes"
+            : activation
+              ? "Demandes d'activation et de test"
+              : "Cartes à remettre aux clients"}
         </h1>
         <p className="text-sm text-slate-500">
           {impression
             ? "Imprimez la carte puis saisissez son numéro physique."
-            : "Après activation dans les barrières et test réussi, confirmez l'opération."}
+            : activation
+              ? "Après activation dans les barrières et test réussi, confirmez l'opération."
+              : "Confirmez la récupération de la carte par le client."}
         </p>
       </div>
       <Space>
@@ -93,8 +118,16 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
       />
       <Modal
         open={Boolean(selection)}
-        title={impression ? "Confirmer l'impression" : "Confirmer l'activation et le test"}
-        okText={impression ? "Carte imprimée" : "Carte activée et testée"}
+        title={impression
+          ? "Confirmer l'impression"
+          : activation
+            ? "Confirmer l'activation et le test"
+            : "Confirmer la récupération"}
+        okText={impression
+          ? "Carte imprimée"
+          : activation
+            ? "Carte activée et testée"
+            : "Carte remise au client"}
         cancelText="Annuler"
         confirmLoading={mutation.isPending}
         okButtonProps={{ disabled: impression && !numeroCarte.trim() }}
@@ -109,10 +142,15 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
             placeholder="Numéro physique de la carte"
             onChange={(event) => setNumeroCarte(event.target.value)}
           />
-        ) : (
+        ) : activation ? (
           <p>
             Confirmez uniquement après l’activation dans les systèmes de barrière et un test réussi.
             La facture doit déjà avoir été générée par le responsable.
+          </p>
+        ) : (
+          <p>
+            Confirmez que le client a effectivement récupéré sa carte d’accès.
+            L’agent et la date de remise seront enregistrés automatiquement.
           </p>
         )}
       </Modal>
