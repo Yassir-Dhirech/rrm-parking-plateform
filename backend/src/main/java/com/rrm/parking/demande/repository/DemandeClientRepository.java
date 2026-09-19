@@ -62,4 +62,13 @@ public interface DemandeClientRepository
     findByStatutOrderByDateModificationDesc(
             StatutDemande statut
     );
+
+    @Query("""
+            select d
+            from DemandeNouvelAbonnementRegulier d
+            where d.abonnementGenere.id = :abonnementId
+            """)
+    Optional<DemandeClient> findByAbonnementGenereId(
+            @Param("abonnementId") Long abonnementId
+    );
 }

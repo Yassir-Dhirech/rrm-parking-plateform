@@ -56,6 +56,12 @@ export const roleConfig: Record<Role, RoleConfig> = {
         label: "Cartes d'accès",
         path: "/agent/cartes",
       },
+      {
+        key: "impressions-cartes",
+        label: "Demandes d'impression",
+        path: "/agent/impressions-cartes",
+        requiredAuthority: "CARTE_IMPRIMER",
+      },
     ],
   },
   SUPERVISEUR: {
@@ -80,6 +86,12 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "recettes", label: "Recettes Hebdo", path: "/superviseur/recettes" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
       { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
+      {
+        key: "activations-cartes",
+        label: "Activation et test des cartes",
+        path: "/superviseur/activations-cartes",
+        requiredAuthority: "CARTE_ACTIVER",
+      },
     ],
   },
   RESPONSABLE: {
