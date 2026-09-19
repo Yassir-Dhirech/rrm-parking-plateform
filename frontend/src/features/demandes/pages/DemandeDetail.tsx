@@ -8,6 +8,8 @@ import {
   Col,
   Descriptions,
   Image,
+  Input,
+  Modal,
   Row,
   Space,
   Spin,
@@ -25,11 +27,14 @@ import {
   FolderOutlined,
   IdcardOutlined,
   SafetyCertificateOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import {
   chargerContenuPieceJointe,
   extraireMessageErreur,
   obtenirDetailDemande,
+  demanderCorrectionDemande,
+  validerDemandeFinalement,
 } from "../../../api/demandesApi";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { useAuth } from "../../../context/AuthContext";
@@ -264,6 +269,11 @@ export function DemandeDetail() {
   const [paiementOuvert, setPaiementOuvert] = useState(false);
   const [paiementEnregistre, setPaiementEnregistre] =
     useState<EnregistrementPaiementResponse | null>(null);
+  const [correctionOuverte, setCorrectionOuverte] = useState(false);
+  const [motifCorrection, setMotifCorrection] = useState("");
+  const [decisionEnCours, setDecisionEnCours] = useState(false);
+  const [messageDecision, setMessageDecision] = useState<string | null>(null);
+  const [erreurDecision, setErreurDecision] = useState<string | null>(null);
 
   const demandeId = Number(id);
   const idValide =
@@ -381,6 +391,10 @@ export function DemandeDetail() {
     data.statut === "EN_ATTENTE_PAIEMENT" &&
     hasAuthority("PAIEMENT_ENREGISTRER");
 
+  const peutDecider =
+    data.statut === "PAYEE" &&
+    hasAuthority("DEMANDE_VALIDER");
+
   const traiterPaiementEnregistre = async (
     paiement: EnregistrementPaiementResponse
   ) => {
@@ -395,6 +409,67 @@ export function DemandeDetail() {
         queryKey: ["demandes", "en-attente-paiement"],
       }),
     ]);
+  };
+
+  const rafraichirApresDecision = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["demande-detail", demandeId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["demandes", "a-valider"],
+      }),
+    ]);
+  };
+
+  const validerFinalement = () => {
+    Modal.confirm({
+      title: "Valider définitivement cette demande ?",
+      content:
+        "L’abonnement sera activé et une demande d’impression de carte sera créée.",
+      okText: "Valider la demande",
+      cancelText: "Annuler",
+      onOk: async () => {
+        setDecisionEnCours(true);
+        setErreurDecision(null);
+        try {
+          const resultat = await validerDemandeFinalement(demandeId);
+          setMessageDecision(
+            `Demande validée. Abonnement ${resultat.referenceAbonnement} créé et carte ${resultat.referenceCarte} envoyée en impression.`
+          );
+          await rafraichirApresDecision();
+        } catch (error) {
+          setErreurDecision(extraireMessageErreur(error));
+          throw error;
+        } finally {
+          setDecisionEnCours(false);
+        }
+      },
+    });
+  };
+
+  const envoyerDemandeCorrection = async () => {
+    const motif = motifCorrection.trim();
+    if (!motif) {
+      setErreurDecision("Le motif de correction est obligatoire.");
+      return;
+    }
+
+    setDecisionEnCours(true);
+    setErreurDecision(null);
+    try {
+      await demanderCorrectionDemande(demandeId, motif);
+      setCorrectionOuverte(false);
+      setMotifCorrection("");
+      setMessageDecision(
+        "La demande de correction a été enregistrée et le client a été informé par e-mail."
+      );
+      await rafraichirApresDecision();
+    } catch (error) {
+      setErreurDecision(extraireMessageErreur(error));
+    } finally {
+      setDecisionEnCours(false);
+    }
   };
 
   return (
@@ -479,6 +554,27 @@ export function DemandeDetail() {
             showIcon
             message="Paiement enregistré"
             description={`Paiement ${paiementEnregistre.reference} confirmé pour ${formaterMontant(paiementEnregistre.montant)} MAD.`}
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        {messageDecision && (
+          <Alert
+            type="success"
+            showIcon
+            message={messageDecision}
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        {erreurDecision && (
+          <Alert
+            type="error"
+            showIcon
+            message="Décision impossible"
+            description={erreurDecision}
+            closable
+            onClose={() => setErreurDecision(null)}
             style={{ marginBottom: 20 }}
           />
         )}
@@ -714,6 +810,40 @@ export function DemandeDetail() {
           </Image.PreviewGroup>
         </Card>
 
+        {peutDecider && (
+          <Card
+            size="small"
+            title="Décision finale"
+            style={{ borderColor: "#93c5fd", marginBottom: 16 }}
+          >
+            <Alert
+              type="info"
+              showIcon
+              message="Le paiement est confirmé"
+              description="Contrôlez les informations et toutes les pièces justificatives avant de prendre votre décision."
+              style={{ marginBottom: 16 }}
+            />
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                loading={decisionEnCours}
+                onClick={validerFinalement}
+              >
+                Valider définitivement
+              </Button>
+              <Button
+                danger
+                icon={<StopOutlined />}
+                disabled={decisionEnCours}
+                onClick={() => setCorrectionOuverte(true)}
+              >
+                Demander une correction
+              </Button>
+            </Space>
+          </Card>
+        )}
+
         {peutEnregistrerPaiement ? (
           <Card
             size="small"
@@ -741,7 +871,7 @@ export function DemandeDetail() {
               </Button>
             </Space>
           </Card>
-        ) : (
+        ) : !peutDecider && (
           <Alert
             type="info"
             showIcon
@@ -762,6 +892,32 @@ export function DemandeDetail() {
             void traiterPaiementEnregistre(paiement);
           }}
         />
+
+        <Modal
+          title="Demander une correction au client"
+          open={correctionOuverte}
+          okText="Envoyer la demande"
+          cancelText="Annuler"
+          confirmLoading={decisionEnCours}
+          onOk={() => void envoyerDemandeCorrection()}
+          onCancel={() => {
+            setCorrectionOuverte(false);
+            setMotifCorrection("");
+          }}
+        >
+          <p>
+            Indiquez précisément l’anomalie à corriger. Le paiement
+            restera confirmé et le client ne devra pas repayer.
+          </p>
+          <Input.TextArea
+            value={motifCorrection}
+            rows={5}
+            maxLength={1000}
+            showCount
+            placeholder="Exemple : la copie du verso de la CIN est illisible."
+            onChange={(event) => setMotifCorrection(event.target.value)}
+          />
+        </Modal>
       </Card>
     </div>
   );

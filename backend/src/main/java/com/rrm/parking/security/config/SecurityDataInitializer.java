@@ -49,6 +49,36 @@ public class SecurityDataInitializer
     @Value("${app.bootstrap.agent-prenom:Administratif}")
     private String agentPrenom;
 
+    @Value("${app.bootstrap.supervisor-enabled:false}")
+    private boolean supervisorEnabled;
+
+    @Value("${app.bootstrap.supervisor-email:}")
+    private String supervisorEmail;
+
+    @Value("${app.bootstrap.supervisor-password:}")
+    private String supervisorPassword;
+
+    @Value("${app.bootstrap.supervisor-nom:Superviseur}")
+    private String supervisorNom;
+
+    @Value("${app.bootstrap.supervisor-prenom:RRM}")
+    private String supervisorPrenom;
+
+    @Value("${app.bootstrap.responsable-enabled:false}")
+    private boolean responsableEnabled;
+
+    @Value("${app.bootstrap.responsable-email:}")
+    private String responsableEmail;
+
+    @Value("${app.bootstrap.responsable-password:}")
+    private String responsablePassword;
+
+    @Value("${app.bootstrap.responsable-nom:Responsable}")
+    private String responsableNom;
+
+    @Value("${app.bootstrap.responsable-prenom:Stationnement}")
+    private String responsablePrenom;
+
     @Value("${app.bootstrap.admin-email:}")
     private String adminEmail;
 
@@ -95,6 +125,15 @@ public class SecurityDataInitializer
 
         roleRepository.save(roleAgent);
 
+        Role roleSuperviseur = configurerRoleValidation(
+                CodeRole.SUPERVISEUR,
+                permissions
+        );
+        Role roleResponsable = configurerRoleValidation(
+                CodeRole.RESPONSABLE_STATIONNEMENT,
+                permissions
+        );
+
         if (enabled) {
             verifierConfiguration();
 
@@ -121,6 +160,49 @@ public class SecurityDataInitializer
         if (agentEnabled) {
             initialiserAgent(roleAgent);
         }
+
+        if (supervisorEnabled) {
+            initialiserUtilisateurMetier(
+                    roleSuperviseur,
+                    supervisorEmail,
+                    supervisorPassword,
+                    supervisorNom,
+                    supervisorPrenom,
+                    "SUPERVISEUR"
+            );
+        }
+
+        if (responsableEnabled) {
+            initialiserUtilisateurMetier(
+                    roleResponsable,
+                    responsableEmail,
+                    responsablePassword,
+                    responsableNom,
+                    responsablePrenom,
+                    "RESPONSABLE"
+            );
+        }
+    }
+
+    private Role configurerRoleValidation(
+            CodeRole codeRole,
+            List<Permission> permissions
+    ) {
+        Role role = roleRepository
+                .findByCode(codeRole)
+                .orElseThrow();
+
+        role.getPermissions().clear();
+        permissions.stream()
+                .filter(permission ->
+                        permission.getCode()
+                                == CodePermission.DEMANDE_CONSULTER
+                                || permission.getCode()
+                                == CodePermission.DEMANDE_VALIDER
+                )
+                .forEach(role.getPermissions()::add);
+
+        return roleRepository.save(role);
     }
 
     private Permission obtenirOuCreerPermission(
@@ -213,6 +295,93 @@ public class SecurityDataInitializer
         if (!agent.getRoles().contains(roleAgent)) {
             agent.ajouterRole(roleAgent);
             utilisateurRepository.save(agent);
+        }
+    }
+
+    private void initialiserUtilisateurMetier(
+            Role role,
+            String email,
+            String motDePasse,
+            String nom,
+            String prenom,
+            String libelle
+    ) {
+        verifierConfigurationUtilisateur(
+                email,
+                motDePasse,
+                nom,
+                prenom,
+                libelle
+        );
+
+        String emailNormalise = email
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        Utilisateur utilisateur = utilisateurRepository
+                .findByEmailIgnoreCase(emailNormalise)
+                .orElseGet(() -> creerUtilisateurMetier(
+                        emailNormalise,
+                        motDePasse,
+                        nom,
+                        prenom,
+                        role
+                ));
+
+        if (!utilisateur.getRoles().contains(role)) {
+            utilisateur.ajouterRole(role);
+            utilisateurRepository.save(utilisateur);
+        }
+    }
+
+    private Utilisateur creerUtilisateurMetier(
+            String email,
+            String motDePasse,
+            String nom,
+            String prenom,
+            Role role
+    ) {
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setNom(nom.trim());
+        utilisateur.setPrenom(prenom.trim());
+        utilisateur.setEmail(email);
+        utilisateur.setMotDePasseHash(
+                passwordEncoder.encode(motDePasse)
+        );
+        utilisateur.setStatut(StatutUtilisateur.ACTIF);
+        utilisateur.ajouterRole(role);
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    private void verifierConfigurationUtilisateur(
+            String email,
+            String motDePasse,
+            String nom,
+            String prenom,
+            String libelle
+    ) {
+        if (email == null
+                || email.isBlank()
+                || !email.contains("@")) {
+            throw new IllegalStateException(
+                    "RRM_" + libelle + "_EMAIL est invalide"
+            );
+        }
+
+        if (motDePasse == null || motDePasse.length() < 12) {
+            throw new IllegalStateException(
+                    "RRM_" + libelle
+                            + "_PASSWORD doit contenir au moins 12 caractères"
+            );
+        }
+
+        if (nom == null || nom.isBlank()
+                || prenom == null || prenom.isBlank()) {
+            throw new IllegalStateException(
+                    "Le nom et le prénom du profil "
+                            + libelle.toLowerCase(Locale.ROOT)
+                            + " sont obligatoires"
+            );
         }
     }
 

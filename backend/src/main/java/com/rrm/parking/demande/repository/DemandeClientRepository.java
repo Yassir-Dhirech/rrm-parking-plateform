@@ -42,4 +42,14 @@ public interface DemandeClientRepository
     findByStatutOrderByDateValidationOtpAsc(
             StatutDemande statut
     );
+
+    List<DemandeClient>
+    findByStatutOrderByDateSoumissionAsc(
+            StatutDemande statut
+    );
+
+    List<DemandeClient>
+    findByStatutOrderByDateSoumissionDesc(
+            StatutDemande statut
+    );
 }

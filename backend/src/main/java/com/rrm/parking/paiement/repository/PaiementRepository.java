@@ -20,6 +20,11 @@ public interface PaiementRepository
             StatutPaiement statut
     );
 
+    Optional<Paiement> findByDemandeIdAndStatut(
+            Long demandeId,
+            StatutPaiement statut
+    );
+
     List<Paiement> findByDemandeIdOrderByDateCreationDesc(
             Long demandeId
     );

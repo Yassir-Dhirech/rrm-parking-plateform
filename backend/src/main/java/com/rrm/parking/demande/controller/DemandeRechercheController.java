@@ -55,6 +55,26 @@ public class DemandeRechercheController {
         );
     }
 
+    @GetMapping("/a-valider")
+    @PreAuthorize(
+            "hasAuthority('DEMANDE_VALIDER')"
+    )
+    public ResponseEntity<List<DemandeRechercheResponse>>
+    listerAValider(
+            @RequestParam(required = false)
+            String recherche,
+
+            @RequestParam(defaultValue = "ANCIEN")
+            String ordre
+    ) {
+        return ResponseEntity.ok(
+                demandeRechercheService.listerDemandesAValider(
+                        recherche,
+                        ordre
+                )
+        );
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize(
             "hasAuthority('DEMANDE_CONSULTER')"

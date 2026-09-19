@@ -8,7 +8,6 @@ import { Unauthorized } from "../pages/Unauthorized";
 import { NotFound } from "../pages/NotFound";
 import { PublicQrForm } from "../features/demandes/pages/PublicQrForm";
 import { roleConfig, type Role } from "../lib/roleConfig";
-import { DemandesList } from "../features/demandes/pages/DemandesList";
 import { LandingPage } from "../pages/LandingPage";
 import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
 import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
@@ -34,6 +33,7 @@ import { ScrollToTop } from "../components/ui/ScrollToTop";
 import {
   EspaceDemandesAgent,
 } from "../features/demandes/pages/EspaceDemandesAgent";
+import { DemandesAValider } from "../features/demandes/pages/DemandesAValider";
 
 function RootLayout() {
   return (
@@ -62,7 +62,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
        element:
          role === "AGENT"
            ? <EspaceDemandesAgent />
-           : <DemandesList />,
+           : <DemandesAValider />,
      },
      {
        path: `${roleConfig[role].homePath}/demandes/:id`,

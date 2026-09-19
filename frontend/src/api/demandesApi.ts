@@ -10,6 +10,7 @@ import type {
   DemandeDetailResponse,
   EnregistrementPaiementRequest,
   EnregistrementPaiementResponse,
+  DecisionDemandeResponse,
 } from "../features/demandes/types";
 
 export async function creerDemandeAbonnementRegulier(
@@ -113,6 +114,45 @@ export async function listerDemandesEnAttentePaiement(): Promise<
   return response.data;
 }
 
+export async function listerDemandesAValider(
+  recherche: string,
+  ordre: "ANCIEN" | "RECENT"
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/a-valider",
+    {
+      params: {
+        recherche: recherche.trim() || undefined,
+        ordre,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function validerDemandeFinalement(
+  demandeId: number
+): Promise<DecisionDemandeResponse> {
+  const response = await client.post<DecisionDemandeResponse>(
+    `/demandes/${demandeId}/validation-finale`
+  );
+
+  return response.data;
+}
+
+export async function demanderCorrectionDemande(
+  demandeId: number,
+  motif: string
+): Promise<DecisionDemandeResponse> {
+  const response = await client.post<DecisionDemandeResponse>(
+    `/demandes/${demandeId}/demande-correction`,
+    { motif }
+  );
+
+  return response.data;
+}
+
 export async function obtenirDetailDemande(
   id: number
 ): Promise<DemandeDetailResponse> {
@@ -170,5 +210,6 @@ export function extraireMessageErreur(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
+
   return "Une erreur technique est survenue. Veuillez réessayer.";
 }
