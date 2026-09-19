@@ -4,6 +4,7 @@ type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
   | "PAYEE"
+  | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
   | "REFUSEE"
   | "EXPIREE"
@@ -28,6 +29,7 @@ const colorMap: Record<AnyStatut, string> = {
   EN_COURS: "gold",
   EN_ATTENTE_PAIEMENT: "warning",
   PAYEE: "cyan",
+  EN_ATTENTE_CORRECTION: "orange",
   VALIDEE: "green",
   REFUSEE: "red",
   EN_ATTENTE: "blue",
@@ -61,6 +63,7 @@ const labelMap: Record<AnyStatut, string> = {
   EN_COURS: "En cours",
   EN_ATTENTE_PAIEMENT: "En attente de paiement (Guichet)",
   PAYEE: "Paiement enregistré",
+  EN_ATTENTE_CORRECTION: "Correction demandée",
   EN_ATTENTE: "En attente",
   ACTIF: "Actif",
   SUSPENDU: "Suspendu",

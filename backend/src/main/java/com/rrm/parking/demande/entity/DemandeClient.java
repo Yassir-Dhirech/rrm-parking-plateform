@@ -242,6 +242,48 @@ public abstract class DemandeClient {
         );
     }
 
+    public void demanderCorrection(
+            Utilisateur utilisateur,
+            String motif
+    ) {
+        verifierStatutActuel(StatutDemande.PAYEE);
+
+        Objects.requireNonNull(
+                utilisateur,
+                "L'utilisateur demandant la correction est obligatoire"
+        );
+
+        if (motif == null || motif.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Le motif de correction est obligatoire"
+            );
+        }
+
+        motifRefus = motif.trim();
+
+        appliquerTransition(
+                StatutDemande.EN_ATTENTE_CORRECTION,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                utilisateur,
+                motifRefus
+        );
+    }
+
+    public void resoumettreApresCorrection() {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_CORRECTION
+        );
+
+        motifRefus = null;
+
+        appliquerTransition(
+                StatutDemande.PAYEE,
+                OrigineTransition.CLIENT,
+                null,
+                "Dossier corrigé et renvoyé en validation finale"
+        );
+    }
+
     public void expirer() {
         verifierStatutActuel(
                 StatutDemande.EN_ATTENTE_PAIEMENT

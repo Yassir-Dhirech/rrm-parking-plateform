@@ -38,6 +38,10 @@ const statutConfig: Record<
     color: "gold",
   },
   PAYEE: { label: "Payée", color: "cyan" },
+  EN_ATTENTE_CORRECTION: {
+    label: "En attente de correction",
+    color: "orange",
+  },
   VALIDEE: { label: "Validée", color: "green" },
   REFUSEE: { label: "Refusée", color: "red" },
   EXPIREE: { label: "Expirée", color: "default" },

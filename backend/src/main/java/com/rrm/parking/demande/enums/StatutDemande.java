@@ -10,6 +10,9 @@ public enum StatutDemande {
     // Paiement enregistré par l’agent
     PAYEE,
 
+    // Le dossier payé doit être corrigé sans nouveau paiement
+    EN_ATTENTE_CORRECTION,
+
     // Décision prise par le superviseur ou le responsable
     VALIDEE,
     REFUSEE,

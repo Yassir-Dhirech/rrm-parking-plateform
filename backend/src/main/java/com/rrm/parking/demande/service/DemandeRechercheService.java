@@ -138,6 +138,39 @@ public class DemandeRechercheService {
     }
 
     @Transactional(readOnly = true)
+    public List<DemandeRechercheResponse> listerDemandesAValider(
+            String recherche,
+            String ordre
+    ) {
+        boolean plusRecent = "RECENT".equalsIgnoreCase(
+                ordre == null ? "" : ordre.trim()
+        );
+
+        List<DemandeClient> demandes = plusRecent
+                ? demandeClientRepository
+                .findByStatutOrderByDateSoumissionDesc(
+                        StatutDemande.PAYEE
+                )
+                : demandeClientRepository
+                .findByStatutOrderByDateSoumissionAsc(
+                        StatutDemande.PAYEE
+                );
+
+        String terme = recherche == null
+                ? ""
+                : recherche.trim().toUpperCase(Locale.ROOT);
+
+        return demandes.stream()
+                .map(DemandeRechercheResponse::depuis)
+                .filter(demande ->
+                        terme.isBlank()
+                                || contient(demande.reference(), terme)
+                                || contient(demande.identifiantClient(), terme)
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public DemandeDetailResponse obtenirDetail(
             Long id
     ) {
@@ -173,5 +206,10 @@ public class DemandeRechercheService {
     ) {
         return valeur != null
                 && !valeur.isBlank();
+    }
+
+    private boolean contient(String valeur, String terme) {
+        return valeur != null
+                && valeur.toUpperCase(Locale.ROOT).contains(terme);
     }
 }

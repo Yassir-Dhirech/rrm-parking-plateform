@@ -40,10 +40,23 @@ export type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
   | "PAYEE"
+  | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
   | "REFUSEE"
   | "EXPIREE"
   | "ANNULEE";
+
+export interface DecisionDemandeResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  abonnementId: number | null;
+  referenceAbonnement: string | null;
+  carteId: number | null;
+  referenceCarte: string | null;
+  demandeImpressionId: number | null;
+  referenceDemandeImpression: string | null;
+}
 
 export type StatutDemandeApi = StatutDemande;
 
