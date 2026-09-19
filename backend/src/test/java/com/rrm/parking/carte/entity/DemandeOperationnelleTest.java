@@ -46,5 +46,18 @@ class DemandeOperationnelleTest {
                 .isEqualTo(StatutDemandeOperationnelle.TERMINEE);
         assertThat(carte.getStatut()).isEqualTo(StatutCarteAcces.ACTIVE);
         assertThat(carte.getDateActivation()).isNotNull();
+
+        DemandeOperationnelle remise = new DemandeOperationnelle(
+                "REM-TEST-001", carte, TypeOperationCarte.REMISE,
+                "Remise au client", superviseur
+        );
+        remise.definirDemandeDeclencheuse(activation);
+        remise.prendreEnCharge(agent);
+        remise.terminerRemise(agent);
+
+        assertThat(remise.getStatut())
+                .isEqualTo(StatutDemandeOperationnelle.TERMINEE);
+        assertThat(remise.getDateExecution()).isNotNull();
+        assertThat(carte.getStatut()).isEqualTo(StatutCarteAcces.ACTIVE);
     }
 }

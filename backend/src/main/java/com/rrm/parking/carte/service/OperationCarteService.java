@@ -55,6 +55,11 @@ public class OperationCarteService {
         return lister(TypeOperationCarte.ACTIVATION);
     }
 
+    @Transactional(readOnly = true)
+    public List<DemandeOperationnelleResponse> listerRemises() {
+        return lister(TypeOperationCarte.REMISE);
+    }
+
     @Transactional
     public DemandeOperationnelleResponse terminerImpression(
             Long operationId,
@@ -97,12 +102,36 @@ public class OperationCarteService {
 
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerActivation(utilisateur);
+
+        DemandeOperationnelle remise = new DemandeOperationnelle(
+                genererReference("REM"),
+                operation.getCarteAcces(),
+                TypeOperationCarte.REMISE,
+                "Remise de la carte d'accès au client",
+                utilisateur
+        );
+        remise.definirDemandeDeclencheuse(operation);
+        operationRepository.save(remise);
+
         eventPublisher.publishEvent(new CarteActiveeEvent(
                 facture.getId(), contexte.demande().getReference(),
                 operation.getCarteAcces().getReference(),
                 contexte.client().getEmail(), contexte.client().getNomComplet()
         ));
         return versReponse(operation, contexte);
+    }
+
+    @Transactional
+    public DemandeOperationnelleResponse terminerRemise(
+            Long operationId,
+            Long utilisateurId
+    ) {
+        DemandeOperationnelle operation = charger(operationId,
+                TypeOperationCarte.REMISE);
+        Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
+        prendreEnChargeSiNecessaire(operation, utilisateur);
+        operation.terminerRemise(utilisateur);
+        return versReponse(operation);
     }
 
     private List<DemandeOperationnelleResponse> lister(TypeOperationCarte type) {

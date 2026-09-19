@@ -62,6 +62,12 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/agent/impressions-cartes",
         requiredAuthority: "CARTE_IMPRIMER",
       },
+      {
+        key: "remises-cartes",
+        label: "Cartes à remettre",
+        path: "/agent/remises-cartes",
+        requiredAuthority: "CARTE_REMETTRE",
+      },
     ],
   },
   SUPERVISEUR: {

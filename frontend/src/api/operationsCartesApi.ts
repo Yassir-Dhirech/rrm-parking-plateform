@@ -36,6 +36,22 @@ export async function declarerCarteActivee(
   return response.data;
 }
 
+export async function listerCartesARemettre(): Promise<DemandeOperationnelleCarte[]> {
+  const response = await client.get<DemandeOperationnelleCarte[]>(
+    "/operations-cartes/remises"
+  );
+  return response.data;
+}
+
+export async function confirmerRemiseCarte(
+  operationId: number
+): Promise<DemandeOperationnelleCarte> {
+  const response = await client.post<DemandeOperationnelleCarte>(
+    `/operations-cartes/${operationId}/remise-terminee`
+  );
+  return response.data;
+}
+
 export function extraireErreurOperationCarte(error: unknown): string {
   if (axios.isAxiosError<{ detail?: string }>(error)) {
     return error.response?.data?.detail ?? "L'opération a échoué.";

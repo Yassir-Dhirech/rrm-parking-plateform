@@ -74,10 +74,16 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
  }
 
   if (role === "AGENT") {
-    extraRoutes.push({
-      path: "/agent/impressions-cartes",
-      element: <OperationsCartesPage type="IMPRESSION" />,
-    });
+    extraRoutes.push(
+      {
+        path: "/agent/impressions-cartes",
+        element: <OperationsCartesPage type="IMPRESSION" />,
+      },
+      {
+        path: "/agent/remises-cartes",
+        element: <OperationsCartesPage type="REMISE" />,
+      },
+    );
   }
 
   if (role === "SUPERVISEUR") {

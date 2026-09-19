@@ -53,6 +53,22 @@ public class OperationCarteController {
                 id, extraireUtilisateurId(jwt)));
     }
 
+    @GetMapping("/remises")
+    @PreAuthorize("hasAuthority('CARTE_REMETTRE')")
+    public List<DemandeOperationnelleResponse> listerRemises() {
+        return service.listerRemises();
+    }
+
+    @PostMapping("/{id}/remise-terminee")
+    @PreAuthorize("hasAuthority('CARTE_REMETTRE')")
+    public ResponseEntity<DemandeOperationnelleResponse> terminerRemise(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(service.terminerRemise(
+                id, extraireUtilisateurId(jwt)));
+    }
+
     private Long extraireUtilisateurId(Jwt jwt) {
         Number userId = jwt.getClaim("userId");
         if (userId == null) {
