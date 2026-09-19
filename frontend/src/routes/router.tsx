@@ -35,6 +35,7 @@ import {
 } from "../features/demandes/pages/EspaceDemandesAgent";
 import { DemandesAValider } from "../features/demandes/pages/DemandesAValider";
 import { DemandesValidees } from "../features/demandes/pages/DemandesValidees";
+import { OperationsCartesPage } from "../features/cartes/pages/OperationsCartesPage";
 
 function RootLayout() {
   return (
@@ -71,6 +72,20 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
      },
    );
  }
+
+  if (role === "AGENT") {
+    extraRoutes.push({
+      path: "/agent/impressions-cartes",
+      element: <OperationsCartesPage type="IMPRESSION" />,
+    });
+  }
+
+  if (role === "SUPERVISEUR") {
+    extraRoutes.push({
+      path: "/superviseur/activations-cartes",
+      element: <OperationsCartesPage type="ACTIVATION" />,
+    });
+  }
 
   if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
     extraRoutes.push(

@@ -33,6 +33,12 @@ public interface DemandeOperationnelleRepository
     );
 
     List<DemandeOperationnelle>
+    findByTypeOperationAndStatutInOrderByDateCreationAsc(
+            TypeOperationCarte typeOperation,
+            List<StatutDemandeOperationnelle> statuts
+    );
+
+    List<DemandeOperationnelle>
     findByAffecteeAIdAndStatut(
             Long utilisateurId,
             StatutDemandeOperationnelle statut

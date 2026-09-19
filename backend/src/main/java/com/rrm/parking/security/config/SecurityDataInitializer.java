@@ -118,6 +118,7 @@ public class SecurityDataInitializer
                         permission.getCode() == CodePermission.DEMANDE_CONSULTER
                                 || permission.getCode() == CodePermission.DEMANDE_MODIFIER
                                 || permission.getCode() == CodePermission.PAIEMENT_ENREGISTRER
+                                || permission.getCode() == CodePermission.CARTE_IMPRIMER
                 )
                 .forEach(permission ->
                         roleAgent.getPermissions().add(permission)
@@ -199,6 +200,9 @@ public class SecurityDataInitializer
                                 == CodePermission.DEMANDE_CONSULTER
                                 || permission.getCode()
                                 == CodePermission.DEMANDE_VALIDER
+                                || (codeRole == CodeRole.SUPERVISEUR
+                                && permission.getCode()
+                                == CodePermission.CARTE_ACTIVER)
                 )
                 .forEach(role.getPermissions()::add);
 
