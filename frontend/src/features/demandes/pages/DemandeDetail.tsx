@@ -41,6 +41,11 @@ import { useAuth } from "../../../context/AuthContext";
 import { formatDate } from "../../../lib/dateUtils";
 import { roleConfig } from "../../../lib/roleConfig";
 import { PaiementModal } from "../components/PaiementModal";
+import {
+  extraireErreurFacturation,
+  genererFacturePourDemande,
+  telechargerFacturePdf,
+} from "../../../api/facturationApi";
 import type {
   EnregistrementPaiementResponse,
   PieceJointeDetailResponse,
@@ -274,6 +279,7 @@ export function DemandeDetail() {
   const [decisionEnCours, setDecisionEnCours] = useState(false);
   const [messageDecision, setMessageDecision] = useState<string | null>(null);
   const [erreurDecision, setErreurDecision] = useState<string | null>(null);
+  const [factureEnCours, setFactureEnCours] = useState(false);
 
   const demandeId = Number(id);
   const idValide =
@@ -283,6 +289,10 @@ export function DemandeDetail() {
   const basePath = role
     ? roleConfig[role].homePath
     : "";
+
+  const retourDemandes = role === "RESPONSABLE"
+    ? `${basePath}/demandes-validees`
+    : `${basePath}/demandes`;
 
   const detailQuery = useQuery({
     queryKey: ["demande-detail", demandeId],
@@ -340,7 +350,7 @@ export function DemandeDetail() {
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(`${basePath}/demandes`)}
+          onClick={() => navigate(retourDemandes)}
           style={{ marginBottom: 16 }}
         >
           Retour à la liste des demandes
@@ -394,6 +404,27 @@ export function DemandeDetail() {
   const peutDecider =
     data.statut === "PAYEE" &&
     hasAuthority("DEMANDE_VALIDER");
+
+  const peutGenererFacture =
+    role === "RESPONSABLE" && data.statut === "VALIDEE";
+
+  const genererFacture = async () => {
+    setFactureEnCours(true);
+    setErreurDecision(null);
+    try {
+      const facture = await genererFacturePourDemande(demandeId);
+      setMessageDecision(
+        `Facture ${facture.numero} générée avec succès.`
+      );
+      const url = await telechargerFacturePdf(facture.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      setErreurDecision(extraireErreurFacturation(error));
+    } finally {
+      setFactureEnCours(false);
+    }
+  };
 
   const traiterPaiementEnregistre = async (
     paiement: EnregistrementPaiementResponse
@@ -841,6 +872,30 @@ export function DemandeDetail() {
                 Demander une correction
               </Button>
             </Space>
+          </Card>
+        )}
+
+        {peutGenererFacture && (
+          <Card
+            size="small"
+            title="Facturation de la demande validée"
+            style={{ borderColor: "#86efac", marginBottom: 16 }}
+          >
+            <Alert
+              type="info"
+              showIcon
+              message="Dossier validé et abonnement créé"
+              description={`Le total de la facture sera ${formaterMontant(data.montantTotalTTC)} MAD TTC, avec l’abonnement et la carte RFID de 50 DH séparés.`}
+              style={{ marginBottom: 16 }}
+            />
+            <Button
+              type="primary"
+              icon={<FilePdfOutlined />}
+              loading={factureEnCours}
+              onClick={() => void genererFacture()}
+            >
+              Générer et imprimer la facture
+            </Button>
           </Card>
         )}
 

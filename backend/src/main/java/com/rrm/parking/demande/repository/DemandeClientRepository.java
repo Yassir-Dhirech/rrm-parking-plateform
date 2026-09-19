@@ -52,4 +52,14 @@ public interface DemandeClientRepository
     findByStatutOrderByDateSoumissionDesc(
             StatutDemande statut
     );
+
+    List<DemandeClient>
+    findByStatutOrderByDateModificationAsc(
+            StatutDemande statut
+    );
+
+    List<DemandeClient>
+    findByStatutOrderByDateModificationDesc(
+            StatutDemande statut
+    );
 }

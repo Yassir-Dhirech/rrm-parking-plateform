@@ -34,6 +34,7 @@ import {
   EspaceDemandesAgent,
 } from "../features/demandes/pages/EspaceDemandesAgent";
 import { DemandesAValider } from "../features/demandes/pages/DemandesAValider";
+import { DemandesValidees } from "../features/demandes/pages/DemandesValidees";
 
 function RootLayout() {
   return (
@@ -79,7 +80,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
 
 
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
+  if (role === "SUPERVISEUR" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/factures`, element: <FacturesList /> },
       { path: `${roleConfig[role].homePath}/factures/:id`, element: <FactureDetail /> },
@@ -94,6 +95,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
   if (role === "RESPONSABLE") {
     extraRoutes.push(
+      {
+        path: `${roleConfig[role].homePath}/demandes-validees`,
+        element: <DemandesValidees />,
+      },
       { path: `${roleConfig[role].homePath}/contrats`, element: <ContratsList /> },
       { path: `${roleConfig[role].homePath}/contrats/:id`, element: <ContratDetail /> },
     );
@@ -110,6 +115,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/parkings`, element: <ParkingsList /> },
       { path: `${roleConfig[role].homePath}/tarifs`, element: <PlansTarifairesList /> },
+      { path: `${roleConfig[role].homePath}/factures`, element: <DemandesValidees /> },
     );
   }
 
