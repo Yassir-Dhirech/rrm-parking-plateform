@@ -11,10 +11,10 @@ import {
   Input,
   Modal,
   Row,
-  Col,
-  Image,
-  Popconfirm,
-  Tooltip,
+  Space,
+  Spin,
+  Steps,
+  Tag,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -26,8 +26,7 @@ import {
   FilePdfOutlined,
   FolderOutlined,
   IdcardOutlined,
-  CarOutlined,
-  FileImageOutlined,
+  SafetyCertificateOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import {
@@ -267,30 +266,7 @@ function DocumentCard({
   );
 }
 
-const MOTIFS_REFUS_DOSSIER = [
-  { value: "Copie de la Carte Nationale d'Identité (CIN) illisible ou tronquée", label: "Copie CIN illisible ou tronquée" },
-  { value: "Copie de la Carte Grise illisible ou verso manquant", label: "Copie Carte Grise illisible ou incomplète" },
-  { value: "Non-concordance entre le titulaire de la carte grise et la CIN fournie", label: "Non-concordance titulaire carte grise et CIN" },
-  { value: "Numéro d'immatriculation saisi non conforme au certificat d'immatriculation", label: "Immatriculation non conforme à la carte grise" },
-  { value: "Type ou gabarit de véhicule non admissible pour ce parking", label: "Type de véhicule non admissible pour ce parking" },
-  { value: "Document d'identité ou certificat d'immatriculation périmé", label: "Document d'identité ou certificat périmé" },
-  { value: "Justificatif de domicile manquant ou non recevable", label: "Justificatif de domicile non conforme" },
-  { value: "Document d'entreprise (ICE / RC) incomplet ou non certifié", label: "Document entreprise (ICE / RC) non conforme" },
-  { value: "Dossier en doublon ou abonnement déjà actif pour ce véhicule", label: "Dossier en doublon / abonnement déjà actif" },
-  { value: "AUTRE", label: "Autre motif (préciser ci-dessous)" },
-];
 
-const MOTIFS_REFUS_PAIEMENT = [
-  { value: "Chèque non signé ou signature manifestement non conforme", label: "Chèque non signé ou signature non conforme" },
-  { value: "Montant en lettres et en chiffres non concordants sur le chèque", label: "Montants lettres et chiffres discordants sur le chèque" },
-  { value: "Chèque non libellé à l'ordre exact de Rabat Région Mobilité (RRM)", label: "Ordre du chèque incorrect (doit être Rabat Région Mobilité)" },
-  { value: "Date d'émission du chèque dépassée ou erronée", label: "Date d'émission du chèque dépassée" },
-  { value: "Coupures d'espèces non conformes ou détériorées", label: "Billets d'espèces refusés ou détériorés" },
-  { value: "Montant présenté inférieur au total exigible", label: "Montant remis insuffisant par rapport au total exigible" },
-  { value: "Refus du client de s'acquitter des frais obligatoires de carte RFID (50 DH)", label: "Refus de règlement des frais de carte RFID (50 DH)" },
-  { value: "Chèque de garantie ou d'acompte non accepté (règlement intégral requis)", label: "Chèque de garantie ou d'acompte non accepté" },
-  { value: "AUTRE", label: "Autre motif (préciser ci-dessous)" },
-];
 
 export function DemandeDetail() {
   const { id } = useParams<{ id: string }>();
