@@ -245,7 +245,8 @@ public class CarteAcces {
                         || statut == StatutCarteAcces.ACTIVE
                         || statut == StatutCarteAcces.SUSPENDUE
                         || statut == StatutCarteAcces.DESACTIVEE
-                        || statut == StatutCarteAcces.EXPIREE;
+                        || (statut == StatutCarteAcces.EXPIREE
+                        && dateImpression != null);
 
         if (numeroObligatoire
                 && (numeroCarte == null || numeroCarte.isBlank())) {
