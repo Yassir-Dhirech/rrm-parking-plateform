@@ -4,6 +4,7 @@ import com.rrm.parking.abonnement.entity.PeriodeAbonnement;
 import com.rrm.parking.abonnement.enums.StatutPeriodeAbonnement;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,5 +25,15 @@ public interface PeriodeAbonnementRepository
     boolean existsByAbonnementIdAndStatut(
             Long abonnementId,
             StatutPeriodeAbonnement statut
+    );
+
+    List<PeriodeAbonnement> findByStatutAndDateFin(
+            StatutPeriodeAbonnement statut,
+            LocalDate dateFin
+    );
+
+    List<PeriodeAbonnement> findByStatutAndDateFinBefore(
+            StatutPeriodeAbonnement statut,
+            LocalDate date
     );
 }
