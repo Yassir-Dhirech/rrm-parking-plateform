@@ -2,15 +2,14 @@ package com.rrm.parking.facturation.dto.response;
 
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeClient;
-import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.facturation.entity.Recu;
 import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutCheque;
 import com.rrm.parking.paiement.enums.StatutPaiement;
+import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import com.rrm.parking.tarification.entity.TarifParking;
-import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 
 import java.math.BigDecimal;
@@ -58,16 +57,14 @@ public record RecuConsultationResponse(
     public static RecuConsultationResponse depuis(
             Recu recu,
             ClientParticulier client,
-            DemandeNouvelAbonnementRegulier demandeReguliere
+            DemandeClient demande
     ) {
         Paiement paiement = recu.getPaiement();
-        DemandeClient demande = paiement.getDemande();
         Utilisateur agent = paiement.getTraitePar();
 
-        TarifParking tarif =
-                demandeReguliere.getTarifParking();
-        DecompteNouvelAbonnement decompte =
-                DecompteNouvelAbonnement.depuis(tarif);
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demande);
+        TarifParking tarif = decompte.tarifParking();
 
         Long agentId = agent == null
                 ? null

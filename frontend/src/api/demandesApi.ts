@@ -11,7 +11,20 @@ import type {
   EnregistrementPaiementRequest,
   EnregistrementPaiementResponse,
   DecisionDemandeResponse,
+  RechercheRenouvellementRequest,
+  RenouvellementConsultationResponse,
+  DemandeRenouvellementRequest,
 } from "../features/demandes/types";
+
+async function lireReponseJson<T>(response: Response): Promise<T> {
+  const body = await response.json();
+
+  if (!response.ok) {
+    throw body;
+  }
+
+  return body as T;
+}
 
 export async function creerDemandeAbonnementRegulier(
   demande: DemandeAbonnementRegulierRequest,
@@ -72,6 +85,77 @@ export async function validerOtp(
   }
 
   return body as ValidationOtpResponse;
+}
+
+export async function rechercherRenouvellement(
+  requete: RechercheRenouvellementRequest
+): Promise<RenouvellementConsultationResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/recherche`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requete),
+    }
+  );
+
+  return lireReponseJson<RenouvellementConsultationResponse>(response);
+}
+
+export async function creerDemandeRenouvellement(
+  requete: DemandeRenouvellementRequest
+): Promise<DemandeAbonnementRegulierResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requete),
+    }
+  );
+
+  return lireReponseJson<DemandeAbonnementRegulierResponse>(response);
+}
+
+export async function validerOtpRenouvellement(
+  reference: string,
+  code: string
+): Promise<ValidationOtpResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/` +
+      `${encodeURIComponent(reference)}/otp/validation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ code }),
+    }
+  );
+
+  return lireReponseJson<ValidationOtpResponse>(response);
+}
+
+export async function renvoyerOtpRenouvellement(
+  reference: string
+): Promise<DemandeAbonnementRegulierResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/` +
+      `${encodeURIComponent(reference)}/otp/renvoi`,
+    {
+      method: "POST",
+      headers: { Accept: "application/json" },
+    }
+  );
+
+  return lireReponseJson<DemandeAbonnementRegulierResponse>(response);
 }
 
 export async function rechercherDemandesParReference(

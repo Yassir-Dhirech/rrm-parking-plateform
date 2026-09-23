@@ -2,6 +2,7 @@ package com.rrm.parking.paiement.service;
 
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.entity.Recu;
@@ -60,6 +61,9 @@ class PaiementServiceTest {
 
     @Mock
     private DemandeNouvelAbonnementRegulier demande;
+
+    @Mock
+    private DemandeRenouvellementRegulier demandeRenouvellement;
 
     @Mock
     private TarifParking tarifParking;
@@ -144,6 +148,59 @@ class PaiementServiceTest {
         assertEquals(ModePaiement.CHEQUE, paiement.getModePaiement());
         assertEquals(StatutPaiement.CONFIRME, paiement.getStatut());
         assertEquals(StatutCheque.ENCAISSE, paiement.getStatutCheque());
+    }
+
+    @Test
+    void doitEnregistrerUnRenouvellementSansFraisDeCarte() {
+        when(demandeClientRepository.findByIdPourMiseAJour(20L))
+                .thenReturn(Optional.of(demandeRenouvellement));
+        when(demandeRenouvellement.getStatut())
+                .thenReturn(
+                        StatutDemande.EN_ATTENTE_PAIEMENT,
+                        StatutDemande.PAYEE
+                );
+        when(demandeRenouvellement.getModePaiementSouhaite())
+                .thenReturn(ModePaiement.ESPECE);
+        when(demandeRenouvellement.getTarifParking())
+                .thenReturn(tarifParking);
+        when(tarifParking.calculerMontantTotalTTC())
+                .thenReturn(new BigDecimal("1500.00"));
+        when(paiementRepository.existsByDemandeIdAndStatut(
+                20L,
+                StatutPaiement.CONFIRME
+        )).thenReturn(false);
+        when(utilisateurRepository.findById(5L))
+                .thenReturn(Optional.of(agent));
+        when(paiementRepository.existsByReference(anyString()))
+                .thenReturn(false);
+        when(paiementRepository.save(any(Paiement.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(recuRepository.existsByNumero(anyString()))
+                .thenReturn(false);
+        when(recuRepository.save(any(Recu.class)))
+                .thenReturn(recuEnregistre);
+        when(recuEnregistre.getId()).thenReturn(99L);
+        when(recuEnregistre.getNumero())
+                .thenReturn("REC-20260921-TEST");
+        when(demandeRenouvellement.getId()).thenReturn(20L);
+        when(demandeRenouvellement.getReference())
+                .thenReturn("DEM-REN-20260921-TEST");
+
+        EnregistrementPaiementResponse response =
+                paiementService.enregistrer(
+                        20L,
+                        new EnregistrementPaiementRequest(null, null, null),
+                        5L
+                );
+
+        ArgumentCaptor<Paiement> captor =
+                ArgumentCaptor.forClass(Paiement.class);
+        verify(paiementRepository).save(captor.capture());
+        verify(demandeRenouvellement).marquerPayee(agent);
+
+        assertEquals(new BigDecimal("1500.00"), captor.getValue().getMontant());
+        assertEquals(new BigDecimal("1500.00"), response.montant());
+        assertEquals(StatutDemande.PAYEE, response.statutDemande());
     }
 
     @Test

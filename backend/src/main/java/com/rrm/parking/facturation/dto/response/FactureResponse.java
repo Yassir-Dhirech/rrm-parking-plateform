@@ -5,6 +5,7 @@ import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.enums.StatutFacture;
 import com.rrm.parking.paiement.entity.Paiement;
@@ -77,6 +78,28 @@ public record FactureResponse(
             if (reguliere.getVehicule() != null) {
                 immatriculation = reguliere.getVehicule()
                         .getImmatriculation();
+            }
+        } else if (demande
+                instanceof DemandeRenouvellementRegulier renouvellement) {
+            abonnementReference = renouvellement
+                    .getAbonnementConcerne()
+                    .getReference();
+            if (renouvellement.getTarifParking() != null) {
+                dureeEnMois = renouvellement
+                        .getTarifParking()
+                        .getDureeEnMois();
+                if (renouvellement.getTarifParking().getParking() != null) {
+                    parkingNom = renouvellement
+                            .getTarifParking()
+                            .getParking()
+                            .getNom();
+                }
+                if (renouvellement.getTarifParking().getForfait() != null) {
+                    forfaitLibelle = renouvellement
+                            .getTarifParking()
+                            .getForfait()
+                            .getLibelle();
+                }
             }
         }
 

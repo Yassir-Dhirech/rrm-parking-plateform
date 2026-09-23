@@ -2,11 +2,15 @@ package com.rrm.parking.demande.service;
 
 import com.rrm.parking.abonnement.entity.AbonnementRegulier;
 import com.rrm.parking.abonnement.entity.PeriodeAbonnement;
+import com.rrm.parking.abonnement.entity.AffectationParking;
+import com.rrm.parking.abonnement.enums.StatutAbonnement;
 import com.rrm.parking.abonnement.repository.AbonnementRepository;
 import com.rrm.parking.abonnement.repository.AbonnementRegulierRepository;
+import com.rrm.parking.abonnement.repository.PeriodeAbonnementRepository;
 import com.rrm.parking.carte.entity.CarteAcces;
 import com.rrm.parking.carte.entity.DemandeOperationnelle;
 import com.rrm.parking.carte.enums.TypeOperationCarte;
+import com.rrm.parking.carte.enums.StatutCarteAcces;
 import com.rrm.parking.carte.repository.CarteAccesRepository;
 import com.rrm.parking.carte.repository.DemandeOperationnelleRepository;
 import com.rrm.parking.client.entity.Client;
@@ -16,9 +20,11 @@ import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.dto.response.DecisionDemandeResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.event.CorrectionDemandeDemandeeEvent;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
+import com.rrm.parking.demande.repository.DemandeRenouvellementRegulierRepository;
 import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.repository.PaiementRepository;
@@ -35,6 +41,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -45,10 +53,12 @@ public class DemandeValidationFinaleService {
             ZoneId.of("Africa/Casablanca");
 
     private final DemandeClientRepository demandeClientRepository;
+    private final DemandeRenouvellementRegulierRepository renouvellementRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final PaiementRepository paiementRepository;
     private final AbonnementRepository abonnementRepository;
     private final AbonnementRegulierRepository abonnementRegulierRepository;
+    private final PeriodeAbonnementRepository periodeAbonnementRepository;
     private final CarteAccesRepository carteAccesRepository;
     private final DemandeOperationnelleRepository demandeOperationnelleRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -58,11 +68,8 @@ public class DemandeValidationFinaleService {
             Long demandeId,
             Long utilisateurId
     ) {
-        DemandeNouvelAbonnementRegulier demande =
-                chargerDemandePayee(demandeId);
+        DemandeClient demande = chargerDemandePayee(demandeId);
         Utilisateur decideur = chargerUtilisateur(utilisateurId);
-        ClientParticulier client = chargerClientParticulier(demande);
-        TarifParking tarif = demande.getTarifParking();
         Paiement paiement = paiementRepository
                 .findByDemandeIdAndStatut(
                         demandeId,
@@ -74,10 +81,28 @@ public class DemandeValidationFinaleService {
                         )
                 );
 
-        demande.valider(
-                decideur,
-                "Validation finale du dossier payé"
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            return validerNouvelAbonnement(nouvelle, decideur, paiement);
+        }
+
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            return validerRenouvellement(renouvellement, decideur, paiement);
+        }
+
+        throw new ConflitMetierException(
+                "Ce type de demande n'est pas encore pris en charge"
         );
+    }
+
+    private DecisionDemandeResponse validerNouvelAbonnement(
+            DemandeNouvelAbonnementRegulier demande,
+            Utilisateur decideur,
+            Paiement paiement
+    ) {
+        ClientParticulier client = chargerClientParticulier(demande);
+        TarifParking tarif = demande.getTarifParking();
+
+        demande.valider(decideur, "Validation finale du dossier payé");
 
         LocalDate dateDebut = LocalDate.now(ZONE_RRM);
         LocalDate dateFin = dateDebut
@@ -127,6 +152,7 @@ public class DemandeValidationFinaleService {
                         "Impression de la première carte d'accès",
                         decideur
                 );
+        impression.definirDemandeClientSource(demande);
 
         DemandeOperationnelle impressionEnregistree =
                 demandeOperationnelleRepository.save(impression);
@@ -140,7 +166,110 @@ public class DemandeValidationFinaleService {
                 carte.getId(),
                 carte.getReference(),
                 impressionEnregistree.getId(),
-                impressionEnregistree.getReference()
+                impressionEnregistree.getReference(),
+                null,
+                null
+        );
+    }
+
+    private DecisionDemandeResponse validerRenouvellement(
+            DemandeRenouvellementRegulier demande,
+            Utilisateur decideur,
+            Paiement paiement
+    ) {
+        AbonnementRegulier abonnement = demande.getAbonnementConcerne();
+        TarifParking nouveauTarif = demande.getTarifParking();
+        PeriodeAbonnement dernierePeriode = abonnement.getPeriodes().stream()
+                .filter(periode -> periode.getStatut()
+                        != com.rrm.parking.abonnement.enums.StatutPeriodeAbonnement.ANNULEE)
+                .max(Comparator.comparing(PeriodeAbonnement::getNumero))
+                .orElseThrow(() -> new ConflitMetierException(
+                        "L'abonnement ne possède aucune période renouvelable"
+                ));
+
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
+        LocalDate dateDebut = dernierePeriode.getDateFin().isBefore(aujourdHui)
+                ? aujourdHui
+                : dernierePeriode.getDateFin().plusDays(1);
+        LocalDate dateFin = dateDebut
+                .plusMonths(nouveauTarif.getDureeEnMois())
+                .minusDays(1);
+
+        TarifParking ancienTarif = chargerDernierTarif(abonnement.getId());
+        AffectationParking derniereAffectation = abonnement
+                .getAffectationsParking().stream()
+                .max(Comparator.comparing(AffectationParking::getDateDebut))
+                .orElseThrow(() -> new ConflitMetierException(
+                        "L'abonnement ne possède aucune affectation parking"
+                ));
+
+        boolean parkingChange = !memeEntite(
+                derniereAffectation.getParking().getId(),
+                nouveauTarif.getParking().getId(),
+                derniereAffectation.getParking(),
+                nouveauTarif.getParking()
+        );
+        boolean forfaitChange = !memeEntite(
+                ancienTarif.getForfait().getId(),
+                nouveauTarif.getForfait().getId(),
+                ancienTarif.getForfait(),
+                nouveauTarif.getForfait()
+        );
+
+        CarteAcces carte = chargerCarteExistante(abonnement.getId());
+        boolean carteExpiree = carte.getStatut() == StatutCarteAcces.EXPIREE;
+
+        demande.valider(decideur, "Validation finale du renouvellement payé");
+
+        PeriodeAbonnement nouvellePeriode = new PeriodeAbonnement(
+                dernierePeriode.getNumero() + 1,
+                dateDebut,
+                dateFin,
+                nouveauTarif.calculerMontantTotalHT(),
+                nouveauTarif.getTauxTVA(),
+                abonnement
+        );
+        abonnement.ajouterPeriode(nouvellePeriode);
+
+        if (parkingChange) {
+            abonnement.changerParking(nouveauTarif.getParking(), dateDebut);
+        }
+
+        if (!dateDebut.isAfter(aujourdHui)) {
+            nouvellePeriode.activer();
+            if (abonnement.getStatut() == StatutAbonnement.EXPIRE) {
+                abonnement.reactiverApresRenouvellement();
+            }
+        }
+
+        PeriodeAbonnement periodeEnregistree =
+                periodeAbonnementRepository.save(nouvellePeriode);
+        abonnementRegulierRepository.save(abonnement);
+        paiement.associerPeriodeAbonnement(periodeEnregistree);
+        demande.associerPeriodeGeneree(periodeEnregistree);
+
+        DemandeOperationnelle activation = new DemandeOperationnelle(
+                genererReferenceActivation(),
+                carte,
+                TypeOperationCarte.ACTIVATION,
+                motifActivation(carteExpiree, parkingChange, forfaitChange),
+                decideur
+        );
+        activation.definirDemandeClientSource(demande);
+        activation = demandeOperationnelleRepository.save(activation);
+
+        return new DecisionDemandeResponse(
+                demande.getId(),
+                demande.getReference(),
+                demande.getStatut(),
+                abonnement.getId(),
+                abonnement.getReference(),
+                carte.getId(),
+                carte.getReference(),
+                null,
+                null,
+                activation.getId(),
+                activation.getReference()
         );
     }
 
@@ -150,8 +279,7 @@ public class DemandeValidationFinaleService {
             Long utilisateurId,
             String motif
     ) {
-        DemandeNouvelAbonnementRegulier demande =
-                chargerDemandePayee(demandeId);
+        DemandeClient demande = chargerDemandePayee(demandeId);
         Utilisateur decideur = chargerUtilisateur(utilisateurId);
         ClientParticulier client = chargerClientParticulier(demande);
 
@@ -173,7 +301,7 @@ public class DemandeValidationFinaleService {
         );
     }
 
-    private DemandeNouvelAbonnementRegulier chargerDemandePayee(
+    private DemandeClient chargerDemandePayee(
             Long demandeId
     ) {
         DemandeClient demande = demandeClientRepository
@@ -186,26 +314,34 @@ public class DemandeValidationFinaleService {
         DemandeClient demandeReelle =
                 (DemandeClient) Hibernate.unproxy(demande);
 
-        if (!(demandeReelle
-                instanceof DemandeNouvelAbonnementRegulier reguliere)) {
+        if (!(demandeReelle instanceof DemandeNouvelAbonnementRegulier)
+                && !(demandeReelle instanceof DemandeRenouvellementRegulier)) {
             throw new ConflitMetierException(
                     "Ce type de demande n'est pas encore pris en charge"
             );
         }
 
-        if (reguliere.getStatut() != StatutDemande.PAYEE) {
+        if (demandeReelle.getStatut() != StatutDemande.PAYEE) {
             throw new ConflitMetierException(
                     "La demande doit être payée avant la décision finale"
             );
         }
 
-        if (reguliere.getAbonnementGenere() != null) {
+        if (demandeReelle instanceof DemandeNouvelAbonnementRegulier reguliere
+                && reguliere.getAbonnementGenere() != null) {
             throw new ConflitMetierException(
                     "La demande a déjà généré un abonnement"
             );
         }
 
-        return reguliere;
+        if (demandeReelle instanceof DemandeRenouvellementRegulier renouvellement
+                && renouvellement.getPeriodeGeneree() != null) {
+            throw new ConflitMetierException(
+                    "La demande a déjà généré une période"
+            );
+        }
+
+        return demandeReelle;
     }
 
     private Utilisateur chargerUtilisateur(Long utilisateurId) {
@@ -218,7 +354,7 @@ public class DemandeValidationFinaleService {
     }
 
     private ClientParticulier chargerClientParticulier(
-            DemandeNouvelAbonnementRegulier demande
+            DemandeClient demande
     ) {
         Client client = (Client) Hibernate.unproxy(
                 demande.getClient()
@@ -226,7 +362,7 @@ public class DemandeValidationFinaleService {
 
         if (!(client instanceof ClientParticulier particulier)) {
             throw new ConflitMetierException(
-                    "Le nouvel abonnement régulier exige un client particulier"
+                    "La demande régulière exige un client particulier"
             );
         }
 
@@ -252,6 +388,73 @@ public class DemandeValidationFinaleService {
                 "IMP",
                 demandeOperationnelleRepository::existsByReference
         );
+    }
+
+    private String genererReferenceActivation() {
+        return genererReferenceUnique(
+                "ACT",
+                demandeOperationnelleRepository::existsByReference
+        );
+    }
+
+    private CarteAcces chargerCarteExistante(Long abonnementId) {
+        List<CarteAcces> cartes = carteAccesRepository
+                .findByAbonnementId(abonnementId).stream()
+                .filter(carte -> carte.getStatut()
+                        != StatutCarteAcces.DESACTIVEE)
+                .toList();
+
+        if (cartes.size() != 1) {
+            throw new ConflitMetierException(
+                    "L'abonnement doit posséder exactement une carte réutilisable"
+            );
+        }
+
+        return cartes.getFirst();
+    }
+
+    private TarifParking chargerDernierTarif(Long abonnementId) {
+        return renouvellementRepository
+                .findFirstByAbonnementConcerneIdAndPeriodeGenereeIsNotNullOrderByDateModificationDesc(
+                        abonnementId
+                )
+                .map(DemandeRenouvellementRegulier::getTarifParking)
+                .orElseGet(() -> demandeClientRepository
+                        .findByAbonnementGenereId(abonnementId)
+                        .map(DemandeClient.class::cast)
+                        .filter(DemandeNouvelAbonnementRegulier.class::isInstance)
+                        .map(DemandeNouvelAbonnementRegulier.class::cast)
+                        .map(DemandeNouvelAbonnementRegulier::getTarifParking)
+                        .orElseThrow(() -> new ConflitMetierException(
+                                "Le tarif précédent de l'abonnement est introuvable"
+                        ))
+                );
+    }
+
+    private boolean memeEntite(
+            Long premierId,
+            Long secondId,
+            Object premier,
+            Object second
+    ) {
+        if (premier == second) {
+            return true;
+        }
+        return premierId != null && premierId.equals(secondId);
+    }
+
+    private String motifActivation(
+            boolean carteExpiree,
+            boolean parkingChange,
+            boolean forfaitChange
+    ) {
+        StringBuilder motif = new StringBuilder(
+                "Réactivation et test de la carte après renouvellement"
+        );
+        if (carteExpiree) motif.append(" ; carte expirée");
+        if (parkingChange) motif.append(" ; changement de parking");
+        if (forfaitChange) motif.append(" ; changement de forfait");
+        return motif.toString();
     }
 
     private String genererReferenceUnique(

@@ -123,7 +123,9 @@ export interface PieceJointeDetailResponse {
 export interface DemandeDetailResponse {
   id: number;
   reference: string;
-  typeDemande: "NOUVEL_ABONNEMENT_REGULIER";
+  typeDemande:
+    | "NOUVEL_ABONNEMENT_REGULIER"
+    | "RENOUVELLEMENT_REGULIER";
   statut: StatutDemande;
   canalInitiation: CanalInitiation;
 
@@ -201,6 +203,31 @@ export interface DemandeAbonnementRegulierResponse {
   tentativesRestantes: number;
   canalOtp: CanalOtp;
   destinationMasquee: string;
+}
+
+export interface RechercheRenouvellementRequest {
+  numeroCarte: string;
+  cin: string;
+}
+
+export interface RenouvellementConsultationResponse {
+  abonnementId: number;
+  referenceAbonnement: string;
+  statutAbonnement: string;
+  numeroCarte: string;
+  statutCarte: string;
+  clientNom: string;
+  parkingActuelId: number;
+  parkingActuelNom: string;
+  dateFinActuelle: string;
+}
+
+export interface DemandeRenouvellementRequest
+  extends RechercheRenouvellementRequest {
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+  canalOtp: CanalOtp;
+  conditionsAcceptees: boolean;
 }
 
 export interface ValidationOtpResponse {

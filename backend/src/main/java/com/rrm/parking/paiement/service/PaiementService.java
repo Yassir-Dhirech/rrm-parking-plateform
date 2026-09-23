@@ -3,7 +3,6 @@ package com.rrm.parking.paiement.service;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.entity.DemandeClient;
-import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.entity.Recu;
@@ -14,8 +13,8 @@ import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.event.PaiementConfirmeEvent;
+import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import com.rrm.parking.paiement.repository.PaiementRepository;
-import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,12 +58,6 @@ public class PaiementService {
                         )
                 );
 
-        if (!(demande instanceof DemandeNouvelAbonnementRegulier demandeReguliere)) {
-            throw new ConflitMetierException(
-                    "Ce type de demande n'est pas encore pris en charge pour le paiement"
-            );
-        }
-
         if (demande.getStatut() != StatutDemande.EN_ATTENTE_PAIEMENT) {
             throw new ConflitMetierException(
                     "La demande doit être en attente de paiement"
@@ -88,12 +81,11 @@ public class PaiementService {
                         )
                 );
 
-        ModePaiement modePaiement =
-                demandeReguliere.getModePaiementSouhaite();
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demande);
 
-        BigDecimal montant = DecompteNouvelAbonnement
-                .depuis(demandeReguliere.getTarifParking())
-                .montantTotalTTC();
+        ModePaiement modePaiement = decompte.modePaiement();
+        BigDecimal montant = decompte.montantTotalTTC();
 
         Paiement paiement = creerPaiement(
                 modePaiement,

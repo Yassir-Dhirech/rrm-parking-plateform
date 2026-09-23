@@ -7,6 +7,8 @@ import com.rrm.parking.demande.dto.request.ValidationOtpRequest;
 import com.rrm.parking.demande.dto.response.ValidationOtpResponse;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
+import com.rrm.parking.demande.event.RenouvellementOtpValideEvent;
 import com.rrm.parking.demande.event.DemandeOtpValideeEvent;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
@@ -137,48 +139,57 @@ public class OtpValidationService {
     private void publierEvenementConfirmation(
             DemandeClient demande
     ) {
-        if (!(demande
-                instanceof DemandeNouvelAbonnementRegulier demandeReguliere)) {
-            throw new IllegalStateException(
-                    "La demande n'est pas une demande d'abonnement régulier"
+        ClientParticulier client = clientParticulierRepository
+                .findById(demande.getClient().getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Le client particulier de la demande est introuvable"
+                ));
+
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            TarifParking tarif = nouvelle.getTarifParking();
+            DecompteNouvelAbonnement decompte =
+                    DecompteNouvelAbonnement.depuis(tarif);
+
+            eventPublisher.publishEvent(
+                    new DemandeOtpValideeEvent(
+                            client.getEmail(),
+                            client.getNomComplet(),
+                            demande.getReference(),
+                            tarif.getParking().getNom(),
+                            tarif.getParking().getAdresse(),
+                            tarif.getForfait().getLibelle(),
+                            tarif.getDureeEnMois(),
+                            decompte.montantAbonnementTTC(),
+                            decompte.fraisCarteTTC(),
+                            decompte.montantTotalTTC(),
+                            nouvelle.getModePaiementSouhaite().name(),
+                            demande.getDateValidationOtp().toLocalDate().plusDays(7)
+                    )
             );
+            return;
         }
 
-        ClientParticulier client =
-                clientParticulierRepository
-                        .findById(
-                                demande.getClient().getId()
-                        )
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "Le client particulier de la demande est introuvable"
-                                )
-                        );
-        TarifParking tarif =
-                demandeReguliere.getTarifParking();
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            TarifParking tarif = renouvellement.getTarifParking();
+            eventPublisher.publishEvent(
+                    new RenouvellementOtpValideEvent(
+                            client.getEmail(),
+                            client.getNomComplet(),
+                            demande.getReference(),
+                            renouvellement.getAbonnementConcerne().getReference(),
+                            tarif.getParking().getNom(),
+                            tarif.getForfait().getLibelle(),
+                            tarif.getDureeEnMois(),
+                            tarif.calculerMontantTotalTTC(),
+                            renouvellement.getModePaiementSouhaite().name(),
+                            demande.getDateValidationOtp().toLocalDate().plusDays(7)
+                    )
+            );
+            return;
+        }
 
-        DecompteNouvelAbonnement decompte =
-                DecompteNouvelAbonnement.depuis(tarif);
-
-        eventPublisher.publishEvent(
-                new DemandeOtpValideeEvent(
-                        client.getEmail(),
-                        client.getNomComplet(),
-                        demande.getReference(),
-                        tarif.getParking().getNom(),
-                        tarif.getParking().getAdresse(),
-                        tarif.getForfait().getLibelle(),
-                        tarif.getDureeEnMois(),
-                        decompte.montantAbonnementTTC(),
-                        decompte.fraisCarteTTC(),
-                        decompte.montantTotalTTC(),
-                        demandeReguliere
-                                .getModePaiementSouhaite()
-                                .name(),
-                        demande.getDateValidationOtp()
-                                .toLocalDate()
-                                .plusDays(7)
-                )
+        throw new IllegalStateException(
+                "Ce type de demande n'est pas pris en charge pour la confirmation OTP"
         );
     }
 }
