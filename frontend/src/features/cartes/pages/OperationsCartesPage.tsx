@@ -72,7 +72,15 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
       title: "ACTION",
       fixed: "right",
       render: (_, row) => (
-        <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => setSelection(row)}>
+        <Button
+          type="primary"
+          icon={<CheckCircleOutlined />}
+          disabled={activation && !row.factureId}
+          title={activation && !row.factureId
+            ? "Le responsable doit d'abord générer la facture"
+            : undefined}
+          onClick={() => setSelection(row)}
+        >
           {impression
             ? "Déclarer imprimée"
             : activation

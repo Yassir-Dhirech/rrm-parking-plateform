@@ -6,6 +6,7 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.dto.response.DemandeFacturationResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.dto.response.FactureResponse;
@@ -17,7 +18,7 @@ import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.tarification.entity.TarifParking;
-import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
+import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
@@ -67,8 +68,7 @@ public class FacturationService {
                 : recherche.trim().toUpperCase(Locale.ROOT);
 
         return demandes.stream()
-                .filter(demande -> Hibernate.unproxy(demande)
-                        instanceof DemandeNouvelAbonnementRegulier)
+                .filter(this::estDemandeReguliereFacturable)
                 .map(this::versDemandeFacturation)
                 .filter(reponse -> terme.isBlank()
                         || contient(reponse.referenceDemande(), terme)
@@ -79,9 +79,7 @@ public class FacturationService {
 
     @Transactional
     public FactureResponse genererPourDemande(Long demandeId) {
-        DemandeNouvelAbonnementRegulier demande = chargerDemandeValidee(
-                demandeId
-        );
+        DemandeClient demande = chargerDemandeValidee(demandeId);
         Paiement paiement = chargerPaiementConfirme(demandeId);
 
         Facture existante = factureRepository
@@ -91,9 +89,9 @@ public class FacturationService {
             return FactureResponse.depuis(existante);
         }
 
-        TarifParking tarif = demande.getTarifParking();
-        DecompteNouvelAbonnement decompte =
-                DecompteNouvelAbonnement.depuis(tarif);
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demande);
+        TarifParking tarif = decompte.tarifParking();
 
         BigDecimal tauxTva = tarif.getTauxTVA();
         Facture facture = new Facture(
@@ -113,16 +111,18 @@ public class FacturationService {
                 tauxTva
         ));
 
-        facture.ajouterLigne(new LigneFacture(
-                TypeLigneFacture.CARTE_ACCES,
-                "Frais d'émission de la carte RFID sans contact",
-                1,
-                convertirTtcEnHt(
-                        decompte.fraisCarteTTC(),
-                        tauxTva
-                ),
-                tauxTva
-        ));
+        if (decompte.fraisCarteTTC().signum() > 0) {
+            facture.ajouterLigne(new LigneFacture(
+                    TypeLigneFacture.CARTE_ACCES,
+                    "Frais d'émission de la carte RFID sans contact",
+                    1,
+                    convertirTtcEnHt(
+                            decompte.fraisCarteTTC(),
+                            tauxTva
+                    ),
+                    tauxTva
+            ));
+        }
 
         facture.emettre();
         return FactureResponse.depuis(
@@ -144,8 +144,10 @@ public class FacturationService {
     private DemandeFacturationResponse versDemandeFacturation(
             DemandeClient demande
     ) {
-        if (!(Hibernate.unproxy(demande)
-                instanceof DemandeNouvelAbonnementRegulier reguliere)) {
+        DemandeClient demandeReelle = (DemandeClient) Hibernate.unproxy(
+                demande
+        );
+        if (!estDemandeReguliereFacturable(demandeReelle)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_IMPLEMENTED,
                     "La facturation de ce type de demande n'est pas encore disponible"
@@ -157,13 +159,13 @@ public class FacturationService {
                 .findByPaiementId(paiement.getId())
                 .orElse(null);
         return DemandeFacturationResponse.depuis(
-                reguliere,
+                demandeReelle,
                 paiement,
                 facture
         );
     }
 
-    private DemandeNouvelAbonnementRegulier chargerDemandeValidee(
+    private DemandeClient chargerDemandeValidee(
             Long demandeId
     ) {
         DemandeClient demande = demandeRepository.findById(demandeId)
@@ -175,22 +177,32 @@ public class FacturationService {
         DemandeClient demandeReelle = (DemandeClient) Hibernate.unproxy(
                 demande
         );
-        if (!(demandeReelle
-                instanceof DemandeNouvelAbonnementRegulier reguliere)) {
+        if (!estDemandeReguliereFacturable(demandeReelle)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_IMPLEMENTED,
                     "La facturation de ce type de demande n'est pas encore disponible"
             );
         }
 
-        if (reguliere.getStatut() != StatutDemande.VALIDEE
-                || reguliere.getAbonnementGenere() == null) {
+        boolean resultatGenere =
+                demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle
+                        ? nouvelle.getAbonnementGenere() != null
+                        : ((DemandeRenouvellementRegulier) demandeReelle)
+                                .getPeriodeGeneree() != null;
+        if (demandeReelle.getStatut() != StatutDemande.VALIDEE
+                || !resultatGenere) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "La demande doit être validée et générer un abonnement"
+                    "La demande doit être validée et générer son abonnement ou sa période"
             );
         }
-        return reguliere;
+        return demandeReelle;
+    }
+
+    private boolean estDemandeReguliereFacturable(DemandeClient demande) {
+        Object demandeReelle = Hibernate.unproxy(demande);
+        return demandeReelle instanceof DemandeNouvelAbonnementRegulier
+                || demandeReelle instanceof DemandeRenouvellementRegulier;
     }
 
     private Paiement chargerPaiementConfirme(Long demandeId) {

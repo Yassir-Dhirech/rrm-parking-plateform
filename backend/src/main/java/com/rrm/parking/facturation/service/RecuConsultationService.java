@@ -3,11 +3,10 @@ package com.rrm.parking.facturation.service;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.client.repository.ClientParticulierRepository;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
-import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.facturation.dto.response.RecuConsultationResponse;
 import com.rrm.parking.facturation.entity.Recu;
 import com.rrm.parking.facturation.repository.RecuRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +20,6 @@ public class RecuConsultationService {
     private final ClientParticulierRepository
             clientParticulierRepository;
 
-    private final EntityManager entityManager;
-
     @Transactional(readOnly = true)
     public RecuConsultationResponse consulter(
             Long recuId
@@ -35,10 +32,9 @@ public class RecuConsultationService {
                         )
                 );
 
-        Long demandeId = recu
+        DemandeClient demande = recu
                 .getPaiement()
-                .getDemande()
-                .getId();
+                .getDemande();
 
         Long clientId = recu
                 .getPaiement()
@@ -55,22 +51,10 @@ public class RecuConsultationService {
                                 )
                         );
 
-        DemandeNouvelAbonnementRegulier
-                demandeReguliere = entityManager.find(
-                DemandeNouvelAbonnementRegulier.class,
-                demandeId
-        );
-
-        if (demandeReguliere == null) {
-            throw new RessourceIntrouvableException(
-                    "Demande d'abonnement régulier introuvable"
-            );
-        }
-
         return RecuConsultationResponse.depuis(
                 recu,
                 client,
-                demandeReguliere
+                demande
         );
     }
 }

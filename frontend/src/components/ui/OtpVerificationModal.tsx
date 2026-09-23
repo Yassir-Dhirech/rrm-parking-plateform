@@ -38,6 +38,13 @@ interface OtpVerificationModalProps {
   referenceNumber?: string;
   demandeResponse?: DemandeAbonnementRegulierResponse | null;
   onOtpVerified?: (res: ValidationOtpResponse) => void;
+  onValidateOtp?: (
+    reference: string,
+    code: string
+  ) => Promise<ValidationOtpResponse>;
+  onResendOtp?: (
+    reference: string
+  ) => Promise<DemandeAbonnementRegulierResponse>;
 }
 
 type ModalPhase = "INPUT_OTP" | "LOADING" | "CONFIRMED";
@@ -53,6 +60,8 @@ export function OtpVerificationModal({
   referenceNumber,
   demandeResponse,
   onOtpVerified,
+  onValidateOtp,
+  onResendOtp,
 }: OtpVerificationModalProps) {
   const navigate = useNavigate();
 
@@ -84,7 +93,7 @@ export function OtpVerificationModal({
         if (demandeResponse.canalOtp) {
           setChannel(demandeResponse.canalOtp);
         }
-        
+
         // Calculate remaining seconds if dateExpirationOtp is provided
         if (demandeResponse.dateExpirationOtp) {
           const expDate = new Date(demandeResponse.dateExpirationOtp).getTime();
@@ -125,11 +134,35 @@ export function OtpVerificationModal({
     }
   };
 
-  const handleResend = () => {
-    setCountdown(600);
+  const handleResend = async () => {
     setOtpDigits(["", "", "", "", "", ""]);
     setErrorMessage(null);
-    handleSendOtp();
+
+    if (activeRef && onResendOtp) {
+      setIsSending(true);
+      try {
+        const response = await onResendOtp(activeRef);
+        setGeneratedRef(response.reference);
+        setTentativesRestantes(response.tentativesRestantes ?? 3);
+        setChannel(response.canalOtp);
+
+        const expiration = new Date(response.dateExpirationOtp).getTime();
+        const secondesRestantes = Math.max(
+          0,
+          Math.floor((expiration - Date.now()) / 1000)
+        );
+        setCountdown(secondesRestantes || 600);
+        message.success("Un nouveau code OTP vous a été envoyé.");
+      } catch (error) {
+        setErrorMessage(extraireMessageErreur(error));
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
+    setCountdown(600);
+    await handleSendOtp();
   };
 
   const handleDigitChange = (index: number, value: string) => {
@@ -174,7 +207,9 @@ export function OtpVerificationModal({
       // If we have an active backend reference, call the backend validerOtp API
       if (activeRef) {
         try {
-          const validationRes = await validerOtp(activeRef, fullCode);
+          const validationRes = onValidateOtp
+            ? await onValidateOtp(activeRef, fullCode)
+            : await validerOtp(activeRef, fullCode);
           if (validationRes.otpValide) {
             if (onOtpVerified) {
               onOtpVerified(validationRes);
@@ -302,6 +337,7 @@ export function OtpVerificationModal({
                 <Radio.Group
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
+                  disabled={Boolean(demandeResponse)}
                   buttonStyle="solid"
                   size="small"
                 >

@@ -115,6 +115,16 @@ public abstract class Abonnement {
         statut = StatutAbonnement.ACTIF;
     }
 
+    public void reactiverApresRenouvellement() {
+        if (statut != StatutAbonnement.EXPIRE) {
+            throw new IllegalStateException(
+                    "Seul un abonnement expiré peut être réactivé par renouvellement"
+            );
+        }
+
+        statut = StatutAbonnement.ACTIF;
+    }
+
     public void resilier(String motif) {
         verifierMotif(motif);
 
@@ -175,7 +185,14 @@ public abstract class Abonnement {
                 "La période est obligatoire"
         );
 
-        if (periode.getAbonnement() != this) {
+        Abonnement abonnementPeriode = periode.getAbonnement();
+        boolean memeInstance = abonnementPeriode == this;
+        boolean memeIdentifiant = id != null
+                && abonnementPeriode != null
+                && abonnementPeriode.getId() != null
+                && id.equals(abonnementPeriode.getId());
+
+        if (!memeInstance && !memeIdentifiant) {
             throw new IllegalArgumentException(
                     "La période doit appartenir à cet abonnement"
             );
@@ -194,13 +211,13 @@ public abstract class Abonnement {
         }
 
         obtenirDernierePeriodeNonAnnulee().ifPresent(derniere -> {
-            LocalDate dateDebutAttendue =
+            LocalDate premiereDateAutorisee =
                     derniere.getDateFin().plusDays(1);
 
-            if (!periode.getDateDebut().equals(dateDebutAttendue)) {
+            if (periode.getDateDebut().isBefore(premiereDateAutorisee)) {
                 throw new IllegalArgumentException(
-                        "La nouvelle période doit commencer le "
-                                + dateDebutAttendue
+                        "La nouvelle période ne peut pas commencer avant le "
+                                + premiereDateAutorisee
                 );
             }
         });

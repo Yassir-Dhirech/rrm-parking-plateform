@@ -2,12 +2,14 @@ package com.rrm.parking.demande.dto.response;
 
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.document.entity.PieceJointe;
 import com.rrm.parking.document.enums.StatutPieceJointe;
 import com.rrm.parking.document.enums.TypePieceJointe;
 import com.rrm.parking.paiement.enums.ModePaiement;
+import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.entity.Forfait;
 import com.rrm.parking.tarification.entity.TarifParking;
@@ -85,6 +87,68 @@ public record DemandeDetailResponse(
                 demande.getId(),
                 demande.getReference(),
                 "NOUVEL_ABONNEMENT_REGULIER",
+                demande.getStatut(),
+                demande.getCanalInitiation(),
+
+                demande.getDateCreation(),
+                demande.getDateSoumission(),
+                demande.getDateValidationOtp(),
+                demande.getDateModification(),
+                demande.getMotifRefus(),
+
+                client.getId(),
+                "PARTICULIER",
+                client.getNomComplet(),
+                client.getCin(),
+                client.getEmail(),
+                client.getTelephone(),
+
+                vehicule.getId(),
+                vehicule.getImmatriculation(),
+                vehicule.getMarque(),
+                vehicule.getModele(),
+                vehicule.getCouleur(),
+                vehicule.getType(),
+
+                tarif.getId(),
+                parking.getId(),
+                parking.getNom(),
+                forfait.getId(),
+                forfait.getLibelle(),
+                tarif.getDureeEnMois(),
+                tarif.getPrixHT(),
+                tarif.getTauxTVA(),
+                decompte.montantAbonnementTTC(),
+                decompte.fraisCarteTTC(),
+                decompte.montantTotalTTC(),
+                demande.getModePaiementSouhaite(),
+
+                pieces.stream()
+                        .map(PieceJointeInfo::depuis)
+                        .toList()
+        );
+    }
+
+    public static DemandeDetailResponse depuis(
+            DemandeRenouvellementRegulier demande,
+            Vehicule vehicule,
+            List<PieceJointe> pieces
+    ) {
+        ClientParticulier client =
+                (ClientParticulier) Hibernate.unproxy(
+                        demande.getClient()
+                );
+
+        TarifParking tarif = demande.getTarifParking();
+        Parking parking = tarif.getParking();
+        Forfait forfait = tarif.getForfait();
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demande);
+
+        return new DemandeDetailResponse(
+                demande.getId(),
+                demande.getReference(),
+                "RENOUVELLEMENT_REGULIER",
                 demande.getStatut(),
                 demande.getCanalInitiation(),
 

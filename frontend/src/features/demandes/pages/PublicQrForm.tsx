@@ -50,8 +50,22 @@ import {
   getTarifsParking,
 } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
-import { creerDemandeAbonnementRegulier, extraireMessageErreur } from "../../../api/demandesApi";
-import type { DemandeAbonnementRegulierRequest, DocumentsDemande, DemandeAbonnementRegulierResponse, ModePaiement } from "../types";
+import {
+  creerDemandeAbonnementRegulier,
+  creerDemandeRenouvellement,
+  extraireMessageErreur,
+  rechercherRenouvellement,
+  renvoyerOtpRenouvellement,
+  validerOtpRenouvellement,
+} from "../../../api/demandesApi";
+import type {
+  DemandeAbonnementRegulierRequest,
+  DemandeRenouvellementRequest,
+  DocumentsDemande,
+  DemandeAbonnementRegulierResponse,
+  ModePaiement,
+  RenouvellementConsultationResponse,
+} from "../types";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
@@ -183,6 +197,12 @@ export function PublicQrForm() {
   import.meta.env.VITE_SMS_OTP_ENABLED === "true";
   // Account Lookup State for RENEW / TRANSFER / DUPLICATE
   const [lookupQuery, setLookupQuery] = useState("");
+  const [renewalLookup, setRenewalLookup] = useState({
+    cin: "",
+    numeroCarte: "",
+  });
+  const [renewalAccount, setRenewalAccount] =
+    useState<RenouvellementConsultationResponse | null>(null);
   const [isSearchingLookup, setIsSearchingLookup] = useState(false);
   const [hasFoundAccount, setHasFoundAccount] = useState(false);
 
@@ -263,7 +283,7 @@ const {
   enabled:
     Number.isInteger(parkingIdSelectionne) &&
     parkingIdSelectionne > 0 &&
-    typeDemande === "NEW",
+    (typeDemande === "NEW" || typeDemande === "RENEW"),
 });
 
   const forfaitsDisponibles = useMemo(() => {
@@ -379,6 +399,50 @@ const {
 
   // Account search handler
   const handleLookupSubscriber = async () => {
+    if (typeDemande === "RENEW") {
+      const cin = renewalLookup.cin.trim().toUpperCase();
+      const numeroCarte = renewalLookup.numeroCarte.trim();
+
+      if (!cin || !numeroCarte) {
+        message.warning(
+          "Veuillez saisir votre CIN et le numéro inscrit sur votre carte RFID."
+        );
+        return;
+      }
+
+      setIsSearchingLookup(true);
+      setHasFoundAccount(false);
+      setRenewalAccount(null);
+      try {
+        const response = await rechercherRenouvellement({ cin, numeroCarte });
+        setRenewalAccount(response);
+        setHasFoundAccount(true);
+
+        const lookupValues = {
+          nom: response.clientNom,
+          cin,
+          carteRfidActuelle: response.numeroCarte,
+          referenceAbonnement: response.referenceAbonnement,
+          dateFinAbonnement: response.dateFinActuelle,
+          parkingId: response.parkingActuelId,
+          formuleCode: undefined,
+          dureeMois: undefined,
+          tarifParkingId: undefined,
+        };
+        form.setFieldsValue(lookupValues);
+        setFormValues((previous: any) => ({
+          ...previous,
+          ...lookupValues,
+        }));
+        message.success("Abonnement identifié avec succès.");
+      } catch (error) {
+        message.error(extraireMessageErreur(error));
+      } finally {
+        setIsSearchingLookup(false);
+      }
+      return;
+    }
+
     if (!lookupQuery.trim()) {
       message.warning("Veuillez saisir votre CIN ou Numéro de Carte RFID.");
       return;
@@ -441,7 +505,7 @@ const {
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
   const handleValidateParkingAndGoToRecap = async () => {
     try {
-      if (typeDemande === "NEW") {
+      if (typeDemande === "NEW" || typeDemande === "RENEW") {
         await form.validateFields([
           "parkingId",
           "formuleCode",
@@ -515,14 +579,14 @@ const {
   const totalMonths =
     typeDemande === "CORPORATE"
       ? 240
-      : typeDemande === "NEW"
+      : typeDemande === "NEW" || typeDemande === "RENEW"
         ? tarifSelectionne?.dureeEnMois || 0
         : recapData.dureeMois || watchedDureeMois || 3;
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
   const baseAbonnementPrice =
     typeDemande === "DUPLICATE"
       ? 0
-      : typeDemande === "NEW"
+      : typeDemande === "NEW" || typeDemande === "RENEW"
         ? tarifSelectionne?.montantTotalTTC || 0
         : getMonthlyPrice() * totalMonths * cardMultiplier;
 
@@ -684,6 +748,41 @@ const {
           message.success("Demande créée avec succès ! Code OTP envoyé.");
         } catch (err) {
           message.error(extraireMessageErreur(err));
+        } finally {
+          setIsSubmittingBackend(false);
+        }
+      } else if (typeDemande === "RENEW") {
+        if (!renewalAccount || !hasFoundAccount) {
+          message.error("Veuillez d'abord identifier votre abonnement.");
+          return;
+        }
+
+        const tarifParkingId = Number(consolidated.tarifParkingId);
+        if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
+          message.error(
+            "Veuillez sélectionner un parking, un forfait et une durée."
+          );
+          return;
+        }
+
+        const demandeReq: DemandeRenouvellementRequest = {
+          numeroCarte: renewalLookup.numeroCarte.trim(),
+          cin: renewalLookup.cin.trim().toUpperCase(),
+          tarifParkingId,
+          modePaiement:
+            consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE",
+          canalOtp: consolidated.canalOtp === "SMS" ? "SMS" : "EMAIL",
+          conditionsAcceptees: Boolean(consolidated.acceptTerms),
+        };
+
+        setIsSubmittingBackend(true);
+        try {
+          const response = await creerDemandeRenouvellement(demandeReq);
+          setBackendDemandeResponse(response);
+          setIsOtpModalOpen(true);
+          message.success("Demande de renouvellement créée. Code OTP envoyé.");
+        } catch (error) {
+          message.error(extraireMessageErreur(error));
         } finally {
           setIsSubmittingBackend(false);
         }
@@ -962,7 +1061,9 @@ const {
                         : "Recherche de votre Compte Abonné"}
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">
-                      Saisissez votre CIN ou numéro de carte RFID pour retrouver automatiquement vos informations.
+                      {typeDemande === "RENEW"
+                        ? "Saisissez votre CIN et le numéro physique inscrit sur votre carte RFID."
+                        : "Saisissez votre CIN ou numéro de carte RFID pour retrouver automatiquement vos informations."}
                     </p>
                   </div>
                   <Tag color="blue" className="font-bold px-3 py-1 rounded-full">
@@ -972,13 +1073,46 @@ const {
 
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                   <div className="flex flex-col md:flex-row gap-3">
-                    <Input
-                      size="large"
-                      placeholder="Ex: CIN (AB123456) ou N° Carte RFID (RFID-9988)"
-                      value={lookupQuery}
-                      onChange={(e) => setLookupQuery(e.target.value)}
-                      className="rounded-xl"
-                    />
+                    {typeDemande === "RENEW" ? (
+                      <>
+                        <Input
+                          size="large"
+                          placeholder="CIN, ex. AB123456"
+                          value={renewalLookup.cin}
+                          onChange={(event) => {
+                            setRenewalLookup((previous) => ({
+                              ...previous,
+                              cin: event.target.value.toUpperCase(),
+                            }));
+                            setHasFoundAccount(false);
+                            setRenewalAccount(null);
+                          }}
+                          className="rounded-xl"
+                        />
+                        <Input
+                          size="large"
+                          placeholder="N° physique de la carte RFID"
+                          value={renewalLookup.numeroCarte}
+                          onChange={(event) => {
+                            setRenewalLookup((previous) => ({
+                              ...previous,
+                              numeroCarte: event.target.value,
+                            }));
+                            setHasFoundAccount(false);
+                            setRenewalAccount(null);
+                          }}
+                          className="rounded-xl"
+                        />
+                      </>
+                    ) : (
+                      <Input
+                        size="large"
+                        placeholder="Ex: CIN (AB123456) ou N° Carte RFID (RFID-9988)"
+                        value={lookupQuery}
+                        onChange={(e) => setLookupQuery(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    )}
                     <Button
                       type="primary"
                       size="large"
@@ -1017,15 +1151,52 @@ const {
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Form.Item name="telephone" label="Téléphone Mobile">
+                          <Form.Item
+                            name={typeDemande === "RENEW" ? "referenceAbonnement" : "telephone"}
+                            label={typeDemande === "RENEW" ? "Référence abonnement" : "Téléphone Mobile"}
+                          >
                             <Input readOnly className="rounded-xl bg-white font-semibold" />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Form.Item name="immatriculation" label="Véhicule Immatriculation">
+                          <Form.Item
+                            name={typeDemande === "RENEW" ? "carteRfidActuelle" : "immatriculation"}
+                            label={typeDemande === "RENEW" ? "Numéro de carte RFID" : "Véhicule Immatriculation"}
+                          >
                             <Input readOnly className="rounded-xl bg-white font-semibold" />
                           </Form.Item>
                         </Col>
+                        {typeDemande === "RENEW" && renewalAccount && (
+                          <>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Parking actuel">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.parkingActuelNom}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Fin de la période actuelle">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.dateFinActuelle}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Statut de la carte">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.statutCarte}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                          </>
+                        )}
                       </Row>
                     </AntCard>
                   </Form>
@@ -1643,7 +1814,7 @@ const {
                 </Select>
               </Form.Item>
 
-              {typeDemande === "NEW" ? (
+              {typeDemande === "NEW" || typeDemande === "RENEW" ? (
                 <>
                   <Form.Item
                     name="tarifParkingId"
@@ -1828,7 +1999,7 @@ const {
                 </Form.Item>
               )}
 
-{typeDemande === "NEW" && (
+{(typeDemande === "NEW" || typeDemande === "RENEW") && (
   <Form.Item
     name="canalOtp"
     label="Réception du code de vérification"
@@ -2094,7 +2265,7 @@ const {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
                       <span className="text-slate-600 font-semibold">Formule Souscrite :</span>
                       <strong className="text-slate-900 text-sm">
-                        {typeDemande === "NEW"
+                        {typeDemande === "NEW" || typeDemande === "RENEW"
                           ? tarifSelectionne?.forfaitLibelle || "Non sélectionnée"
                           : getFormuleLabel(recapData.formuleCode || watchedFormuleCode || "24H7J")}
                       </strong>
@@ -2282,6 +2453,12 @@ const {
         phone={pendingValues?.telephone || "0661234567"}
         email={pendingValues?.email}
         referenceNumber={backendDemandeResponse?.reference || submittedResult?.reference}
+        onValidateOtp={
+          typeDemande === "RENEW" ? validerOtpRenouvellement : undefined
+        }
+        onResendOtp={
+          typeDemande === "RENEW" ? renvoyerOtpRenouvellement : undefined
+        }
       />
 
       <PublicFooter />

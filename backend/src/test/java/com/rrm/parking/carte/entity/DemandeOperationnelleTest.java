@@ -13,6 +13,38 @@ import static org.mockito.Mockito.mock;
 class DemandeOperationnelleTest {
 
     @Test
+    void reconfigureCarteActiveSansCouperAccesCourant() {
+        CarteAcces carte = new CarteAcces(
+                "CARTE-RECONFIG-001",
+                mock(Abonnement.class)
+        );
+        Utilisateur agent = new Utilisateur();
+        Utilisateur superviseur = new Utilisateur();
+
+        carte.demanderImpression();
+        carte.marquerCommeImprimee("RFID-RECONFIG-001");
+        carte.demanderActivation();
+        carte.activer();
+
+        DemandeOperationnelle reconfiguration = new DemandeOperationnelle(
+                "ACT-RECONFIG-001",
+                carte,
+                TypeOperationCarte.ACTIVATION,
+                "Reconfiguration après renouvellement",
+                superviseur
+        );
+
+        assertThat(carte.getStatut()).isEqualTo(StatutCarteAcces.ACTIVE);
+
+        reconfiguration.prendreEnCharge(superviseur);
+        reconfiguration.terminerActivation(superviseur);
+
+        assertThat(reconfiguration.getStatut())
+                .isEqualTo(StatutDemandeOperationnelle.TERMINEE);
+        assertThat(carte.getStatut()).isEqualTo(StatutCarteAcces.ACTIVE);
+    }
+
+    @Test
     void enchaineImpressionPuisActivationEtTest() {
         CarteAcces carte = new CarteAcces(
                 "CARTE-TEST-001",

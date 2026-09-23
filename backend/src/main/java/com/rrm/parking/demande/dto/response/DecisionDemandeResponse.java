@@ -11,7 +11,9 @@ public record DecisionDemandeResponse(
         Long carteId,
         String referenceCarte,
         Long demandeImpressionId,
-        String referenceDemandeImpression
+        String referenceDemandeImpression,
+        Long demandeActivationId,
+        String referenceDemandeActivation
 ) {
 
     public static DecisionDemandeResponse correction(
@@ -23,6 +25,8 @@ public record DecisionDemandeResponse(
                 demandeId,
                 referenceDemande,
                 statutDemande,
+                null,
+                null,
                 null,
                 null,
                 null,
