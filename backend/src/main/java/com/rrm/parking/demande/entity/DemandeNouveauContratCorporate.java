@@ -5,7 +5,9 @@ import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
+import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.tarification.model.DecompteCorporate;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.vehicule.entity.Vehicule;
 import jakarta.persistence.*;
@@ -13,6 +15,7 @@ import jakarta.persistence.*;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "demande_nouveau_contrat_corporate")
@@ -24,15 +27,65 @@ import java.util.Set;
 )
 public class DemandeNouveauContratCorporate extends DemandeClient {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /*
+     * Association historique conservée nullable pour permettre la migration
+     * des anciennes bases. La tarification corporate est désormais calculée
+     * selon le nombre de places, sans TarifParking régulier.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "tarif_parking_id",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_demande_corporate_tarif"
             )
     )
     private TarifParking tarifParking;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "parking_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_demande_corporate_parking")
+    )
+    private Parking parking;
+
+    @Column(nullable = false, length = 80)
+    private String titreFoncier;
+
+    @Column(nullable = false, length = 200)
+    private String libelleProjet;
+
+    @Column(nullable = false, length = 500)
+    private String adresseProjet;
+
+    @Column(length = 10)
+    private String cinRepresentant;
+
+    @Column(length = 200)
+    private String plageHoraire;
+
+    @Column(nullable = false)
+    private Integer nombrePlaces;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal prixMensuelUnitaireTtc;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal montantAbonnementTtc;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal fraisCartesTtc;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal montantTotalTtc;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "demande_corporate_immatriculation",
+            joinColumns = @JoinColumn(name = "demande_id")
+    )
+    @Column(name = "immatriculation", nullable = false, length = 30)
+    private Set<String> immatriculationsDeclarees = new LinkedHashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -75,14 +128,52 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
             CanalInitiation canalInitiation,
             ClientEntreprise client,
             Utilisateur initieePar,
-            TarifParking tarifParking
+            Parking parking,
+            String titreFoncier,
+            String libelleProjet,
+            String adresseProjet,
+            String cinRepresentant,
+            String plageHoraire,
+            DecompteCorporate decompte
     ) {
         super(reference, canalInitiation, client, initieePar);
 
-        this.tarifParking = exigerNonNull(
-                tarifParking,
-                "Le tarif corporate est obligatoire"
+        this.parking = exigerNonNull(parking, "Le parking est obligatoire");
+        this.titreFoncier = exigerTexte(titreFoncier, "Le titre foncier est obligatoire");
+        this.libelleProjet = exigerTexte(libelleProjet, "Le libellé du projet est obligatoire");
+        this.adresseProjet = exigerTexte(adresseProjet, "L'adresse du projet est obligatoire");
+        this.cinRepresentant = exigerTexte(
+                cinRepresentant,
+                "Le CIN du représentant est obligatoire"
+        ).toUpperCase(java.util.Locale.ROOT);
+        this.plageHoraire = exigerTexte(
+                plageHoraire,
+                "La plage horaire est obligatoire"
         );
+
+        DecompteCorporate calcul = exigerNonNull(
+                decompte,
+                "Le décompte corporate est obligatoire"
+        );
+        this.nombrePlaces = calcul.nombrePlaces();
+        this.prixMensuelUnitaireTtc = calcul.prixMensuelUnitaireTtc();
+        this.montantAbonnementTtc = calcul.montantAbonnementTtc();
+        this.fraisCartesTtc = calcul.fraisCartesTtc();
+        this.montantTotalTtc = calcul.montantTotalTtc();
+    }
+
+    public void ajouterImmatriculation(String immatriculation) {
+        verifierModifiableAvantPaiement();
+        String valeur = exigerTexte(
+                immatriculation,
+                "L'immatriculation ne peut pas être vide"
+        );
+        if (immatriculationsDeclarees.size() >= nombrePlaces) {
+            throw new IllegalStateException(
+                    "Le nombre d'immatriculations dépasse le nombre de places"
+            );
+        }
+        immatriculationsDeclarees.add(valeur);
     }
 
     public void selectionnerTarif(TarifParking tarif) {
@@ -137,9 +228,14 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
 
     @PrePersist
     private void verifierAvantCreation() {
-        if (tarifParking == null) {
+        if (parking == null || nombrePlaces == null || nombrePlaces <= 0) {
             throw new IllegalStateException(
-                    "Le tarif corporate est obligatoire"
+                    "Le parking et le nombre de places corporate sont obligatoires"
+            );
+        }
+        if (cinRepresentant == null || plageHoraire == null) {
+            throw new IllegalStateException(
+                    "Le CIN du représentant et la plage horaire sont obligatoires"
             );
         }
     }
@@ -180,8 +276,63 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
         return valeur;
     }
 
+    private String exigerTexte(String valeur, String message) {
+        if (valeur == null || valeur.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        return valeur.trim();
+    }
+
     public TarifParking getTarifParking() {
         return tarifParking;
+    }
+
+    public Parking getParking() {
+        return parking;
+    }
+
+    public String getTitreFoncier() {
+        return titreFoncier;
+    }
+
+    public String getLibelleProjet() {
+        return libelleProjet;
+    }
+
+    public String getAdresseProjet() {
+        return adresseProjet;
+    }
+
+    public String getCinRepresentant() {
+        return cinRepresentant;
+    }
+
+    public String getPlageHoraire() {
+        return plageHoraire;
+    }
+
+    public Integer getNombrePlaces() {
+        return nombrePlaces;
+    }
+
+    public BigDecimal getPrixMensuelUnitaireTtc() {
+        return prixMensuelUnitaireTtc;
+    }
+
+    public BigDecimal getMontantAbonnementTtc() {
+        return montantAbonnementTtc;
+    }
+
+    public BigDecimal getFraisCartesTtc() {
+        return fraisCartesTtc;
+    }
+
+    public BigDecimal getMontantTotalTtc() {
+        return montantTotalTtc;
+    }
+
+    public Set<String> getImmatriculationsDeclarees() {
+        return Collections.unmodifiableSet(immatriculationsDeclarees);
     }
 
     public Set<Vehicule> getVehiculesSelectionnes() {

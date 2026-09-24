@@ -120,6 +120,12 @@ export const roleConfig: Record<Role, RoleConfig> = {
         requiredAuthority: "DEMANDE_VALIDER",
       },
       {
+        key: "demandes-corporate",
+        label: "Demandes corporate",
+        path: "/responsable/demandes-corporate",
+        requiredAuthority: "DEMANDE_VALIDER",
+      },
+      {
         key: "demandes-validees",
         label: "Demandes validées / Facturation",
         path: "/responsable/demandes-validees",

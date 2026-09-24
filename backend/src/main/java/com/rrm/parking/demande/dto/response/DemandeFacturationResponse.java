@@ -2,12 +2,13 @@ package com.rrm.parking.demande.dto.response;
 
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeClient;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.enums.StatutFacture;
 import com.rrm.parking.paiement.entity.Paiement;
-import com.rrm.parking.tarification.entity.TarifParking;
-import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
+import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
@@ -35,30 +36,44 @@ public record DemandeFacturationResponse(
 ) {
 
     public static DemandeFacturationResponse depuis(
-            DemandeNouvelAbonnementRegulier demande,
+            DemandeClient demande,
             Paiement paiement,
             Facture facture
     ) {
         ClientParticulier client = (ClientParticulier) Hibernate.unproxy(
                 demande.getClient()
         );
-        TarifParking tarif = demande.getTarifParking();
-        DecompteNouvelAbonnement decompte =
-                DecompteNouvelAbonnement.depuis(tarif);
+        DemandeClient demandeReelle = (DemandeClient) Hibernate.unproxy(
+                demande
+        );
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demandeReelle);
 
-        String abonnementReference = demande.getAbonnementGenere() == null
-                ? null
-                : demande.getAbonnementGenere().getReference();
+        String abonnementReference;
+        if (demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            abonnementReference = nouvelle.getAbonnementGenere() == null
+                    ? null
+                    : nouvelle.getAbonnementGenere().getReference();
+        } else if (demandeReelle
+                instanceof DemandeRenouvellementRegulier renouvellement) {
+            abonnementReference = renouvellement
+                    .getAbonnementConcerne()
+                    .getReference();
+        } else {
+            throw new IllegalArgumentException(
+                    "Ce type de demande n'est pas facturable"
+            );
+        }
 
         return new DemandeFacturationResponse(
-                demande.getId(),
-                demande.getReference(),
-                demande.getStatut(),
-                demande.getDateModification(),
+                demandeReelle.getId(),
+                demandeReelle.getReference(),
+                demandeReelle.getStatut(),
+                demandeReelle.getDateModification(),
                 client.getNomComplet(),
                 client.getCin(),
                 client.getEmail(),
-                tarif.getParking().getNom(),
+                decompte.tarifParking().getParking().getNom(),
                 abonnementReference,
                 decompte.montantAbonnementTTC(),
                 decompte.fraisCarteTTC(),

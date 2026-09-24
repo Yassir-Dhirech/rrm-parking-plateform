@@ -66,7 +66,10 @@ services:
       RRM_BREVO_SMS_SENDER: ${RRM_BREVO_SMS_SENDER:-RRM}
       RRM_BREVO_SENDER_EMAIL: ${RRM_BREVO_SENDER_EMAIL}
       RRM_BREVO_SENDER_NAME: ${RRM_BREVO_SENDER_NAME:-RRM Parking}
+      RRM_ABONNEMENT_EXPIRATION_CRON: "${RRM_ABONNEMENT_EXPIRATION_CRON:-0 0 0 * * *}"
+      RRM_FRONTEND_RENEWAL_URL: "${RRM_FRONTEND_RENEWAL_URL:-http://localhost:5173/demande-publique?tab=RENEW}"
       RRM_BREVO_SMS_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+
 
 
       RRM_AGENT_BOOTSTRAP_ENABLED: ${RRM_AGENT_BOOTSTRAP_ENABLED:-false}
@@ -103,6 +106,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_SMS_OTP_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+        VITE_MAPTILER_API_KEY: ${RRM_MAPTILER_API_KEY}
     container_name: rrm-frontend
     restart: unless-stopped
     depends_on:

@@ -18,6 +18,10 @@ public interface CarteAccesRepository
             String numeroCarte
     );
 
+    Optional<CarteAcces> findByNumeroCarteIgnoreCase(
+            String numeroCarte
+    );
+
     boolean existsByReference(
             String reference
     );

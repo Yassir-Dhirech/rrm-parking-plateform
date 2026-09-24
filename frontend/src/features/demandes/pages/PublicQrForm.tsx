@@ -50,8 +50,25 @@ import {
   getTarifsParking,
 } from "../../../api/parkings";
 import { submitPublicDemande } from "../../../api/demandes";
-import { creerDemandeAbonnementRegulier, extraireMessageErreur } from "../../../api/demandesApi";
-import type { DemandeAbonnementRegulierRequest, DocumentsDemande, DemandeAbonnementRegulierResponse, ModePaiement } from "../types";
+import {
+  creerDemandeAbonnementRegulier,
+  creerDemandeCorporate,
+  creerDemandeRenouvellement,
+  extraireMessageErreur,
+  rechercherRenouvellement,
+  renvoyerOtpRenouvellement,
+  validerOtpRenouvellement,
+  validerOtpCorporate,
+} from "../../../api/demandesApi";
+import type {
+  DemandeAbonnementRegulierRequest,
+  DemandeRenouvellementRequest,
+  DocumentsDemande,
+  DemandeAbonnementRegulierResponse,
+  DemandeCorporateRequest,
+  ModePaiement,
+  RenouvellementConsultationResponse,
+} from "../types";
 import { OtpVerificationModal } from "../../../components/ui/OtpVerificationModal";
 import { searchSubscriberByCinOrCardMock } from "../../../api/subscribersMock";
 import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCard";
@@ -183,6 +200,12 @@ export function PublicQrForm() {
   import.meta.env.VITE_SMS_OTP_ENABLED === "true";
   // Account Lookup State for RENEW / TRANSFER / DUPLICATE
   const [lookupQuery, setLookupQuery] = useState("");
+  const [renewalLookup, setRenewalLookup] = useState({
+    cin: "",
+    numeroCarte: "",
+  });
+  const [renewalAccount, setRenewalAccount] =
+    useState<RenouvellementConsultationResponse | null>(null);
   const [isSearchingLookup, setIsSearchingLookup] = useState(false);
   const [hasFoundAccount, setHasFoundAccount] = useState(false);
 
@@ -215,7 +238,13 @@ export function PublicQrForm() {
     raisonSociale: "",
     ice: "",
     rc: "",
-    nomContact: "",
+    titreFoncier: "",
+    nomRepresentant: "",
+    prenomRepresentant: "",
+    cinRepresentant: "",
+    libelleProjet: "",
+    adresseProjet: "",
+    plageHoraire: undefined,
     canalOtp: "EMAIL",
     parkingId: undefined,
     formuleCode: undefined,
@@ -263,7 +292,7 @@ const {
   enabled:
     Number.isInteger(parkingIdSelectionne) &&
     parkingIdSelectionne > 0 &&
-    typeDemande === "NEW",
+    (typeDemande === "NEW" || typeDemande === "RENEW"),
 });
 
   const forfaitsDisponibles = useMemo(() => {
@@ -358,8 +387,18 @@ const {
       raisonSociale: "Maroc Telecom SA",
       ice: "001234567000089",
       rc: "998877",
-      nomContact: "Karim BENNANI",
-      photoDocEntreprise: mockDocumentList,
+      titreFoncier: "TF-12345/2026",
+      nomRepresentant: "BENNANI",
+      prenomRepresentant: "Karim",
+      cinRepresentant: "AB123456",
+      libelleProjet: "Projet corporate RRM",
+      adresseProjet: "Avenue Annakhil, Rabat",
+      plageHoraire: "Tous les jours de 08h00 à 20h00",
+      flotteVehicules: [
+        { immatriculation: "12345-A-1" },
+        { immatriculation: "67890-B-2" },
+        { immatriculation: "" },
+      ],
       parkingId: parkings[0]?.id || 1,
       formuleCode: "24H7J",
       dureeMois: 6,
@@ -379,6 +418,50 @@ const {
 
   // Account search handler
   const handleLookupSubscriber = async () => {
+    if (typeDemande === "RENEW") {
+      const cin = renewalLookup.cin.trim().toUpperCase();
+      const numeroCarte = renewalLookup.numeroCarte.trim();
+
+      if (!cin || !numeroCarte) {
+        message.warning(
+          "Veuillez saisir votre CIN et le numéro inscrit sur votre carte RFID."
+        );
+        return;
+      }
+
+      setIsSearchingLookup(true);
+      setHasFoundAccount(false);
+      setRenewalAccount(null);
+      try {
+        const response = await rechercherRenouvellement({ cin, numeroCarte });
+        setRenewalAccount(response);
+        setHasFoundAccount(true);
+
+        const lookupValues = {
+          nom: response.clientNom,
+          cin,
+          carteRfidActuelle: response.numeroCarte,
+          referenceAbonnement: response.referenceAbonnement,
+          dateFinAbonnement: response.dateFinActuelle,
+          parkingId: response.parkingActuelId,
+          formuleCode: undefined,
+          dureeMois: undefined,
+          tarifParkingId: undefined,
+        };
+        form.setFieldsValue(lookupValues);
+        setFormValues((previous: any) => ({
+          ...previous,
+          ...lookupValues,
+        }));
+        message.success("Abonnement identifié avec succès.");
+      } catch (error) {
+        message.error(extraireMessageErreur(error));
+      } finally {
+        setIsSearchingLookup(false);
+      }
+      return;
+    }
+
     if (!lookupQuery.trim()) {
       message.warning("Veuillez saisir votre CIN ou Numéro de Carte RFID.");
       return;
@@ -441,7 +524,7 @@ const {
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
   const handleValidateParkingAndGoToRecap = async () => {
     try {
-      if (typeDemande === "NEW") {
+      if (typeDemande === "NEW" || typeDemande === "RENEW") {
         await form.validateFields([
           "parkingId",
           "formuleCode",
@@ -451,6 +534,20 @@ const {
         const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
         if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
           message.error("Veuillez sélectionner un parking, une formule et une durée.");
+          return;
+        }
+      } else if (typeDemande === "CORPORATE") {
+        await form.validateFields(["parkingId"]);
+        const parkingCorporate = parkings.find(
+          (parking) => parking.id === Number(form.getFieldValue("parkingId"))
+        );
+        if (
+          !parkingCorporate ||
+          parkingCorporate.placesDisponiblesAbonnements < nombreVehiculesCorporate
+        ) {
+          message.error(
+            `Ce parking ne dispose pas de ${nombreVehiculesCorporate} places d'abonnement.`
+          );
           return;
         }
       } else {
@@ -463,39 +560,53 @@ const {
       }));
 
       setCurrentStep(3);
-      message.success("Choix du parking et de la formule validé.");
+      message.success(
+        typeDemande === "CORPORATE"
+          ? "Choix du parking validé."
+          : "Choix du parking et de la formule validé."
+      );
     } catch {
-      message.error("Veuillez sélectionner un parking, une formule et une durée.");
+      message.error(
+        typeDemande === "CORPORATE"
+          ? "Veuillez sélectionner un parking disposant de suffisamment de places."
+          : "Veuillez sélectionner un parking, une formule et une durée."
+      );
     }
   };
 
   // Corporate Section Validation
   const handleValidateCorporateAndNext = async () => {
     try {
-      await form.validateFields(["raisonSociale", "ice", "rc", "nomContact", "telephone", "email", "photoDocEntreprise"]);
+      await form.validateFields([
+        "raisonSociale",
+        "ice",
+        "rc",
+        "titreFoncier",
+        "nomRepresentant",
+        "prenomRepresentant",
+        "cinRepresentant",
+        "telephone",
+        "email",
+        "libelleProjet",
+        "adresseProjet",
+        "plageHoraire",
+      ]);
       setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setIsCorporateValid(true);
       message.success("Informations Société validées !");
       setCurrentStep(2);
     } catch {
-      message.error("Veuillez vérifier les informations de l'entreprise et joindre les documents.");
+      message.error("Veuillez vérifier les informations de l'entreprise et du projet.");
     }
   };
 
   // Calculate pricing summary
   const getMonthlyPrice = () => {
-    const currentFormule = recapData.formuleCode || watchedFormuleCode;
     if (typeDemande === "CORPORATE") {
-      switch (currentFormule) {
-        case "CORP_8_20":
-          return 500;
-        case "CORP_8_22":
-          return 550;
-        case "CORP_24_7":
-        default:
-          return 650;
-      }
+      return nombreVehiculesCorporate <= 10 ? 375 : 325;
     }
+
+    const currentFormule = recapData.formuleCode || watchedFormuleCode;
 
     switch (currentFormule) {
       case "24H7J":
@@ -515,14 +626,14 @@ const {
   const totalMonths =
     typeDemande === "CORPORATE"
       ? 240
-      : typeDemande === "NEW"
+      : typeDemande === "NEW" || typeDemande === "RENEW"
         ? tarifSelectionne?.dureeEnMois || 0
         : recapData.dureeMois || watchedDureeMois || 3;
   const cardMultiplier = typeDemande === "CORPORATE" ? nombreVehiculesCorporate : 1;
   const baseAbonnementPrice =
     typeDemande === "DUPLICATE"
       ? 0
-      : typeDemande === "NEW"
+      : typeDemande === "NEW" || typeDemande === "RENEW"
         ? tarifSelectionne?.montantTotalTTC || 0
         : getMonthlyPrice() * totalMonths * cardMultiplier;
 
@@ -538,15 +649,7 @@ const {
 
   const getFormuleLabel = (code: string) => {
     if (typeDemande === "CORPORATE") {
-      switch (code) {
-        case "CORP_8_20":
-          return "Pass Diurne Corporate 08h-20h (500 DH/mois/place)";
-        case "CORP_8_22":
-          return "Pass Étendu Corporate 08h-22h (550 DH/mois/place)";
-        case "CORP_24_7":
-        default:
-          return "Pass Permanent Corporate 24h/7j (650 DH/mois/place)";
-      }
+      return `Contrat corporate 20 ans — ${getMonthlyPrice()} DH TTC/mois/place`;
     }
     switch (code) {
       case "24H7J":
@@ -684,6 +787,86 @@ const {
           message.success("Demande créée avec succès ! Code OTP envoyé.");
         } catch (err) {
           message.error(extraireMessageErreur(err));
+        } finally {
+          setIsSubmittingBackend(false);
+        }
+      } else if (typeDemande === "RENEW") {
+        if (!renewalAccount || !hasFoundAccount) {
+          message.error("Veuillez d'abord identifier votre abonnement.");
+          return;
+        }
+
+        const tarifParkingId = Number(consolidated.tarifParkingId);
+        if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
+          message.error(
+            "Veuillez sélectionner un parking, un forfait et une durée."
+          );
+          return;
+        }
+
+        const demandeReq: DemandeRenouvellementRequest = {
+          numeroCarte: renewalLookup.numeroCarte.trim(),
+          cin: renewalLookup.cin.trim().toUpperCase(),
+          tarifParkingId,
+          modePaiement:
+            consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE",
+          canalOtp: consolidated.canalOtp === "SMS" ? "SMS" : "EMAIL",
+          conditionsAcceptees: Boolean(consolidated.acceptTerms),
+        };
+
+        setIsSubmittingBackend(true);
+        try {
+          const response = await creerDemandeRenouvellement(demandeReq);
+          setBackendDemandeResponse(response);
+          setIsOtpModalOpen(true);
+          message.success("Demande de renouvellement créée. Code OTP envoyé.");
+        } catch (error) {
+          message.error(extraireMessageErreur(error));
+        } finally {
+          setIsSubmittingBackend(false);
+        }
+      } else if (typeDemande === "CORPORATE") {
+        const parkingId = Number(consolidated.parkingId);
+        if (!Number.isInteger(parkingId) || parkingId <= 0) {
+          message.error("Veuillez sélectionner un parking.");
+          return;
+        }
+
+        const immatriculations = Array.from(
+          new Set(
+            (consolidated.flotteVehicules || [])
+              .map((vehicule: any) => vehicule?.immatriculation?.trim())
+              .filter(Boolean)
+          )
+        ) as string[];
+
+        const demandeReq: DemandeCorporateRequest = {
+          raisonSociale: consolidated.raisonSociale,
+          ice: consolidated.ice,
+          numeroRc: consolidated.rc,
+          titreFoncier: consolidated.titreFoncier,
+          nomRepresentant: consolidated.nomRepresentant,
+          prenomRepresentant: consolidated.prenomRepresentant,
+          cinRepresentant: consolidated.cinRepresentant,
+          telephoneRepresentant: consolidated.telephone,
+          emailRepresentant: consolidated.email,
+          libelleProjet: consolidated.libelleProjet,
+          adresseProjet: consolidated.adresseProjet,
+          plageHoraire: consolidated.plageHoraire,
+          parkingId,
+          nombrePlaces: nombreVehiculesCorporate,
+          immatriculations,
+          conditionsAcceptees: Boolean(consolidated.acceptTerms),
+        };
+
+        setIsSubmittingBackend(true);
+        try {
+          const response = await creerDemandeCorporate(demandeReq);
+          setBackendDemandeResponse(response);
+          setIsOtpModalOpen(true);
+          message.success("Demande corporate créée. Code OTP envoyé par email.");
+        } catch (error) {
+          message.error(extraireMessageErreur(error));
         } finally {
           setIsSubmittingBackend(false);
         }
@@ -962,7 +1145,9 @@ const {
                         : "Recherche de votre Compte Abonné"}
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">
-                      Saisissez votre CIN ou numéro de carte RFID pour retrouver automatiquement vos informations.
+                      {typeDemande === "RENEW"
+                        ? "Saisissez votre CIN et le numéro physique inscrit sur votre carte RFID."
+                        : "Saisissez votre CIN ou numéro de carte RFID pour retrouver automatiquement vos informations."}
                     </p>
                   </div>
                   <Tag color="blue" className="font-bold px-3 py-1 rounded-full">
@@ -972,13 +1157,46 @@ const {
 
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                   <div className="flex flex-col md:flex-row gap-3">
-                    <Input
-                      size="large"
-                      placeholder="Ex: CIN (AB123456) ou N° Carte RFID (RFID-9988)"
-                      value={lookupQuery}
-                      onChange={(e) => setLookupQuery(e.target.value)}
-                      className="rounded-xl"
-                    />
+                    {typeDemande === "RENEW" ? (
+                      <>
+                        <Input
+                          size="large"
+                          placeholder="CIN, ex. AB123456"
+                          value={renewalLookup.cin}
+                          onChange={(event) => {
+                            setRenewalLookup((previous) => ({
+                              ...previous,
+                              cin: event.target.value.toUpperCase(),
+                            }));
+                            setHasFoundAccount(false);
+                            setRenewalAccount(null);
+                          }}
+                          className="rounded-xl"
+                        />
+                        <Input
+                          size="large"
+                          placeholder="N° physique de la carte RFID"
+                          value={renewalLookup.numeroCarte}
+                          onChange={(event) => {
+                            setRenewalLookup((previous) => ({
+                              ...previous,
+                              numeroCarte: event.target.value,
+                            }));
+                            setHasFoundAccount(false);
+                            setRenewalAccount(null);
+                          }}
+                          className="rounded-xl"
+                        />
+                      </>
+                    ) : (
+                      <Input
+                        size="large"
+                        placeholder="Ex: CIN (AB123456) ou N° Carte RFID (RFID-9988)"
+                        value={lookupQuery}
+                        onChange={(e) => setLookupQuery(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    )}
                     <Button
                       type="primary"
                       size="large"
@@ -1017,15 +1235,52 @@ const {
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Form.Item name="telephone" label="Téléphone Mobile">
+                          <Form.Item
+                            name={typeDemande === "RENEW" ? "referenceAbonnement" : "telephone"}
+                            label={typeDemande === "RENEW" ? "Référence abonnement" : "Téléphone Mobile"}
+                          >
                             <Input readOnly className="rounded-xl bg-white font-semibold" />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Form.Item name="immatriculation" label="Véhicule Immatriculation">
+                          <Form.Item
+                            name={typeDemande === "RENEW" ? "carteRfidActuelle" : "immatriculation"}
+                            label={typeDemande === "RENEW" ? "Numéro de carte RFID" : "Véhicule Immatriculation"}
+                          >
                             <Input readOnly className="rounded-xl bg-white font-semibold" />
                           </Form.Item>
                         </Col>
+                        {typeDemande === "RENEW" && renewalAccount && (
+                          <>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Parking actuel">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.parkingActuelNom}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Fin de la période actuelle">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.dateFinActuelle}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Form.Item label="Statut de la carte">
+                                <Input
+                                  readOnly
+                                  value={renewalAccount.statutCarte}
+                                  className="rounded-xl bg-white font-semibold"
+                                />
+                              </Form.Item>
+                            </Col>
+                          </>
+                        )}
                       </Row>
                     </AntCard>
                   </Form>
@@ -1070,7 +1325,7 @@ const {
                       Souscription Corporate — Entreprise & Flotte
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">
-                      Renseignez les informations de la société, le document officiel et les véhicules de la flotte.
+                      Renseignez les informations de la société, du projet et le nombre de véhicules.
                     </p>
                   </div>
                   <Tag color="gold" className="font-bold px-3 py-1 rounded-full">
@@ -1085,7 +1340,7 @@ const {
                   onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
                   className="space-y-4"
                 >
-                  <Collapse defaultActiveKey={["societe", "vehicules_flotte", "docs_entreprise"]} className="bg-transparent border-none space-y-4">
+                  <Collapse defaultActiveKey={["societe", "vehicules_flotte"]} className="bg-transparent border-none space-y-4">
                     {/* Panel 1: Société & Responsable */}
                     <Collapse.Panel
                       header={
@@ -1161,16 +1416,58 @@ const {
                             <Input placeholder="12345" className="rounded-xl py-2" />
                           </Form.Item>
                         </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="titreFoncier"
+                            label="Titre foncier"
+                            rules={[{ required: true, message: "Le titre foncier est requis." }]}
+                          >
+                            <Input placeholder="ex: TF-12345/2026" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
                       </Row>
 
                       <Row gutter={16}>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} md={8}>
                           <Form.Item
-                            name="nomContact"
-                            label="Nom & Prénom du Responsable Flotte"
-                            rules={[{ required: true, message: "Le nom du responsable est requis." }]}
+                            name="nomRepresentant"
+                            label="Nom du représentant"
+                            rules={[{ required: true, message: "Le nom du représentant est requis." }]}
                           >
-                            <Input placeholder="ex: Karim BENNANI" className="rounded-xl py-2" />
+                            <Input placeholder="ex: BENNANI" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                          <Form.Item
+                            name="prenomRepresentant"
+                            label="Prénom du représentant"
+                            rules={[{ required: true, message: "Le prénom du représentant est requis." }]}
+                          >
+                            <Input placeholder="ex: Karim" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={8}>
+                          <Form.Item
+                            name="cinRepresentant"
+                            label="CIN du représentant"
+                            normalize={(value) =>
+                              value
+                                ? value.replace(/\s/g, "").toUpperCase().slice(0, 10)
+                                : ""
+                            }
+                            rules={[
+                              { required: true, message: "Le CIN du représentant est requis." },
+                              {
+                                pattern: /^[A-Z]{1,2}[0-9]{5,8}$/,
+                                message: "Format attendu : AB123456 ou A123456.",
+                              },
+                            ]}
+                          >
+                            <Input
+                              placeholder="ex: AB123456"
+                              maxLength={10}
+                              className="rounded-xl py-2 font-mono uppercase"
+                            />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
@@ -1183,17 +1480,62 @@ const {
                             <Input placeholder="06 61 00 00 00" className="rounded-xl py-2" />
                           </Form.Item>
                         </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="email"
+                            label="Email Professionnel"
+                            rules={[
+                              { required: true, message: "L'email est requis." },
+                              { type: "email", message: "Email invalide." },
+                            ]}
+                          >
+                            <Input placeholder="flotte@entreprise.ma" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="libelleProjet"
+                            label="Libellé du projet"
+                            rules={[{ required: true, message: "Le libellé du projet est requis." }]}
+                          >
+                            <Input placeholder="ex: Projet corporate RRM" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            name="adresseProjet"
+                            label="Adresse du projet"
+                            rules={[{ required: true, message: "L'adresse du projet est requise." }]}
+                          >
+                            <Input placeholder="Adresse complète du projet" className="rounded-xl py-2" />
+                          </Form.Item>
+                        </Col>
                       </Row>
 
                       <Form.Item
-                        name="email"
-                        label="Email Professionnel pour Facturation"
+                        name="plageHoraire"
+                        label="Plage horaire d'accès au parking"
                         rules={[
-                          { required: true, message: "L'email est requis." },
-                          { type: "email", message: "Email invalide." },
+                          { required: true, message: "La plage horaire est requise." },
                         ]}
                       >
-                        <Input placeholder="flotte@entreprise.ma" className="rounded-xl py-2" />
+                        <Select
+                          placeholder="Choisissez la plage horaire contractuelle"
+                          className="w-full"
+                        >
+                          <Option value="Tous les jours de 08h00 à 20h00">
+                            Tous les jours de 08h00 à 20h00
+                          </Option>
+                          <Option value="Tous les jours de 08h00 à 22h00">
+                            Tous les jours de 08h00 à 22h00
+                          </Option>
+                          <Option value="24h/24 et 7j/7">
+                            24h/24 et 7j/7
+                          </Option>
+                        </Select>
                       </Form.Item>
                     </Collapse.Panel>
 
@@ -1211,7 +1553,7 @@ const {
                       <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                           <label className="font-bold text-slate-900 text-sm block mb-1">
-                            Combien de cartes RFID / abonnements souhaitez-vous ?
+                            Combien de places, véhicules et cartes RFID souhaitez-vous ?
                           </label>
                         </div>
                         <InputNumber
@@ -1233,47 +1575,15 @@ const {
                               <Col xs={24} md={12}>
                                 <Form.Item
                                   name={["flotteVehicules", idx, "immatriculation"]}
-                                  label={`Matricule Véhicule #${idx + 1}`}
-                                  rules={[{ required: true, message: "Immatriculation requise." }]}
+                                  label={`Matricule Véhicule #${idx + 1} (facultatif)`}
                                 >
                                   <Input prefix={<CarOutlined />} placeholder="12345-A-1" className="rounded-xl py-2" />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={24} md={12}>
-                                <Form.Item
-                                  name={["flotteVehicules", idx, "marque"]}
-                                  label={`Marque & Modèle Véhicule #${idx + 1}`}
-                                >
-                                  <Input placeholder="ex: Dacia / Renault / Peugeot" className="rounded-xl py-2" />
                                 </Form.Item>
                               </Col>
                             </Row>
                           </div>
                         ))}
                       </div>
-                    </Collapse.Panel>
-
-                    {/* Panel 3: Corporate Documents Upload (Required with Clean Custom Cadre State) */}
-                    <Collapse.Panel
-                      header={
-                        <div className="flex items-center gap-2 font-bold text-slate-900 text-base">
-                          <FileImageOutlined className="text-amber-600 text-lg" />
-                          <span>3. Document Entreprise (Attestation ICE / Registre de Commerce)</span>
-                        </div>
-                      }
-                      key="docs_entreprise"
-                      className="glass-panel rounded-2xl border border-slate-200 bg-white/70 overflow-hidden shadow-xs"
-                    >
-                      <ScanUploadField
-                        name="photoDocEntreprise"
-                        label="Attestation ICE ou Registre de Commerce (RC)"
-                        tagText="Document Entreprise Officiel"
-                        tagColor="gold"
-                        icon={<BankOutlined />}
-                        btnText="Scanner Document Entreprise"
-                        isRequired={true}
-                        form={form}
-                      />
                     </Collapse.Panel>
                   </Collapse>
                 </Form>
@@ -1635,15 +1945,22 @@ const {
                     <Option
                       key={parking.id}
                       value={parking.id}
-                      disabled={!parking.souscriptionDisponible}
+                      disabled={
+                        !parking.souscriptionDisponible ||
+                        (typeDemande === "CORPORATE" &&
+                          parking.placesDisponiblesAbonnements < nombreVehiculesCorporate)
+                      }
                     >
                       {parking.nom}
+                      {typeDemande === "CORPORATE"
+                        ? ` — ${parking.placesDisponiblesAbonnements} places disponibles`
+                        : ""}
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
 
-              {typeDemande === "NEW" ? (
+              {typeDemande === "NEW" || typeDemande === "RENEW" ? (
                 <>
                   <Form.Item
                     name="tarifParkingId"
@@ -1828,7 +2145,7 @@ const {
                 </Form.Item>
               )}
 
-{typeDemande === "NEW" && (
+{(typeDemande === "NEW" || typeDemande === "RENEW") && (
   <Form.Item
     name="canalOtp"
     label="Réception du code de vérification"
@@ -1935,7 +2252,7 @@ const {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-6">
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 m-0">
-                  Récapitulatif Final & Validation par SMS OTP
+                  Récapitulatif Final & Validation par code OTP
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
                   Vérifiez le détail de votre souscription avant d'effectuer la validation sécurisée.
@@ -1992,9 +2309,15 @@ const {
                         </Tag>
                       </Col>
                       <Col xs={24} md={8}>
-                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Responsable Flotte</span>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Représentant</span>
                         <strong className="text-sm text-slate-900 block">
-                          {recapData.nomContact || form.getFieldValue("nomContact") || "-"}
+                          {`${recapData.nomRepresentant || form.getFieldValue("nomRepresentant") || ""} ${recapData.prenomRepresentant || form.getFieldValue("prenomRepresentant") || ""}`.trim() || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">CIN du représentant</span>
+                        <strong className="text-sm text-slate-900 font-mono block">
+                          {recapData.cinRepresentant || form.getFieldValue("cinRepresentant") || "-"}
                         </strong>
                       </Col>
                       <Col xs={12} md={8}>
@@ -2007,6 +2330,30 @@ const {
                         <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Email Professionnel</span>
                         <strong className="text-sm text-slate-900 block truncate">
                           {recapData.email || form.getFieldValue("email") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Titre foncier</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.titreFoncier || form.getFieldValue("titreFoncier") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={12} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Projet</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.libelleProjet || form.getFieldValue("libelleProjet") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Adresse du projet</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.adresseProjet || form.getFieldValue("adresseProjet") || "-"}
+                        </strong>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Plage horaire</span>
+                        <strong className="text-sm text-slate-900 block">
+                          {recapData.plageHoraire || form.getFieldValue("plageHoraire") || "-"}
                         </strong>
                       </Col>
                     </Row>
@@ -2070,6 +2417,17 @@ const {
                         )}
                       </>
                     )}
+                    {typeDemande === "CORPORATE" && (
+                      <Col xs={24}>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculations renseignées (facultatives)</span>
+                        <strong className="text-sm text-secondary font-mono block">
+                          {(form.getFieldValue("flotteVehicules") || [])
+                            .map((vehicule: any) => vehicule?.immatriculation?.trim())
+                            .filter(Boolean)
+                            .join(", ") || "Aucune immatriculation renseignée"}
+                        </strong>
+                      </Col>
+                    )}
                     <Col xs={24} sm={typeDemande === "CORPORATE" ? 12 : 8}>
                       <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
                       <strong className="text-sm text-slate-900 block">
@@ -2094,7 +2452,7 @@ const {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
                       <span className="text-slate-600 font-semibold">Formule Souscrite :</span>
                       <strong className="text-slate-900 text-sm">
-                        {typeDemande === "NEW"
+                        {typeDemande === "NEW" || typeDemande === "RENEW"
                           ? tarifSelectionne?.forfaitLibelle || "Non sélectionnée"
                           : getFormuleLabel(recapData.formuleCode || watchedFormuleCode || "24H7J")}
                       </strong>
@@ -2157,19 +2515,19 @@ const {
                   </div>
                 </div>
 
-                {/* Section 5: Pièces Justificatives Téléversées */}
-                <div className="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                  <span className="font-semibold text-slate-500">Pièces Justificatives :</span>
-                  <Tag color="green" className="font-bold m-0 inline-flex items-center gap-1">
-                    <CheckCircleOutlined /> {typeDemande === "CORPORATE" ? "Document Entreprise (ICE/RC)" : "CIN Recto/Verso"}
-                  </Tag>
-                  {typeDemande !== "CORPORATE" && (
+                {/* Section 5: Pièces justificatives pour les demandes particulières */}
+                {typeDemande !== "CORPORATE" && (
+                  <div className="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                    <span className="font-semibold text-slate-500">Pièces Justificatives :</span>
+                    <Tag color="green" className="font-bold m-0 inline-flex items-center gap-1">
+                      <CheckCircleOutlined /> CIN Recto/Verso
+                    </Tag>
                     <Tag color="green" className="font-bold m-0 inline-flex items-center gap-1">
                       <CheckCircleOutlined /> Carte Grise Recto/Verso
                     </Tag>
-                  )}
-                  <Tag color="blue" className="font-bold m-0">Dossier Complet</Tag>
-                </div>
+                    <Tag color="blue" className="font-bold m-0">Dossier Complet</Tag>
+                  </div>
+                )}
 
                 {/* Instructions & Explications pour le Règlement par Chèque */}
                 {currentPaymentMode === "CHEQUE" && (
@@ -2282,6 +2640,16 @@ const {
         phone={pendingValues?.telephone || "0661234567"}
         email={pendingValues?.email}
         referenceNumber={backendDemandeResponse?.reference || submittedResult?.reference}
+        onValidateOtp={
+          typeDemande === "RENEW"
+            ? validerOtpRenouvellement
+            : typeDemande === "CORPORATE"
+              ? validerOtpCorporate
+              : undefined
+        }
+        onResendOtp={
+          typeDemande === "RENEW" ? renvoyerOtpRenouvellement : undefined
+        }
       />
 
       <PublicFooter />

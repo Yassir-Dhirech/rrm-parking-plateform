@@ -1,0 +1,338 @@
+.responsable-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.responsable-kpi-card.glass-effect {
+  min-height: 190px;
+  height: 100%;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+
+  background: rgba(26, 26, 26, 0.47);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 40px 5px rgba(0, 0, 0, 0.5);
+
+  color: #ffffff;
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+}
+
+.responsable-kpi-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.responsable-kpi-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.responsable-kpi-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f6f9;
+  font-size: 17px;
+}
+
+.responsable-kpi-title {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.responsable-kpi-info {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 14px;
+  cursor: help;
+}
+
+.responsable-kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  margin-bottom: auto;
+}
+
+.responsable-kpi-value {
+  min-width: 0;
+  color: #ffffff;
+  font-size: clamp(24px, 2vw, 31px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+.responsable-kpi-evolution {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.responsable-kpi-evolution--positive {
+  color: #6ccb5f;
+  background: rgba(16, 124, 16, 0.16);
+}
+
+.responsable-kpi-evolution--negative {
+  color: #ff8c8c;
+  background: rgba(209, 52, 56, 0.16);
+}
+
+.responsable-kpi-evolution--stable {
+  color: #ffd666;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.responsable-kpi-evolution--none {
+  color: rgba(255, 255, 255, 0.48);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.responsable-kpi-progress {
+  margin: 12px 0 3px;
+}
+
+.responsable-kpi-description {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 11.5px;
+  line-height: 1.45;
+  min-height: 29px;
+}
+
+.responsable-kpi-error {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.responsable-kpi-error small {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.responsable-kpi-card .ant-skeleton-title,
+.responsable-kpi-card .ant-skeleton-paragraph > li {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+@media (max-width: 1199px) {
+  .responsable-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .responsable-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .responsable-kpi-card.glass-effect {
+    min-height: 178px;
+  }
+}
+/* ==========================================================================
+   KPI CHIFFRE D'AFFAIRES — VARIANTE MAUVE
+   ========================================================================== */
+
+.responsable-kpi-card.glass-effect.responsable-kpi-card--revenue {
+  background: rgba(59, 18, 76, 0.41) !important;
+  backdrop-filter: blur(17px) !important;
+  -webkit-backdrop-filter: blur(17px) !important;
+
+  border: 1px solid rgba(187, 112, 214, 0.78) !important;
+  box-shadow:
+    0 14px 34px rgba(35, 7, 49, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.responsable-kpi-card--revenue .responsable-kpi-title {
+  color: #d8a4ee !important;
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em;
+}
+
+.responsable-kpi-card--revenue .responsable-kpi-icon {
+  color: #e6b8f7 !important;
+  border-color: rgba(203, 132, 231, 0.50) !important;
+  background: rgba(154, 73, 184, 0.18) !important;
+}
+
+.responsable-kpi-card--revenue .responsable-kpi-description {
+  border-top-color: rgba(203, 132, 231, 0.72) !important;
+}
+
+.responsable-kpi-card--revenue .responsable-kpi-info {
+  color: rgba(226, 181, 244, 0.72) !important;
+}
+/* === RRM_KPI_TYPOGRAPHY_REFINEMENT_START === */
+
+/*
+ * KPI Responsable â€” proportions plus premium :
+ * cartes lÃ©gÃ¨rement plus compactes,
+ * typographie plus fine,
+ * valeurs plus lisibles,
+ * pourcentages d'Ã©volution plus visibles.
+ */
+
+.responsable-kpi-grid {
+  gap: 14px !important;
+}
+
+.responsable-kpi-card.glass-effect {
+  min-height: 176px !important;
+  padding: 18px 20px !important;
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+}
+
+/* Header plus aÃ©rÃ© mais compact */
+.responsable-kpi-header {
+  gap: 14px !important;
+}
+
+.responsable-kpi-title-wrap {
+  gap: 10px !important;
+}
+
+/* IcÃ´ne lÃ©gÃ¨rement plus grande */
+.responsable-kpi-icon {
+  width: 34px !important;
+  height: 34px !important;
+  flex-basis: 34px !important;
+  font-size: 16px !important;
+  border-radius: 9px !important;
+}
+
+/* Titre plus fin et plus premium */
+.responsable-kpi-title {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Info discret */
+.responsable-kpi-info {
+  font-size: 13px !important;
+}
+
+/* Zone valeur principale */
+.responsable-kpi-value-row {
+  margin-top: 16px !important;
+  gap: 12px !important;
+}
+
+/* Valeur KPI : grande mais plus fine */
+.responsable-kpi-value {
+  font-size: clamp(30px, 2.15vw, 38px) !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/*
+ * Pourcentage Ã©volution :
+ * plus grand et plus lisible.
+ */
+.responsable-kpi-evolution {
+  padding: 4px 9px !important;
+  border-radius: 999px !important;
+
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Ligne de progression lÃ©gÃ¨rement plus proche de la valeur */
+.responsable-kpi-progress {
+  margin: 10px 0 2px !important;
+}
+
+/* Description fine et propre */
+.responsable-kpi-description {
+  margin-top: 14px !important;
+  padding-top: 10px !important;
+
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Responsive */
+@media (max-width: 1199px) {
+  .responsable-kpi-card.glass-effect {
+    min-height: 170px !important;
+  }
+
+  .responsable-kpi-value {
+    font-size: clamp(29px, 4vw, 36px) !important;
+  }
+
+  .responsable-kpi-evolution {
+    font-size: 13.5px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .responsable-kpi-card.glass-effect {
+    min-height: 164px !important;
+    padding: 16px 18px !important;
+  }
+
+  .responsable-kpi-title {
+    font-size: 14px !important;
+  }
+
+  .responsable-kpi-value {
+    font-size: 32px !important;
+  }
+
+  .responsable-kpi-evolution {
+    font-size: 13px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* === RRM_KPI_TYPOGRAPHY_REFINEMENT_END === */

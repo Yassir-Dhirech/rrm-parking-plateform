@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.rrm.parking.demande.dto.response.DemandeDetailResponse;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.document.repository.PieceJointeRepository;
 import org.hibernate.Hibernate;
 import java.util.List;
@@ -186,18 +187,46 @@ public class DemandeRechercheService {
         DemandeClient demandeReelle =
                 (DemandeClient) Hibernate.unproxy(demande);
 
-        if (!(demandeReelle
-                instanceof DemandeNouvelAbonnementRegulier reguliere)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_IMPLEMENTED,
-                    "Le détail de ce type de demande n’est pas encore disponible"
+        if (demandeReelle instanceof DemandeNouvelAbonnementRegulier reguliere) {
+            return DemandeDetailResponse.depuis(
+                    reguliere,
+                    pieceJointeRepository
+                            .findByDemandeIdOrderByDateDepotDesc(id)
             );
         }
 
-        return DemandeDetailResponse.depuis(
-                reguliere,
-                pieceJointeRepository
-                        .findByDemandeIdOrderByDateDepotDesc(id)
+        if (demandeReelle instanceof DemandeRenouvellementRegulier renouvellement) {
+            DemandeClient demandeInitiale = demandeClientRepository
+                    .findByAbonnementGenereId(
+                            renouvellement.getAbonnementConcerne().getId()
+                    )
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "La demande initiale de l'abonnement est introuvable"
+                    ));
+
+            DemandeClient demandeInitialeReelle =
+                    (DemandeClient) Hibernate.unproxy(demandeInitiale);
+
+            if (!(demandeInitialeReelle
+                    instanceof DemandeNouvelAbonnementRegulier initiale)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "La demande d'origine de l'abonnement est invalide"
+                );
+            }
+
+            return DemandeDetailResponse.depuis(
+                    renouvellement,
+                    initiale.getVehicule(),
+                    pieceJointeRepository
+                            .findByDemandeIdOrderByDateDepotDesc(initiale.getId())
+            );
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.NOT_IMPLEMENTED,
+                "Le détail de ce type de demande n’est pas encore disponible"
         );
     }
 

@@ -1,0 +1,749 @@
+.responsable-dashboard-glass {
+  min-height: calc(100vh - 96px);
+  padding: 18px;
+  border-radius: 24px;
+  background: transparent;
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+
+}
+
+/* Dark glass surface shared by Ant Design cards and existing dashboard panels. */
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass [class*="bg-white"] {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border-radius: 19px !important;
+
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(50px) saturate(168%);
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-card-head {
+  background: transparent !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass [class*="rounded-2xl"] {
+  border-radius: 19px !important;
+}
+
+/* Secondary surfaces keep the same dark glass language. */
+.responsable-dashboard-glass [class*="bg-slate-50"],
+.responsable-dashboard-glass [class*="bg-slate-100"] {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  backdrop-filter: blur(9px) saturate(168%);
+  -webkit-backdrop-filter: blur(9px) saturate(168%);
+}
+
+/* Ant Design data surfaces. */
+.responsable-dashboard-glass .ant-table,
+.responsable-dashboard-glass .ant-table-container,
+.responsable-dashboard-glass .ant-table-content,
+.responsable-dashboard-glass .ant-table-thead > tr > th,
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  background: transparent !important;
+}
+
+.responsable-dashboard-glass .ant-table-thead > tr > th {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e8e8e8 !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Inputs and map-style selector use the same dark glass language. */
+.responsable-dashboard-glass .ant-select-selector,
+.responsable-dashboard-glass .ant-segmented,
+.responsable-dashboard-glass .ant-btn-default {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-segmented-item-selected {
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+
+/* Keep text readable over the dark glass. */
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass .ant-card-head-title,
+.responsable-dashboard-glass .ant-typography,
+.responsable-dashboard-glass .ant-table,
+.responsable-dashboard-glass [class*="text-slate-"] {
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-typography-secondary,
+.responsable-dashboard-glass [class*="text-slate-500"],
+.responsable-dashboard-glass [class*="text-slate-600"] {
+  color: #c7c7c7 !important;
+}
+
+@media (max-width: 768px) {
+  .responsable-dashboard-glass {
+    padding: 12px;
+    border-radius: 16px;
+  }
+}
+
+/* =========================================================
+   RESPONSABLE — GLASSMORPHISM AGRESSIF
+   Centralise le blur de toutes les cartes visibles du dashboard.
+   ========================================================= */
+.responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+.responsable-dashboard-glass .responsable-chart-card.glass-effect,
+.responsable-dashboard-glass .responsable-area-card.glass-effect,
+.responsable-dashboard-glass .responsable-pending-card.glass-effect,
+.responsable-dashboard-glass .responsable-mix-card.glass-effect,
+.responsable-dashboard-glass .ant-card {
+  background: rgba(12, 20, 34, 0.34) !important;
+  backdrop-filter: blur(32px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(175%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    0 12px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.responsable-dashboard-glass .ant-card-head,
+.responsable-dashboard-glass .ant-card-body {
+  background: transparent !important;
+}
+
+.responsable-dashboard-glass .responsable-chart-summary,
+.responsable-dashboard-glass .responsable-area-summary,
+.responsable-dashboard-glass .responsable-pending-kpi,
+.responsable-dashboard-glass .responsable-mix-legend-row {
+  background: rgba(255, 255, 255, 0.055) !important;
+  backdrop-filter: blur(14px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+}
+
+@media (max-width: 767px) {
+  .responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+  .responsable-dashboard-glass .responsable-chart-card.glass-effect,
+  .responsable-dashboard-glass .responsable-area-card.glass-effect,
+  .responsable-dashboard-glass .responsable-pending-card.glass-effect,
+  .responsable-dashboard-glass .responsable-mix-card.glass-effect,
+  .responsable-dashboard-glass .ant-card {
+    backdrop-filter: blur(24px) saturate(165%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(165%) !important;
+  }
+}
+/* === RRM_MAIN_CARDS_STRONG_GLASS_START === */
+
+/*
+ * Backdrop blur fort pour les cartes principales du dashboard RESPONSABLE.
+ * PlacÃ© en fin de fichier + !important pour Ã©craser les CSS locaux
+ * de chaque composant.
+ */
+.responsable-dashboard-glass {
+  isolation: auto !important;
+}
+
+.responsable-dashboard-glass .responsable-kpi-card,
+.responsable-dashboard-glass .responsable-chart-card,
+.responsable-dashboard-glass .responsable-area-card,
+.responsable-dashboard-glass .responsable-pending-card,
+.responsable-dashboard-glass .responsable-mix-card,
+.responsable-dashboard-glass .ant-card {
+  background-color: rgba(15, 24, 39, 0.22) !important;
+  background-image: none !important;
+
+  backdrop-filter: blur(54px) saturate(165%) brightness(0.82) !important;
+  -webkit-backdrop-filter: blur(54px) saturate(165%) brightness(0.82) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+
+  /* Force une vraie couche compositing dans Chromium */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/*
+ * Les sous-couches ne doivent pas recouvrir le backdrop du parent.
+ */
+.responsable-dashboard-glass .ant-card-head,
+.responsable-dashboard-glass .ant-card-body {
+  background: transparent !important;
+}
+
+/*
+ * Surfaces secondaires : blur moins fort.
+ */
+.responsable-dashboard-glass .responsable-chart-summary,
+.responsable-dashboard-glass .responsable-area-summary,
+.responsable-dashboard-glass .responsable-pending-kpi,
+.responsable-dashboard-glass .responsable-mix-legend-row {
+  background: rgba(255, 255, 255, 0.045) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+}
+
+/*
+ * Important : ne jamais rendre les cartes principales opaques via
+ * d'anciens backgrounds utilitaires.
+ */
+.responsable-dashboard-glass .responsable-kpi-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-chart-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-area-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-pending-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-mix-card[class*="bg-"] {
+  background-color: rgba(15, 24, 39, 0.22) !important;
+}
+
+/* === RRM_MAIN_CARDS_STRONG_GLASS_END === */
+/* === RRM_WEATHER_DARK_CARDS_START === */
+
+/*
+ * Style inspirÃ© de la rÃ©fÃ©rence fournie :
+ * cartes sombres bleu-gris, blur doux mais visible,
+ * coins arrondis, lumiÃ¨re discrÃ¨te, look mÃ©tÃ©o premium.
+ */
+.responsable-dashboard-glass {
+  isolation: auto !important;
+}
+
+/* Toutes les cartes principales du dashboard */
+.responsable-dashboard-glass .responsable-kpi-card,
+.responsable-dashboard-glass .responsable-chart-card,
+.responsable-dashboard-glass .responsable-area-card,
+.responsable-dashboard-glass .responsable-pending-card,
+.responsable-dashboard-glass .responsable-mix-card,
+.responsable-dashboard-glass .ant-card {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 28, 39, 0.78) 0%,
+      rgba(20, 34, 48, 0.66) 100%
+    ) !important;
+
+  backdrop-filter: blur(22px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 22px !important;
+
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+
+  color: #f8fbff !important;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(18, 28, 39, 0.78) 0%,
+      rgba(20, 34, 48, 0.66) 100%
+    ) !important;
+}
+
+/* Transparence interne pour ne pas casser le style */
+.responsable-dashboard-glass .ant-card-head,
+.responsable-dashboard-glass .ant-card-body,
+.responsable-dashboard-glass .ant-card-cover {
+  background: transparent !important;
+}
+
+/* Couleur du texte principal */
+.responsable-dashboard-glass .ant-card-head-title,
+.responsable-dashboard-glass .ant-typography,
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass [class*="text-slate-900"],
+.responsable-dashboard-glass [class*="text-slate-800"],
+.responsable-dashboard-glass [class*="text-slate-700"] {
+  color: #f7fbff !important;
+}
+
+/* Couleur du texte secondaire */
+.responsable-dashboard-glass .ant-typography-secondary,
+.responsable-dashboard-glass [class*="text-slate-600"],
+.responsable-dashboard-glass [class*="text-slate-500"],
+.responsable-dashboard-glass [class*="text-slate-400"] {
+  color: rgba(224, 234, 245, 0.72) !important;
+}
+
+/* Surfaces secondaires internes */
+.responsable-dashboard-glass .responsable-chart-summary,
+.responsable-dashboard-glass .responsable-area-summary,
+.responsable-dashboard-glass .responsable-pending-kpi,
+.responsable-dashboard-glass .responsable-mix-legend-row,
+.responsable-dashboard-glass [class*="bg-slate-50"],
+.responsable-dashboard-glass [class*="bg-slate-100"] {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    ) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 16px !important;
+
+  backdrop-filter: blur(12px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
+}
+
+/* Inputs / sÃ©lecteurs / boutons neutres */
+.responsable-dashboard-glass .ant-select-selector,
+.responsable-dashboard-glass .ant-segmented,
+.responsable-dashboard-glass .ant-btn-default {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(26, 41, 56, 0.86) 0%,
+      rgba(22, 34, 47, 0.76) 100%
+    ) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 14px !important;
+
+  backdrop-filter: blur(14px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(135%) !important;
+
+  color: #f7fbff !important;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.responsable-dashboard-glass .ant-segmented-item-selected {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Tableaux dans le mÃªme langage visuel */
+.responsable-dashboard-glass .ant-table,
+.responsable-dashboard-glass .ant-table-container,
+.responsable-dashboard-glass .ant-table-content,
+.responsable-dashboard-glass .ant-table-thead > tr > th,
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  background: transparent !important;
+  color: #eef5fb !important;
+}
+
+.responsable-dashboard-glass .ant-table-thead > tr > th {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Garde les cartes uniformes sur mobile */
+@media (max-width: 768px) {
+  .responsable-dashboard-glass .responsable-kpi-card,
+  .responsable-dashboard-glass .responsable-chart-card,
+  .responsable-dashboard-glass .responsable-area-card,
+  .responsable-dashboard-glass .responsable-pending-card,
+  .responsable-dashboard-glass .responsable-mix-card,
+  .responsable-dashboard-glass .ant-card {
+    border-radius: 18px !important;
+    backdrop-filter: blur(18px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+  }
+}
+
+/* === RRM_WEATHER_DARK_CARDS_END === */
+/* === RRM_DASHBOARD_GLASS_SINGLE_SOURCE_START === */
+
+/*
+ * SOURCE UNIQUE VISUELLE DU DASHBOARD RESPONSABLE
+ *
+ * Pourquoi ce bloc est trÃ¨s spÃ©cifique :
+ * plusieurs composants du dashboard possÃ¨dent encore leurs propres
+ * background/backdrop-filter, et d'anciens overrides utilisent !important.
+ * Ce bloc doit donc Ãªtre la derniÃ¨re autoritÃ© visuelle.
+ */
+
+/* Le fond montagne doit rester rÃ©ellement derriÃ¨re les cartes. */
+body .rrm-role-shell--glass > main,
+body .rrm-role-shell--glass > main .responsable-dashboard-glass {
+  background: transparent !important;
+  isolation: auto !important;
+  filter: none !important;
+}
+
+/*
+ * IMPORTANT :
+ * les anciens translateZ(0) / will-change peuvent crÃ©er des couches
+ * de composition inutiles et rendre le backdrop-filter incohÃ©rent.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-chart-card,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-card,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-card,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-card,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card {
+  transform: none !important;
+  -webkit-transform: none !important;
+  will-change: auto !important;
+}
+
+/*
+ * CARTES PRINCIPALES
+ * Look sombre / bleu-gris inspirÃ© de la rÃ©fÃ©rence mÃ©tÃ©o.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-chart-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card {
+  background: rgba(18, 27, 39, 0.62) !important;
+  background-color: rgba(18, 27, 39, 0.62) !important;
+  background-image: none !important;
+
+  backdrop-filter: blur(20px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(135%) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 18px !important;
+
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+
+  color: #f7f9fc !important;
+}
+
+/*
+ * KPI CHIFFRE D'AFFAIRES
+ * La couleur demandÃ©e doit gagner contre TOUS les anciens styles.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card.glass-effect.responsable-kpi-card--revenue {
+  background: rgba(59, 18, 76, 0.41) !important;
+  background-color: rgba(59, 18, 76, 0.41) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(17px) saturate(135%) !important;
+  backdrop-filter: blur(17px) saturate(135%) !important;
+
+  border: 1px solid rgba(206, 135, 229, 0.92) !important;
+
+  box-shadow:
+    0 16px 38px rgba(46, 8, 61, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--revenue .responsable-kpi-title {
+  color: #dca8ef !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--revenue .responsable-kpi-description {
+  border-top-color: rgba(206, 135, 229, 0.88) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--revenue .responsable-kpi-icon {
+  color: #ecc7f8 !important;
+  background: rgba(130, 53, 159, 0.24) !important;
+  border-color: rgba(206, 135, 229, 0.48) !important;
+}
+
+/*
+ * ANT DESIGN :
+ * les sous-couches d'une Card doivent rester transparentes.
+ * Sinon elles cachent le backdrop-filter du conteneur.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card-head,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card-body,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card-cover {
+  background: transparent !important;
+}
+
+/* Texte lisible dans toutes les cartes. */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card-head-title,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card .ant-typography,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card [style*="color: rgb(36, 36, 36)"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card [style*="color:#242424"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card [style*="color: #242424"] {
+  color: #f7f9fc !important;
+}
+
+/*
+ * PETITES SURFACES INTERNES
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-chart-summary,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-summary,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-kpi,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-legend-row {
+  background: rgba(255, 255, 255, 0.055) !important;
+
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/*
+ * BAS DU DASHBOARD :
+ * les anciens blocs Tailwind clairs sont neutralisÃ©s.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-white"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-slate-50"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-slate-100"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-emerald-50"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-purple-50"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-amber-50"],
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="bg-red-50"] {
+  background: rgba(22, 31, 44, 0.54) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+/*
+ * SÃ©lecteurs et petits contrÃ´les.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-select-selector,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-segmented,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-btn-default {
+  background: rgba(24, 34, 48, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f7f9fc !important;
+
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+@media (max-width: 768px) {
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-chart-card.glass-effect,
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-card.glass-effect,
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-card.glass-effect,
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-card.glass-effect,
+  body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card {
+    backdrop-filter: blur(16px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* === RRM_DASHBOARD_GLASS_SINGLE_SOURCE_END === */
+/* === RRM_KPI_COLOR_VARIANTS_START === */
+
+/*
+ * Variantes KPI.
+ * SÃ©lecteurs volontairement trÃ¨s spÃ©cifiques pour gagner contre
+ * les anciens styles globaux du dashboard.
+ */
+
+/* ----------------------------------------------------------
+   1. CHIFFRE D'AFFAIRES â€” MAUVE
+   ---------------------------------------------------------- */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card.glass-effect.responsable-kpi-card--revenue {
+  background: rgba(59, 18, 76, 0.41) !important;
+  background-color: rgba(59, 18, 76, 0.41) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(17px) !important;
+  backdrop-filter: blur(17px) !important;
+
+  border: 1px solid rgba(210, 143, 235, 0.88) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--revenue .responsable-kpi-title {
+  color: #dfaaf2 !important;
+  font-size: 17px !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--revenue .responsable-kpi-description {
+  border-top-color: rgba(210, 143, 235, 0.82) !important;
+}
+
+/* ----------------------------------------------------------
+   2. TAUX D'OCCUPATION GLOBAL â€” ROUGE
+   demandÃ© : rgb(166, 0, 0, 0.41)
+   rendu CSS Ã©quivalent sÃ»r : rgba(166, 0, 0, 0.41)
+   ---------------------------------------------------------- */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card.glass-effect.responsable-kpi-card--occupancy {
+  background: rgba(166, 0, 0, 0.41) !important;
+  background-color: rgba(166, 0, 0, 0.41) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(17px) !important;
+  backdrop-filter: blur(17px) !important;
+
+  border: 1px solid rgba(255, 120, 120, 0.86) !important;
+
+  box-shadow:
+    0 16px 38px rgba(87, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--occupancy .responsable-kpi-title {
+  color: #ffb0b0 !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--occupancy .responsable-kpi-description {
+  border-top-color: rgba(255, 120, 120, 0.78) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--occupancy .responsable-kpi-icon {
+  color: #ffd0d0 !important;
+  background: rgba(145, 0, 0, 0.24) !important;
+  border-color: rgba(255, 120, 120, 0.44) !important;
+}
+
+/* ----------------------------------------------------------
+   3. ABONNEMENTS ACTIFS â€” JAUNE / OR
+   demandÃ© : rgb(191, 166, 0, 0.41)
+   rendu CSS Ã©quivalent sÃ»r : rgba(191, 166, 0, 0.41)
+   ---------------------------------------------------------- */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card.glass-effect.responsable-kpi-card--active {
+  background: rgba(191, 166, 0, 0.41) !important;
+  background-color: rgba(191, 166, 0, 0.41) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(17px) !important;
+  backdrop-filter: blur(17px) !important;
+
+  border: 1px solid rgba(255, 225, 90, 0.88) !important;
+
+  box-shadow:
+    0 16px 38px rgba(90, 73, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--active .responsable-kpi-title {
+  color: #ffed9e !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--active .responsable-kpi-description {
+  border-top-color: rgba(255, 225, 90, 0.80) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--active .responsable-kpi-icon {
+  color: #fff2b6 !important;
+  background: rgba(126, 106, 0, 0.25) !important;
+  border-color: rgba(255, 225, 90, 0.46) !important;
+}
+
+/* ----------------------------------------------------------
+   4. DELAI MOYEN â€” VERT / TURQUOISE
+   demandÃ© : rgb(0, 126, 103, 0.41)
+   rendu CSS Ã©quivalent sÃ»r : rgba(0, 126, 103, 0.41)
+   ---------------------------------------------------------- */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card.glass-effect.responsable-kpi-card--delay {
+  background: rgba(0, 126, 103, 0.41) !important;
+  background-color: rgba(0, 126, 103, 0.41) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(17px) !important;
+  backdrop-filter: blur(17px) !important;
+
+  border: 1px solid rgba(92, 226, 202, 0.86) !important;
+
+  box-shadow:
+    0 16px 38px rgba(0, 70, 57, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--delay .responsable-kpi-title {
+  color: #a6f0e1 !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--delay .responsable-kpi-description {
+  border-top-color: rgba(92, 226, 202, 0.78) !important;
+}
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-kpi-card--delay .responsable-kpi-icon {
+  color: #c6f8ee !important;
+  background: rgba(0, 98, 80, 0.26) !important;
+  border-color: rgba(92, 226, 202, 0.44) !important;
+}
+
+/* === RRM_KPI_COLOR_VARIANTS_END === */
+/* === RRM_TWO_CHARTS_DARK_GLASS_START === */
+
+/*
+ * Les deux graphes principaux :
+ * 1) Abonnements actifs par parking
+ * 2) Chiffre d'affaires mensuel
+ *
+ * Fond noir translucide + blur trÃ¨s fort,
+ * inspirÃ© de la rÃ©fÃ©rence fournie.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-chart-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-area-card.glass-effect {
+  background: rgba(0, 0, 0, 0.53) !important;
+  background-color: rgba(0, 0, 0, 0.53) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(50px) !important;
+  backdrop-filter: blur(50px) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+/*
+ * Les zones internes restent transparentes
+ * pour laisser le noir translucide + blur du parent visible.
+ */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-chart-card .responsable-chart-summary,
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-area-card .responsable-area-summary {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* === RRM_TWO_CHARTS_DARK_GLASS_END === */

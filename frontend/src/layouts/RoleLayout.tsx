@@ -106,103 +106,129 @@ const {
           : location.pathname.startsWith(item.path),
       )?.key;
 
-  return (
-    <div className="bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white">
+
+  const currentPageTitle =
+    selectedKey === "dashboard"
+      ? "Dashboard"
+      : visibleMenuItems.find((item) => item.key === selectedKey)?.label ?? "Dashboard";
+return (
+    <div
+      className={`rrm-role-shell bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white ${
+        role === "RESPONSABLE" ? "rrm-role-shell--glass" : ""
+      }`}
+    >
       {/* Ambient Radial Background Glows */}
       <div className="absolute top-0 left-[20%] w-[500px] h-[500px] rounded-full bg-sky-400/10 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 right-[10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl pointer-events-none"></div>
-
-      {/* 1. FULL-WIDTH TOP APP BAR */}
-      <header className="fixed top-0 left-0 w-full h-[64px] border-b border-slate-200/80 shadow-2xs flex justify-between items-center px-4 md:px-6 z-50 bg-white/90 backdrop-blur-md">
-        {/* Left Side: Mobile Menu Button & RRM Logo */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            type="text"
-            icon={<MenuOutlined style={{ fontSize: 20, color: "#003566" }} />}
-            onClick={() => setMobileDrawerOpen(true)}
-            className="md:hidden flex items-center justify-center p-1"
-          />
-
-          {/* RRM Logo */}
-          <div
-            className="flex items-center cursor-pointer ml-1"
-            onClick={() => navigate(config.homePath)}
-          >
-            <img
-              src="/pictures/logo-rrm.png"
-              alt="Rabat Région Mobilité"
-              className="h-8 md:h-9 object-contain"
-            />
-          </div>
-        </div>
-
-        {/* Center: Search Bar Centered in Middle of Header (Desktop Only) */}
-        <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-auto px-4">
-          <div className="w-full">
-            <GlobalSearch />
-          </div>
-        </div>
-
-        {/* Right Side: Trailing Action Controls */}
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          {/* Internal Team Messaging */}
-          <Badge count={1} dot color="#0284c7">
+      {/* 1. TOP BAR */}
+      {role === "RESPONSABLE" ? (
+        <header
+          className={`rrm-responsable-topbar fixed top-0 right-0 h-[76px] z-50 flex items-center justify-between px-4 md:px-6 transition-all duration-300 ease-in-out ${
+            isCollapsed ? "md:left-[96px]" : "md:left-[280px]"
+          }`}
+        >
+          {/* Left: page title */}
+          <div className="rrm-responsable-topbar-left flex items-center min-w-0">
             <Button
-              shape="circle"
-              icon={<MessageOutlined style={{ fontSize: 16, color: "#003566" }} />}
-              title="Messagerie Interne Équipe"
-              onClick={() => setMessagerieOpen(true)}
-              className="border-slate-200 bg-slate-50 hover:bg-white shadow-xs"
+              type="text"
+              icon={<MenuOutlined style={{ fontSize: 20 }} />}
+              onClick={() => setMobileDrawerOpen(true)}
+              className="rrm-responsable-mobile-menu md:hidden"
             />
-          </Badge>
 
-          {/* Notification Popover */}
-          <NotificationPopover />
-        </div>
-      </header>
+            <h1 className="rrm-responsable-page-title truncate">
+              {currentPageTitle}
+            </h1>
+          </div>
 
-      {/* 2. DESKTOP SIDEBAR NAVIGATION (Foldable with Smooth Transition) */}
+          {/* Right: user identity + communication actions */}
+          <div className="rrm-responsable-topbar-right flex items-center">
+            <button
+              type="button"
+              className="rrm-responsable-user-summary"
+              onClick={() => setProfileModalOpen(true)}
+              title="Ouvrir mon profil"
+            >
+              <span className="rrm-responsable-user-avatar">
+                <UserOutlined />
+              </span>
+
+              <span className="rrm-responsable-user-copy">
+                <strong>{userName ?? "Responsable RRM"}</strong>
+                <small>Espace Responsable</small>
+              </span>
+            </button>
+
+            <Badge count={1} dot color="#ffffff">
+              <Button
+                shape="circle"
+                icon={<MessageOutlined />}
+                title="Messagerie interne"
+                onClick={() => setMessagerieOpen(true)}
+                className="rrm-responsable-topbar-icon"
+              />
+            </Badge>
+
+            <div className="rrm-responsable-notification-action">
+              <NotificationPopover />
+            </div>
+          </div>
+        </header>
+      ) : (
+        <header className="fixed top-0 left-0 w-full h-[64px] border-b border-slate-200/80 shadow-2xs flex justify-between items-center px-4 md:px-6 z-50 bg-white/90 backdrop-blur-md">
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="text"
+              icon={<MenuOutlined style={{ fontSize: 20, color: "#003566" }} />}
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden flex items-center justify-center p-1"
+            />
+
+            <div
+              className="flex items-center cursor-pointer ml-1"
+              onClick={() => navigate(config.homePath)}
+            >
+              <img
+                src="/pictures/logo-rrm.png"
+                alt="Rabat RÃ©gion MobilitÃ©"
+                className="h-8 md:h-9 object-contain"
+              />
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-auto px-4">
+            <div className="w-full">
+              <GlobalSearch />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <Badge count={1} dot color="#0284c7">
+              <Button
+                shape="circle"
+                icon={<MessageOutlined style={{ fontSize: 16, color: "#003566" }} />}
+                title="Messagerie Interne Ã‰quipe"
+                onClick={() => setMessagerieOpen(true)}
+                className="border-slate-200 bg-slate-50 hover:bg-white shadow-xs"
+              />
+            </Badge>
+
+            <NotificationPopover />
+          </div>
+        </header>
+      )}
+{/* 2. DESKTOP SIDEBAR NAVIGATION (Foldable with Smooth Transition) */}
       <aside
         className={`hidden md:flex fixed left-0 top-[64px] h-[calc(100vh-64px)] border-r border-slate-200/80 shadow-2xs flex-col py-5 z-40 bg-white/85 backdrop-blur-3xl transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-[76px]" : "w-[260px]"
         }`}
       >
-        {/* Top of Sidebar: User Info Badge & Fold/Unfold Toggle Button */}
+        {/* Top of Sidebar: only the fold / unfold control */}
         <div
-          className={`flex items-center mb-5 pb-3 border-b border-slate-100 transition-all duration-300 ${
-            isCollapsed
-              ? "flex-col gap-3 px-2 items-center"
-              : "justify-between px-5 gap-2"
+          className={`flex items-center mb-4 pb-3 border-b border-white/15 transition-all duration-300 ${
+            isCollapsed ? "justify-center px-2" : "justify-end px-4"
           }`}
         >
-          {/* User Info Badge */}
-          <div
-            className={`flex items-center cursor-pointer min-w-0 ${
-              isCollapsed ? "justify-center" : "gap-3 flex-1"
-            }`}
-            onClick={() => navigate(config.homePath)}
-          >
-            <Tooltip
-              title={isCollapsed ? `${userName ?? "Agent RRM"} (${config.title})` : ""}
-              placement="right"
-            >
-              <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary font-black text-sm shrink-0 shadow-2xs">
-                {userName ? userName.charAt(0).toUpperCase() : "A"}
-              </div>
-            </Tooltip>
-            {!isCollapsed && (
-              <div className="overflow-hidden">
-                <h1 className="text-xs font-extrabold text-slate-900 truncate m-0 leading-tight">
-                  {userName ?? "Agent RRM"}
-                </h1>
-                <p className="text-[10px] font-semibold text-slate-500 truncate m-0">
-                  {config.title}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Fold / Unfold Toggle Button at the top of the sidebar */}
           <Tooltip
             title={isCollapsed ? "Déplier la barre latérale" : "Replier la barre latérale"}
             placement={isCollapsed ? "right" : "bottom"}
@@ -211,13 +237,13 @@ const {
               type="text"
               icon={
                 isCollapsed ? (
-                  <MenuUnfoldOutlined style={{ fontSize: 16, color: "#003566" }} />
+                  <MenuUnfoldOutlined style={{ fontSize: 16, color: "#f8fafc" }} />
                 ) : (
-                  <MenuFoldOutlined style={{ fontSize: 16, color: "#003566" }} />
+                  <MenuFoldOutlined style={{ fontSize: 16, color: "#f8fafc" }} />
                 )
               }
               onClick={toggleSidebar}
-              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 border-none cursor-pointer transition-all shrink-0"
+              className="rrm-sidebar-toggle-button flex items-center justify-center w-9 h-9 rounded-xl border-none cursor-pointer transition-all shrink-0"
             />
           </Tooltip>
         </div>
@@ -232,12 +258,12 @@ const {
               <button
                 key={item.key}
                 onClick={() => navigate(item.path)}
-                className={`flex items-center rounded-xl transition-all duration-200 text-xs font-extrabold cursor-pointer border-none text-left w-full ${
+                className={`rrm-sidebar-nav-button flex items-center rounded-xl transition-all duration-200 text-xs font-extrabold cursor-pointer border-none text-left w-full ${
                   isCollapsed ? "justify-center px-0 py-3" : "gap-3 px-4 py-2.5"
                 } ${
                   isSelected
-                    ? "text-secondary border-l-4 border-secondary bg-secondary/10 shadow-xs scale-[1.02]"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 hover:translate-x-0.5"
+                    ? "rrm-sidebar-nav-button--active shadow-xs scale-[1.02]"
+                    : "hover:translate-x-0.5"
                 }`}
               >
                 <span className="text-base shrink-0">{icon}</span>
@@ -266,7 +292,7 @@ const {
               <Tooltip title="Mon Profil" placement="right">
                 <button
                   onClick={() => setProfileModalOpen(true)}
-                  className="flex items-center justify-center text-slate-600 hover:text-slate-900 w-10 h-10 rounded-xl hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
+                  className="rrm-sidebar-footer-button flex items-center justify-center w-10 h-10 rounded-xl transition-all border-none bg-transparent cursor-pointer"
                 >
                   <UserOutlined className="text-base" />
                 </button>
@@ -274,7 +300,7 @@ const {
               <Tooltip title="Déconnexion" placement="right">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center justify-center text-rose-600 hover:text-rose-700 w-10 h-10 rounded-xl hover:bg-rose-50 transition-all border-none bg-transparent cursor-pointer"
+                  className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center justify-center w-10 h-10 rounded-xl transition-all border-none bg-transparent cursor-pointer"
                 >
                   <LogoutOutlined className="text-base" />
                 </button>
@@ -284,14 +310,14 @@ const {
             <>
               <button
                 onClick={() => setProfileModalOpen(true)}
-                className="flex items-center gap-3 text-slate-600 hover:text-slate-900 px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
+                className="rrm-sidebar-footer-button flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
               >
                 <UserOutlined className="text-base" />
                 <span>Mon Profil</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 text-rose-600 hover:text-rose-700 px-4 py-2.5 rounded-xl hover:bg-rose-50 transition-all text-xs font-extrabold border-none bg-transparent cursor-pointer w-full text-left"
+                className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-extrabold border-none bg-transparent cursor-pointer w-full text-left"
               >
                 <LogoutOutlined className="text-base" />
                 <span>Déconnexion</span>
@@ -313,6 +339,7 @@ const {
         onClose={() => setMobileDrawerOpen(false)}
         open={mobileDrawerOpen}
         width={280}
+        rootClassName={role === "RESPONSABLE" ? "rrm-mobile-drawer--glass" : undefined}
         styles={{ body: { padding: "16px 12px" } }}
       >
         <div className="flex flex-col h-full gap-4">
@@ -338,10 +365,10 @@ const {
                     navigate(item.path);
                     setMobileDrawerOpen(false);
                   }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-xs font-extrabold cursor-pointer border-none text-left w-full ${
+                  className={`rrm-mobile-sidebar-nav-button flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-xs font-extrabold cursor-pointer border-none text-left w-full ${
                     isSelected
-                      ? "text-secondary border-l-4 border-secondary bg-secondary/10 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "rrm-mobile-sidebar-nav-button--active shadow-xs"
+                      : ""
                   }`}
                 >
                   <span className="text-base shrink-0">{icon}</span>
@@ -357,14 +384,14 @@ const {
                 setProfileModalOpen(true);
                 setMobileDrawerOpen(false);
               }}
-              className="flex items-center gap-3 text-slate-600 hover:text-slate-900 px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
+              className="rrm-mobile-sidebar-footer-button flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
             >
               <UserOutlined className="text-base" />
               <span>Mon Profil</span>
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 text-rose-600 hover:text-rose-700 px-4 py-2.5 rounded-xl hover:bg-rose-50 transition-all text-xs font-extrabold border-none bg-transparent cursor-pointer w-full text-left"
+              className="rrm-mobile-sidebar-footer-button rrm-mobile-sidebar-footer-button--logout flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-extrabold border-none bg-transparent cursor-pointer w-full text-left"
             >
               <LogoutOutlined className="text-base" />
               <span>Déconnexion</span>

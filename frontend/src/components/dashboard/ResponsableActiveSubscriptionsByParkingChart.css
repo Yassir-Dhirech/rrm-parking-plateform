@@ -1,0 +1,385 @@
+.responsable-chart-card.glass-effect {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 360px;
+  height: auto;
+  padding: 18px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: rgba(26, 26, 26, 0.47);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 40px 5px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+}
+
+.responsable-chart-header,
+.responsable-chart-heading,
+.responsable-chart-summary {
+  display: flex;
+  align-items: center;
+}
+
+.responsable-chart-header {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.responsable-chart-heading {
+  gap: 10px;
+}
+
+.responsable-chart-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 17px;
+}
+
+.responsable-chart-heading h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.responsable-chart-heading p {
+  margin: 3px 0 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+}
+
+.responsable-chart-info {
+  color: rgba(255, 255, 255, 0.5);
+  cursor: help;
+}
+
+.responsable-chart-summary {
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.responsable-chart-summary span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.responsable-chart-summary strong {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.responsable-bar-chart {
+  height: 232px;
+  margin-top: 18px;
+  padding: 8px 2px 0;
+  display: flex;
+  align-items: end;
+  justify-content: flex-start;
+  gap: 3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 100% 25%;
+}
+
+.responsable-bar-column {
+  width: 36px;
+  height: 100%;
+  min-width: 36px;
+  display: grid;
+  grid-template-rows: 24px 1fr 42px;
+  align-items: end;
+  text-align: center;
+}
+
+.responsable-bar-value {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.responsable-bar-track {
+  width: 12px;
+  max-width: 12px;
+  height: 100%;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 7px 7px 2px 2px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+
+.responsable-bar-fill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 7px 7px 2px 2px;
+  background: rgba(70, 166, 255, 0.88);
+  box-shadow:
+    0 0 14px rgba(70, 166, 255, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition:
+    height 280ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.responsable-bar-track:hover .responsable-bar-fill {
+  filter: brightness(1.12);
+  transform: scaleX(1.02);
+}
+
+.responsable-bar-label {
+  align-self: start;
+  padding-top: 7px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.responsable-chart-state {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  font-size: 12px;
+}
+
+@media (max-width: 1199px) {
+  .responsable-chart-card.glass-effect {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 767px) {
+  .responsable-bar-chart {
+    gap: 3px;
+    overflow-x: auto;
+  }
+
+  .responsable-bar-column {
+    width: 34px;
+    min-width: 34px;
+  }
+
+  .responsable-bar-track {
+    width: 11px;
+    max-width: 11px;
+  }
+}
+/* ==========================================================================
+   LISIBILITE DU GRAPHE — ABONNEMENTS ACTIFS PAR PARKING
+   ========================================================================== */
+
+/*
+ * On conserve exactement la largeur de la section.
+ * Les colonnes utilisent l'espace disponible au lieu d'être tassées
+ * sur la gauche avec une largeur fixe.
+ */
+.responsable-bar-chart {
+  height: 242px;
+  padding: 10px 8px 0;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.responsable-bar-column {
+  width: auto;
+  min-width: 0;
+  max-width: 48px;
+  flex: 1 1 0;
+
+  grid-template-rows: 28px 1fr 56px;
+}
+
+/* Valeurs au-dessus des barres : plus grandes et bleues. */
+.responsable-bar-value {
+  color: #69bcff !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Barres un peu plus présentes sans élargir la carte. */
+.responsable-bar-track {
+  width: 16px;
+  max-width: 16px;
+  border-radius: 8px 8px 2px 2px;
+}
+
+.responsable-bar-fill {
+  background: linear-gradient(
+    180deg,
+    #65c6ff 0%,
+    #278ee8 100%
+  );
+  box-shadow:
+    0 0 16px rgba(70, 166, 255, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+/*
+ * Noms complets des parkings :
+ * deux lignes maximum, plus grands, bleus, sans ellipsis agressif.
+ */
+.responsable-bar-label {
+  width: 100%;
+  min-width: 0;
+  padding-top: 8px;
+
+  overflow: hidden;
+  color: #72c2ff !important;
+
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Les textes de contenu du graphe passent eux aussi sur le bleu. */
+.responsable-chart-heading p,
+.responsable-chart-summary span {
+  color: rgba(113, 194, 255, 0.82) !important;
+}
+
+.responsable-chart-summary strong {
+  color: #8ed0ff !important;
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .responsable-bar-chart {
+    gap: 10px;
+    padding-inline: 6px;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .responsable-bar-column {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+  }
+
+  .responsable-bar-track {
+    width: 15px;
+    max-width: 15px;
+  }
+
+  .responsable-bar-label {
+    font-size: 10.5px;
+  }
+}
+/* === RRM_RESPONSABLE_BAR_CHART_POLISH_START === */
+
+/* Titre du graphe 1 : plus grand, plus fin, plus pro */
+.responsable-chart-heading h3 {
+  font-size: 23px !important;
+  font-weight: 400 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.02em !important;
+  color: #9fd8ff !important;
+}
+
+/* Sous-titre plus lisible */
+.responsable-chart-heading p {
+  font-size: 12.5px !important;
+  color: rgba(146, 208, 255, 0.82) !important;
+}
+
+/* Icône de titre légèrement plus présente */
+.responsable-chart-icon {
+  width: 38px !important;
+  height: 38px !important;
+  flex-basis: 38px !important;
+  font-size: 17px !important;
+}
+
+/* Le graphe respire davantage sans changer la largeur de la carte */
+.responsable-bar-chart {
+  align-items: end !important;
+  gap: 6px !important;
+  padding: 14px 10px 0 !important;
+  justify-content: space-between !important;
+}
+
+.responsable-bar-column {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  grid-template-rows: 30px 1fr 64px !important;
+}
+
+/* Labels bleus, plus grands, sur deux lignes max */
+.responsable-bar-label {
+  color: #7ecfff !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.16 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-align: center !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
+}
+
+/* Valeurs plus visibles en bleu */
+.responsable-bar-value {
+  color: #74c8ff !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+}
+
+.responsable-bar-track {
+  width: 14px !important;
+  max-width: 14px !important;
+}
+
+.responsable-bar-fill {
+  box-shadow:
+    0 0 18px rgba(70, 166, 255, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+/* === RRM_RESPONSABLE_BAR_CHART_POLISH_END === */

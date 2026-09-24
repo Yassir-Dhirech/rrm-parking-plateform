@@ -43,4 +43,15 @@ public interface NotificationRepository
     List<Notification> findByReferenceMetier(
             String referenceMetier
     );
+
+    Optional<Notification> findByReferenceMetierAndTypeNotification(
+            String referenceMetier,
+            TypeNotification typeNotification
+    );
+
+    List<Notification>
+    findByStatutInAndDateEnvoiPrevueLessThanEqualOrderByDateEnvoiPrevueAsc(
+            List<StatutNotification> statuts,
+            LocalDateTime dateLimite
+    );
 }

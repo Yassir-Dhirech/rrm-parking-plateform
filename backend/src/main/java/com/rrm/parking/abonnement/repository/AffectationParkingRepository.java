@@ -47,4 +47,21 @@ public interface AffectationParkingRepository
             @Param("date")
             LocalDate date
     );
+
+    @Query("""
+            select count(distinct affectation.abonnement.id)
+            from AffectationParking affectation
+            where affectation.parking.id = :parkingId
+              and affectation.abonnement.statut in :statuts
+              and affectation.dateDebut <= :date
+              and (
+                    affectation.dateFin is null
+                    or affectation.dateFin >= :date
+              )
+            """)
+    long compterPlacesOccupees(
+            @Param("parkingId") Long parkingId,
+            @Param("statuts") Collection<StatutAbonnement> statuts,
+            @Param("date") LocalDate date
+    );
 }

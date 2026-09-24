@@ -11,6 +11,7 @@ import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.repository.FactureRepository;
@@ -80,6 +81,11 @@ public class OperationCarteService {
                 utilisateur
         );
         activation.definirDemandeDeclencheuse(operation);
+        if (operation.getDemandeClientSource() != null) {
+            activation.definirDemandeClientSource(
+                    operation.getDemandeClientSource()
+            );
+        }
         operationRepository.save(activation);
         return versReponse(operation);
     }
@@ -103,6 +109,11 @@ public class OperationCarteService {
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerActivation(utilisateur);
 
+        if (contexte.renouvellement()) {
+            publierNotificationActivation(operation, contexte);
+            return versReponse(operation, contexte);
+        }
+
         DemandeOperationnelle remise = new DemandeOperationnelle(
                 genererReference("REM"),
                 operation.getCarteAcces(),
@@ -111,14 +122,33 @@ public class OperationCarteService {
                 utilisateur
         );
         remise.definirDemandeDeclencheuse(operation);
+        if (operation.getDemandeClientSource() != null) {
+            remise.definirDemandeClientSource(
+                    operation.getDemandeClientSource()
+            );
+        }
         operationRepository.save(remise);
 
-        eventPublisher.publishEvent(new CarteActiveeEvent(
-                facture.getId(), contexte.demande().getReference(),
-                operation.getCarteAcces().getReference(),
-                contexte.client().getEmail(), contexte.client().getNomComplet()
-        ));
+        publierNotificationActivation(operation, contexte);
         return versReponse(operation, contexte);
+    }
+
+    private void publierNotificationActivation(
+            DemandeOperationnelle operation,
+            ContexteDemande contexte
+    ) {
+        Facture facture = contexte.facture();
+        var periode = facture.getPaiement().getPeriodeAbonnement();
+        eventPublisher.publishEvent(new CarteActiveeEvent(
+                facture.getId(),
+                contexte.demande().getReference(),
+                operation.getCarteAcces().getReference(),
+                contexte.client().getEmail(),
+                contexte.client().getNomComplet(),
+                contexte.renouvellement(),
+                periode == null ? null : periode.getDateDebut(),
+                periode == null ? null : periode.getDateFin()
+        ));
     }
 
     @Transactional
@@ -183,8 +213,8 @@ public class OperationCarteService {
         return DemandeOperationnelleResponse.depuis(
                 operation, demande.getId(), demande.getReference(),
                 contexte.client().getNomComplet(), contexte.client().getCin(),
-                contexte.client().getEmail(), demande.getVehicule().getImmatriculation(),
-                demande.getTarifParking().getParking().getNom(),
+                contexte.client().getEmail(), contexte.immatriculation(),
+                contexte.parkingNom(),
                 facture == null ? null : facture.getId(),
                 facture == null ? null : facture.getNumero()
         );
@@ -192,19 +222,42 @@ public class OperationCarteService {
 
     private ContexteDemande chargerContexte(DemandeOperationnelle operation) {
         Long abonnementId = operation.getCarteAcces().getAbonnement().getId();
-        DemandeClient brute = demandeRepository.findByAbonnementGenereId(abonnementId)
-                .orElseThrow(() -> new RessourceIntrouvableException(
-                        "Demande cliente liée à la carte introuvable"));
+        DemandeClient brute = operation.getDemandeClientSource();
+        if (brute == null) {
+            brute = demandeRepository.findByAbonnementGenereId(abonnementId)
+                    .orElseThrow(() -> new RessourceIntrouvableException(
+                            "Demande cliente liée à la carte introuvable"));
+        }
         DemandeClient reelle = (DemandeClient) Hibernate.unproxy(brute);
-        if (!(reelle instanceof DemandeNouvelAbonnementRegulier demande)
-                || !(Hibernate.unproxy(demande.getClient())
+        if (!(Hibernate.unproxy(reelle.getClient())
                 instanceof ClientParticulier client)) {
             throw new ConflitMetierException(
                     "Ce type de demande n'est pas encore pris en charge");
         }
-        Facture facture = factureRepository.findByPaiementDemandeId(demande.getId())
+
+        DemandeNouvelAbonnementRegulier demandeInitiale = demandeRepository
+                .findByAbonnementGenereId(abonnementId)
+                .map(Hibernate::unproxy)
+                .filter(DemandeNouvelAbonnementRegulier.class::isInstance)
+                .map(DemandeNouvelAbonnementRegulier.class::cast)
+                .orElseThrow(() -> new RessourceIntrouvableException(
+                        "Demande initiale liée à la carte introuvable"));
+
+        boolean renouvellement = reelle instanceof DemandeRenouvellementRegulier;
+        String parkingNom = renouvellement
+                ? ((DemandeRenouvellementRegulier) reelle)
+                        .getTarifParking().getParking().getNom()
+                : demandeInitiale.getTarifParking().getParking().getNom();
+        Facture facture = factureRepository.findByPaiementDemandeId(reelle.getId())
                 .orElse(null);
-        return new ContexteDemande(demande, client, facture);
+        return new ContexteDemande(
+                reelle,
+                client,
+                facture,
+                demandeInitiale.getVehicule().getImmatriculation(),
+                parkingNom,
+                renouvellement
+        );
     }
 
     private String genererReference(String prefixe) {
@@ -220,9 +273,12 @@ public class OperationCarteService {
     }
 
     private record ContexteDemande(
-            DemandeNouvelAbonnementRegulier demande,
+            DemandeClient demande,
             ClientParticulier client,
-            Facture facture
+            Facture facture,
+            String immatriculation,
+            String parkingNom,
+            boolean renouvellement
     ) {
     }
 }

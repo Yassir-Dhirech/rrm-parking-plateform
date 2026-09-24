@@ -1,0 +1,206 @@
+.responsable-pending-card.glass-effect {
+  min-height: 310px;
+  padding: 18px;
+  box-sizing: border-box;
+  background: rgba(26, 26, 26, 0.47);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 40px 5px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+}
+
+.responsable-pending-header,
+.responsable-pending-heading,
+.responsable-pending-kpi {
+  display: flex;
+  align-items: center;
+}
+
+.responsable-pending-header {
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.responsable-pending-heading {
+  min-width: 0;
+  gap: 10px;
+}
+
+.responsable-pending-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 17px;
+}
+
+.responsable-pending-heading h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.responsable-pending-heading p {
+  margin: 3px 0 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 11px;
+}
+
+.responsable-pending-kpi {
+  min-width: 68px;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.responsable-pending-kpi span {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.responsable-pending-kpi strong {
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.responsable-pending-table-wrap {
+  overflow-x: auto;
+}
+
+.responsable-pending-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.responsable-pending-table th {
+  padding: 8px 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.responsable-pending-table td {
+  padding: 9px 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+.responsable-pending-table th:nth-child(1),
+.responsable-pending-table td:nth-child(1) {
+  width: 24%;
+}
+
+.responsable-pending-table th:nth-child(2),
+.responsable-pending-table td:nth-child(2) {
+  width: 31%;
+}
+
+.responsable-pending-table th:nth-child(3),
+.responsable-pending-table td:nth-child(3) {
+  width: 19%;
+}
+
+.responsable-pending-table th:nth-child(4),
+.responsable-pending-table td:nth-child(4) {
+  width: 26%;
+}
+
+.responsable-pending-reference {
+  font-weight: 700;
+  color: #fff !important;
+}
+
+.responsable-pending-client {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.responsable-pending-status.ant-tag {
+  margin: 0;
+  border-color: rgba(250, 173, 20, 0.28);
+  background: rgba(250, 173, 20, 0.12);
+  color: #ffd666;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.responsable-pending-action {
+  text-align: right;
+}
+
+.responsable-pending-action .ant-btn {
+  color: #7fc4ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.responsable-pending-action .ant-btn:hover {
+  background: rgba(70, 166, 255, 0.1) !important;
+  color: #b8ddff !important;
+}
+
+.responsable-pending-view-all {
+  width: 100%;
+  margin-top: 11px;
+  padding: 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: rgba(127, 196, 255, 0.88);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.responsable-pending-empty,
+.responsable-pending-state {
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.58);
+  text-align: center;
+  font-size: 12px;
+}
+
+.responsable-pending-state {
+  flex-direction: column;
+  gap: 5px;
+}
+
+@media (max-width: 767px) {
+  .responsable-pending-heading p {
+    display: none;
+  }
+
+  .responsable-pending-table {
+    min-width: 520px;
+  }
+}

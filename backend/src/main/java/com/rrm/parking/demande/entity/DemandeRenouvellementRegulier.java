@@ -5,6 +5,7 @@ import com.rrm.parking.abonnement.entity.PeriodeAbonnement;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
+import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
@@ -39,6 +40,15 @@ public class DemandeRenouvellementRegulier extends DemandeClient {
             )
     )
     private TarifParking tarifParking;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "mode_paiement_souhaite",
+            nullable = false,
+            length = 20,
+            columnDefinition = "VARCHAR(20)"
+    )
+    private ModePaiement modePaiementSouhaite;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -86,6 +96,18 @@ public class DemandeRenouvellementRegulier extends DemandeClient {
         );
     }
 
+    public void choisirModePaiement(ModePaiement modePaiement) {
+        if (getStatut() != null) {
+            throw new IllegalStateException(
+                    "Le mode de paiement ne peut plus Ãªtre modifiÃ© aprÃ¨s la soumission"
+            );
+        }
+        this.modePaiementSouhaite = exigerNonNull(
+                modePaiement,
+                "Le mode de paiement est obligatoire"
+        );
+    }
+
     public void associerPeriodeGeneree(PeriodeAbonnement periode) {
         if (getStatut() != StatutDemande.VALIDEE) {
             throw new IllegalStateException(
@@ -127,6 +149,12 @@ public class DemandeRenouvellementRegulier extends DemandeClient {
         if (tarifParking == null) {
             throw new IllegalStateException(
                     "Le tarif du renouvellement est obligatoire"
+            );
+        }
+
+        if (modePaiementSouhaite == null) {
+            throw new IllegalStateException(
+                    "Le mode de paiement est obligatoire"
             );
         }
     }
@@ -194,6 +222,10 @@ public class DemandeRenouvellementRegulier extends DemandeClient {
 
     public TarifParking getTarifParking() {
         return tarifParking;
+    }
+
+    public ModePaiement getModePaiementSouhaite() {
+        return modePaiementSouhaite;
     }
 
     public PeriodeAbonnement getPeriodeGeneree() {

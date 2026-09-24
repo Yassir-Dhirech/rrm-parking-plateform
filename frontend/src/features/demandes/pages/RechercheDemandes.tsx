@@ -37,6 +37,10 @@ const statutConfig: Record<
     label: "En attente de paiement",
     color: "gold",
   },
+  EN_ATTENTE_VALIDATION_RESPONSABLE: {
+    label: "En attente de validation responsable",
+    color: "purple",
+  },
   PAYEE: { label: "Payée", color: "cyan" },
   EN_ATTENTE_CORRECTION: {
     label: "En attente de correction",

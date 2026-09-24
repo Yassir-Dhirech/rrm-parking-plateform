@@ -39,6 +39,7 @@ export type CanalOtp = "EMAIL" | "SMS";
 export type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
+  | "EN_ATTENTE_VALIDATION_RESPONSABLE"
   | "PAYEE"
   | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
@@ -123,7 +124,9 @@ export interface PieceJointeDetailResponse {
 export interface DemandeDetailResponse {
   id: number;
   reference: string;
-  typeDemande: "NOUVEL_ABONNEMENT_REGULIER";
+  typeDemande:
+    | "NOUVEL_ABONNEMENT_REGULIER"
+    | "RENOUVELLEMENT_REGULIER";
   statut: StatutDemande;
   canalInitiation: CanalInitiation;
 
@@ -201,6 +204,104 @@ export interface DemandeAbonnementRegulierResponse {
   tentativesRestantes: number;
   canalOtp: CanalOtp;
   destinationMasquee: string;
+}
+
+export interface DemandeCorporateRequest {
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  cinRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  plageHoraire: string;
+  parkingId: number;
+  nombrePlaces: number;
+  immatriculations: string[];
+  conditionsAcceptees: boolean;
+}
+
+export interface DemandeCorporateResponse
+  extends DemandeAbonnementRegulierResponse {
+  cinRepresentant: string;
+  plageHoraire: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+}
+
+export interface DemandeCorporateDetailResponse {
+  id: number;
+  reference: string;
+  statut: StatutDemande;
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string;
+  motifRefus: string | null;
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  parkingId: number;
+  parkingNom: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+  immatriculations: string[];
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+}
+
+export interface DecisionCorporateResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+  message: string;
+}
+
+export interface RechercheRenouvellementRequest {
+  numeroCarte: string;
+  cin: string;
+}
+
+export interface RenouvellementConsultationResponse {
+  abonnementId: number;
+  referenceAbonnement: string;
+  statutAbonnement: string;
+  numeroCarte: string;
+  statutCarte: string;
+  clientNom: string;
+  parkingActuelId: number;
+  parkingActuelNom: string;
+  dateFinActuelle: string;
+}
+
+export interface DemandeRenouvellementRequest
+  extends RechercheRenouvellementRequest {
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+  canalOtp: CanalOtp;
+  conditionsAcceptees: boolean;
 }
 
 export interface ValidationOtpResponse {

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
-import { RABAT_PARKINGS_MAP_DATA, type RabatParkingMapItem } from "../features/parkings/data/parkingsMapData";
+import { RABAT_PARKINGS_MAP_DATA } from "../features/parkings/data/parkingsMapData";
+import { getPublicParkings, type Parking } from "../api/parkings";
+import { toParkingMapItems, type ParkingMapItem, type ParkingSaturation } from "../features/parkings/data/parkingMapAdapters";
 import {
   EnvironmentOutlined,
   ArrowRightOutlined,
@@ -34,8 +36,11 @@ export function PublicParkingsPage() {
   const [activeTab, setActiveTab] = useState<"MAP" | "TARIFS">("MAP");
 
   // Active Selected Parking for Map
-  const [activeParking, setActiveParking] = useState<RabatParkingMapItem>(RABAT_PARKINGS_MAP_DATA[0]);
+  const [parkings, setParkings] = useState<Parking[]>([]);
+  const [activeParking, setActiveParking] = useState<ParkingMapItem | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [parkingsLoading, setParkingsLoading] = useState(true);
+  const [parkingsError, setParkingsError] = useState<string | null>(null);
 
   // Folded Cards Expansion State for Tarifs View
   const [expandedParkingIds, setExpandedParkingIds] = useState<Set<number>>(new Set([1]));
@@ -53,18 +58,50 @@ export function PublicParkingsPage() {
     }
   }, [location]);
 
+  const mapParkings = useMemo(() => toParkingMapItems(parkings), [parkings]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function chargerParkings() {
+      try {
+        setParkingsLoading(true);
+        setParkingsError(null);
+        const data = await getPublicParkings();
+        if (!cancelled) setParkings(data);
+      } catch (error) {
+        console.error("Impossible de charger les parkings:", error);
+        if (!cancelled) setParkingsError("Impossible de charger les parkings depuis le serveur.");
+      } finally {
+        if (!cancelled) setParkingsLoading(false);
+      }
+    }
+
+    void chargerParkings();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (mapParkings.length === 0) {
+      setActiveParking(null);
+      return;
+    }
+    setActiveParking((current) =>
+      (current && mapParkings.find((parking) => parking.id === current.id)) || mapParkings[0]
+    );
+  }, [mapParkings]);
+
   // Memoize Filtered Parkings
   const filteredParkings = useMemo(() => {
-    if (!searchQuery.trim()) return RABAT_PARKINGS_MAP_DATA;
+    if (!searchQuery.trim()) return mapParkings;
     const q = searchQuery.toLowerCase();
-    return RABAT_PARKINGS_MAP_DATA.filter(
+    return mapParkings.filter(
       (p) =>
-        p.nomComplet.toLowerCase().includes(q) ||
+        p.nom.toLowerCase().includes(q) ||
         p.code.toLowerCase().includes(q) ||
-        p.quartier.toLowerCase().includes(q) ||
         p.adresse.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
+  }, [mapParkings, searchQuery]);
 
   // Toggle Accordion / Folded Card expansion in Tarifs View
   const toggleParkingExpand = (id: number) => {
@@ -85,7 +122,7 @@ export function PublicParkingsPage() {
   };
 
   // Status Badge Helper
-  const getStatusBadge = (statut: RabatParkingMapItem["statutSaturation"]) => {
+  const getStatusBadge = (statut: ParkingSaturation) => {
     switch (statut) {
       case "FLUIDE":
         return (
@@ -128,10 +165,25 @@ export function PublicParkingsPage() {
           scrollWheelZoom: true,
         });
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        const reliefLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+          maxZoom: 17,
+        });
+
+        const standardLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | RRM Rabat',
           maxZoom: 19,
-        }).addTo(map);
+        });
+
+        reliefLayer.addTo(map);
+        L.control.layers(
+          {
+            "Relief": reliefLayer,
+            "Standard": standardLayer,
+          },
+          undefined,
+          { position: "topright", collapsed: false }
+        ).addTo(map);
 
         mapInstanceRef.current = map;
       } catch (err) {
@@ -184,15 +236,32 @@ export function PublicParkingsPage() {
         iconAnchor: [18, 36],
       });
 
-      const marker = L.marker([parking.lat, parking.lng], { icon: customIcon }).addTo(map);
+      const marker = L.marker([parking.latitude, parking.longitude], { icon: customIcon }).addTo(map);
 
+      marker.bindPopup(`
+        <div style="font-family:system-ui,sans-serif;padding:6px;max-width:250px;">
+          <strong style="font-size:13px;color:#003566;">${parking.nom}</strong>
+          <div style="font-size:11px;color:#64748b;margin:5px 0;">${parking.code} · ${parking.statut}</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px;">${parking.adresse}</div>
+          <div style="font-size:12px;font-weight:700;color:#16a34a;">${parking.placesDisponiblesAbonnements} / ${parking.capaciteReserveeAbonnements} places abonnés disponibles</div>
+        </div>
+      `);
+
+      marker.on("mouseover", () => marker.openPopup());
       marker.on("click", () => {
         setActiveParking(parking);
-        map.flyTo([parking.lat, parking.lng], 15, { animate: true, duration: 0.5 });
+        map.flyTo([parking.latitude, parking.longitude], 15, { animate: true, duration: 0.5 });
       });
 
       markersRef.current[parking.id] = marker;
     });
+
+    if (filteredParkings.length > 0 && !searchQuery.trim()) {
+      const bounds = L.latLngBounds(
+        filteredParkings.map((parking) => [parking.latitude, parking.longitude] as [number, number])
+      );
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    }
 
     return () => {
       clearTimeout(t1);
@@ -226,10 +295,10 @@ export function PublicParkingsPage() {
   }, [activeTab]);
 
   // Select Parking Handler on Map Sidebar
-  const handleSelectParking = (parking: RabatParkingMapItem) => {
+  const handleSelectParking = (parking: ParkingMapItem) => {
     setActiveParking(parking);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([parking.lat, parking.lng], 15, { animate: true, duration: 0.5 });
+      mapInstanceRef.current.flyTo([parking.latitude, parking.longitude], 15, { animate: true, duration: 0.5 });
     }
   };
 
@@ -322,6 +391,16 @@ export function PublicParkingsPage() {
             />
           </div>
 
+          {parkingsLoading && (
+            <div className="text-xs text-slate-500 py-3 text-center">Chargement des parkings...</div>
+          )}
+          {parkingsError && (
+            <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3 mb-2">{parkingsError}</div>
+          )}
+          {!parkingsLoading && !parkingsError && mapParkings.length === 0 && (
+            <div className="text-xs text-slate-500 py-3 text-center">Aucun parking géolocalisé disponible.</div>
+          )}
+
           {/* Streamlined Parking Names List */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {filteredParkings.map((p) => {
@@ -351,10 +430,10 @@ export function PublicParkingsPage() {
                           isSelected ? "text-white" : "text-slate-900"
                         }`}
                       >
-                        {p.nomComplet.split("(")[0]}
+                        {p.nom}
                       </h3>
                       <span className={`text-[11px] block truncate ${isSelected ? "text-slate-200" : "text-slate-400"}`}>
-                        {p.quartier}
+                        {p.code}
                       </span>
                     </div>
                   </div>
@@ -381,17 +460,17 @@ export function PublicParkingsPage() {
                   <Tag color="cyan" className="font-extrabold border-none px-2 py-0.5 rounded-full text-[11px] m-0">
                     Pin #{activeParking.numeroPin}
                   </Tag>
-                  <span className="text-[11px] text-slate-500 font-semibold">{activeParking.quartier}</span>
+                  <span className="text-[11px] text-slate-500 font-semibold">{activeParking.code}</span>
                 </div>
                 <h3 className="text-base md:text-lg font-black text-slate-900 m-0 leading-tight">
-                  {activeParking.nomComplet}
+                  {activeParking.nom}
                 </h3>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => {
                     if (mapInstanceRef.current) {
-                      mapInstanceRef.current.flyTo([activeParking.lat, activeParking.lng], 15, { animate: true, duration: 0.5 });
+                      mapInstanceRef.current.flyTo([activeParking.latitude, activeParking.longitude], 15, { animate: true, duration: 0.5 });
                     }
                   }}
                   className="text-slate-500 hover:text-secondary bg-slate-100 p-1.5 rounded-full cursor-pointer transition-colors"
@@ -400,7 +479,7 @@ export function PublicParkingsPage() {
                   <AimOutlined className="text-sm" />
                 </button>
                 <button
-                  onClick={() => setActiveParking(null as any)}
+                  onClick={() => setActiveParking(null)}
                   className="text-slate-400 hover:text-slate-800 bg-slate-100 p-1.5 rounded-full cursor-pointer transition-colors"
                 >
                   <CloseOutlined className="text-sm" />
@@ -413,14 +492,14 @@ export function PublicParkingsPage() {
               <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80">
                 <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">Places Libres</span>
                 <span className="text-sm md:text-base font-black text-emerald-700">
-                  {activeParking.placesAbonnesLibres} <span className="text-xs font-semibold text-emerald-600">/ {activeParking.placesAbonnesTotal}</span>
+                  {activeParking.placesDisponiblesAbonnements} <span className="text-xs font-semibold text-emerald-600">/ {activeParking.capaciteReserveeAbonnements}</span>
                 </span>
               </div>
 
               <div className="p-2.5 rounded-xl bg-secondary/5 border border-secondary/20">
-                <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Tarif Mensuel</span>
+                <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block">Capacité totale</span>
                 <span className="text-xs md:text-sm font-black text-secondary truncate block">
-                  {activeParking.tarifsAbonnementMensuel.split("/")[0]}
+                  {activeParking.capaciteTotale} places
                 </span>
               </div>
             </div>
@@ -449,15 +528,13 @@ export function PublicParkingsPage() {
                   <CarOutlined className="text-slate-500" /> Capacité Abonnés :
                 </span>
                 <span className="text-emerald-600 font-extrabold text-sm">
-                  {activeParking.placesAbonnesLibres} / {activeParking.placesAbonnesTotal} places
+                  {activeParking.placesDisponiblesAbonnements} / {activeParking.capaciteReserveeAbonnements} places
                 </span>
               </div>
 
               {(() => {
                 const percentFull = Math.round(
-                  ((activeParking.placesAbonnesTotal - activeParking.placesAbonnesLibres) /
-                    activeParking.placesAbonnesTotal) *
-                    100
+                  activeParking.tauxOccupationAbonnements
                 );
                 return (
                   <div className="space-y-1">
@@ -485,6 +562,7 @@ export function PublicParkingsPage() {
                 block
                 size="large"
                 icon={<ThunderboltOutlined />}
+                disabled={!activeParking.souscriptionDisponible}
                 onClick={() => navigate(`/demande-publique?parkingId=${activeParking.id}&tab=particulier`)}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs h-11 shadow-md border-none flex justify-center items-center gap-2"
               >
