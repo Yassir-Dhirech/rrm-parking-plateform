@@ -107,7 +107,11 @@ const {
       )?.key;
 
   return (
-    <div className="bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white">
+    <div
+      className={`rrm-role-shell bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white ${
+        role === "RESPONSABLE" ? "rrm-role-shell--glass" : ""
+      }`}
+    >
       {/* Ambient Radial Background Glows */}
       <div className="absolute top-0 left-[20%] w-[500px] h-[500px] rounded-full bg-sky-400/10 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 right-[10%] w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl pointer-events-none"></div>
@@ -313,6 +317,7 @@ const {
         onClose={() => setMobileDrawerOpen(false)}
         open={mobileDrawerOpen}
         width={280}
+        rootClassName={role === "RESPONSABLE" ? "rrm-mobile-drawer--glass" : undefined}
         styles={{ body: { padding: "16px 12px" } }}
       >
         <div className="flex flex-col h-full gap-4">

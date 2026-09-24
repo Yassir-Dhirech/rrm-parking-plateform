@@ -1,0 +1,213 @@
+.responsable-dashboard-glass {
+  min-height: calc(100vh - 96px);
+  padding: 18px;
+  border-radius: 24px;
+  background: transparent;
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+
+}
+
+/* Dark glass surface shared by Ant Design cards and existing dashboard panels. */
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass [class*="bg-white"] {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border-radius: 19px !important;
+
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(50px) saturate(168%);
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-card-head {
+  background: transparent !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass [class*="rounded-2xl"] {
+  border-radius: 19px !important;
+}
+
+/* Secondary surfaces keep the same dark glass language. */
+.responsable-dashboard-glass [class*="bg-slate-50"],
+.responsable-dashboard-glass [class*="bg-slate-100"] {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  backdrop-filter: blur(9px) saturate(168%);
+  -webkit-backdrop-filter: blur(9px) saturate(168%);
+}
+
+/* Ant Design data surfaces. */
+.responsable-dashboard-glass .ant-table,
+.responsable-dashboard-glass .ant-table-container,
+.responsable-dashboard-glass .ant-table-content,
+.responsable-dashboard-glass .ant-table-thead > tr > th,
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  background: transparent !important;
+}
+
+.responsable-dashboard-glass .ant-table-thead > tr > th {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e8e8e8 !important;
+}
+
+.responsable-dashboard-glass .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Inputs and map-style selector use the same dark glass language. */
+.responsable-dashboard-glass .ant-select-selector,
+.responsable-dashboard-glass .ant-segmented,
+.responsable-dashboard-glass .ant-btn-default {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-segmented-item-selected {
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+
+/* Keep text readable over the dark glass. */
+.responsable-dashboard-glass .ant-card,
+.responsable-dashboard-glass .ant-card-head-title,
+.responsable-dashboard-glass .ant-typography,
+.responsable-dashboard-glass .ant-table,
+.responsable-dashboard-glass [class*="text-slate-"] {
+  color: #f5f5f5 !important;
+}
+
+.responsable-dashboard-glass .ant-typography-secondary,
+.responsable-dashboard-glass [class*="text-slate-500"],
+.responsable-dashboard-glass [class*="text-slate-600"] {
+  color: #c7c7c7 !important;
+}
+
+@media (max-width: 768px) {
+  .responsable-dashboard-glass {
+    padding: 12px;
+    border-radius: 16px;
+  }
+}
+
+/* =========================================================
+   RESPONSABLE — GLASSMORPHISM AGRESSIF
+   Centralise le blur de toutes les cartes visibles du dashboard.
+   ========================================================= */
+.responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+.responsable-dashboard-glass .responsable-chart-card.glass-effect,
+.responsable-dashboard-glass .responsable-area-card.glass-effect,
+.responsable-dashboard-glass .responsable-pending-card.glass-effect,
+.responsable-dashboard-glass .responsable-mix-card.glass-effect,
+.responsable-dashboard-glass .ant-card {
+  background: rgba(12, 20, 34, 0.34) !important;
+  backdrop-filter: blur(32px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(175%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    0 12px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.responsable-dashboard-glass .ant-card-head,
+.responsable-dashboard-glass .ant-card-body {
+  background: transparent !important;
+}
+
+.responsable-dashboard-glass .responsable-chart-summary,
+.responsable-dashboard-glass .responsable-area-summary,
+.responsable-dashboard-glass .responsable-pending-kpi,
+.responsable-dashboard-glass .responsable-mix-legend-row {
+  background: rgba(255, 255, 255, 0.055) !important;
+  backdrop-filter: blur(14px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(150%) !important;
+}
+
+@media (max-width: 767px) {
+  .responsable-dashboard-glass .responsable-kpi-card.glass-effect,
+  .responsable-dashboard-glass .responsable-chart-card.glass-effect,
+  .responsable-dashboard-glass .responsable-area-card.glass-effect,
+  .responsable-dashboard-glass .responsable-pending-card.glass-effect,
+  .responsable-dashboard-glass .responsable-mix-card.glass-effect,
+  .responsable-dashboard-glass .ant-card {
+    backdrop-filter: blur(24px) saturate(165%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(165%) !important;
+  }
+}
+/* === RRM_MAIN_CARDS_STRONG_GLASS_START === */
+
+/*
+ * Backdrop blur fort pour les cartes principales du dashboard RESPONSABLE.
+ * PlacÃ© en fin de fichier + !important pour Ã©craser les CSS locaux
+ * de chaque composant.
+ */
+.responsable-dashboard-glass {
+  isolation: auto !important;
+}
+
+.responsable-dashboard-glass .responsable-kpi-card,
+.responsable-dashboard-glass .responsable-chart-card,
+.responsable-dashboard-glass .responsable-area-card,
+.responsable-dashboard-glass .responsable-pending-card,
+.responsable-dashboard-glass .responsable-mix-card,
+.responsable-dashboard-glass .ant-card {
+  background-color: rgba(15, 24, 39, 0.22) !important;
+  background-image: none !important;
+
+  backdrop-filter: blur(54px) saturate(165%) brightness(0.82) !important;
+  -webkit-backdrop-filter: blur(54px) saturate(165%) brightness(0.82) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+
+  /* Force une vraie couche compositing dans Chromium */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/*
+ * Les sous-couches ne doivent pas recouvrir le backdrop du parent.
+ */
+.responsable-dashboard-glass .ant-card-head,
+.responsable-dashboard-glass .ant-card-body {
+  background: transparent !important;
+}
+
+/*
+ * Surfaces secondaires : blur moins fort.
+ */
+.responsable-dashboard-glass .responsable-chart-summary,
+.responsable-dashboard-glass .responsable-area-summary,
+.responsable-dashboard-glass .responsable-pending-kpi,
+.responsable-dashboard-glass .responsable-mix-legend-row {
+  background: rgba(255, 255, 255, 0.045) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+}
+
+/*
+ * Important : ne jamais rendre les cartes principales opaques via
+ * d'anciens backgrounds utilitaires.
+ */
+.responsable-dashboard-glass .responsable-kpi-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-chart-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-area-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-pending-card[class*="bg-"],
+.responsable-dashboard-glass .responsable-mix-card[class*="bg-"] {
+  background-color: rgba(15, 24, 39, 0.22) !important;
+}
+
+/* === RRM_MAIN_CARDS_STRONG_GLASS_END === */
