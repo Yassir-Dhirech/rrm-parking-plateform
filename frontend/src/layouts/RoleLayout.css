@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    BACK-OFFICE LAYOUT (RoleLayout.css)
    ========================================================================== */
 
@@ -245,3 +245,542 @@
     background-attachment: scroll;
   }
 }
+
+.rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-nav-button,
+.rrm-role-shell--glass > aside .rrm-sidebar-footer-button {
+  color: rgba(248, 250, 252, 0.92) !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover,
+.rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-footer-button--logout {
+  color: #fda4af !important;
+}
+
+.rrm-role-shell--glass > aside .rrm-sidebar-footer-button--logout:hover {
+  color: #fecdd3 !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+}
+
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button,
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button {
+  color: rgba(248, 250, 252, 0.92) !important;
+}
+
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button:hover,
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+}
+
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button--active {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button--logout {
+  color: #fda4af !important;
+}
+
+.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button--logout:hover {
+  color: #fecdd3 !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+}
+/* === RRM_RESPONSABLE_FLOATING_SIDEBAR_START === */
+
+@media (min-width: 769px) {
+  /*
+   * Sidebar RESPONSABLE inspirÃ©e de la rÃ©fÃ©rence :
+   * flottante, lÃ©gÃ¨rement dÃ©collÃ©e du bord gauche,
+   * du haut jusqu'au bas de l'Ã©cran, avec le logo RRM intÃ©grÃ©.
+   */
+  .rrm-role-shell--glass > aside {
+    left: 10px !important;
+    top: 10px !important;
+    height: calc(100vh - 20px) !important;
+
+    padding-top: 82px !important;
+    padding-bottom: 12px !important;
+
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+
+    background: rgba(179, 177, 177, 0.49) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+
+    overflow: hidden;
+    z-index: 60 !important;
+  }
+
+  /*
+   * Logo RRM intÃ©grÃ© Ã  l'intÃ©rieur de la sidebar.
+   * On rÃ©utilise l'asset dÃ©jÃ  prÃ©sent dans le projet.
+   */
+  .rrm-role-shell--glass > aside::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: 10px;
+    right: 10px;
+    height: 52px;
+
+    background-image: url("/pictures/logo-rrm.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /*
+   * Le logo du header desktop est cachÃ© pour Ã©viter le doublon :
+   * le logo fait maintenant partie de la sidebar.
+   */
+  .rrm-role-shell--glass > header img[alt="Rabat RÃ©gion MobilitÃ©"] {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /*
+   * Le header reste derriÃ¨re la sidebar flottante,
+   * comme sur la rÃ©fÃ©rence visuelle.
+   */
+  .rrm-role-shell--glass > header {
+    z-index: 50 !important;
+  }
+
+  /*
+   * Rail navigation plus compact et propre.
+   */
+  .rrm-role-shell--glass > aside > div:nth-of-type(2) {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    gap: 5px !important;
+  }
+
+  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button {
+    min-height: 38px;
+    border-radius: 8px !important;
+  }
+
+  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
+    background: rgba(32, 34, 38, 0.28) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+  }
+
+  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover {
+    background: rgba(32, 34, 38, 0.20) !important;
+    color: #ffffff !important;
+  }
+
+  /*
+   * Le bouton replier/dÃ©plier reprend le style sombre discret
+   * de la rÃ©fÃ©rence.
+   */
+  .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
+    border-radius: 8px !important;
+    background: rgba(30, 31, 34, 0.28) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+  }
+
+  .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
+    background: rgba(30, 31, 34, 0.40) !important;
+  }
+
+  /*
+   * Footer sÃ©parÃ© mais cohÃ©rent avec le rail.
+   */
+  .rrm-role-shell--glass > aside .rrm-sidebar-footer-button {
+    border-radius: 8px !important;
+  }
+
+  .rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover {
+    background: rgba(32, 34, 38, 0.20) !important;
+  }
+}
+
+/* === RRM_RESPONSABLE_FLOATING_SIDEBAR_END === */
+/* === RRM_RESPONSABLE_CLEAN_TOPBAR_START === */
+
+/*
+ * Top bar RESPONSABLE :
+ * pas de carte, pas de blur, pas de bordure.
+ * Le contenu flotte directement sur le background,
+ * comme dans la rÃ©fÃ©rence visuelle.
+ */
+.rrm-role-shell--glass > header.rrm-responsable-topbar {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #ffffff !important;
+}
+
+/* Titre fin, professionnel et trÃ¨s lisible. */
+.rrm-responsable-page-title {
+  margin: 0;
+  color: #ffffff;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.38);
+}
+
+/* Zone droite : compacte et sans gros cadre. */
+.rrm-responsable-topbar-right {
+  gap: 10px;
+}
+
+/* IdentitÃ© utilisateur, sans carte autour. */
+.rrm-responsable-user-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 3px 5px 3px 3px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rrm-responsable-user-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+
+  background: rgba(15, 23, 42, 0.34);
+  color: #ffffff;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  font-size: 15px;
+}
+
+.rrm-responsable-user-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 190px;
+}
+
+.rrm-responsable-user-copy strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.42);
+}
+
+.rrm-responsable-user-copy small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.68);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 9.5px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * Actions circulaires inspirÃ©es de la rÃ©fÃ©rence.
+ * Fond sombre translucide, bordure discrÃ¨te, icÃ´ne claire.
+ * Aucun backdrop-filter ici : la top bar reste sans blur.
+ */
+.rrm-responsable-topbar .rrm-responsable-topbar-icon.ant-btn,
+.rrm-responsable-topbar .rrm-responsable-notification-action .ant-btn {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+
+  background: rgba(15, 23, 42, 0.34) !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease !important;
+}
+
+.rrm-responsable-topbar .rrm-responsable-topbar-icon.ant-btn:hover,
+.rrm-responsable-topbar .rrm-responsable-notification-action .ant-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(15, 23, 42, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+}
+
+.rrm-responsable-topbar .rrm-responsable-topbar-icon .anticon,
+.rrm-responsable-topbar .rrm-responsable-notification-action .anticon {
+  color: #ffffff !important;
+  font-size: 15px !important;
+}
+
+/* Badge plus discret. */
+.rrm-responsable-topbar .ant-badge-count,
+.rrm-responsable-topbar .ant-scroll-number-only-unit {
+  font-size: 9px;
+}
+
+.rrm-responsable-topbar .ant-badge-dot {
+  width: 6px;
+  min-width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 2px rgba(12, 20, 32, 0.7);
+}
+
+/* Bouton menu mobile cohÃ©rent avec le nouveau design. */
+.rrm-responsable-mobile-menu.ant-btn {
+  margin-right: 8px;
+  color: #ffffff !important;
+  border: 0 !important;
+  background: rgba(15, 23, 42, 0.26) !important;
+}
+
+/* Responsive. */
+@media (max-width: 768px) {
+  .rrm-role-shell--glass > header.rrm-responsable-topbar {
+    left: 0 !important;
+    height: 68px !important;
+    padding: 0 12px !important;
+  }
+
+  .rrm-responsable-page-title {
+    font-size: 21px;
+  }
+
+  .rrm-responsable-user-copy {
+    display: none;
+  }
+
+  .rrm-responsable-user-avatar {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .rrm-responsable-topbar .rrm-responsable-topbar-icon.ant-btn,
+  .rrm-responsable-topbar .rrm-responsable-notification-action .ant-btn {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* === RRM_RESPONSABLE_CLEAN_TOPBAR_END === */
+/* === RRM_RESPONSABLE_TOPBAR_LARGE_START === */
+
+/* Top bar un peu plus haute pour accueillir des composants plus grands. */
+.rrm-role-shell--glass > header.rrm-responsable-topbar {
+  height: 88px !important;
+  padding-left: 28px !important;
+  padding-right: 30px !important;
+}
+
+/* Titre Dashboard plus grand, toujours fin et professionnel. */
+.rrm-responsable-page-title {
+  font-size: 36px !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Plus d'espace entre identitÃ© et actions. */
+.rrm-responsable-topbar-right {
+  gap: 14px !important;
+}
+
+/* Zone utilisateur lÃ©gÃ¨rement agrandie. */
+.rrm-responsable-user-summary {
+  gap: 12px !important;
+  padding: 4px 7px 4px 4px !important;
+}
+
+/* Avatar responsable plus visible. */
+.rrm-responsable-user-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  flex: 0 0 44px !important;
+  font-size: 18px !important;
+}
+
+/* Nom/prÃ©nom plus lisible. */
+.rrm-responsable-user-copy {
+  max-width: 230px !important;
+}
+
+.rrm-responsable-user-copy strong {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* Sous-titre "Espace Responsable". */
+.rrm-responsable-user-copy small {
+  margin-top: 3px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* IcÃ´nes message / notification plus grandes. */
+.rrm-responsable-topbar .rrm-responsable-topbar-icon.ant-btn,
+.rrm-responsable-topbar .rrm-responsable-notification-action .ant-btn {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+}
+
+/* Taille des glyphes. */
+.rrm-responsable-topbar .rrm-responsable-topbar-icon .anticon,
+.rrm-responsable-topbar .rrm-responsable-notification-action .anticon {
+  font-size: 18px !important;
+}
+
+/* Badge notification/message mieux proportionnÃ©. */
+.rrm-responsable-topbar .ant-badge-dot {
+  width: 7px !important;
+  min-width: 7px !important;
+  height: 7px !important;
+}
+
+/* Responsive : plus compact sur tablette/mobile. */
+@media (max-width: 768px) {
+  .rrm-role-shell--glass > header.rrm-responsable-topbar {
+    height: 72px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .rrm-responsable-page-title {
+    font-size: 26px !important;
+  }
+
+  .rrm-responsable-user-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    flex-basis: 38px !important;
+    font-size: 16px !important;
+  }
+
+  .rrm-responsable-topbar .rrm-responsable-topbar-icon.ant-btn,
+  .rrm-responsable-topbar .rrm-responsable-notification-action .ant-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+  }
+
+  .rrm-responsable-topbar .rrm-responsable-topbar-icon .anticon,
+  .rrm-responsable-topbar .rrm-responsable-notification-action .anticon {
+    font-size: 16px !important;
+  }
+}
+
+/* === RRM_RESPONSABLE_TOPBAR_LARGE_END === */
+/* === RRM_RESPONSABLE_SIDEBAR_DARK_GLASS_START === */
+
+/*
+ * Sidebar RESPONSABLE â€” dark glass
+ * Valeurs demandÃ©es :
+ * background: rgba(0, 0, 0, 0.53)
+ * blur: 50px
+ */
+body .rrm-role-shell--glass > aside {
+  background: rgba(0, 0, 0, 0.53) !important;
+  background-color: rgba(0, 0, 0, 0.53) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(50px) !important;
+  backdrop-filter: blur(50px) !important;
+
+  border-color: rgba(255, 255, 255, 0.10) !important;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+/*
+ * Les Ã©lÃ©ments internes restent transparents pour laisser
+ * le blur de la sidebar visible.
+ */
+body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button,
+body .rrm-role-shell--glass > aside .rrm-sidebar-footer-button,
+body .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
+  background-color: transparent !important;
+}
+
+body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
+  background: rgba(255, 255, 255, 0.10) !important;
+}
+
+body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover,
+body .rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover,
+body .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* === RRM_RESPONSABLE_SIDEBAR_DARK_GLASS_END === */

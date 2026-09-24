@@ -40,12 +40,14 @@ function createSubscriptionMarker(count: number) {
     className: "responsable-parking-marker-host",
     html: `
       <div class="responsable-parking-marker" aria-label="${count} abonnements">
+        <span class="responsable-parking-marker__pulse" aria-hidden="true"></span>
+        <span class="responsable-parking-marker__ring" aria-hidden="true"></span>
+        <span class="responsable-parking-marker__core" aria-hidden="true"></span>
         <span class="responsable-parking-marker__count">${displayedCount}</span>
-        <span class="responsable-parking-marker__pointer" aria-hidden="true"></span>
       </div>
     `,
-    iconSize: [42, 38],
-    iconAnchor: [21, 38],
+    iconSize: [54, 54],
+    iconAnchor: [27, 27],
   });
 }
 
@@ -308,15 +310,17 @@ export function ResponsableParkingMap() {
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
       <Card
+      className="responsable-map-card"
       bordered={false}
       title={
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <EnvironmentOutlined style={{ color: "#0078d4" }} />
-          <span style={{ fontWeight: 700, color: "#242424" }}>Réseau des parkings</span>
+        <div className="responsable-map-card__title">
+          <EnvironmentOutlined className="responsable-map-card__title-icon" />
+          <span className="responsable-map-card__title-text">Réseau des parkings</span>
         </div>
       }
       extra={
         <Segmented
+          className="responsable-map-style-toggle"
           size="small"
           value={mapStyle}
           onChange={(value) => setMapStyle(value as MapStyle)}
@@ -328,23 +332,68 @@ export function ResponsableParkingMap() {
       }
       styles={{
         header: {
-          minHeight: 56,
-          borderBottom: "1px solid #edebe9",
-          paddingInline: 16,
+          minHeight: 62,
+          borderBottom: "1px solid rgba(255, 255, 255, 0.10)",
+          paddingInline: 18,
+          background: "transparent",
         },
         body: {
           padding: 12,
+          background: "transparent",
         },
       }}
       style={{
-        background: "#ffffff",
-        border: "1px solid #edebe9",
-        borderRadius: 8,
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+        background: "rgba(0, 0, 0, 0.53)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderRadius: 18,
+        boxShadow: "0 18px 42px rgba(0, 0, 0, 0.30)",
         overflow: "hidden",
+        backdropFilter: "blur(50px)",
+        WebkitBackdropFilter: "blur(50px)",
       }}
     >
       <style>{`
+        .responsable-map-card__title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .responsable-map-card__title-icon {
+          color: #57cfff;
+          font-size: 18px;
+        }
+
+        .responsable-map-card__title-text {
+          color: #e7f6ff;
+          font-family: "Segoe UI", Inter, sans-serif;
+          font-size: 22px;
+          font-weight: 400;
+          letter-spacing: -0.02em;
+        }
+
+        .responsable-map-style-toggle.ant-segmented {
+          background: rgba(0, 0, 0, 0.53);
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          border-radius: 12px;
+          box-shadow:
+            0 14px 34px rgba(0, 0, 0, 0.26),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          -webkit-backdrop-filter: blur(50px);
+          backdrop-filter: blur(50px);
+        }
+
+        .responsable-map-style-toggle .ant-segmented-item {
+          color: rgba(222, 241, 255, 0.82);
+          font-weight: 500;
+        }
+
+        .responsable-map-style-toggle .ant-segmented-item-selected {
+          background: rgba(255, 255, 255, 0.10);
+          color: #ffffff;
+          box-shadow: none;
+        }
+
         .responsable-parking-marker-host {
           background: transparent;
           border: 0;
@@ -352,79 +401,96 @@ export function ResponsableParkingMap() {
 
         .responsable-parking-marker {
           position: relative;
-          width: 42px;
-          height: 32px;
+          width: 54px;
+          height: 54px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(0, 120, 212, 0.28);
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.96);
-          color: #0f3a5d;
-          font-family: "Segoe UI", Inter, sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          line-height: 1;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
-          backdrop-filter: blur(4px);
-          transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+          pointer-events: none;
+        }
+
+        .responsable-parking-marker__pulse {
+          position: absolute;
+          inset: 11px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(96, 221, 255, 0.34) 0%, rgba(96, 221, 255, 0.04) 70%, rgba(96, 221, 255, 0) 100%);
+          filter: blur(4px);
+        }
+
+        .responsable-parking-marker__ring {
+          position: absolute;
+          width: 24px;
+          height: 24px;
+          border-radius: 999px;
+          border: 1.5px solid rgba(127, 229, 255, 0.9);
+          box-shadow:
+            0 0 18px rgba(72, 191, 255, 0.68),
+            inset 0 0 12px rgba(144, 232, 255, 0.22);
+          background: rgba(8, 22, 44, 0.28);
+          -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+        }
+
+        .responsable-parking-marker__core {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          border-radius: 999px;
+          background: radial-gradient(circle at 35% 35%, #ecffff 0%, #7ce2ff 45%, #1ca8ff 100%);
+          box-shadow:
+            0 0 16px rgba(111, 231, 255, 0.95),
+            0 0 28px rgba(64, 196, 255, 0.65);
         }
 
         .responsable-parking-marker__count {
-          position: relative;
-          z-index: 2;
-        }
-
-        .responsable-parking-marker__pointer {
           position: absolute;
-          left: 50%;
-          bottom: -5px;
-          width: 10px;
-          height: 10px;
-          transform: translateX(-50%) rotate(45deg);
-          border-right: 1px solid rgba(0, 120, 212, 0.28);
-          border-bottom: 1px solid rgba(0, 120, 212, 0.28);
-          background: rgba(255, 255, 255, 0.96);
-          border-radius: 0 0 2px 0;
-        }
-
-        .responsable-parking-marker::before {
-          content: "";
-          position: absolute;
-          left: 5px;
-          top: 7px;
-          bottom: 7px;
-          width: 3px;
+          top: -2px;
+          right: -4px;
+          min-width: 24px;
+          height: 24px;
+          padding: 0 7px;
           border-radius: 999px;
-          background: #0078d4;
-        }
-
-        .responsable-parking-marker:hover {
-          transform: translateY(-2px);
-          border-color: rgba(0, 120, 212, 0.55);
-          box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(5, 13, 24, 0.82);
+          color: #c9f5ff;
+          border: 1px solid rgba(122, 223, 255, 0.62);
+          font-family: "Segoe UI", Inter, sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1;
+          box-shadow:
+            0 8px 18px rgba(0, 0, 0, 0.28),
+            0 0 14px rgba(53, 192, 255, 0.22);
+          -webkit-backdrop-filter: blur(20px);
+          backdrop-filter: blur(20px);
         }
 
         .responsable-dashboard-map .leaflet-control-zoom {
-          border: 1px solid #d1d1d1;
-          border-radius: 4px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          border-radius: 12px;
+          box-shadow:
+            0 12px 28px rgba(0, 0, 0, 0.26),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
           overflow: hidden;
+          -webkit-backdrop-filter: blur(26px);
+          backdrop-filter: blur(26px);
         }
 
         .responsable-dashboard-map .leaflet-control-zoom a {
-          width: 32px;
-          height: 32px;
-          line-height: 30px;
-          color: #242424;
-          background: #ffffff;
+          width: 34px;
+          height: 34px;
+          line-height: 32px;
+          color: #e8f7ff;
+          background: rgba(0, 0, 0, 0.53);
           font-family: "Segoe UI", Inter, sans-serif;
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .responsable-dashboard-map .leaflet-control-zoom a:hover {
-          color: #0078d4;
-          background: #f5f5f5;
+          color: #57cfff;
+          background: rgba(255, 255, 255, 0.06);
         }
       `}</style>
 
@@ -452,10 +518,10 @@ export function ResponsableParkingMap() {
           position: "relative",
           width: "100%",
           aspectRatio: "1 / 1",
-          borderRadius: 6,
+          borderRadius: 16,
           overflow: "hidden",
-          background: "#f5f5f5",
-          border: "1px solid #e1dfdd",
+          background: "rgba(0, 0, 0, 0.30)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
         }}
       >
         <div
@@ -502,7 +568,8 @@ export function ResponsableParkingMap() {
       </Card>
 
       <Card
-        bordered={false}
+      className="responsable-map-card"
+      bordered={false}
         title={
           <span style={{ fontWeight: 700, color: "#242424" }}>Détails du parking</span>
         }

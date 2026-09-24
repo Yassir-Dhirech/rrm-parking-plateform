@@ -12,28 +12,10 @@ function formatDate(dateIso: string): string {
   }).format(new Date(`${dateIso}T12:00:00`));
 }
 
-function abbreviateParkingName(name: string): string {
-  const nettoye = name
+function displayParkingName(name: string): string {
+  return name
     .replace(/^parking\s+/i, "")
     .trim();
-
-  if (nettoye.length <= 8) {
-    return nettoye;
-  }
-
-  const mots = nettoye.split(/\s+/);
-
-  if (mots.length === 1) {
-    return `${mots[0].slice(0, 7)}.`;
-  }
-
-  return mots
-    .map((mot, index) =>
-      index === 0
-        ? mot.slice(0, 5)
-        : `${mot.charAt(0).toUpperCase()}.`,
-    )
-    .join(" ");
 }
 
 export function ResponsableActiveSubscriptionsByParkingChart() {
@@ -128,7 +110,7 @@ export function ResponsableActiveSubscriptionsByParkingChart() {
                 </Tooltip>
 
                 <div className="responsable-bar-label" title={parking.parkingNom}>
-                  {abbreviateParkingName(parking.parkingNom)}
+                  {displayParkingName(parking.parkingNom)}
                 </div>
               </div>
             );
