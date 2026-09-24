@@ -106,6 +106,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_SMS_OTP_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+        VITE_MAPTILER_API_KEY: ${RRM_MAPTILER_API_KEY}
     container_name: rrm-frontend
     restart: unless-stopped
     depends_on:

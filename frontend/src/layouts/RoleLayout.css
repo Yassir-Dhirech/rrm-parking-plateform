@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    BACK-OFFICE LAYOUT (RoleLayout.css)
    ========================================================================== */
 
@@ -152,4 +152,96 @@
 .app-sider-menu .ant-menu-item-selected {
   background-color: rgba(255, 255, 255, 0.18) !important;
   font-weight: 700 !important;
+}
+.rrm-role-shell--glass {
+  background-image:
+    linear-gradient(135deg, rgba(7, 24, 39, 0.26), rgba(14, 45, 68, 0.16)),
+    url("/api/public/assets/mountain");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.rrm-role-shell--glass > header {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  border-radius: 19px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+  color: #f5f5f5;
+}
+
+.rrm-role-shell--glass > aside {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  border-radius: 19px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+  color: #f5f5f5;
+}
+
+.rrm-role-shell--glass > aside button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.rrm-role-shell--glass > aside button[class*="bg-secondary"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.rrm-role-shell--glass > main {
+  background: transparent;
+}
+
+.rrm-mobile-drawer--glass .ant-drawer-content,
+.rrm-mobile-drawer--glass .ant-drawer-header,
+.rrm-mobile-drawer--glass .ant-drawer-body {
+  background: rgba(92, 92, 92, 0.27) !important;
+  color: #f5f5f5;
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+}
+
+.rrm-mobile-drawer--glass .ant-drawer-content {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 19px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.rrm-role-shell--glass > header .header-user-name,
+.rrm-role-shell--glass > header .header-user-role,
+.rrm-role-shell--glass > header .anticon,
+.rrm-role-shell--glass > aside,
+.rrm-role-shell--glass > aside .ant-menu-item,
+.rrm-role-shell--glass > aside .ant-menu-item .anticon {
+  color: #f5f5f5 !important;
+}
+
+.rrm-role-shell--glass > header .header-user-section {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+}
+
+.rrm-role-shell--glass > header .header-search-input {
+  background: rgba(92, 92, 92, 0.27) !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  color: #f5f5f5 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(29px) saturate(168%);
+  -webkit-backdrop-filter: blur(29px) saturate(168%);
+}
+
+.rrm-role-shell--glass > header .header-search-input::placeholder {
+  color: #c7c7c7 !important;
+}
+
+@media (max-width: 768px) {
+  .rrm-role-shell--glass {
+    background-attachment: scroll;
+  }
 }
