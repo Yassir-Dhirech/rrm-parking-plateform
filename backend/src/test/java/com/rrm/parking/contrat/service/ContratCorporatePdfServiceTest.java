@@ -49,6 +49,7 @@ class ContratCorporatePdfServiceTest {
                 null,
                 null,
                 null,
+                null,
                 "SOCIETE CORPORATE TEST",
                 "009876543210123",
                 "RC-12345",

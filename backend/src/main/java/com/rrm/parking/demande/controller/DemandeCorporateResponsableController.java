@@ -3,6 +3,7 @@ package com.rrm.parking.demande.controller;
 import com.rrm.parking.contrat.service.ContratCorporatePdfService;
 import com.rrm.parking.demande.dto.request.RefusDemandeCorporateRequest;
 import com.rrm.parking.demande.dto.response.DecisionCorporateResponse;
+import com.rrm.parking.demande.dto.response.ConvocationCorporateResponse;
 import com.rrm.parking.demande.dto.response.DemandeCorporateDetailResponse;
 import com.rrm.parking.demande.dto.response.DemandeRechercheResponse;
 import com.rrm.parking.demande.service.DemandeCorporateResponsableService;
@@ -71,6 +72,19 @@ public class DemandeCorporateResponsableController {
                         demandeId,
                         utilisateurId(jwt),
                         requete.motif()
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/convocation")
+    public ResponseEntity<ConvocationCorporateResponse> convoquer(
+            @PathVariable Long demandeId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.convoquer(
+                        demandeId,
+                        utilisateurId(jwt)
                 )
         );
     }

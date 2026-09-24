@@ -6,12 +6,14 @@ import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.contrat.entity.ContratCorporate;
 import com.rrm.parking.contrat.repository.ContratCorporateRepository;
 import com.rrm.parking.demande.dto.response.DecisionCorporateResponse;
+import com.rrm.parking.demande.dto.response.ConvocationCorporateResponse;
 import com.rrm.parking.demande.dto.response.DemandeCorporateDetailResponse;
 import com.rrm.parking.demande.dto.response.DemandeRechercheResponse;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.enums.OrigineTransition;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.event.DemandeCorporateRefuseeEvent;
+import com.rrm.parking.demande.event.DemandeCorporateConvoqueeEvent;
 import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.EnumSet;
 import java.util.UUID;
 
 @Service
@@ -45,12 +48,16 @@ public class DemandeCorporateResponsableService {
         boolean recentes = "RECENT".equalsIgnoreCase(
                 ordre == null ? "" : ordre.trim()
         );
+        EnumSet<StatutDemande> statutsATraiter = EnumSet.of(
+                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
+                StatutDemande.VALIDEE
+        );
         List<DemandeNouveauContratCorporate> demandes = recentes
-                ? demandeRepository.findByStatutOrderByDateSoumissionDesc(
-                        StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE
+                ? demandeRepository.findByStatutInOrderByDateSoumissionDesc(
+                        statutsATraiter
                 )
-                : demandeRepository.findByStatutOrderByDateSoumissionAsc(
-                        StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE
+                : demandeRepository.findByStatutInOrderByDateSoumissionAsc(
+                        statutsATraiter
                 );
         String terme = recherche == null
                 ? ""
@@ -155,6 +162,58 @@ public class DemandeCorporateResponsableService {
                 null,
                 null,
                 "Demande refusée et client informé par e-mail"
+        );
+    }
+
+    @Transactional
+    public ConvocationCorporateResponse convoquer(
+            Long demandeId,
+            Long responsableId
+    ) {
+        DemandeNouveauContratCorporate demande = demandeRepository
+                .findByIdPourDecision(demandeId)
+                .orElseThrow(() -> new RessourceIntrouvableException(
+                        "Demande corporate introuvable"
+                ));
+
+        if (demande.getStatut() != StatutDemande.VALIDEE) {
+            throw new ConflitMetierException(
+                    "La demande corporate n'est pas prête pour la convocation"
+            );
+        }
+        if (demande.getContratGenere() == null) {
+            throw new ConflitMetierException(
+                    "Le contrat corporate doit être généré avant la convocation"
+            );
+        }
+
+        Utilisateur responsable = chargerResponsable(responsableId);
+        ClientEntreprise entreprise = (ClientEntreprise) Hibernate.unproxy(
+                demande.getClient()
+        );
+
+        demande.convoquerClient(responsable);
+        demandeRepository.save(demande);
+
+        eventPublisher.publishEvent(
+                new DemandeCorporateConvoqueeEvent(
+                        demande.getReference(),
+                        entreprise.getRaisonSociale(),
+                        nomRepresentant(entreprise),
+                        entreprise.getEmail(),
+                        demande.getParking().getNom(),
+                        demande.getMontantTotalTtc(),
+                        demande.getDateConvocation()
+                )
+        );
+
+        return new ConvocationCorporateResponse(
+                demande.getId(),
+                demande.getReference(),
+                demande.getStatut(),
+                demande.getDateConvocation(),
+                entreprise.getEmail(),
+                "Client invité au siège par e-mail pour le paiement et la signature"
         );
     }
 

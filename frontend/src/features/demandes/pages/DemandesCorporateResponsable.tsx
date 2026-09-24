@@ -48,7 +48,12 @@ export function DemandesCorporateResponsable() {
     {
       title: "STATUT",
       key: "statut",
-      render: () => <Tag color="purple">À VALIDER PAR LE RESPONSABLE</Tag>,
+      render: (_, demande) =>
+        demande.statut === "VALIDEE" ? (
+          <Tag color="gold">À CONVOQUER</Tag>
+        ) : (
+          <Tag color="purple">À VALIDER PAR LE RESPONSABLE</Tag>
+        ),
     },
     {
       title: "SOUMISSION",
@@ -68,7 +73,7 @@ export function DemandesCorporateResponsable() {
           icon={<EyeOutlined />}
           onClick={() => navigate(`/responsable/demandes-corporate/${demande.id}`)}
         >
-          Examiner
+          {demande.statut === "VALIDEE" ? "Convoquer" : "Examiner"}
         </Button>
       ),
     },
@@ -78,10 +83,10 @@ export function DemandesCorporateResponsable() {
     <section className="space-y-5">
       <div>
         <h1 className="text-2xl font-black text-slate-900">
-          Demandes corporate à valider
+          Demandes corporate à traiter
         </h1>
         <p className="text-sm text-slate-500">
-          Étude des dossiers entreprise avant génération du contrat non signé.
+          Validation des dossiers, génération du contrat et convocation au siège.
         </p>
       </div>
 
@@ -138,7 +143,7 @@ export function DemandesCorporateResponsable() {
         loading={query.isLoading}
         scroll={{ x: 900 }}
         pagination={{ pageSize: 10 }}
-        locale={{ emptyText: <Empty description="Aucune demande corporate à valider" /> }}
+        locale={{ emptyText: <Empty description="Aucune demande corporate à traiter" /> }}
       />
     </section>
   );

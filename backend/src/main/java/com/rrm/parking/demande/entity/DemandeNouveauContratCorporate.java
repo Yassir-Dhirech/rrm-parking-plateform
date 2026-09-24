@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "demande_nouveau_contrat_corporate")
@@ -118,6 +119,8 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
             )
     )
     private ContratCorporate contratGenere;
+
+    private LocalDateTime dateConvocation;
 
     protected DemandeNouveauContratCorporate() {
         // Constructeur JPA
@@ -223,6 +226,36 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
         this.contratGenere = exigerNonNull(
                 contrat,
                 "Le contrat généré est obligatoire"
+        );
+    }
+
+    public void convoquerClient(Utilisateur responsable) {
+        if (getStatut() != StatutDemande.VALIDEE) {
+            throw new IllegalStateException(
+                    "La demande doit être validée avant la convocation"
+            );
+        }
+        if (contratGenere == null) {
+            throw new IllegalStateException(
+                    "Le contrat doit être généré avant la convocation"
+            );
+        }
+        if (dateConvocation != null) {
+            throw new IllegalStateException(
+                    "Le client a déjà été convoqué"
+            );
+        }
+
+        dateConvocation = LocalDateTime.now();
+        changerStatut(
+                StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE,
+                com.rrm.parking.demande.enums.OrigineTransition
+                        .UTILISATEUR_INTERNE,
+                exigerNonNull(
+                        responsable,
+                        "Le responsable est obligatoire"
+                ),
+                "Convocation au siège pour paiement et signature"
         );
     }
 
@@ -341,5 +374,9 @@ public class DemandeNouveauContratCorporate extends DemandeClient {
 
     public ContratCorporate getContratGenere() {
         return contratGenere;
+    }
+
+    public LocalDateTime getDateConvocation() {
+        return dateConvocation;
     }
 }

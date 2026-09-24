@@ -16,10 +16,12 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   DownloadOutlined,
+  MailOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import {
   extraireMessageErreur,
+  convoquerClientCorporate,
   obtenirDetailDemandeCorporate,
   refuserDemandeCorporate,
   telechargerContratCorporatePdf,
@@ -123,6 +125,32 @@ export function DemandeCorporateDetail() {
     }
   };
 
+  const convoquer = () => {
+    Modal.confirm({
+      title: "Inviter le client au siège RRM ?",
+      content:
+        "Un e-mail sera envoyé au représentant pour lui demander de venir avec le chèque, signer le contrat, le faire légaliser puis le remettre à RRM. Le contrat ne sera pas joint à l'e-mail et cette convocation ne pourra pas être renvoyée.",
+      okText: "Envoyer la convocation",
+      cancelText: "Annuler",
+      onOk: async () => {
+        setTraitement(true);
+        setErreur(null);
+        try {
+          const resultat = await convoquerClientCorporate(demandeId);
+          setMessageSucces(
+            `Convocation envoyée à ${resultat.emailRepresentant}.`
+          );
+          await rafraichir();
+        } catch (cause) {
+          setErreur(extraireMessageErreur(cause));
+          throw cause;
+        } finally {
+          setTraitement(false);
+        }
+      },
+    });
+  };
+
   if (!idValide) {
     return <Alert type="error" showIcon message="Identifiant de demande invalide" />;
   }
@@ -143,6 +171,10 @@ export function DemandeCorporateDetail() {
   const demande = query.data;
   const peutDecider =
     demande.statut === "EN_ATTENTE_VALIDATION_RESPONSABLE";
+  const peutConvoquer =
+    demande.statut === "VALIDEE" &&
+    demande.contratId !== null &&
+    demande.dateConvocation === null;
 
   return (
     <div style={{ maxWidth: 1050, margin: "0 auto" }}>
@@ -189,6 +221,7 @@ export function DemandeCorporateDetail() {
           </Descriptions.Item>
           <Descriptions.Item label="Téléphone">{demande.telephoneRepresentant}</Descriptions.Item>
           <Descriptions.Item label="E-mail">{demande.emailRepresentant}</Descriptions.Item>
+          <Descriptions.Item label="CIN du représentant">{demande.cinRepresentant}</Descriptions.Item>
           <Descriptions.Item label="OTP validé le">
             {demande.dateValidationOtp ? formatDate(demande.dateValidationOtp) : "—"}
           </Descriptions.Item>
@@ -203,6 +236,7 @@ export function DemandeCorporateDetail() {
         >
           <Descriptions.Item label="Projet">{demande.libelleProjet}</Descriptions.Item>
           <Descriptions.Item label="Adresse">{demande.adresseProjet}</Descriptions.Item>
+          <Descriptions.Item label="Plage horaire">{demande.plageHoraire}</Descriptions.Item>
           <Descriptions.Item label="Parking"><strong>{demande.parkingNom}</strong></Descriptions.Item>
           <Descriptions.Item label="Places / cartes">{demande.nombrePlaces}</Descriptions.Item>
           <Descriptions.Item label="Durée">20 ans ({demande.dureeEnMois} mois)</Descriptions.Item>
@@ -252,6 +286,40 @@ export function DemandeCorporateDetail() {
                 Télécharger le PDF
               </Button>
             }
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        {peutConvoquer && (
+          <Card
+            size="small"
+            title="Convocation du représentant"
+            style={{ borderColor: "#86efac", marginBottom: 20 }}
+          >
+            <Alert
+              type="info"
+              showIcon
+              message="Le contrat est prêt"
+              description="Invitez le représentant à venir au siège RRM avec le chèque pour signer le contrat. Il devra ensuite le faire légaliser et le remettre au responsable."
+              style={{ marginBottom: 16 }}
+            />
+            <Button
+              type="primary"
+              icon={<MailOutlined />}
+              loading={traitement}
+              onClick={convoquer}
+            >
+              Inviter le client au bureau
+            </Button>
+          </Card>
+        )}
+
+        {demande.dateConvocation && (
+          <Alert
+            type="success"
+            showIcon
+            message="Convocation envoyée"
+            description={`Le représentant a été invité par e-mail le ${formatDate(demande.dateConvocation)}. Paiement par chèque et signature du contrat attendus au siège RRM.`}
             style={{ marginBottom: 20 }}
           />
         )}

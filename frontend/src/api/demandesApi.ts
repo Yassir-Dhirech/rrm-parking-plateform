@@ -18,6 +18,7 @@ import type {
   DemandeCorporateResponse,
   DemandeCorporateDetailResponse,
   DecisionCorporateResponse,
+  ConvocationCorporateResponse,
 } from "../features/demandes/types";
 
 async function lireReponseJson<T>(response: Response): Promise<T> {
@@ -241,6 +242,15 @@ export async function refuserDemandeCorporate(
   const response = await client.post<DecisionCorporateResponse>(
     `/demandes/corporate/responsable/${demandeId}/refus`,
     { motif }
+  );
+  return response.data;
+}
+
+export async function convoquerClientCorporate(
+  demandeId: number
+): Promise<ConvocationCorporateResponse> {
+  const response = await client.post<ConvocationCorporateResponse>(
+    `/demandes/corporate/responsable/${demandeId}/convocation`
   );
   return response.data;
 }

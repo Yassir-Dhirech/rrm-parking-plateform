@@ -31,7 +31,8 @@ public class CapaciteCorporateService {
                     StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
                     StatutDemande.EN_ATTENTE_PAIEMENT,
                     StatutDemande.PAYEE,
-                    StatutDemande.VALIDEE
+                    StatutDemande.VALIDEE,
+                    StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE
             );
 
     private final ParkingRepository parkingRepository;

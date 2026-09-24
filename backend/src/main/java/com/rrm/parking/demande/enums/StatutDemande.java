@@ -18,6 +18,10 @@ public enum StatutDemande {
 
     // Décision prise par le superviseur ou le responsable
     VALIDEE,
+
+    // Corporate validé : venue au siège attendue pour paiement et signature
+    EN_ATTENTE_PAIEMENT_SIGNATURE,
+
     REFUSEE,
 
     // Aucun paiement sept jours après validation OTP
