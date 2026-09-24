@@ -39,6 +39,7 @@ export type CanalOtp = "EMAIL" | "SMS";
 export type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
+  | "EN_ATTENTE_VALIDATION_RESPONSABLE"
   | "PAYEE"
   | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
@@ -203,6 +204,79 @@ export interface DemandeAbonnementRegulierResponse {
   tentativesRestantes: number;
   canalOtp: CanalOtp;
   destinationMasquee: string;
+}
+
+export interface DemandeCorporateRequest {
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  cinRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  plageHoraire: string;
+  parkingId: number;
+  nombrePlaces: number;
+  immatriculations: string[];
+  conditionsAcceptees: boolean;
+}
+
+export interface DemandeCorporateResponse
+  extends DemandeAbonnementRegulierResponse {
+  cinRepresentant: string;
+  plageHoraire: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+}
+
+export interface DemandeCorporateDetailResponse {
+  id: number;
+  reference: string;
+  statut: StatutDemande;
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string;
+  motifRefus: string | null;
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  parkingId: number;
+  parkingNom: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+  immatriculations: string[];
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+}
+
+export interface DecisionCorporateResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+  message: string;
 }
 
 export interface RechercheRenouvellementRequest {

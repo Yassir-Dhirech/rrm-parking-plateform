@@ -6,14 +6,18 @@ import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.dto.request.ValidationOtpRequest;
 import com.rrm.parking.demande.dto.response.ValidationOtpResponse;
 import com.rrm.parking.client.entity.ClientParticulier;
+import com.rrm.parking.client.entity.ClientEntreprise;
+import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.event.RenouvellementOtpValideEvent;
 import com.rrm.parking.demande.event.DemandeOtpValideeEvent;
+import com.rrm.parking.demande.event.CorporateOtpValideEvent;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.tarification.model.DecompteNouvelAbonnement;
 import org.springframework.context.ApplicationEventPublisher;
 import com.rrm.parking.client.repository.ClientParticulierRepository;
+import com.rrm.parking.client.repository.ClientEntrepriseRepository;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.VerificationOtp;
 import com.rrm.parking.demande.enums.StatutOtp;
@@ -33,10 +37,14 @@ public class OtpValidationService {
     private final ClientParticulierRepository
             clientParticulierRepository;
 
+    private final ClientEntrepriseRepository
+            clientEntrepriseRepository;
+
     private final VerificationOtpRepository
             verificationOtpRepository;
 
     private final OtpCodeService otpCodeService;
+    private final CapaciteCorporateService capaciteCorporateService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(
@@ -114,8 +122,19 @@ public class OtpValidationService {
             );
         }
 
+        if (demande instanceof DemandeNouveauContratCorporate corporate) {
+            capaciteCorporateService.verrouillerEtVerifier(
+                    corporate.getParking().getId(),
+                    corporate.getNombrePlaces()
+            );
+        }
+
         verification.marquerValide();
-        demande.confirmerOtp();
+        if (demande instanceof DemandeNouveauContratCorporate) {
+            demande.confirmerOtpAvantValidationResponsable();
+        } else {
+            demande.confirmerOtp();
+        }
 
         verificationOtpRepository.save(
                 verification
@@ -139,13 +158,8 @@ public class OtpValidationService {
     private void publierEvenementConfirmation(
             DemandeClient demande
     ) {
-        ClientParticulier client = clientParticulierRepository
-                .findById(demande.getClient().getId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Le client particulier de la demande est introuvable"
-                ));
-
         if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            ClientParticulier client = obtenirClientParticulier(demande);
             TarifParking tarif = nouvelle.getTarifParking();
             DecompteNouvelAbonnement decompte =
                     DecompteNouvelAbonnement.depuis(tarif);
@@ -170,6 +184,7 @@ public class OtpValidationService {
         }
 
         if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            ClientParticulier client = obtenirClientParticulier(demande);
             TarifParking tarif = renouvellement.getTarifParking();
             eventPublisher.publishEvent(
                     new RenouvellementOtpValideEvent(
@@ -188,8 +203,53 @@ public class OtpValidationService {
             return;
         }
 
+        if (demande instanceof DemandeNouveauContratCorporate corporate) {
+            ClientEntreprise entreprise = clientEntrepriseRepository
+                    .findById(demande.getClient().getId())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Le client entreprise de la demande est introuvable"
+                    ));
+            String destinataire = (
+                    texteOuVide(entreprise.getPrenomContactPrincipal()) + " "
+                            + texteOuVide(entreprise.getNomContactPrincipal())
+            ).trim();
+            if (destinataire.isBlank()) {
+                destinataire = entreprise.getRaisonSociale();
+            }
+            eventPublisher.publishEvent(
+                    new CorporateOtpValideEvent(
+                            entreprise.getEmail(),
+                            destinataire,
+                            demande.getReference(),
+                            entreprise.getRaisonSociale(),
+                            corporate.getParking().getNom(),
+                            corporate.getLibelleProjet(),
+                            corporate.getNombrePlaces(),
+                            corporate.getPrixMensuelUnitaireTtc(),
+                            corporate.getMontantAbonnementTtc(),
+                            corporate.getFraisCartesTtc(),
+                            corporate.getMontantTotalTtc()
+                    )
+            );
+            return;
+        }
+
         throw new IllegalStateException(
                 "Ce type de demande n'est pas pris en charge pour la confirmation OTP"
         );
+    }
+
+    private ClientParticulier obtenirClientParticulier(
+            DemandeClient demande
+    ) {
+        return clientParticulierRepository
+                .findById(demande.getClient().getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Le client particulier de la demande est introuvable"
+                ));
+    }
+
+    private String texteOuVide(String valeur) {
+        return valeur == null ? "" : valeur;
     }
 }

@@ -3,6 +3,7 @@ import { Tag } from "antd";
 type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
+  | "EN_ATTENTE_VALIDATION_RESPONSABLE"
   | "PAYEE"
   | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
@@ -28,6 +29,7 @@ const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
   EN_COURS: "gold",
   EN_ATTENTE_PAIEMENT: "warning",
+  EN_ATTENTE_VALIDATION_RESPONSABLE: "purple",
   PAYEE: "cyan",
   EN_ATTENTE_CORRECTION: "orange",
   VALIDEE: "green",
@@ -62,6 +64,7 @@ const labelMap: Record<AnyStatut, string> = {
   SOUMISE: "Soumise",
   EN_COURS: "En cours",
   EN_ATTENTE_PAIEMENT: "En attente de paiement (Guichet)",
+  EN_ATTENTE_VALIDATION_RESPONSABLE: "En attente de validation responsable",
   PAYEE: "Paiement enregistré",
   EN_ATTENTE_CORRECTION: "Correction demandée",
   EN_ATTENTE: "En attente",
