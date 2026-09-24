@@ -6,6 +6,7 @@ import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.parking.enums.StatutParking;
 import com.rrm.parking.parking.repository.ParkingRepository;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
+import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class ParkingPublicServiceTest {
     private AffectationParkingRepository affectationParkingRepository;
 
     @Mock
+    private DemandeNouveauContratCorporateRepository demandeCorporateRepository;
+
+    @Mock
     private Parking parkingDisponible;
 
     @Mock
@@ -47,7 +51,8 @@ class ParkingPublicServiceTest {
         parkingPublicService = new ParkingPublicService(
                 tarifParkingRepository,
                 parkingRepository,
-                affectationParkingRepository
+                affectationParkingRepository,
+                demandeCorporateRepository
         );
     }
 
@@ -59,6 +64,9 @@ class ParkingPublicServiceTest {
         when(affectationParkingRepository.compterPlacesOccupeesParParking(
                 anySet(),
                 any()
+        )).thenReturn(List.of());
+        when(demandeCorporateRepository.compterPlacesReserveesParParking(
+                anySet()
         )).thenReturn(List.of());
         when(parkingRepository.findAllByStatutInOrderByNomAsc(anyCollection()))
                 .thenReturn(List.of(parkingDisponible, parkingComplet));

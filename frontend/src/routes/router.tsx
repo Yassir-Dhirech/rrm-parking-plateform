@@ -36,6 +36,8 @@ import {
 import { DemandesAValider } from "../features/demandes/pages/DemandesAValider";
 import { DemandesValidees } from "../features/demandes/pages/DemandesValidees";
 import { OperationsCartesPage } from "../features/cartes/pages/OperationsCartesPage";
+import { DemandesCorporateResponsable } from "../features/demandes/pages/DemandesCorporateResponsable";
+import { DemandeCorporateDetail } from "../features/demandes/pages/DemandeCorporateDetail";
 
 function RootLayout() {
   return (
@@ -116,6 +118,14 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
   if (role === "RESPONSABLE") {
     extraRoutes.push(
+      {
+        path: "/responsable/demandes-corporate",
+        element: <DemandesCorporateResponsable />,
+      },
+      {
+        path: "/responsable/demandes-corporate/:id",
+        element: <DemandeCorporateDetail />,
+      },
       {
         path: `${roleConfig[role].homePath}/demandes-validees`,
         element: <DemandesValidees />,

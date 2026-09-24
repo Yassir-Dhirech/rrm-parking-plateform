@@ -185,6 +185,19 @@ public abstract class DemandeClient {
         );
     }
 
+    public void confirmerOtpAvantValidationResponsable() {
+        verifierStatutActuel(StatutDemande.SOUMISE);
+
+        dateValidationOtp = LocalDateTime.now();
+
+        appliquerTransition(
+                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
+                OrigineTransition.CLIENT,
+                null,
+                "Validation du code OTP corporate"
+        );
+    }
+
     public void marquerPayee(Utilisateur agent) {
         verifierStatutActuel(
                 StatutDemande.EN_ATTENTE_PAIEMENT
@@ -232,6 +245,27 @@ public abstract class DemandeClient {
         Objects.requireNonNull(
                 utilisateur,
                 "L'utilisateur ayant validé la demande est obligatoire"
+        );
+
+        appliquerTransition(
+                StatutDemande.VALIDEE,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                utilisateur,
+                commentaire
+        );
+    }
+
+    public void validerParResponsable(
+            Utilisateur utilisateur,
+            String commentaire
+    ) {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE
+        );
+
+        Objects.requireNonNull(
+                utilisateur,
+                "Le responsable ayant validé la demande est obligatoire"
         );
 
         appliquerTransition(

@@ -7,6 +7,9 @@ public enum StatutDemande {
     // OTP validé, demande modifiable et paiement attendu
     EN_ATTENTE_PAIEMENT,
 
+    // Demande corporate confirmée par OTP, décision du responsable attendue
+    EN_ATTENTE_VALIDATION_RESPONSABLE,
+
     // Paiement enregistré par l’agent
     PAYEE,
 
