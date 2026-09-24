@@ -77,9 +77,15 @@ function Evolution({
   );
 }
 
-function KpiShell({ children }: { children: ReactNode }) {
+function KpiShell({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="responsable-kpi-card glass-effect">
+    <div className={`responsable-kpi-card glass-effect ${className}`.trim()}>
       {children}
     </div>
   );
@@ -145,7 +151,7 @@ function ErrorCards() {
 
 function RevenueCard({ data }: { data: ResponsableDashboardKpis }) {
   return (
-    <KpiShell>
+    <KpiShell className="responsable-kpi-card--revenue">
       <KpiHeader
         icon={<DollarOutlined />}
         title="Chiffre d’affaires HT"
@@ -185,7 +191,7 @@ function OccupancyCard({ data }: { data: ResponsableDashboardKpis }) {
         : "#107c10";
 
   return (
-    <KpiShell>
+    <KpiShell className="responsable-kpi-card--occupancy">
       <KpiHeader
         icon={<CarOutlined />}
         title="Taux d’occupation global"
@@ -228,7 +234,7 @@ function ActiveSubscriptionsCard({
   data: ResponsableDashboardKpis;
 }) {
   return (
-    <KpiShell>
+    <KpiShell className="responsable-kpi-card--active">
       <KpiHeader
         icon={<FileTextOutlined />}
         title="Abonnements actifs"
@@ -253,7 +259,7 @@ function ProcessingDelayCard({
   data: ResponsableDashboardKpis;
 }) {
   return (
-    <KpiShell>
+    <KpiShell className="responsable-kpi-card--delay">
       <KpiHeader
         icon={<ClockCircleOutlined />}
         title="Délai moyen de traitement"

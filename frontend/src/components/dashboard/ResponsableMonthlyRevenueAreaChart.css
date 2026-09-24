@@ -192,3 +192,106 @@
     min-width: 620px;
   }
 }
+/* ==========================================================================
+   LISIBILITE DU GRAPHE — CHIFFRE D'AFFAIRES MENSUEL
+   ========================================================================== */
+
+/* Sous-titre et résumé dans le même bleu que le graphe voisin. */
+.responsable-area-heading p,
+.responsable-area-summary span {
+  color: rgba(113, 194, 255, 0.82) !important;
+}
+
+.responsable-area-summary strong {
+  color: #8ed0ff !important;
+  font-weight: 600;
+}
+
+/* Axes et mois : plus grands et réellement lisibles. */
+.responsable-area-axis-value,
+.responsable-area-month {
+  fill: #72c2ff !important;
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+}
+
+.responsable-area-axis-value {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.responsable-area-month {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* La courbe gagne légèrement en présence sans changer la largeur du bloc. */
+.responsable-area-line {
+  stroke-width: 3.4;
+}
+
+.responsable-area-point {
+  r: 4.5px;
+}
+
+/* Plus de respiration verticale, largeur inchangée. */
+.responsable-area-chart {
+  height: 250px;
+}
+/* === RRM_RESPONSABLE_AREA_CHART_POLISH_START === */
+
+/* Titre du graphe 2 : plus grand, moins gras */
+.responsable-area-heading h3 {
+  font-size: 23px !important;
+  font-weight: 400 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.02em !important;
+  color: #9fd8ff !important;
+}
+
+.responsable-area-heading p {
+  font-size: 12.5px !important;
+  color: rgba(146, 208, 255, 0.82) !important;
+}
+
+.responsable-area-icon {
+  width: 38px !important;
+  height: 38px !important;
+  flex-basis: 38px !important;
+  font-size: 17px !important;
+}
+
+/* Selecteur d'année demandé : dark glass */
+.responsable-area-year-select.ant-select {
+  min-width: 86px !important;
+}
+
+.responsable-area-year-select .ant-select-selector {
+  background: rgba(0, 0, 0, 0.53) !important;
+  background-color: rgba(0, 0, 0, 0.53) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 12px !important;
+  color: #f4fbff !important;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  -webkit-backdrop-filter: blur(50px) !important;
+  backdrop-filter: blur(50px) !important;
+}
+
+.responsable-area-year-select .ant-select-selection-item,
+.responsable-area-year-select .ant-select-arrow {
+  color: #d7f1ff !important;
+}
+
+.responsable-area-year-select.ant-select-open .ant-select-selector,
+.responsable-area-year-select .ant-select-selector:hover,
+.responsable-area-year-select .ant-select-selector:focus-within {
+  border-color: rgba(126, 208, 255, 0.42) !important;
+}
+
+/* === RRM_RESPONSABLE_AREA_CHART_POLISH_END === */
