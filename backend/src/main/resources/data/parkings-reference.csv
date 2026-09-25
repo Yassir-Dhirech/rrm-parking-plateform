@@ -1,0 +1,16 @@
+code;nom;adresse;latitude;longitude;capaciteTotale;capaciteReserveeAbonnements
+BAB_EL_HAD;Bab El Had;Bab El Had, Rabat;34.0224939;-6.8408849;471;212
+THEATRE_MOHAMMED_V;Théâtre Mohammed V;Avenue Moulay Rachid, Rabat;34.0197817;-6.8324132;245;98
+BAB_CHELLAH;Bab Chellah;Bab Chellah, Rabat;34.0234265;-6.8337261;495;223
+BAB_FES;Bab Fès;Bab Fès, Salé;34.0346686;-6.8187501;553;249
+PLACE_RUSSIE;Place de Russie;Place de Russie, Rabat;34.0194140;-6.8499600;125;63
+HARHOURA_NORD;Harhoura Nord;Plage Harhoura Nord, Témara;33.9367547;-6.9412297;247;124
+RUE_BRUXELLES;Rue de Bruxelles;Rue de Bruxelles, Rabat;34.0206450;-6.8481050;87;44
+OULED_DLIM;Ouled Dlim;Avenue Hassan II, Témara;33.9456090;-6.8895240;737;626
+HARHOURA_SURFACE;Parking en surface Harhoura;Harhoura Littoral, Témara;33.9382120;-6.9401820;221;88
+BADR;Parking Badr;Agdal, Rabat;34.0002490;-6.8495740;340;170
+RABIA_AL_ADAOUIA;Parking Rabia Al Adaouia;Avenue Allal Ben Abdellah, Rabat;34.0005610;-6.8451000;160;72
+PLACE_ITALIE;Parking Place d'Italie;Place d'Italie, Rabat;34.0225100;-6.8497330;74;37
+PARKING_CHELLAH;Parking en surface Chellah;Chellah, Rabat;34.0064820;-6.8254770;180;72
+TEMARA_PLAGE;Parking Témara Plage;Plage de Témara, Témara;33.9304010;-6.9529660;258;103
+ROND_POINT_KHALISS;Parking Rond-point Khaliss;Rond-point Khaliss, Harhoura;33.9353500;-6.9436230;74;30
