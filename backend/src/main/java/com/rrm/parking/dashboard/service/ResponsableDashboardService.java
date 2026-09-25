@@ -46,9 +46,13 @@ public class ResponsableDashboardService {
                 ? dateDebut
                 : aujourdHui.withDayOfMonth(1);
 
-        LocalDate fin = dateFin != null
+        LocalDate finDemandee = dateFin != null
                 ? dateFin
-                : debut.withDayOfMonth(debut.lengthOfMonth());
+                : aujourdHui;
+
+        LocalDate fin = finDemandee.isAfter(aujourdHui)
+                ? aujourdHui
+                : finDemandee;
 
         if (fin.isBefore(debut)) {
             throw new IllegalArgumentException(
@@ -83,18 +87,26 @@ public class ResponsableDashboardService {
         Occupation occupation =
                 calculerOccupation(referenceActive, parkingId);
 
+        LocalDate debutDelaiPrecedent = debut.minusMonths(1);
+        LocalDate finDelaiPrecedent =
+                dateDebut == null && dateFin == null
+                        ? debut.minusDays(1)
+                        : fin.minusMonths(1);
+
         Long delaiActuel =
-                calculerDelaiMoyenMinutes(debut, fin);
+                calculerDelaiMoyenMinutes(debut, fin, parkingId);
         Long delaiPrecedent =
                 calculerDelaiMoyenMinutes(
-                        debutPrecedent,
-                        finPrecedent
+                        debutDelaiPrecedent,
+                        finDelaiPrecedent,
+                        parkingId
                 );
 
         return new ResponsableDashboardKpiResponse(
                 debut,
                 fin,
-                caActuel.valeur(),
+                caActuel.valeur()
+                        .setScale(2, RoundingMode.HALF_UP),
                 evolution(
                         caActuel.valeur(),
                         caPrecedent.valeur(),
@@ -126,14 +138,28 @@ public class ResponsableDashboardService {
     }
 
     public ResponsablePendingValidationResponse chargerDemandesEnAttenteValidation() {
-        List<DemandeClient> demandesPayees =
+        List<DemandeClient> demandesEnAttente = new ArrayList<>();
+
+        demandesEnAttente.addAll(
                 demandeClientRepository.findByStatutOrderByDateModificationAsc(
                         StatutDemande.PAYEE
-                );
+                )
+        );
 
-        List<ResponsablePendingValidationResponse.PendingRequestItem> resume =
-                demandesPayees.stream()
-                        .limit(6)
+        demandesEnAttente.addAll(
+                demandeClientRepository.findByStatutOrderByDateModificationAsc(
+                        StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE
+                )
+        );
+
+        demandesEnAttente.sort(
+                (gauche, droite) ->
+                        gauche.getDateModification()
+                                .compareTo(droite.getDateModification())
+        );
+
+        List<ResponsablePendingValidationResponse.PendingRequestItem> demandes =
+                demandesEnAttente.stream()
                         .map(demande ->
                                 new ResponsablePendingValidationResponse.PendingRequestItem(
                                         demande.getId(),
@@ -145,11 +171,10 @@ public class ResponsableDashboardService {
                         .toList();
 
         return new ResponsablePendingValidationResponse(
-                demandesPayees.size(),
-                resume
+                demandes.size(),
+                demandes
         );
     }
-
     public ResponsableParkingMixResponse chargerRepartitionPlacesActives() {
         LocalDate dateReference = LocalDate.now(ZONE_RRM);
 
@@ -238,9 +263,18 @@ public class ResponsableDashboardService {
     public ResponsableMonthlyRevenueResponse chargerChiffreAffairesMensuel(
             Integer annee
     ) {
+        return chargerChiffreAffairesMensuel(annee, null);
+    }
+
+    public ResponsableMonthlyRevenueResponse chargerChiffreAffairesMensuel(
+            Integer annee,
+            Long parkingId
+    ) {
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
+
         int anneeSelectionnee = annee != null
                 ? annee
-                : LocalDate.now(ZONE_RRM).getYear();
+                : aujourdHui.getYear();
 
         if (anneeSelectionnee < 2000 || anneeSelectionnee > 2100) {
             throw new IllegalArgumentException(
@@ -262,20 +296,31 @@ public class ResponsableDashboardService {
         for (int numeroMois = 1; numeroMois <= 12; numeroMois++) {
             LocalDate debutMois =
                     LocalDate.of(anneeSelectionnee, numeroMois, 1);
-            LocalDate finMois =
-                    debutMois.withDayOfMonth(debutMois.lengthOfMonth());
+            BigDecimal montantBrut = BigDecimal.ZERO;
 
-            MesureMonetaire mesure =
-                    calculerChiffreAffaires(
-                            debutMois,
-                            finMois,
-                            null
-                    );
+            if (!debutMois.isAfter(aujourdHui)) {
+                LocalDate finMoisCalendaire =
+                        debutMois.withDayOfMonth(debutMois.lengthOfMonth());
 
-            BigDecimal montant = mesure.valeur()
+                LocalDate finReconnaissance =
+                        finMoisCalendaire.isAfter(aujourdHui)
+                                ? aujourdHui
+                                : finMoisCalendaire;
+
+                MesureMonetaire mesure =
+                        calculerChiffreAffaires(
+                                debutMois,
+                                finReconnaissance,
+                                parkingId
+                        );
+
+                montantBrut = mesure.valeur();
+            }
+
+            BigDecimal montant = montantBrut
                     .setScale(2, RoundingMode.HALF_UP);
 
-            totalAnnuel = totalAnnuel.add(montant);
+            totalAnnuel = totalAnnuel.add(montantBrut);
 
             mois.add(
                     new ResponsableMonthlyRevenueResponse.MonthlyRevenue(
@@ -385,19 +430,17 @@ public class ResponsableDashboardService {
             return lireMesureMonetaire(
                     """
                     select
-                        coalesce(sum(
-                            p.prixhtapplique
-                            * (
-                                datediff(
-                                    least(p.date_fin, :fin),
-                                    greatest(p.date_debut, :debut)
-                                ) + 1
-                            )
-                            / (
-                                datediff(p.date_fin, p.date_debut) + 1
-                            )
-                        ), 0) as montant,
-                        count(*) as nombre_lignes
+                        p.prixhtapplique as montant_ht,
+                        p.date_debut as periode_debut,
+                        p.date_fin as periode_fin,
+                        greatest(
+                            p.date_debut,
+                            :debut
+                        ) as reconnaissance_debut,
+                        least(
+                            p.date_fin,
+                            :fin
+                        ) as reconnaissance_fin
                     from periode_abonnement p
                     where p.statut <> 'ANNULEE'
                       and p.date_debut <= :fin
@@ -412,72 +455,73 @@ public class ResponsableDashboardService {
         return lireMesureMonetaire(
                 """
                 select
-                    coalesce(sum(x.montant), 0) as montant,
-                    count(*) as nombre_lignes
-                from (
-                    select
-                        p.id,
-                        p.prixhtapplique
-                        * (
-                            datediff(
-                                least(
-                                    p.date_fin,
-                                    :fin,
-                                    coalesce(a.date_fin, :fin)
-                                ),
-                                greatest(
-                                    p.date_debut,
-                                    :debut,
-                                    a.date_debut
-                                )
-                            ) + 1
-                        )
-                        / (
-                            datediff(p.date_fin, p.date_debut) + 1
-                        ) as montant
-                    from periode_abonnement p
-                    join abonnement_regulier ar
-                      on ar.id = p.abonnement_id
-                    join affectation_parking a
-                      on a.abonnement_regulier_id = ar.id
-                    where p.statut <> 'ANNULEE'
-                      and a.parking_id = :parkingId
-                      and p.date_debut <= :fin
-                      and p.date_fin >= :debut
-                      and a.date_debut <= :fin
-                      and (
-                            a.date_fin is null
-                            or a.date_fin >= :debut
-                      )
+                    p.prixhtapplique as montant_ht,
+                    p.date_debut as periode_debut,
+                    p.date_fin as periode_fin,
+                    greatest(
+                        p.date_debut,
+                        :debut,
+                        a.date_debut
+                    ) as reconnaissance_debut,
+                    least(
+                        p.date_fin,
+                        :fin,
+                        coalesce(a.date_fin, p.date_fin)
+                    ) as reconnaissance_fin
+                from periode_abonnement p
+                join abonnement_regulier ar
+                  on ar.id = p.abonnement_id
+                join affectation_parking a
+                  on a.abonnement_regulier_id = ar.id
+                where p.statut <> 'ANNULEE'
+                  and a.parking_id = :parkingId
+                  and p.date_debut <= :fin
+                  and p.date_fin >= :debut
+                  and a.date_debut <= :fin
+                  and (
+                        a.date_fin is null
+                        or a.date_fin >= :debut
+                  )
+                  and greatest(
+                        p.date_debut,
+                        :debut,
+                        a.date_debut
+                  ) <= least(
+                        p.date_fin,
+                        :fin,
+                        coalesce(a.date_fin, p.date_fin)
+                  )
 
-                    union all
+                union all
 
-                    select
-                        p.id,
-                        p.prixhtapplique
-                        * (
-                            datediff(
-                                least(p.date_fin, :fin),
-                                greatest(p.date_debut, :debut)
-                            ) + 1
-                        )
-                        / (
-                            datediff(p.date_fin, p.date_debut) + 1
-                        ) as montant
-                    from periode_abonnement p
-                    join abonnement_entreprise ae
-                      on ae.id = p.abonnement_id
-                    join contrat_corporate c
-                      on c.id = ae.contrat_corporate_id
-                    join demande_nouveau_contrat_corporate dnc
-                      on dnc.contrat_genere_id = c.id
-                    join tarif_parking t
-                      on t.id = dnc.tarif_parking_id
-                    where p.statut <> 'ANNULEE'
-                      and t.parking_id = :parkingId
-                      and p.date_debut <= :fin
-                      and p.date_fin >= :debut
-                ) x
+                select
+                    p.prixhtapplique as montant_ht,
+                    p.date_debut as periode_debut,
+                    p.date_fin as periode_fin,
+                    greatest(
+                        p.date_debut,
+                        :debut
+                    ) as reconnaissance_debut,
+                    least(
+                        p.date_fin,
+                        :fin
+                    ) as reconnaissance_fin
+                from periode_abonnement p
+                join abonnement_entreprise ae
+                  on ae.id = p.abonnement_id
+                join contrat_corporate c
+                  on c.id = ae.contrat_corporate_id
+                join demande_nouveau_contrat_corporate dnc
+                  on dnc.contrat_genere_id = c.id
+                left join tarif_parking t
+                  on t.id = dnc.tarif_parking_id
+                where p.statut <> 'ANNULEE'
+                  and coalesce(
+                        dnc.parking_id,
+                        t.parking_id
+                  ) = :parkingId
+                  and p.date_debut <= :fin
+                  and p.date_fin >= :debut
                 """,
                 debut,
                 fin,
@@ -500,18 +544,41 @@ public class ResponsableDashboardService {
             params.addValue("parkingId", parkingId);
         }
 
-        return jdbc.queryForObject(
+        List<LigneChiffreAffaires> lignes = jdbc.query(
                 sql,
                 params,
-                (rs, rowNum) -> new MesureMonetaire(
-                        rs.getBigDecimal("montant")
-                                .setScale(
-                                        2,
-                                        RoundingMode.HALF_UP
-                                ),
-                        rs.getLong("nombre_lignes")
+                (rs, rowNum) -> new LigneChiffreAffaires(
+                        rs.getBigDecimal("montant_ht"),
+                        rs.getObject(
+                                "periode_debut",
+                                LocalDate.class
+                        ),
+                        rs.getObject(
+                                "periode_fin",
+                                LocalDate.class
+                        ),
+                        rs.getObject(
+                                "reconnaissance_debut",
+                                LocalDate.class
+                        ),
+                        rs.getObject(
+                                "reconnaissance_fin",
+                                LocalDate.class
+                        )
                 )
         );
+
+        BigDecimal montant = lignes.stream()
+                .map(ligne -> ChiffreAffairesProrata.calculer(
+                        ligne.montantHt(),
+                        ligne.periodeDebut(),
+                        ligne.periodeFin(),
+                        ligne.reconnaissanceDebut(),
+                        ligne.reconnaissanceFin()
+                ))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new MesureMonetaire(montant, lignes.size());
     }
 
     private long compterAbonnementsActifs(
@@ -527,7 +594,7 @@ public class ResponsableDashboardService {
                     """
                     select count(distinct p.abonnement_id)
                     from periode_abonnement p
-                    where p.statut = 'ACTIVE'
+                    where p.statut <> 'ANNULEE'
                       and p.date_debut <= :date
                       and p.date_fin >= :date
                     """,
@@ -543,7 +610,7 @@ public class ResponsableDashboardService {
                 """
                 select count(distinct p.abonnement_id)
                 from periode_abonnement p
-                where p.statut = 'ACTIVE'
+                where p.statut <> 'ANNULEE'
                   and p.date_debut <= :date
                   and p.date_fin >= :date
                   and (
@@ -570,11 +637,14 @@ public class ResponsableDashboardService {
                              ae.contrat_corporate_id
                         join demande_nouveau_contrat_corporate dnc
                           on dnc.contrat_genere_id = c.id
-                        join tarif_parking t
+                        left join tarif_parking t
                           on t.id = dnc.tarif_parking_id
                         where ae.id =
                               p.abonnement_id
-                          and t.parking_id = :parkingId
+                          and coalesce(
+                                dnc.parking_id,
+                                t.parking_id
+                              ) = :parkingId
                     )
                   )
                 """,
@@ -601,6 +671,7 @@ public class ResponsableDashboardService {
                         0
                     )
                     from parking
+                    where statut = 'ACTIF'
                     """;
         } else {
             reserveSql = """
@@ -610,6 +681,7 @@ public class ResponsableDashboardService {
                     )
                     from parking
                     where id = :parkingId
+                      and statut = 'ACTIF'
                     """;
             params.addValue("parkingId", parkingId);
         }
@@ -650,7 +722,7 @@ public class ResponsableDashboardService {
 
         String filtreCorporate = parkingId == null
                 ? ""
-                : " and t.parking_id = :parkingId ";
+                : " and coalesce(dnc.parking_id, t.parking_id) = :parkingId ";
 
         Long corporate = jdbc.queryForObject(
                 """
@@ -667,7 +739,7 @@ public class ResponsableDashboardService {
                       on c.id = ae.contrat_corporate_id
                     join demande_nouveau_contrat_corporate dnc
                       on dnc.contrat_genere_id = c.id
-                    join tarif_parking t
+                    left join tarif_parking t
                       on t.id = dnc.tarif_parking_id
                     where p.statut = 'ACTIVE'
                       and p.date_debut <= :date
@@ -702,7 +774,8 @@ public class ResponsableDashboardService {
 
     private Long calculerDelaiMoyenMinutes(
             LocalDate debut,
-            LocalDate fin
+            LocalDate fin,
+            Long parkingId
     ) {
         MapSqlParameterSource params =
                 new MapSqlParameterSource()
@@ -720,44 +793,70 @@ public class ResponsableDashboardService {
                                 )
                         );
 
+        String filtreParking = parkingId == null
+                ? ""
+                : " and x.parking_id = :parkingId ";
+
+        if (parkingId != null) {
+            params.addValue("parkingId", parkingId);
+        }
+
         BigDecimal moyenne = jdbc.queryForObject(
                 """
+                with activation_par_demande as (
+                    select
+                        demande_client_source_id as demande_id,
+                        max(date_execution) as date_disponibilite
+                    from demande_operationnelle
+                    where type_operation = 'ACTIVATION'
+                      and statut = 'TERMINEE'
+                      and date_execution is not null
+                      and demande_client_source_id is not null
+                    group by demande_client_source_id
+                ),
+                parcours as (
+                    select
+                        p.demande_id,
+                        p.date_confirmation,
+                        case
+                            when dnc.id is not null
+                            then dnc.date_finalisation
+                            else apd.date_disponibilite
+                        end as date_disponibilite,
+                        coalesce(
+                            dnc.parking_id,
+                            tr.parking_id,
+                            tn.parking_id
+                        ) as parking_id
+                    from paiement p
+                    left join demande_nouveau_contrat_corporate dnc
+                      on dnc.id = p.demande_id
+                    left join demande_renouvellement_regulier drr
+                      on drr.id = p.demande_id
+                    left join tarif_parking tr
+                      on tr.id = drr.tarif_parking_id
+                    left join demande_nouvel_abonnement_regulier dna
+                      on dna.id = p.demande_id
+                    left join tarif_parking tn
+                      on tn.id = dna.tarif_parking_id
+                    left join activation_par_demande apd
+                      on apd.demande_id = p.demande_id
+                    where p.statut = 'CONFIRME'
+                      and p.date_confirmation is not null
+                )
                 select avg(
                     timestampdiff(
-                        minute,
-                        x.date_paiement,
-                        x.date_decision
+                        second,
+                        x.date_confirmation,
+                        x.date_disponibilite
                     )
-                )
-                from (
-                    select
-                        h.demande_id,
-                        min(
-                            case
-                                when h.nouveau_statut = 'PAYEE'
-                                then h.date_changement
-                            end
-                        ) as date_paiement,
-                        max(
-                            case
-                                when h.nouveau_statut in (
-                                    'VALIDEE',
-                                    'REFUSEE'
-                                )
-                                then h.date_changement
-                            end
-                        ) as date_decision
-                    from historique_statut_demande h
-                    group by h.demande_id
-                ) x
-                join demande_client d
-                  on d.id = x.demande_id
-                where d.statut in ('VALIDEE', 'REFUSEE')
-                  and x.date_paiement is not null
-                  and x.date_decision is not null
-                  and x.date_decision >= :debut
-                  and x.date_decision < :finExclusive
-                """,
+                ) / 60
+                from parcours x
+                where x.date_disponibilite is not null
+                  and x.date_disponibilite >= x.date_confirmation
+                  and x.date_disponibilite >= :debut
+                  and x.date_disponibilite < :finExclusive
+                """ + filtreParking,
                 params,
                 BigDecimal.class
         );
@@ -795,6 +894,15 @@ public class ResponsableDashboardService {
     private record MesureMonetaire(
             BigDecimal valeur,
             long nombreLignes
+    ) {
+    }
+
+    private record LigneChiffreAffaires(
+            BigDecimal montantHt,
+            LocalDate periodeDebut,
+            LocalDate periodeFin,
+            LocalDate reconnaissanceDebut,
+            LocalDate reconnaissanceFin
     ) {
     }
 
