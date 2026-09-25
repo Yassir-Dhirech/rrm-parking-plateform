@@ -365,7 +365,10 @@ public class DemandeCorporateResponsableService {
                 1,
                 dateDebut,
                 dateFin,
-                convertirTtcEnHt(demande.getMontantTotalTtc(), tauxTva),
+                convertirTtcEnHt(
+                        demande.getMontantAbonnementTtc(),
+                        tauxTva
+                ),
                 tauxTva,
                 abonnement
         );
