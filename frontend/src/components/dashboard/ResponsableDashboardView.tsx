@@ -16,7 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
-import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
+import { ChiffreAffairesDashboard } from "./financial/ChiffreAffairesDashboard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getContratsMock, enregistrerScanContratMock } from "../../api/contratsMock";
 import { ScannerContratModal } from "../../features/contrats/components/ScannerContratModal";
@@ -287,8 +287,8 @@ export function ResponsableDashboardView() {
         </Col>
       </Row>
 
-      {/* Chiffre d'Affaires DÃ©taillÃ© par Parking : Mensuel & Entre Deux Dates */}
-      <ChiffreAffairesParkingTable />
+      {/* Même source financière et mêmes filtres que l'espace comptable. */}
+      <ChiffreAffairesDashboard audience="RESPONSABLE" />
 
       {/* 4. Parking Quotas & Saturation: Circular Dial + Rectangular Track for Each Site */}
       <Card
