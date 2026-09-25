@@ -41,6 +41,11 @@ export type StatutDemande =
   | "EN_ATTENTE_PAIEMENT"
   | "EN_ATTENTE_VALIDATION_RESPONSABLE"
   | "EN_ATTENTE_PAIEMENT_SIGNATURE"
+  | "EN_ATTENTE_RETOUR_CONTRAT_LEGALISE"
+  | "EN_ATTENTE_FACTURATION"
+  | "EN_PREPARATION_CARTES"
+  | "PRETE_A_FINALISER"
+  | "FINALISEE"
   | "PAYEE"
   | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
@@ -246,6 +251,11 @@ export interface DemandeCorporateDetailResponse {
   dateValidationOtp: string | null;
   dateModification: string;
   dateConvocation: string | null;
+  datePaiementEtRemiseContrat: string | null;
+  dateRetourContratLegalise: string | null;
+  dateFacturation: string | null;
+  dateActivationCartes: string | null;
+  dateFinalisation: string | null;
   motifRefus: string | null;
   raisonSociale: string;
   ice: string;
@@ -271,6 +281,17 @@ export interface DemandeCorporateDetailResponse {
   contratId: number | null;
   referenceContrat: string | null;
   statutContrat: string | null;
+  paiementId: number | null;
+  paiementReference: string | null;
+  numeroCheque: string | null;
+  banqueCheque: string | null;
+  dateEmissionCheque: string | null;
+  factureId: number | null;
+  numeroFacture: string | null;
+  abonnementId: number | null;
+  referenceAbonnement: string | null;
+  nombreCartes: number;
+  nombreCartesActivees: number;
 }
 
 export interface DecisionCorporateResponse {

@@ -12,6 +12,28 @@ import type { DemandeRechercheResponse } from "../types";
 
 type Ordre = "ANCIEN" | "RECENT";
 
+const etapes: Record<string, { couleur: string; libelle: string; action: string }> = {
+  EN_ATTENTE_VALIDATION_RESPONSABLE: {
+    couleur: "purple", libelle: "À VALIDER", action: "Examiner",
+  },
+  VALIDEE: { couleur: "gold", libelle: "À CONVOQUER", action: "Convoquer" },
+  EN_ATTENTE_PAIEMENT_SIGNATURE: {
+    couleur: "orange", libelle: "PAIEMENT / SIGNATURE", action: "Paiement",
+  },
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: {
+    couleur: "volcano", libelle: "RETOUR CONTRAT", action: "Déclarer",
+  },
+  EN_ATTENTE_FACTURATION: {
+    couleur: "geekblue", libelle: "À FACTURER", action: "Facturer",
+  },
+  EN_PREPARATION_CARTES: {
+    couleur: "cyan", libelle: "CARTES EN COURS", action: "Suivre",
+  },
+  PRETE_A_FINALISER: {
+    couleur: "green", libelle: "À FINALISER", action: "Finaliser",
+  },
+};
+
 function formaterDate(date: string | null): string {
   if (!date) return "—";
   return new Intl.DateTimeFormat("fr-FR", {
@@ -48,12 +70,12 @@ export function DemandesCorporateResponsable() {
     {
       title: "STATUT",
       key: "statut",
-      render: (_, demande) =>
-        demande.statut === "VALIDEE" ? (
-          <Tag color="gold">À CONVOQUER</Tag>
-        ) : (
-          <Tag color="purple">À VALIDER PAR LE RESPONSABLE</Tag>
-        ),
+      render: (_, demande) => {
+        const etape = etapes[demande.statut] ?? {
+          couleur: "default", libelle: demande.statut, action: "Consulter",
+        };
+        return <Tag color={etape.couleur}>{etape.libelle}</Tag>;
+      },
     },
     {
       title: "SOUMISSION",
@@ -73,7 +95,7 @@ export function DemandesCorporateResponsable() {
           icon={<EyeOutlined />}
           onClick={() => navigate(`/responsable/demandes-corporate/${demande.id}`)}
         >
-          {demande.statut === "VALIDEE" ? "Convoquer" : "Examiner"}
+          {(etapes[demande.statut] ?? { action: "Consulter" }).action}
         </Button>
       ),
     },
@@ -86,7 +108,7 @@ export function DemandesCorporateResponsable() {
           Demandes corporate à traiter
         </h1>
         <p className="text-sm text-slate-500">
-          Validation des dossiers, génération du contrat et convocation au siège.
+          Du contrôle initial jusqu'à la facturation, aux cartes et à la finalisation.
         </p>
       </div>
 

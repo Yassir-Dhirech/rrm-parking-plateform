@@ -58,7 +58,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
   const columns: ColumnsType<DemandeOperationnelleCarte> = [
     { title: "RÉFÉRENCE", dataIndex: "reference" },
     { title: "CLIENT", dataIndex: "nomClient" },
-    { title: "CIN", dataIndex: "cin" },
+    { title: "CIN / ICE", dataIndex: "cin" },
     { title: "DEMANDE", dataIndex: "referenceDemandeClient" },
     { title: "CARTE", dataIndex: "referenceCarte" },
     { title: "N° PHYSIQUE", dataIndex: "numeroCarte", render: (v) => v || "—" },

@@ -255,6 +255,44 @@ export async function convoquerClientCorporate(
   return response.data;
 }
 
+export async function enregistrerPaiementCorporate(
+  demandeId: number,
+  requete: EnregistrementPaiementRequest
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/paiement-cheque`,
+    requete
+  );
+  return response.data;
+}
+
+export async function declarerRetourContratCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/retour-contrat-legalise`
+  );
+  return response.data;
+}
+
+export async function genererFactureCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/facturation`
+  );
+  return response.data;
+}
+
+export async function finaliserDemandeCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/finalisation`
+  );
+  return response.data;
+}
+
 export async function telechargerContratCorporatePdf(
   demandeId: number
 ): Promise<string> {

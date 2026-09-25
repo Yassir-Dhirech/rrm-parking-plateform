@@ -114,7 +114,7 @@ public class FacturePdfService {
         writeCentered(content, BOLD_ITALIC, 13, 330, 675,
                 safe(facture.clientNom()).toUpperCase(Locale.ROOT));
         writeCentered(content, ITALIC, 11, 330, 657,
-                "CIN : " + safe(facture.clientIdentifiant()));
+                "CIN / ICE : " + safe(facture.clientIdentifiant()));
         writeCentered(content, ITALIC, 10, 330, 640,
                 safe(facture.email()));
     }

@@ -6,12 +6,17 @@ import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
 import com.rrm.parking.carte.enums.TypeOperationCarte;
 import com.rrm.parking.carte.event.CarteActiveeEvent;
 import com.rrm.parking.carte.repository.DemandeOperationnelleRepository;
+import com.rrm.parking.carte.repository.CarteAccesRepository;
+import com.rrm.parking.carte.enums.StatutCarteAcces;
+import com.rrm.parking.client.entity.Client;
+import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
+import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.repository.FactureRepository;
@@ -42,6 +47,7 @@ public class OperationCarteService {
 
     private final DemandeOperationnelleRepository operationRepository;
     private final DemandeClientRepository demandeRepository;
+    private final CarteAccesRepository carteRepository;
     private final FactureRepository factureRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -109,6 +115,16 @@ public class OperationCarteService {
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerActivation(utilisateur);
 
+        if (contexte.corporate()) {
+            operationRepository.flush();
+            marquerCorporatePretSiToutesCartesActives(
+                    operation,
+                    contexte,
+                    utilisateur
+            );
+            return versReponse(operation, contexte);
+        }
+
         if (contexte.renouvellement()) {
             publierNotificationActivation(operation, contexte);
             return versReponse(operation, contexte);
@@ -143,12 +159,40 @@ public class OperationCarteService {
                 facture.getId(),
                 contexte.demande().getReference(),
                 operation.getCarteAcces().getReference(),
-                contexte.client().getEmail(),
-                contexte.client().getNomComplet(),
+                contexte.email(),
+                contexte.nomClient(),
                 contexte.renouvellement(),
                 periode == null ? null : periode.getDateDebut(),
                 periode == null ? null : periode.getDateFin()
         ));
+    }
+
+    private void marquerCorporatePretSiToutesCartesActives(
+            DemandeOperationnelle operation,
+            ContexteDemande contexte,
+            Utilisateur superviseur
+    ) {
+        DemandeNouveauContratCorporate demande =
+                (DemandeNouveauContratCorporate) contexte.demande();
+        var cartes = carteRepository.findByAbonnementIdOrderByIdAsc(
+                operation.getCarteAcces().getAbonnement().getId()
+        );
+        boolean toutesActives = cartes.size() == demande.getNombrePlaces()
+                && cartes.stream().allMatch(carte ->
+                carte.getStatut() == StatutCarteAcces.ACTIVE);
+        if (!toutesActives) {
+            return;
+        }
+
+        var derniereActivation = cartes.stream()
+                .map(carte -> carte.getDateActivation())
+                .filter(java.util.Objects::nonNull)
+                .max(java.time.LocalDateTime::compareTo)
+                .orElseThrow(() -> new ConflitMetierException(
+                        "La date d'activation des cartes est introuvable"
+                ));
+        demande.marquerCartesActivees(derniereActivation, superviseur);
+        demandeRepository.save(demande);
     }
 
     @Transactional
@@ -212,8 +256,8 @@ public class OperationCarteService {
         var facture = contexte.facture();
         return DemandeOperationnelleResponse.depuis(
                 operation, demande.getId(), demande.getReference(),
-                contexte.client().getNomComplet(), contexte.client().getCin(),
-                contexte.client().getEmail(), contexte.immatriculation(),
+                contexte.nomClient(), contexte.identifiantClient(),
+                contexte.email(), contexte.immatriculation(),
                 contexte.parkingNom(),
                 facture == null ? null : facture.getId(),
                 facture == null ? null : facture.getNumero()
@@ -229,10 +273,28 @@ public class OperationCarteService {
                             "Demande cliente liée à la carte introuvable"));
         }
         DemandeClient reelle = (DemandeClient) Hibernate.unproxy(brute);
-        if (!(Hibernate.unproxy(reelle.getClient())
-                instanceof ClientParticulier client)) {
-            throw new ConflitMetierException(
-                    "Ce type de demande n'est pas encore pris en charge");
+        Client clientBrut = (Client) Hibernate.unproxy(reelle.getClient());
+
+        if (reelle instanceof DemandeNouveauContratCorporate corporate
+                && clientBrut instanceof ClientEntreprise entreprise) {
+            Facture facture = factureRepository
+                    .findByPaiementDemandeId(reelle.getId())
+                    .orElse(null);
+            return new ContexteDemande(
+                    reelle,
+                    entreprise.getRaisonSociale(),
+                    entreprise.getIce(),
+                    entreprise.getEmail(),
+                    facture,
+                    operation.getCarteAcces().getImmatriculationAffectee(),
+                    corporate.getParking().getNom(),
+                    false,
+                    true
+            );
+        }
+
+        if (!(clientBrut instanceof ClientParticulier client)) {
+            throw new ConflitMetierException("Ce type de demande n'est pas pris en charge");
         }
 
         DemandeNouvelAbonnementRegulier demandeInitiale = demandeRepository
@@ -252,11 +314,14 @@ public class OperationCarteService {
                 .orElse(null);
         return new ContexteDemande(
                 reelle,
-                client,
+                client.getNomComplet(),
+                client.getCin(),
+                client.getEmail(),
                 facture,
                 demandeInitiale.getVehicule().getImmatriculation(),
                 parkingNom,
-                renouvellement
+                renouvellement,
+                false
         );
     }
 
@@ -274,11 +339,14 @@ public class OperationCarteService {
 
     private record ContexteDemande(
             DemandeClient demande,
-            ClientParticulier client,
+            String nomClient,
+            String identifiantClient,
+            String email,
             Facture facture,
             String immatriculation,
             String parkingNom,
-            boolean renouvellement
+            boolean renouvellement,
+            boolean corporate
     ) {
     }
 }

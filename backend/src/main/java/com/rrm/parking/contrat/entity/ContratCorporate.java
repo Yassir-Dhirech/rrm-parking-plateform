@@ -167,6 +167,24 @@ public class ContratCorporate {
         statut = StatutContrat.ACTIF;
     }
 
+    /**
+     * Le DG signe le document papier hors plateforme. Le responsable ne fait
+     * donc pas une étape de signature numérique : la génération de la facture
+     * vaut déclaration que le contrat légalisé et signé est disponible.
+     */
+    public void activerApresSignatureExterne(
+            LocalDate nouvelleDateDebut,
+            LocalDate nouvelleDateFin
+    ) {
+        verifierStatut(StatutContrat.RETOURNE_SIGNE_LEGALISE);
+        verifierDates(nouvelleDateDebut, nouvelleDateFin);
+
+        dateSignatureDG = LocalDateTime.now();
+        dateDebut = nouvelleDateDebut;
+        dateFin = nouvelleDateFin;
+        statut = StatutContrat.ACTIF;
+    }
+
     public void marquerExpire() {
         verifierStatut(StatutContrat.ACTIF);
         statut = StatutContrat.EXPIRE;

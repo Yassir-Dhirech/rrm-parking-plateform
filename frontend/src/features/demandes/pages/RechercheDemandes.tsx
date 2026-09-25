@@ -45,6 +45,23 @@ const statutConfig: Record<
     label: "Paiement et signature attendus",
     color: "gold",
   },
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: {
+    label: "Retour du contrat légalisé attendu",
+    color: "orange",
+  },
+  EN_ATTENTE_FACTURATION: {
+    label: "Prête à facturer",
+    color: "geekblue",
+  },
+  EN_PREPARATION_CARTES: {
+    label: "Cartes en préparation",
+    color: "cyan",
+  },
+  PRETE_A_FINALISER: {
+    label: "Prête à finaliser",
+    color: "lime",
+  },
+  FINALISEE: { label: "Finalisée", color: "green" },
   PAYEE: { label: "Payée", color: "cyan" },
   EN_ATTENTE_CORRECTION: {
     label: "En attente de correction",

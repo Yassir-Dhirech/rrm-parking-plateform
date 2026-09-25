@@ -465,6 +465,7 @@ public abstract class DemandeClient {
 
     public boolean estTerminee() {
         return statut == StatutDemande.VALIDEE
+                || statut == StatutDemande.FINALISEE
                 || statut == StatutDemande.REFUSEE
                 || statut == StatutDemande.EXPIREE
                 || statut == StatutDemande.ANNULEE;
