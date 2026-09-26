@@ -223,38 +223,7 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
               />
             </div>
 
-            {/* Numbered Selector Buttons */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                Accès rapide (Parkings 1 à 5) :
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {RABAT_PARKINGS_MAP_DATA.map((p) => {
-                  const isSelected = activeParking.id === p.id;
-                  const color = getPinColor(p.statutSaturation);
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => handleSelectParkingItem(p)}
-                      style={{
-                        flex: 1,
-                        padding: "6px 0",
-                        borderRadius: 8,
-                        border: isSelected ? `2px solid ${color}` : "1px solid #cbd5e1",
-                        backgroundColor: isSelected ? "#001E3D" : "#ffffff",
-                        color: isSelected ? "#ffffff" : "#1e293b",
-                        fontWeight: 800,
-                        fontSize: 13,
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {p.numeroPin}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            
 
             {/* Filtered Search Results List (if searching) */}
             {searchQuery.trim() && (
