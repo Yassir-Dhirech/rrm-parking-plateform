@@ -64,7 +64,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 3,
     reference: "DEM-2026-000003",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "PAIEMENT_ENREGISTRE",
+    statut: "PAYEE",
     clientNom: "Sara Bennis",
     typeClient: "PARTICULIER",
     cin: "B998811",
@@ -84,7 +84,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     slaRestantJours: 6,
     slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       montant: 1310, // 1260 + 50 RFID
       datePaiement: "10/09/2026 14:30",
       validePar: "Agent Rachid (Guichet Agdal)",
@@ -171,7 +171,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     slaRestantJours: 5,
     slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       montant: 50,
       datePaiement: "04/09/2026 16:45",
       validePar: "Agent Hassan",
@@ -182,7 +182,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 7,
     reference: "DEM-2026-000007",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "PAIEMENT_ENREGISTRE",
+    statut: "PAYEE",
     clientNom: "Anas Benjelloun",
     typeClient: "PARTICULIER",
     cin: "K123456",
@@ -202,7 +202,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     slaRestantJours: 6,
     slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       montant: 2570, // 2520 + 50 RFID
       datePaiement: "11/09/2026 09:30",
       validePar: "Agent Rachid (Guichet Agdal)",
@@ -235,7 +235,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 9,
     reference: "DEM-2026-000009",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "REJETEE",
+    statut: "REFUSEE",
     clientNom: "Omar Tazi",
     typeClient: "PARTICULIER",
     cin: "H334455",
@@ -260,7 +260,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 10,
     reference: "DEM-2026-000010",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "CORRIGEE",
+    statut: "SOUMISE",
     clientNom: "Fatima Zahra Mouline",
     typeClient: "PARTICULIER",
     cin: "J778899",
@@ -317,7 +317,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 12,
     reference: "DEM-2026-000012",
     typeDemande: "PERTE_CARTE",
-    statut: "PAIEMENT_ENREGISTRE",
+    statut: "PAYEE",
     clientNom: "Reda Bennani",
     typeClient: "PARTICULIER",
     cin: "L998877",
@@ -338,7 +338,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     slaRestantJours: 6,
     slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       montant: 50,
       datePaiement: "11/09/2026 08:45",
       validePar: "Agent Rachid (Guichet Agdal)",
@@ -393,7 +393,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 15,
     reference: "DEM-2026-000015",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "PAIEMENT_ENREGISTRE",
+    statut: "PAYEE",
     clientNom: "Salma Idrissi",
     typeClient: "PARTICULIER",
     cin: "Q112244",
@@ -440,7 +440,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     email: "direction@maroclogistique.ma",
     telephone: "0537112233",
     immatriculation: "Flotte Logistique (8 Utilitaires)",
-    typeVehicule: "UTILITAIRE",
+    typeVehicule: "AUTRE",
     traiteParNom: "Mme. Leila Benali (Responsable)",
     roleTraitePar: "RESPONSABLE",
     dateTraitement: "03/09/2026 15:30",
@@ -482,7 +482,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     id: 18,
     reference: "DEM-2026-000018",
     typeDemande: "NOUVEL_ABONNEMENT",
-    statut: "PAIEMENT_ENREGISTRE",
+    statut: "PAYEE",
     clientNom: "Zineb Chafiq",
     typeClient: "PARTICULIER",
     cin: "T889911",
@@ -502,7 +502,7 @@ const mockDemandesStore: Record<number, DemandeDetail> = {
     slaRestantJours: 6,
     slaStatut: "DANS_LES_DELAIS",
     paiementInfo: {
-      modePaiement: "ESPECES",
+      modePaiement: "ESPECE",
       montant: 3650, // 3600 + 50 RFID
       datePaiement: "11/09/2026 11:00",
       validePar: "Agent Hassan (Guichet Salé)",
@@ -524,7 +524,7 @@ export interface SlaAgentPerformance {
 export async function getSlaPerformanceStatsMock() {
   const demandes = Object.values(mockDemandesStore);
   const total = demandes.length;
-  const traites = demandes.filter((d) => d.statut === "VALIDEE" || d.statut === "PAIEMENT_ENREGISTRE" || d.statut === "REJETEE");
+  const traites = demandes.filter((d) => d.statut === "VALIDEE" || d.statut === "PAYEE" || d.statut === "REFUSEE");
   const dureeMoyenne = traites.reduce((acc, curr) => acc + (curr.dureeTraitementJours || 1.5), 0) / (traites.length || 1);
   const dansLesDelais = traites.filter((d) => (d.dureeTraitementJours || 1.5) <= 7).length;
 
@@ -545,7 +545,8 @@ export async function getSlaPerformanceStatsMock() {
 export async function getDemandesMock(): Promise<DemandeListItem[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   return Object.values(mockDemandesStore).map((d) => {
-    const isUnpaid = d.statut === "SOUMISE" || d.statut === "CORRIGEE" || d.statut === "EN_COURS";
+    const isUnpaid = d.statut === "SOUMISE" ||
+                     d.statut === "EN_ATTENTE_PAIEMENT";
     const hasExpired = isUnpaid && isDossierExpired(d.dateCreation, 7);
     const dateExp = d.dateExpiration || getExpirationDateFormatted(d.dateCreation, 7);
     const remaining = getValidityDaysRemaining(d.dateCreation, 7);
@@ -575,7 +576,7 @@ export async function getDemandeByIdMock(id: number): Promise<DemandeDetail> {
   const found = mockDemandesStore[id];
   if (!found) throw new Error("Demande introuvable");
 
-  const isUnpaid = found.statut === "SOUMISE" || found.statut === "CORRIGEE" || found.statut === "EN_COURS";
+  const isUnpaid = found.statut === "SOUMISE" || found.statut === "EN_ATTENTE_PAIEMENT" ;
   const hasExpired = isUnpaid && isDossierExpired(found.dateCreation, 7);
   const dateExp = found.dateExpiration || getExpirationDateFormatted(found.dateCreation, 7);
   const remaining = getValidityDaysRemaining(found.dateCreation, 7);
@@ -634,7 +635,7 @@ export async function submitPublicDemande(input: PublicDemandeInput): Promise<De
     dureeMois: input.dureeMois || (input.typeClient === "ENTREPRISE" ? 240 : 3),
     nombreAbonnements: input.nombreAbonnements || 1,
     montantTotal: input.montantTotal || 1800,
-    modePaiement: (input as any).modePaiement || "ESPECES",
+    modePaiement: (input as any).modePaiement || "ESPECE",
   };
 
   mockDemandesStore[newId] = newDemande;
@@ -656,7 +657,9 @@ export async function searchDemandeByReferenceMock(query: string): Promise<Deman
   if (!found) return null;
 
   // Auto-expire if unpaid and older than 7 days
-  const isUnpaid = found.statut === "SOUMISE" || found.statut === "CORRIGEE" || found.statut === "EN_COURS";
+ const isUnpaid =
+   found.statut === "SOUMISE" ||
+   found.statut === "EN_ATTENTE_PAIEMENT";
   const hasExpired = isUnpaid && isDossierExpired(found.dateCreation, 7);
   if (hasExpired) {
     found.statut = "EXPIREE";
@@ -693,7 +696,9 @@ export async function updatePublicDemandeMock(reference: string, updates: Partia
   const updated: DemandeDetail = {
     ...currentDemande,
     ...updates,
-    statut: currentDemande.statut === "REJETEE" ? "CORRIGEE" : currentDemande.statut,
+    statut: currentDemande.statut === "REFUSEE"
+              ? "SOUMISE"
+              : currentDemande.statut
   };
 
   mockDemandesStore[id] = updated;
@@ -719,7 +724,7 @@ export async function submitPaiementGuichetMock(id: number, paymentInfo: Payment
   await new Promise((resolve) => setTimeout(resolve, 400));
   if (mockDemandesStore[id]) {
     const dem = mockDemandesStore[id];
-    dem.statut = "PAIEMENT_ENREGISTRE";
+    dem.statut = "PAYEE";
     dem.paiementInfo = {
       ...paymentInfo,
       datePaiement: formatDate(new Date().toISOString()),
@@ -850,7 +855,12 @@ export async function addRenouvellementDirectMock(input: DirectRenewalInput): Pr
     email: sub.email,
     telephone: sub.telephone,
     immatriculation: sub.immatriculation,
-    typeVehicule: sub.typeVehicule,
+    typeVehicule:
+      sub.typeVehicule === "VOITURE" ||
+      sub.typeVehicule === "MOTO" ||
+      sub.typeVehicule === "AUTRE"
+        ? sub.typeVehicule
+        : "AUTRE",
     paiementInfo: {
       ...input.paymentInfo,
       montant: input.montantTotal || input.paymentInfo.montant,
@@ -867,7 +877,7 @@ export async function addRenouvellementDirectMock(input: DirectRenewalInput): Pr
 export async function rejeterDemandeMock(id: number, raison: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   if (mockDemandesStore[id]) {
-    mockDemandesStore[id].statut = "REJETEE";
+    mockDemandesStore[id].statut = "REFUSEE";
     mockDemandesStore[id].raisonRejet = raison;
   }
 }

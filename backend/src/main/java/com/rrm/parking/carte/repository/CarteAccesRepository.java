@@ -18,6 +18,10 @@ public interface CarteAccesRepository
             String numeroCarte
     );
 
+    Optional<CarteAcces> findByNumeroCarteIgnoreCase(
+            String numeroCarte
+    );
+
     boolean existsByReference(
             String reference
     );
@@ -27,6 +31,10 @@ public interface CarteAccesRepository
     );
 
     List<CarteAcces> findByAbonnementId(
+            Long abonnementId
+    );
+
+    List<CarteAcces> findByAbonnementIdOrderByIdAsc(
             Long abonnementId
     );
 

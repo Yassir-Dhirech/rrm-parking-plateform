@@ -1,6 +1,7 @@
 package com.rrm.parking.abonnement.entity;
 
 import com.rrm.parking.client.entity.ClientParticulier;
+import com.rrm.parking.abonnement.enums.StatutAbonnement;
 import jakarta.persistence.*;
 import com.rrm.parking.parking.entity.Parking;
 
@@ -56,7 +57,9 @@ public class AbonnementRegulier extends Abonnement {
     }
 
     public boolean peutEtreRenouvele() {
-        return estActif() && !getPeriodes().isEmpty();
+        return (getStatut() == StatutAbonnement.ACTIF
+                || getStatut() == StatutAbonnement.EXPIRE)
+                && !getPeriodes().isEmpty();
     }
 
     public Optional<PeriodeAbonnement> obtenirPeriodeActive() {
@@ -117,9 +120,10 @@ public class AbonnementRegulier extends Abonnement {
                 "La date de changement est obligatoire"
         );
 
-        if (!estActif()) {
+        if (getStatut() != StatutAbonnement.ACTIF
+                && getStatut() != StatutAbonnement.EXPIRE) {
             throw new IllegalStateException(
-                    "Seul un abonnement actif peut changer de parking"
+                    "Seul un abonnement actif ou expiré peut changer de parking"
             );
         }
 

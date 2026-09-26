@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.rrm.parking.parking.entity.Parking;
+import com.rrm.parking.demande.enums.StatutDemande;
+import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.tarification.dto.response.TarifParkingPublicResponse;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
 import org.springframework.http.HttpStatus;
@@ -40,6 +42,9 @@ public class ParkingPublicService {
     private final AffectationParkingRepository
             affectationParkingRepository;
 
+    private final DemandeNouveauContratCorporateRepository
+            demandeCorporateRepository;
+
     @Transactional(readOnly = true)
     public List<ParkingPublicResponse>
     listerParkingsPourCarte() {
@@ -58,13 +63,7 @@ public class ParkingPublicService {
 
         return construireReponses(
                 EnumSet.of(StatutParking.ACTIF)
-        )
-                .stream()
-                .filter(
-                        ParkingPublicResponse
-                                ::souscriptionDisponible
-                )
-                .toList();
+        );
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +123,27 @@ public class ParkingPublicService {
                                                 ::getPlacesOccupees
                                 )
                         );
+
+        demandeCorporateRepository
+                .compterPlacesReserveesParParking(
+                        EnumSet.of(
+                                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
+                                StatutDemande.EN_ATTENTE_PAIEMENT,
+                                StatutDemande.PAYEE,
+                                StatutDemande.VALIDEE,
+                                StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE,
+                                StatutDemande.EN_ATTENTE_RETOUR_CONTRAT_LEGALISE,
+                                StatutDemande.EN_ATTENTE_FACTURATION,
+                                StatutDemande.EN_PREPARATION_CARTES,
+                                StatutDemande.PRETE_A_FINALISER,
+                                StatutDemande.FINALISEE
+                        )
+                )
+                .forEach(occupation -> occupationsParParking.merge(
+                        occupation.getParkingId(),
+                        occupation.getPlacesOccupees(),
+                        Long::sum
+                ));
 
         return parkingRepository
                 .findAllByStatutInOrderByNomAsc(

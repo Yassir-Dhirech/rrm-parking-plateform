@@ -185,6 +185,19 @@ public abstract class DemandeClient {
         );
     }
 
+    public void confirmerOtpAvantValidationResponsable() {
+        verifierStatutActuel(StatutDemande.SOUMISE);
+
+        dateValidationOtp = LocalDateTime.now();
+
+        appliquerTransition(
+                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
+                OrigineTransition.CLIENT,
+                null,
+                "Validation du code OTP corporate"
+        );
+    }
+
     public void marquerPayee(Utilisateur agent) {
         verifierStatutActuel(
                 StatutDemande.EN_ATTENTE_PAIEMENT
@@ -239,6 +252,69 @@ public abstract class DemandeClient {
                 OrigineTransition.UTILISATEUR_INTERNE,
                 utilisateur,
                 commentaire
+        );
+    }
+
+    public void validerParResponsable(
+            Utilisateur utilisateur,
+            String commentaire
+    ) {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE
+        );
+
+        Objects.requireNonNull(
+                utilisateur,
+                "Le responsable ayant validé la demande est obligatoire"
+        );
+
+        appliquerTransition(
+                StatutDemande.VALIDEE,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                utilisateur,
+                commentaire
+        );
+    }
+
+    public void demanderCorrection(
+            Utilisateur utilisateur,
+            String motif
+    ) {
+        verifierStatutActuel(StatutDemande.PAYEE);
+
+        Objects.requireNonNull(
+                utilisateur,
+                "L'utilisateur demandant la correction est obligatoire"
+        );
+
+        if (motif == null || motif.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Le motif de correction est obligatoire"
+            );
+        }
+
+        motifRefus = motif.trim();
+
+        appliquerTransition(
+                StatutDemande.EN_ATTENTE_CORRECTION,
+                OrigineTransition.UTILISATEUR_INTERNE,
+                utilisateur,
+                motifRefus
+        );
+    }
+
+    public void resoumettreApresCorrection() {
+        verifierStatutActuel(
+                StatutDemande.EN_ATTENTE_CORRECTION
+        );
+
+        motifRefus = null;
+
+        appliquerTransition(
+                StatutDemande.PAYEE,
+                OrigineTransition.CLIENT,
+                null,
+                "Dossier corrigé et renvoyé en validation finale"
         );
     }
 
@@ -347,7 +423,14 @@ public abstract class DemandeClient {
             );
         }
 
-        if (statut != null && estTerminee()) {
+        boolean continuationCorporateAutorisee =
+                statut == StatutDemande.VALIDEE
+                        && nouveauStatut
+                        == StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE;
+
+        if (statut != null
+                && estTerminee()
+                && !continuationCorporateAutorisee) {
             throw new IllegalStateException(
                     "Une demande terminée ne peut plus changer de statut"
             );
@@ -382,6 +465,7 @@ public abstract class DemandeClient {
 
     public boolean estTerminee() {
         return statut == StatutDemande.VALIDEE
+                || statut == StatutDemande.FINALISEE
                 || statut == StatutDemande.REFUSEE
                 || statut == StatutDemande.EXPIREE
                 || statut == StatutDemande.ANNULEE;

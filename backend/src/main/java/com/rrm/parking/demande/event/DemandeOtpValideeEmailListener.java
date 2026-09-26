@@ -92,7 +92,15 @@ public class DemandeOtpValideeEmailListener {
                         .replace('_', ' ')
         );
 
-        String montant = evenement
+        String montantAbonnement = evenement
+                .montantAbonnementTtc()
+                .toPlainString();
+
+        String fraisCarte = evenement
+                .fraisCarteTtc()
+                .toPlainString();
+
+        String montantTotal = evenement
                 .montantTotalTtc()
                 .toPlainString();
 
@@ -359,13 +367,51 @@ public class DemandeOtpValideeEmailListener {
 
                                             <tr>
                                                 <td style="
+                                                    padding:13px 16px;
+                                                    border-bottom:1px solid #e2e8f0;
+                                                    color:#64748b;
+                                                    font-size:14px;
+                                                ">
+                                                    Abonnement TTC
+                                                </td>
+                                                <td align="right" style="
+                                                    padding:13px 16px;
+                                                    border-bottom:1px solid #e2e8f0;
+                                                    font-size:14px;
+                                                    font-weight:bold;
+                                                ">
+                                                    %s DH
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="
+                                                    padding:13px 16px;
+                                                    border-bottom:1px solid #e2e8f0;
+                                                    color:#64748b;
+                                                    font-size:14px;
+                                                ">
+                                                    Carte d’accès TTC
+                                                </td>
+                                                <td align="right" style="
+                                                    padding:13px 16px;
+                                                    border-bottom:1px solid #e2e8f0;
+                                                    font-size:14px;
+                                                    font-weight:bold;
+                                                ">
+                                                    %s DH
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="
                                                     padding:16px;
                                                     background-color:#ecfdf5;
                                                     color:#047857;
                                                     font-size:15px;
                                                     font-weight:bold;
                                                 ">
-                                                    Montant total TTC
+                                                    Total à payer TTC
                                                 </td>
                                                 <td align="right" style="
                                                     padding:16px;
@@ -450,7 +496,9 @@ public class DemandeOtpValideeEmailListener {
                 forfait,
                 evenement.dureeEnMois(),
                 modePaiement,
-                montant,
+                montantAbonnement,
+                fraisCarte,
+                montantTotal,
                 dateLimite
         );
     }

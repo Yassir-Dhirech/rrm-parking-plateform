@@ -6,9 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
-@ConfigurationProperties(
-        prefix = "app.integration.brevo"
-)
+@ConfigurationProperties(prefix = "app.integration.brevo")
 public record BrevoProperties(
 
         @NotBlank
@@ -22,6 +20,8 @@ public record BrevoProperties(
         String senderEmail,
 
         @NotBlank
-        String senderName
+        String senderName,
+
+        boolean smsEnabled
 ) {
 }

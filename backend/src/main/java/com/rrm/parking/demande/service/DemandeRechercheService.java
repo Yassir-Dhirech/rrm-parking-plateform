@@ -11,7 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.rrm.parking.demande.dto.response.DemandeDetailResponse;
+import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
+import com.rrm.parking.document.repository.PieceJointeRepository;
+import org.hibernate.Hibernate;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,6 +28,9 @@ public class DemandeRechercheService {
 
     private final ClientParticulierRepository
             clientParticulierRepository;
+
+    private final PieceJointeRepository
+            pieceJointeRepository;
 
     @Transactional(readOnly = true)
     public List<DemandeRechercheResponse> rechercher(
@@ -131,10 +138,107 @@ public class DemandeRechercheService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<DemandeRechercheResponse> listerDemandesAValider(
+            String recherche,
+            String ordre
+    ) {
+        boolean plusRecent = "RECENT".equalsIgnoreCase(
+                ordre == null ? "" : ordre.trim()
+        );
+
+        List<DemandeClient> demandes = plusRecent
+                ? demandeClientRepository
+                .findByStatutOrderByDateSoumissionDesc(
+                        StatutDemande.PAYEE
+                )
+                : demandeClientRepository
+                .findByStatutOrderByDateSoumissionAsc(
+                        StatutDemande.PAYEE
+                );
+
+        String terme = recherche == null
+                ? ""
+                : recherche.trim().toUpperCase(Locale.ROOT);
+
+        return demandes.stream()
+                .map(DemandeRechercheResponse::depuis)
+                .filter(demande ->
+                        terme.isBlank()
+                                || contient(demande.reference(), terme)
+                                || contient(demande.identifiantClient(), terme)
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DemandeDetailResponse obtenirDetail(
+            Long id
+    ) {
+        DemandeClient demande =
+                demandeClientRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Demande introuvable"
+                                )
+                        );
+
+        DemandeClient demandeReelle =
+                (DemandeClient) Hibernate.unproxy(demande);
+
+        if (demandeReelle instanceof DemandeNouvelAbonnementRegulier reguliere) {
+            return DemandeDetailResponse.depuis(
+                    reguliere,
+                    pieceJointeRepository
+                            .findByDemandeIdOrderByDateDepotDesc(id)
+            );
+        }
+
+        if (demandeReelle instanceof DemandeRenouvellementRegulier renouvellement) {
+            DemandeClient demandeInitiale = demandeClientRepository
+                    .findByAbonnementGenereId(
+                            renouvellement.getAbonnementConcerne().getId()
+                    )
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "La demande initiale de l'abonnement est introuvable"
+                    ));
+
+            DemandeClient demandeInitialeReelle =
+                    (DemandeClient) Hibernate.unproxy(demandeInitiale);
+
+            if (!(demandeInitialeReelle
+                    instanceof DemandeNouvelAbonnementRegulier initiale)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "La demande d'origine de l'abonnement est invalide"
+                );
+            }
+
+            return DemandeDetailResponse.depuis(
+                    renouvellement,
+                    initiale.getVehicule(),
+                    pieceJointeRepository
+                            .findByDemandeIdOrderByDateDepotDesc(initiale.getId())
+            );
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.NOT_IMPLEMENTED,
+                "Le détail de ce type de demande n’est pas encore disponible"
+        );
+    }
+
     private boolean estRenseignee(
             String valeur
     ) {
         return valeur != null
                 && !valeur.isBlank();
+    }
+
+    private boolean contient(String valeur, String terme) {
+        return valeur != null
+                && valeur.toUpperCase(Locale.ROOT).contains(terme);
     }
 }

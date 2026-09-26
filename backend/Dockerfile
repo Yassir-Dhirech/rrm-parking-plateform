@@ -8,9 +8,19 @@ RUN mvn clean package -DskipTests -B
 
 # Stage 2: Minimal Runtime Image (~160MB)
 FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+RUN addgroup -S appgroup \
+    && adduser -S appuser -G appgroup \
+    && mkdir -p /app/storage/demandes \
+    && chown -R appuser:appgroup /app/storage
+
+COPY --from=builder --chown=appuser:appgroup \
+    /app/target/*.jar app.jar
+
 USER appuser
-COPY --from=builder /app/target/*.jar app.jar
+
 EXPOSE 8081
+
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

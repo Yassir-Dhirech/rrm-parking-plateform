@@ -1,6 +1,21 @@
 import { Tag } from "antd";
 
-type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
+type StatutDemande =
+  | "SOUMISE"
+  | "EN_ATTENTE_PAIEMENT"
+  | "EN_ATTENTE_VALIDATION_RESPONSABLE"
+  | "EN_ATTENTE_PAIEMENT_SIGNATURE"
+  | "EN_ATTENTE_RETOUR_CONTRAT_LEGALISE"
+  | "EN_ATTENTE_FACTURATION"
+  | "EN_PREPARATION_CARTES"
+  | "PRETE_A_FINALISER"
+  | "FINALISEE"
+  | "PAYEE"
+  | "EN_ATTENTE_CORRECTION"
+  | "VALIDEE"
+  | "REFUSEE"
+  | "EXPIREE"
+  | "ANNULEE";
 type StatutAbonnement = "EN_ATTENTE" | "ACTIF" | "SUSPENDU" | "EXPIRE" | "RESILIE";
 type StatutPaiement = "EN_ATTENTE" | "CONFIRME" | "ANNULE";
 type StatutFacture = "BROUILLON" | "EMISE" | "SIGNEE" | "ANNULEE";
@@ -20,11 +35,17 @@ const colorMap: Record<AnyStatut, string> = {
   SOUMISE: "blue",
   EN_COURS: "gold",
   EN_ATTENTE_PAIEMENT: "warning",
-  PAIEMENT_ENREGISTRE: "cyan",
+  EN_ATTENTE_VALIDATION_RESPONSABLE: "purple",
+  EN_ATTENTE_PAIEMENT_SIGNATURE: "gold",
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: "orange",
+  EN_ATTENTE_FACTURATION: "geekblue",
+  EN_PREPARATION_CARTES: "cyan",
+  PRETE_A_FINALISER: "lime",
+  FINALISEE: "green",
+  PAYEE: "cyan",
+  EN_ATTENTE_CORRECTION: "orange",
   VALIDEE: "green",
-  REJETEE: "red",
-  CORRIGEE: "orange",
-  COMPLETEE: "default",
+  REFUSEE: "red",
   EN_ATTENTE: "blue",
   ACTIF: "green",
   SUSPENDU: "orange",
@@ -55,11 +76,15 @@ const labelMap: Record<AnyStatut, string> = {
   SOUMISE: "Soumise",
   EN_COURS: "En cours",
   EN_ATTENTE_PAIEMENT: "En attente de paiement (Guichet)",
-  PAIEMENT_ENREGISTRE: "Paiement Enregistré",
-  VALIDEE: "Validée",
-  REJETEE: "Rejetée",
-  CORRIGEE: "Corrigée",
-  COMPLETEE: "Complétée",
+  EN_ATTENTE_VALIDATION_RESPONSABLE: "En attente de validation responsable",
+  EN_ATTENTE_PAIEMENT_SIGNATURE: "Paiement et signature attendus",
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: "Retour du contrat légalisé attendu",
+  EN_ATTENTE_FACTURATION: "Prête à facturer",
+  EN_PREPARATION_CARTES: "Cartes en préparation",
+  PRETE_A_FINALISER: "Prête à finaliser",
+  FINALISEE: "Finalisée",
+  PAYEE: "Paiement enregistré",
+  EN_ATTENTE_CORRECTION: "Correction demandée",
   EN_ATTENTE: "En attente",
   ACTIF: "Actif",
   SUSPENDU: "Suspendu",
@@ -67,6 +92,8 @@ const labelMap: Record<AnyStatut, string> = {
   RESILIE: "Résilié",
   CONFIRME: "Confirmé",
   ANNULE: "Annulé",
+  VALIDEE: "Validée",
+  REFUSEE: "Refusée",
   BROUILLON: "Brouillon",
   EMISE: "Émise",
   SIGNEE: "Signée",

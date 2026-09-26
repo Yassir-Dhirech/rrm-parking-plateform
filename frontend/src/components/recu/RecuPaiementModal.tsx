@@ -29,7 +29,7 @@ export interface RecuPaiementData {
   montantAbonnement?: number;
   fraisCarteRfid?: number;
   montantTotal: number;
-  modePaiement: "ESPECES" | "CHEQUE" | "ESPECE";
+  modePaiement: "ESPECE" | "CHEQUE" | "ESPECE";
   numeroCheque?: string;
   banque?: string;
   caissierNom?: string;

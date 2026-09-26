@@ -34,6 +34,9 @@ public class ClientEntreprise extends Client {
     @Column(length = 200)
     private String nomContactPrincipal;
 
+    @Column(length = 100)
+    private String prenomContactPrincipal;
+
     @Column(length = 150)
     private String fonctionContactPrincipal;
 
@@ -92,6 +95,16 @@ public class ClientEntreprise extends Client {
 
     public void setNomContactPrincipal(String nomContactPrincipal) {
         this.nomContactPrincipal = nomContactPrincipal;
+    }
+
+    public String getPrenomContactPrincipal() {
+        return prenomContactPrincipal;
+    }
+
+    public void setPrenomContactPrincipal(
+            String prenomContactPrincipal
+    ) {
+        this.prenomContactPrincipal = prenomContactPrincipal;
     }
 
     public String getFonctionContactPrincipal() {

@@ -1,41 +1,41 @@
 import { useState } from "react";
-import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Select, Table, Dropdown, Badge, message } from "antd";
+import { Row, Col, Card, Progress, Tag, Tooltip, Space, Button, Table, Dropdown, message } from "antd";
 import {
   FileTextOutlined,
-  DollarOutlined,
   SafetyCertificateOutlined,
   FileDoneOutlined,
   ApartmentOutlined,
   TagsOutlined,
   SettingOutlined,
   DownOutlined,
-  EnvironmentOutlined,
-  ReloadOutlined,
   ScanOutlined,
   EyeOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { formatDate } from "../../lib/dateUtils";
 import { ParkingPlansTarifairesModal } from "../parkings/ParkingPlansTarifairesModal";
-import { ChiffreAffairesParkingTable } from "./ChiffreAffairesParkingTable";
-import { getConsolidatedRevenue } from "../../lib/chiffreAffairesService";
+import { ChiffreAffairesDashboard } from "./financial/ChiffreAffairesDashboard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getContratsMock, enregistrerScanContratMock } from "../../api/contratsMock";
 import { ScannerContratModal } from "../../features/contrats/components/ScannerContratModal";
 import { VisualiserScanContratModal } from "../../features/contrats/components/VisualiserScanContratModal";
 import type { ContratScanInfo } from "../../features/contrats/types";
+import { ResponsableParkingMap } from "./ResponsableParkingMap";
+import { ResponsableKpiRow } from "./ResponsableKpiRow";
+import { ResponsableActiveSubscriptionsByParkingChart } from "./ResponsableActiveSubscriptionsByParkingChart";
+import { ResponsableMonthlyRevenueAreaChart } from "./ResponsableMonthlyRevenueAreaChart";
+import { ResponsablePendingValidationList } from "./ResponsablePendingValidationList";
+import { ResponsableParkingMixDonut } from "./ResponsableParkingMixDonut";
+import "./ResponsableDashboardGlass.css";
 
 export function ResponsableDashboardView() {
   const navigate = useNavigate();
-  const { userName } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedSiteFilter, setSelectedSiteFilter] = useState<number | null>(null);
+  const [selectedSiteFilter] = useState<number | null>(null);
   const [plansModalOpen, setPlansModalOpen] = useState(false);
   const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<any | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [selectedContratToScan, setSelectedContratToScan] = useState<any | null>(null);
   const [selectedContratToView, setSelectedContratToView] = useState<any | null>(null);
@@ -51,23 +51,9 @@ export function ResponsableDashboardView() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contrats"] });
       setSelectedContratToScan(null);
-      message.success("Contrat corporate numérisé et archivé avec succès !");
+      message.success("Contrat corporate numÃƒÂ©risÃƒÂ© et archivÃƒÂ© avec succÃƒÂ¨s !");
     },
   });
-
-  const handleResetFilter = () => {
-    setIsRefreshing(true);
-    const wasFiltered = !!selectedSiteFilter;
-    setSelectedSiteFilter(null);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      if (wasFiltered) {
-        message.success("Filtre réinitialisé : Vue globale réseau");
-      } else {
-        message.success("Indicateurs actualisés en temps réel");
-      }
-    }, 400);
-  };
 
   const handleOpenPlans = (parking: any) => {
     setSelectedParkingForPlans(parking);
@@ -81,9 +67,9 @@ export function ResponsableDashboardView() {
       nom: "Parking Bab El Had",
       capaciteTotal: 450,
       quotaParticulier: 180, // 40%
-      abosParticulier: 180,  // 100% alloué
+      abosParticulier: 180,  // 100% allouÃƒÂ©
       quotaCorporate: 135,   // 30%
-      abosCorporate: 135,    // 100% alloué
+      abosCorporate: 135,    // 100% allouÃƒÂ©
       ticketsHorodates: 100, // 22%
       placesLibres: 35,      // 8%
       tauxOccupation: 92.2,
@@ -179,27 +165,6 @@ export function ResponsableDashboardView() {
     ? parkingsCapacityData.filter((p) => p.id === selectedSiteFilter)
     : parkingsCapacityData;
 
-  const isFiltered = !!selectedSiteFilter;
-  const currentParking = isFiltered ? displayedParkings[0] : null;
-
-  // Real-time dynamic recalculations based on selected filter
-  const totalCapacite = displayedParkings.reduce((sum, p) => sum + p.capaciteTotal, 0);
-  const totalOccupes = displayedParkings.reduce((sum, p) => sum + (p.capaciteTotal - p.placesLibres), 0);
-  const totalLibres = displayedParkings.reduce((sum, p) => sum + p.placesLibres, 0);
-  const tauxOccupationGlobal = Math.round((totalOccupes / totalCapacite) * 1000) / 10;
-
-  const totalCA = displayedParkings.reduce((sum, p) => sum + p.caMensuel, 0);
-  const totalCAAbos = displayedParkings.reduce((sum, p) => sum + p.caAbos, 0);
-  const totalCATickets = displayedParkings.reduce((sum, p) => sum + p.caTickets, 0);
-
-  // Synchronisation dynamique avec la Comptabilité
-  const consolidatedData = getConsolidatedRevenue(selectedSiteFilter);
-
-  const totalCorporateCount = displayedParkings.reduce((sum, p) => sum + p.contratsCorporate, 0);
-  const totalAbosParticuliers = displayedParkings.reduce((sum, p) => sum + p.abosParticulier, 0);
-  const totalAbosCorporate = displayedParkings.reduce((sum, p) => sum + p.abosCorporate, 0);
-  const totalAbonnes = totalAbosParticuliers + totalAbosCorporate;
-
   // Pending Executive Approvals (Corporate Contracts & Invoices)
   const pendingContracts = [
     {
@@ -207,7 +172,7 @@ export function ResponsableDashboardView() {
       parkingId: 1,
       parkingNom: "Parking Agdal Gare",
       reference: "CTR-2026-000002",
-      entrepriseNom: "Société Atlas Trans",
+      entrepriseNom: "SociÃƒÂ©tÃƒÂ© Atlas Trans",
       nombreAbonnements: 10,
       formule: "Pass Permanent 24h / 7j (650 MAD)",
       montantMensuel: 6500,
@@ -231,9 +196,9 @@ export function ResponsableDashboardView() {
       parkingId: 1,
       parkingNom: "Parking Agdal Gare",
       reference: "CTR-2026-000007",
-      entrepriseNom: "Banque Centrale Populaire Région",
+      entrepriseNom: "Banque Centrale Populaire RÃƒÂ©gion",
       nombreAbonnements: 25,
-      formule: "Pass Étendu 08h-22h (550 MAD)",
+      formule: "Pass Ãƒâ€°tendu 08h-22h (550 MAD)",
       montantMensuel: 13750,
       duree: "20 Ans (240 Mois)",
       dateCreation: "14/08/2026",
@@ -243,7 +208,7 @@ export function ResponsableDashboardView() {
       parkingId: 2,
       parkingNom: "Parking Hassan II",
       reference: "CTR-2026-000008",
-      entrepriseNom: "Clinique Agdal Santé",
+      entrepriseNom: "Clinique Agdal SantÃƒÂ©",
       nombreAbonnements: 15,
       formule: "Pass Permanent 24h / 7j (650 MAD)",
       montantMensuel: 9750,
@@ -257,7 +222,7 @@ export function ResponsableDashboardView() {
       id: 2,
       parkingId: 1,
       numero: "FACT-AGD-2026-000002",
-      clientNom: "Société Atlas Trans",
+      clientNom: "SociÃƒÂ©tÃƒÂ© Atlas Trans",
       montantTtc: 54500,
       fraisBadge: 500,
       dateEmission: "01/06/2025",
@@ -292,181 +257,38 @@ export function ResponsableDashboardView() {
     : pendingFactures;
 
   return (
-    <div className="space-y-6">
-      {/* 1. Executive Operations Header */}
-      <div className="rounded-2xl bg-white border border-slate-200/90 p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 m-0 tracking-tight">
-                Bonjour, {userName || "Mme. Leila Benali"}
-              </h1>
-              
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {isFiltered ? `Filtre Actif : ${currentParking?.nom}` : "Réseau Opérationnel"}
-              </span>
-            </div>
-            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 mb-0">
-              Pilotage stratégique, suivi de saturation des quotas et gouvernance financière RRM.
-            </p>
-          </div>
+    <div className="space-y-6 responsable-dashboard-glass">
+      {/* Vue exÃ©cutive : KPI + graphiques Ã  gauche, carte/dÃ©tails Ã  droite */}
+      <Row gutter={[16, 16]} align="stretch">
+        <Col xs={24} xl={16}>
+          <div className="space-y-4">
+            <ResponsableKpiRow parkingId={selectedSiteFilter} />
 
-          {/* Clean, High-Impact Executive Controls (Filtered in Real Time) */}
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            {/* 1. Scope Selector */}
-            <Select
-              placeholder="Tous les parkings"
-              value={selectedSiteFilter}
-              onChange={setSelectedSiteFilter}
-              allowClear
-              suffixIcon={<EnvironmentOutlined className="text-secondary" />}
-              className="w-full sm:w-64 font-bold"
-              options={[
-                { value: 3, label: "Parking Bab El Had" },
-                { value: 1, label: "Parking Agdal Gare" },
-                { value: 2, label: "Parking Hassan II" },
-                { value: 4, label: "Parking Chellah" },
-              ]}
-            />
+            <Row gutter={[16, 16]} align="top">
+              <Col xs={24} lg={12}>
+                <div className="space-y-4">
+                  <ResponsableActiveSubscriptionsByParkingChart />
+                  <ResponsablePendingValidationList />
+                </div>
+              </Col>
 
-            {/* 2. Reset / Refresh Button */}
-            <Tooltip title={isFiltered ? "Réinitialiser le filtre" : "Actualiser les indicateurs en temps réel"}>
-              <Button
-                icon={<ReloadOutlined spin={isRefreshing} />}
-                onClick={handleResetFilter}
-                className={`font-bold rounded-xl flex items-center justify-center h-9 ${
-                  isFiltered
-                    ? "border-[#003566] text-[#003566] bg-blue-50/60 hover:bg-blue-100/70 px-3"
-                    : "w-9"
-                }`}
-              >
-                {isFiltered && <span className="text-xs font-bold ml-1">Réinitialiser</span>}
-              </Button>
-            </Tooltip>
-
-            {/* 3. Primary Decision Action: Situation Contrats with Notification Badge */}
-            <Badge count={filteredContracts.length} offset={[-2, 2]}>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => navigate("/responsable/contrats")}
-                className="font-bold rounded-xl shadow-xs flex items-center gap-1.5 h-9"
-                style={{ backgroundColor: "#003566", borderColor: "#003566" }}
-              >
-                <span>Situation Contrats</span>
-              </Button>
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Indicateurs Clés de Gouvernance (4 Cartes Synthétiques) */}
-      <Row gutter={[16, 16]}>
-        {/* KPI 1: Chiffre d'Affaires Réseau */}
-        <Col xs={24} sm={12} lg={6}>
-          <div className="h-full p-4 rounded-2xl bg-white border border-emerald-200 shadow-xs flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider block">
-                  {isFiltered ? `CA — ${currentParking?.nom}` : "Chiffre d'Affaires — Août"}
-                </span>
-                <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
-                  {totalCA.toLocaleString("fr-FR")} MAD
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg font-bold shadow-xs">
-                <DollarOutlined />
-              </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1">
-              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                <span className="text-emerald-700 font-bold">Abos : {(totalCAAbos / 1000).toFixed(0)}k MAD</span>
-                <span>•</span>
-                <span className="text-sky-700 font-bold">Tickets : {(totalCATickets / 1000).toFixed(0)}k MAD</span>
-              </div>
-              <div className="text-[10px] text-slate-400 font-medium flex items-center justify-between pt-0.5">
-                <span className="text-emerald-600">Visa Cpt. : {(consolidatedData.recettesValideesComptable / 1000).toFixed(1)}k MAD</span>
-                <span className="text-amber-600">En cours : {(consolidatedData.recettesEnAttenteVisa / 1000).toFixed(1)}k MAD</span>
-              </div>
-            </div>
+              <Col xs={24} lg={12}>
+                <div className="space-y-4">
+                  <ResponsableMonthlyRevenueAreaChart />
+                  <ResponsableParkingMixDonut />
+                </div>
+              </Col>
+            </Row>
           </div>
         </Col>
 
-        {/* KPI 2: Taux d'Occupation Réseau */}
-        <Col xs={24} sm={12} lg={6}>
-          <div className="h-full p-4 rounded-2xl bg-white border border-amber-200 shadow-xs flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider block">
-                  {isFiltered ? `Occupation — ${currentParking?.nom}` : "Occupation Globale Réseau"}
-                </span>
-                <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
-                  {tauxOccupationGlobal}%
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg font-bold shadow-xs">
-                <ApartmentOutlined />
-              </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
-              <span className="text-slate-600">{totalOccupes} occupées / {totalCapacite} pl.</span>
-              <Tag color="green" className="font-bold m-0 text-[11px]">{totalLibres} libres</Tag>
-            </div>
-          </div>
-        </Col>
-
-        {/* KPI 3: Grands Comptes & Abonnés Actifs */}
-        <Col xs={24} sm={12} lg={6}>
-          <div className="h-full p-4 rounded-2xl bg-white border border-purple-200 shadow-xs flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-black text-purple-800 uppercase tracking-wider block">
-                  Abonnés & Flottes Sous Gestion
-                </span>
-                <span className="text-2xl font-black text-purple-950 leading-tight block mt-1">
-                  {totalAbonnes.toLocaleString("fr-FR")} Abonnés
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg font-bold shadow-xs">
-                <FileTextOutlined />
-              </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
-              <span className="text-purple-700 font-bold">{totalCorporateCount} Corporate</span>
-              <span>•</span>
-              <span className="text-sky-700 font-bold">{totalAbosParticuliers} Résidents</span>
-            </div>
-          </div>
-        </Col>
-
-        {/* KPI 4: Décisions Requises (Contrats et Factures) */}
-        <Col xs={24} sm={12} lg={6}>
-          <div className="h-full p-4 rounded-2xl bg-white border border-sky-200 shadow-xs flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-black text-sky-900 uppercase tracking-wider block">
-                  Visas & Décisions en Attente
-                </span>
-                <span className="text-2xl font-black text-slate-900 leading-tight block mt-1">
-                  {filteredContracts.length + filteredFactures.length} Dossiers
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-[#003566] text-white flex items-center justify-center text-lg font-bold shadow-xs">
-                <SafetyCertificateOutlined />
-              </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
-              <span className="text-purple-700 font-bold">{filteredContracts.length} Contrats</span>
-              <span>•</span>
-              <span className="text-[#003566] font-bold">{filteredFactures.length} Factures</span>
-            </div>
-          </div>
+        <Col xs={24} xl={8}>
+          <ResponsableParkingMap />
         </Col>
       </Row>
 
-      {/* Chiffre d'Affaires Détaillé par Parking : Mensuel & Entre Deux Dates */}
-      <ChiffreAffairesParkingTable />
+      {/* Même source financière et mêmes filtres que l'espace comptable. */}
+      <ChiffreAffairesDashboard audience="RESPONSABLE" />
 
       {/* 4. Parking Quotas & Saturation: Circular Dial + Rectangular Track for Each Site */}
       <Card
@@ -475,11 +297,11 @@ export function ResponsableDashboardView() {
             <Space>
               <ApartmentOutlined style={{ color: "#006398" }} />
               <span className="font-extrabold text-slate-900">
-                Pression des Quotas & Taux d'Occupation Temps Réel par Site
+                Pression des Quotas & Taux d'Occupation Temps RÃƒÂ©el par Site
               </span>
             </Space>
             <Tag color="blue" className="font-black m-0">
-              Règle : 50% Tickets / 50% Abonnements (40% Particuliers / 60% Corporate)
+              RÃƒÂ¨gle : 50% Tickets / 50% Abonnements (40% Particuliers / 60% Corporate)
             </Tag>
           </div>
         }
@@ -519,7 +341,7 @@ export function ResponsableDashboardView() {
                             {
                               key: "parkings",
                               icon: <SettingOutlined style={{ color: "#7c3aed" }} />,
-                              label: <span>Gérer Quotas & Ouvrage</span>,
+                              label: <span>GÃƒÂ©rer Quotas & Ouvrage</span>,
                               onClick: () => navigate("/responsable/parkings"),
                             },
                           ],
@@ -533,15 +355,15 @@ export function ResponsableDashboardView() {
                           style={{ fontWeight: 700, borderRadius: 8, borderColor: "#006398", color: "#006398" }}
                           className="flex items-center gap-1"
                         >
-                          Paramètres <DownOutlined style={{ fontSize: 9 }} />
+                          ParamÃƒÂ¨tres <DownOutlined style={{ fontSize: 9 }} />
                         </Button>
                       </Dropdown>
                     </div>
                     <span className="text-xs text-slate-500 font-semibold block mt-0.5">
-                      Capacité Globale : <strong>{p.capaciteTotal} places</strong>
+                      CapacitÃƒÂ© Globale : <strong>{p.capaciteTotal} places</strong>
                     </span>
                     <div className="mt-2 text-xs font-bold">
-                      Disponibilité Immédiate :{" "}
+                      DisponibilitÃƒÂ© ImmÃƒÂ©diate :{" "}
                       <strong className={isCritical ? "text-red-600 font-black text-sm" : "text-emerald-700 font-black text-sm"}>
                         {p.placesLibres} places libres
                       </strong>
@@ -642,7 +464,7 @@ export function ResponsableDashboardView() {
                 onClick={() => navigate("/responsable/contrats")}
                 className="font-bold text-purple-700 p-0"
               >
-                Gérer →
+                GÃƒÂ©rer Ã¢â€ â€™
               </Button>
             }
             className="rounded-2xl border border-slate-200/80 shadow-xs"
@@ -655,7 +477,7 @@ export function ResponsableDashboardView() {
               scroll={{ x: "max-content" }}
               columns={[
                 {
-                  title: "Référence",
+                  title: "RÃƒÂ©fÃƒÂ©rence",
                   dataIndex: "reference",
                   key: "reference",
                   render: (ref: string, record: any) => (
@@ -680,7 +502,7 @@ export function ResponsableDashboardView() {
                   render: (nb: number) => <Tag color="purple" className="font-bold">{nb} badges</Tag>,
                 },
                 {
-                  title: "Mensualité HT",
+                  title: "MensualitÃƒÂ© HT",
                   dataIndex: "montantMensuel",
                   key: "montantMensuel",
                   render: (val: number) => (
@@ -693,21 +515,21 @@ export function ResponsableDashboardView() {
                   render: (_, record: any) => {
                     if (record.scanInfo?.scanne) {
                       return (
-                        <Tooltip title={`Numérisé le ${record.scanInfo.dateScan} par ${record.scanInfo.scannePar}`}>
+                        <Tooltip title={`NumÃƒÂ©risÃƒÂ© le ${record.scanInfo.dateScan} par ${record.scanInfo.scannePar}`}>
                           <Tag
                             color="success"
                             icon={<CheckCircleOutlined />}
                             style={{ cursor: "pointer", fontWeight: 600 }}
                             onClick={() => setSelectedContratToView(record)}
                           >
-                            Numérisé ({record.scanInfo.nombrePages}p)
+                            NumÃƒÂ©risÃƒÂ© ({record.scanInfo.nombrePages}p)
                           </Tag>
                         </Tooltip>
                       );
                     }
                     return (
                       <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600 }}>
-                        À Scanner
+                        Ãƒâ‚¬ Scanner
                       </Tag>
                     );
                   },
@@ -762,7 +584,7 @@ export function ResponsableDashboardView() {
                 <Space>
                   <FileDoneOutlined style={{ color: "#006398" }} />
                   <span className="font-extrabold text-slate-900">
-                    Factures Officielles à Viser
+                    Factures Officielles ÃƒÂ  Viser
                   </span>
                 </Space>
                 <Tag color="cyan" className="font-black m-0">
@@ -777,7 +599,7 @@ export function ResponsableDashboardView() {
                 onClick={() => navigate("/responsable/factures")}
                 className="font-bold text-[#006398] p-0"
               >
-                Factures →
+                Factures Ã¢â€ â€™
               </Button>
             }
             className="rounded-2xl border border-slate-200/80 shadow-xs"
@@ -796,7 +618,7 @@ export function ResponsableDashboardView() {
                     <div>
                       <div className="font-mono font-black text-slate-900 text-xs">{fact.numero}</div>
                       <div className="text-xs text-slate-600 font-semibold">{fact.clientNom}</div>
-                      <div className="text-[11px] text-slate-400">Émise le {formatDate(fact.dateEmission)}</div>
+                      <div className="text-[11px] text-slate-400">Ãƒâ€°mise le {formatDate(fact.dateEmission)}</div>
                     </div>
 
                     <div className="text-right">
@@ -871,7 +693,7 @@ export function ResponsableDashboardView() {
             statut: "SIGNE",
             vehicules: [],
             dateSignature: "01/01/2026",
-            signePar: "Direction RRM & Représentant Entreprise",
+            signePar: "Direction RRM & ReprÃƒÂ©sentant Entreprise",
             referencePhysique: "PARAPH-CORP-2026",
           }}
           scanInfo={selectedContratToView.scanInfo}

@@ -133,40 +133,36 @@ public class TarifParking {
     }
 
     public BigDecimal calculerMontantTotalHT() {
-        if (prixHT == null || dureeEnMois == null) {
+        if (prixHT == null || tauxTVA == null || dureeEnMois == null) {
             throw new IllegalStateException(
-                    "Le prix mensuel HT et la durée sont obligatoires"
+                    "Le prix mensuel HT, le taux de TVA et la durée sont obligatoires"
             );
         }
 
-        return prixHT
-                .multiply(
-                        BigDecimal.valueOf(dureeEnMois)
-                )
-                .setScale(
-                        2,
+        BigDecimal coefficientTVA = BigDecimal.ONE.add(
+                tauxTVA.divide(
+                        BigDecimal.valueOf(100),
+                        4,
                         RoundingMode.HALF_UP
-                );
+                )
+        );
+
+        return calculerMontantTotalTTC().divide(
+                coefficientTVA,
+                2,
+                RoundingMode.HALF_UP
+        );
     }
 
     public BigDecimal calculerMontantTotalTTC() {
-        if (tauxTVA == null) {
+        if (dureeEnMois == null) {
             throw new IllegalStateException(
-                    "Le taux de TVA est obligatoire"
+                    "La durée du tarif est obligatoire"
             );
         }
 
-        BigDecimal coefficientTVA =
-                BigDecimal.ONE.add(
-                        tauxTVA.divide(
-                                BigDecimal.valueOf(100),
-                                4,
-                                RoundingMode.HALF_UP
-                        )
-                );
-
-        return calculerMontantTotalHT()
-                .multiply(coefficientTVA)
+        return calculerPrixTTC()
+                .multiply(BigDecimal.valueOf(dureeEnMois))
                 .setScale(
                         2,
                         RoundingMode.HALF_UP

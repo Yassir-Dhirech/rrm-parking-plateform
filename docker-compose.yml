@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${RRM_DB_PASSWORD}
       MYSQL_DATABASE: rrm_db
     ports:
       - "3307:3306"
@@ -20,7 +20,7 @@ services:
       retries: 10
       start_period: 15s
 
-  # 2. phpMyAdmin local sur http://localhost:8080
+  # 2. phpMyAdmin local sur http://localhost:8082
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: rrm-phpmyadmin
@@ -32,10 +32,10 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: rootpassword
+      PMA_PASSWORD: ${RRM_DB_PASSWORD}
       UPLOAD_LIMIT: 64M
     ports:
-      - "8080:80"
+      - "8082:80"
 
   # 3. Backend Spring Boot (Java 21) connecté au MySQL local
   backend:
@@ -52,27 +52,69 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rrm_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_DATASOURCE_PASSWORD: ${RRM_DB_PASSWORD}
+      RRM_BOOTSTRAP_ENABLED: ${RRM_BOOTSTRAP_ENABLED:-false}
+      RRM_PARKING_DATA_ENABLED: "true"
       RRM_TARIFF_INIT_ENABLED: "true"
-      RRM_BOOTSTRAP_ENABLED: "true"
-      RRM_ADMIN_EMAIL: admin@rrm.ma
-      RRM_ADMIN_PASSWORD: Admin12345678!
-      RRM_JWT_SECRET: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+
+      RRM_ADMIN_EMAIL: ${RRM_ADMIN_EMAIL:-}
+      RRM_ADMIN_PASSWORD: ${RRM_ADMIN_PASSWORD:-}
+      RRM_JWT_SECRET: ${RRM_JWT_SECRET}
       RRM_STORAGE_PATH: /app/storage
+      RRM_OTP_PROVIDER: ${RRM_OTP_PROVIDER:-brevo}
+      RRM_BREVO_ENABLED: ${RRM_BREVO_ENABLED:-true}
+      RRM_BREVO_API_KEY: ${RRM_BREVO_API_KEY}
+      RRM_BREVO_SMS_SENDER: ${RRM_BREVO_SMS_SENDER:-RRM}
+      RRM_BREVO_SENDER_EMAIL: ${RRM_BREVO_SENDER_EMAIL}
+      RRM_BREVO_SENDER_NAME: ${RRM_BREVO_SENDER_NAME:-RRM Parking}
+      RRM_ABONNEMENT_EXPIRATION_CRON: "${RRM_ABONNEMENT_EXPIRATION_CRON:-0 0 0 * * *}"
+      RRM_FRONTEND_RENEWAL_URL: "${RRM_FRONTEND_RENEWAL_URL:-http://localhost:5173/demande-publique?tab=RENEW}"
+      RRM_BREVO_SMS_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+
+
+
+      RRM_AGENT_BOOTSTRAP_ENABLED: ${RRM_AGENT_BOOTSTRAP_ENABLED:-false}
+      RRM_AGENT_EMAIL: ${RRM_AGENT_EMAIL:-}
+      RRM_AGENT_PASSWORD: ${RRM_AGENT_PASSWORD:-}
+      RRM_AGENT_NOM: ${RRM_AGENT_NOM:-Agent}
+      RRM_AGENT_PRENOM: ${RRM_AGENT_PRENOM:-Administratif}
+
+      RRM_SUPERVISOR_BOOTSTRAP_ENABLED: ${RRM_SUPERVISOR_BOOTSTRAP_ENABLED:-false}
+      RRM_SUPERVISOR_EMAIL: ${RRM_SUPERVISOR_EMAIL:-}
+      RRM_SUPERVISOR_PASSWORD: ${RRM_SUPERVISOR_PASSWORD:-}
+      RRM_SUPERVISOR_NOM: ${RRM_SUPERVISOR_NOM:-Superviseur}
+      RRM_SUPERVISOR_PRENOM: ${RRM_SUPERVISOR_PRENOM:-RRM}
+
+      RRM_RESPONSABLE_BOOTSTRAP_ENABLED: ${RRM_RESPONSABLE_BOOTSTRAP_ENABLED:-false}
+      RRM_RESPONSABLE_EMAIL: ${RRM_RESPONSABLE_EMAIL:-}
+      RRM_RESPONSABLE_PASSWORD: ${RRM_RESPONSABLE_PASSWORD:-}
+      RRM_RESPONSABLE_NOM: ${RRM_RESPONSABLE_NOM:-Responsable}
+      RRM_RESPONSABLE_PRENOM: ${RRM_RESPONSABLE_PRENOM:-Stationnement}
+
+
+      RRM_STORAGE_TYPE: google-drive
+      RRM_GOOGLE_DRIVE_FOLDER_ID: 1sG05PhR8PiMwJz-9Sz1Y6Q1dE94eSrMK
+      RRM_GOOGLE_DRIVE_CREDENTIALS_PATH: /app/secrets/google-drive-oauth.json
+      RRM_GOOGLE_DRIVE_TOKENS_PATH: /app/secrets/google-drive-tokens
     volumes:
       - backend_storage:/app/storage
+      - ./backend/secrets:/app/secrets
 
   # 4. Frontend React SPA & Nginx Reverse Proxy
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_SMS_OTP_ENABLED: ${RRM_BREVO_SMS_ENABLED:-false}
+        VITE_MAPTILER_API_KEY: ${RRM_MAPTILER_API_KEY}
     container_name: rrm-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
       - "5173:80"
+
 
 volumes:
   mysql_data:

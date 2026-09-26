@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { login } from "../../api/auth";
-import { mockLogin } from "./mockAuth";
-import { type Role, roleConfig } from "../../lib/roleConfig";
+import axios from "axios";
+import { getCurrentUser, login } from "../../api/auth";
+import type { Role } from "../../lib/roleConfig";
 import { message } from "antd";
 import {
   LockOutlined,
   LoginOutlined,
   ArrowLeftOutlined,
   IdcardOutlined,
-  RightOutlined,
+
 } from "@ant-design/icons";
 
 const roleHomeRoute: Record<string, string> = {
@@ -22,6 +22,29 @@ const roleHomeRoute: Record<string, string> = {
   ADMIN_SI: "/admin",
 };
 
+const authorityRoleMap: Record<string, Role> = {
+  ROLE_AGENT_ADMINISTRATIF: "AGENT",
+  ROLE_SUPERVISEUR: "SUPERVISEUR",
+  ROLE_RESPONSABLE_STATIONNEMENT: "RESPONSABLE",
+  ROLE_COMPTABLE: "COMPTABLE",
+  ROLE_RESPONSABLE_REPORTING: "RESP_REPORTING",
+  ROLE_ADMINISTRATEUR_SI: "ADMIN_SI",
+};
+
+const resolveFrontendRole = (
+  authorities: string[],
+): Role | null => {
+  for (const authority of authorities) {
+    const role = authorityRoleMap[authority];
+
+    if (role) {
+      return role;
+    }
+  }
+
+  return null;
+};
+
 export function LoginPage() {
   // Clean authentication handler without unused state variables
   const { login: setAuth } = useAuth();
@@ -30,29 +53,65 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const executeLogin = (token: string, role: Role, name?: string) => {
-    setAuth(token, role, name ?? roleConfig[role].title);
+  const executeLogin = (
+    token: string,
+    role: Role,
+    name: string,
+    authorities: string[],
+  ) => {
+    setAuth(
+      token,
+      role,
+      name,
+      authorities,
+    );
+
     navigate(roleHomeRoute[role] ?? "/login");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!email || !password) {
-      message.error("Veuillez saisir votre email et votre mot de passe");
+      message.error(
+        "Veuillez saisir votre email et votre mot de passe",
+      );
       return;
     }
+
     try {
-      const { token, role } = await login(email, password);
-      executeLogin(token, role as Role);
-    } catch (err) {
-      message.error("Email ou mot de passe incorrect");
+      const { accessToken } = await login(email, password);
+      const currentUser = await getCurrentUser();
+      const role = resolveFrontendRole(currentUser.authorities);
+
+      if (!role) {
+        localStorage.removeItem("token");
+        message.error(
+          "Votre rôle ne possède pas encore d’espace dans l’application.",
+        );
+        return;
+      }
+
+      executeLogin(
+        accessToken,
+        role,
+        currentUser.email,
+        currentUser.authorities,
+      );
+    } catch (error) {
+      localStorage.removeItem("token");
+
+      const detail = axios.isAxiosError<{ detail?: string }>(error)
+        ? error.response?.data?.detail
+        : undefined;
+
+      message.error(
+        detail ?? "Email ou mot de passe incorrect",
+      );
     }
   };
 
-  const handleMockLogin = (role: Role) => {
-    const { token } = mockLogin(role);
-    executeLogin(token, role, roleConfig[role].title);
-  };
+
 
   return (
     <section className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden">
@@ -147,28 +206,8 @@ export function LoginPage() {
               <span>Se Connecter</span>
               <LoginOutlined style={{ fontSize: "18px" }} />
             </button>
+            </form>
 
-            {/* Demo Access Role Switcher */}
-            <div className="mt-5 pt-5 border-t border-outline-variant/30 text-center">
-              <p className="font-label-sm text-label-sm text-on-surface-variant mb-3 font-semibold">
-                Accès Rapide Démo — Espace Personnel
-              </p>
-              <div className="grid grid-cols-2 gap-2 justify-center items-center">
-                {(Object.keys(roleConfig) as Role[]).map((role) => (
-                  <button
-                    key={role}
-                    className="px-3 py-2 rounded-xl bg-secondary-container/20 text-on-secondary-container font-label-sm text-label-sm hover:bg-secondary-container/40 transition-colors border border-secondary-container/40 flex items-center justify-between cursor-pointer"
-                    onClick={() => handleMockLogin(role)}
-                    type="button"
-                  >
-                    
-                    <span className="font-medium">{roleConfig[role].title.replace("Espace ", "")}</span>
-                  <span><RightOutlined style={{ fontSize: "16px" }} /></span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </form>
         </div>
 
         <div className="text-center mt-6 font-label-sm text-label-sm text-on-surface-variant/70">

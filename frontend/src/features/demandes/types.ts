@@ -10,18 +10,167 @@ import {
 
 export type ModePaiement = "ESPECE" | "CHEQUE";
 
-export type CanalOtp = "SMS" | "WHATSAPP" | "EMAIL";
+export type StatutPaiement =
+  | "EN_ATTENTE"
+  | "CONFIRME"
+  | "REJETE"
+  | "ANNULE";
 
-export type StatutDemandeApi =
+export interface EnregistrementPaiementRequest {
+  numeroCheque: string | null;
+  banqueCheque: string | null;
+  dateEmissionCheque: string | null;
+}
+
+export interface EnregistrementPaiementResponse {
+  id: number;
+  reference: string;
+  demandeId: number;
+  referenceDemande: string;
+  montant: number;
+  modePaiement: ModePaiement;
+  statutPaiement: StatutPaiement;
+  statutDemande: StatutDemande;
+  dateConfirmation: string;
+}
+
+export type CanalOtp = "EMAIL" | "SMS";
+
+export type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
-  | "EN_ATTENTE_CONFIRMATION_PAIEMENT"
-  | "EN_INSTRUCTION"
-  | "EN_ATTENTE_VALIDATION_SUPERVISEUR"
   | "EN_ATTENTE_VALIDATION_RESPONSABLE"
+  | "EN_ATTENTE_PAIEMENT_SIGNATURE"
+  | "EN_ATTENTE_RETOUR_CONTRAT_LEGALISE"
+  | "EN_ATTENTE_FACTURATION"
+  | "EN_PREPARATION_CARTES"
+  | "PRETE_A_FINALISER"
+  | "FINALISEE"
+  | "PAYEE"
+  | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
   | "REFUSEE"
+  | "EXPIREE"
   | "ANNULEE";
+
+export interface DecisionDemandeResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  abonnementId: number | null;
+  referenceAbonnement: string | null;
+  carteId: number | null;
+  referenceCarte: string | null;
+  demandeImpressionId: number | null;
+  referenceDemandeImpression: string | null;
+}
+
+export type StatutDemandeApi = StatutDemande;
+
+export type CanalInitiation =
+  | "EN_LIGNE"
+  | "ASSISTE_PAR_AGENT";
+
+export type TypeDemandeRecherche =
+  | "NOUVEL_ABONNEMENT_REGULIER"
+  | "RENOUVELLEMENT_REGULIER"
+  | "CHANGEMENT_PARKING"
+  | "CHANGEMENT_VEHICULE"
+  | "NOUVEAU_CONTRAT_CORPORATE"
+  | "AUTRE";
+
+export type TypeClientRecherche =
+  | "PARTICULIER"
+  | "ENTREPRISE"
+  | "INCONNU";
+
+export interface DemandeRechercheResponse {
+  id: number;
+  reference: string;
+  typeDemande: TypeDemandeRecherche;
+  statut: StatutDemande;
+  canalInitiation: CanalInitiation;
+
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string | null;
+
+  clientId: number;
+  typeClient: TypeClientRecherche;
+  nomClient: string | null;
+  identifiantClient: string | null;
+  email: string | null;
+  telephone: string | null;
+}
+
+export type TypePieceJointe =
+  | "CIN_RECTO"
+  | "CIN_VERSO"
+  | "CARTE_GRISE_RECTO"
+  | "CARTE_GRISE_VERSO";
+
+export type StatutPieceJointe =
+  | "TELEVERSEE"
+  | "VALIDEE"
+  | "REJETEE"
+  | "ARCHIVEE";
+
+export interface PieceJointeDetailResponse {
+  id: number;
+  reference: string;
+  typePiece: TypePieceJointe;
+  statut: StatutPieceJointe;
+  nomFichierOriginal: string;
+  typeMime: string;
+  tailleOctets: number;
+  dateDepot: string;
+  contenuUrl: string;
+}
+
+export interface DemandeDetailResponse {
+  id: number;
+  reference: string;
+  typeDemande:
+    | "NOUVEL_ABONNEMENT_REGULIER"
+    | "RENOUVELLEMENT_REGULIER";
+  statut: StatutDemande;
+  canalInitiation: CanalInitiation;
+
+  dateCreation: string;
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string;
+  motifRefus: string | null;
+
+  clientId: number;
+  typeClient: TypeClientRecherche;
+  clientNom: string;
+  cin: string;
+  email: string;
+  telephone: string;
+
+  vehiculeId: number;
+  immatriculation: string;
+  marque: string | null;
+  modele: string | null;
+  couleur: string | null;
+  typeVehicule: TypeVehicule;
+
+  tarifParkingId: number;
+  parkingId: number;
+  parkingNom: string;
+  forfaitId: number;
+  forfaitNom: string;
+  dureeMois: number;
+  prixHT: number;
+  tauxTVA: number;
+  montantAbonnementTTC: number;
+  fraisCarteTTC: number;
+  montantTotalTTC: number;
+  modePaiementSouhaite: ModePaiement;
+
+  piecesJointes: PieceJointeDetailResponse[];
+}
 
 export interface DemandeAbonnementRegulierRequest {
   nom: string;
@@ -38,11 +187,11 @@ export interface DemandeAbonnementRegulierRequest {
   modele?: string;
   couleur?: string;
 
-  typeVehicule: string | TypeVehicule;
+  typeVehicule: TypeVehicule;
 
   tarifParkingId: number;
   modePaiement: ModePaiement;
-  canalOtp?: CanalOtp;
+  canalOtp: CanalOtp;
   conditionsAcceptees: boolean;
 }
 
@@ -55,7 +204,7 @@ export interface DocumentsDemande {
 
 export interface DemandeAbonnementRegulierResponse {
   reference: string;
-  statut: StatutDemandeApi | string;
+  statut: StatutDemande;
   dateSoumission: string;
   dateExpirationOtp: string;
   tentativesRestantes: number;
@@ -63,10 +212,136 @@ export interface DemandeAbonnementRegulierResponse {
   destinationMasquee: string;
 }
 
+export interface DemandeCorporateRequest {
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  cinRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  plageHoraire: string;
+  parkingId: number;
+  nombrePlaces: number;
+  immatriculations: string[];
+  conditionsAcceptees: boolean;
+}
+
+export interface DemandeCorporateResponse
+  extends DemandeAbonnementRegulierResponse {
+  cinRepresentant: string;
+  plageHoraire: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+}
+
+export interface DemandeCorporateDetailResponse {
+  id: number;
+  reference: string;
+  statut: StatutDemande;
+  dateSoumission: string;
+  dateValidationOtp: string | null;
+  dateModification: string;
+  dateConvocation: string | null;
+  datePaiementEtRemiseContrat: string | null;
+  dateRetourContratLegalise: string | null;
+  dateFacturation: string | null;
+  dateActivationCartes: string | null;
+  dateFinalisation: string | null;
+  motifRefus: string | null;
+  raisonSociale: string;
+  ice: string;
+  numeroRc: string;
+  titreFoncier: string;
+  nomRepresentant: string;
+  prenomRepresentant: string;
+  cinRepresentant: string;
+  telephoneRepresentant: string;
+  emailRepresentant: string;
+  libelleProjet: string;
+  adresseProjet: string;
+  plageHoraire: string;
+  parkingId: number;
+  parkingNom: string;
+  nombrePlaces: number;
+  dureeEnMois: number;
+  prixMensuelUnitaireTtc: number;
+  montantAbonnementTtc: number;
+  fraisCartesTtc: number;
+  montantTotalTtc: number;
+  immatriculations: string[];
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+  paiementId: number | null;
+  paiementReference: string | null;
+  numeroCheque: string | null;
+  banqueCheque: string | null;
+  dateEmissionCheque: string | null;
+  factureId: number | null;
+  numeroFacture: string | null;
+  abonnementId: number | null;
+  referenceAbonnement: string | null;
+  nombreCartes: number;
+  nombreCartesActivees: number;
+}
+
+export interface DecisionCorporateResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  contratId: number | null;
+  referenceContrat: string | null;
+  statutContrat: string | null;
+  message: string;
+}
+
+export interface ConvocationCorporateResponse {
+  demandeId: number;
+  referenceDemande: string;
+  statutDemande: StatutDemande;
+  dateConvocation: string;
+  emailRepresentant: string;
+  message: string;
+}
+
+export interface RechercheRenouvellementRequest {
+  numeroCarte: string;
+  cin: string;
+}
+
+export interface RenouvellementConsultationResponse {
+  abonnementId: number;
+  referenceAbonnement: string;
+  statutAbonnement: string;
+  numeroCarte: string;
+  statutCarte: string;
+  clientNom: string;
+  parkingActuelId: number;
+  parkingActuelNom: string;
+  dateFinActuelle: string;
+}
+
+export interface DemandeRenouvellementRequest
+  extends RechercheRenouvellementRequest {
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+  canalOtp: CanalOtp;
+  conditionsAcceptees: boolean;
+}
+
 export interface ValidationOtpResponse {
   reference: string;
   otpValide: boolean;
-  statutDemande: StatutDemandeApi | string;
+  statutDemande: StatutDemande;
   tentativesRestantes: number;
   dateValidation: string | null;
   message: string;
@@ -129,7 +404,7 @@ export interface PublicDemandeInput {
   carteGriseVersoUrl?: string;
 }
 
-export type StatutDemande = "SOUMISE" | "EN_COURS" | "EN_ATTENTE_PAIEMENT" | "PAIEMENT_ENREGISTRE" | "VALIDEE" | "REJETEE" | "CORRIGEE" | "COMPLETEE" | "EXPIREE";
+
 
 export type StatutSla =
   | "DANS_LES_DELAIS"
@@ -182,7 +457,7 @@ export type BankOption =
  * L'API réelle de paiement utilisera ModePaiement.
  */
 export interface PaymentInfoInput {
-  modePaiement: "ESPECES" | "CHEQUE" | "ESPECE";
+  modePaiement: ModePaiement;
   montant: number;
   numeroCheque?: string;
   banque?: BankOption;
@@ -197,7 +472,7 @@ export interface DemandeDetail
   immatriculation: string;
   marque?: string;
   modele?: string;
-  typeVehicule: string;
+  typeVehicule: TypeVehicule;
 
   typeClient?: TypeClient;
   cin?: string;
@@ -217,7 +492,7 @@ export interface DemandeDetail
   dureeMois?: number;
   nombreAbonnements?: number;
   montantTotal?: number;
-  modePaiement?: "ESPECES" | "CHEQUE" | "ESPECE";
+  modePaiement?: ModePaiement;
   raisonRejet?: string;
   commentaireCorrection?: string;
 

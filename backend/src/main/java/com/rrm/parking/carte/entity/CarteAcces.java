@@ -51,6 +51,9 @@ public class CarteAcces {
     @Column(name = "numero_carte", length = 100)
     private String numeroCarte;
 
+    @Column(name = "immatriculation_affectee", length = 30)
+    private String immatriculationAffectee;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "abonnement_id",
@@ -98,6 +101,14 @@ public class CarteAcces {
             String reference,
             Abonnement abonnement
     ) {
+        this(reference, abonnement, null);
+    }
+
+    public CarteAcces(
+            String reference,
+            Abonnement abonnement,
+            String immatriculationAffectee
+    ) {
         this.reference = normaliserReference(reference);
         this.abonnement = exigerNonNull(
                 abonnement,
@@ -106,6 +117,10 @@ public class CarteAcces {
 
         this.statut = StatutCarteAcces.EN_PREPARATION;
         this.dateCreation = LocalDateTime.now();
+        this.immatriculationAffectee = immatriculationAffectee == null
+                || immatriculationAffectee.isBlank()
+                ? null
+                : immatriculationAffectee.trim().toUpperCase(Locale.ROOT);
     }
 
     public void demanderImpression() {
@@ -132,21 +147,27 @@ public class CarteAcces {
 
     public void demanderActivation() {
         if (statut != StatutCarteAcces.IMPRIMEE
-                && statut != StatutCarteAcces.SUSPENDUE) {
+                && statut != StatutCarteAcces.SUSPENDUE
+                && statut != StatutCarteAcces.EXPIREE
+                && statut != StatutCarteAcces.ACTIVE) {
             throw new IllegalStateException(
-                    "Seule une carte imprimée ou suspendue peut être mise en attente d'activation"
+                    "La carte ne peut pas être mise en attente d'activation depuis son état actuel"
             );
         }
 
-        this.statut = StatutCarteAcces.A_ACTIVER;
+        if (statut != StatutCarteAcces.ACTIVE) {
+            this.statut = StatutCarteAcces.A_ACTIVER;
+        }
         this.motifDerniereOperation = null;
     }
 
     public void activer() {
-        verifierStatut(
-                StatutCarteAcces.A_ACTIVER,
-                "La carte doit être en attente d'activation"
-        );
+        if (statut != StatutCarteAcces.A_ACTIVER
+                && statut != StatutCarteAcces.ACTIVE) {
+            throw new IllegalStateException(
+                    "La carte doit être active ou en attente d'activation"
+            );
+        }
 
         if (numeroCarte == null || numeroCarte.isBlank()) {
             throw new IllegalStateException(
@@ -245,7 +266,8 @@ public class CarteAcces {
                         || statut == StatutCarteAcces.ACTIVE
                         || statut == StatutCarteAcces.SUSPENDUE
                         || statut == StatutCarteAcces.DESACTIVEE
-                        || statut == StatutCarteAcces.EXPIREE;
+                        || (statut == StatutCarteAcces.EXPIREE
+                        && dateImpression != null);
 
         if (numeroObligatoire
                 && (numeroCarte == null || numeroCarte.isBlank())) {
@@ -305,6 +327,10 @@ public class CarteAcces {
 
     public String getNumeroCarte() {
         return numeroCarte;
+    }
+
+    public String getImmatriculationAffectee() {
+        return immatriculationAffectee;
     }
 
     public Abonnement getAbonnement() {

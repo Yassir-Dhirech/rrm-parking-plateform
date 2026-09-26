@@ -2,10 +2,13 @@ target/
 node_modules/
 .env
 *.log
-
+backend/secrets/
 # Antigravity Rules & Customizations
 AGENTS.md
 .agents/
 
 # IntelliJ IDEA
 .idea/
+
+# Google OAuth client credentials
+client_secret_*.apps.googleusercontent.com.json

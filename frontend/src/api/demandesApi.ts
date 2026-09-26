@@ -1,11 +1,35 @@
-import { API_BASE_URL } from "./client";
+import axios from "axios";
+import client, { API_BASE_URL } from "./client";
 import type {
   DemandeAbonnementRegulierRequest,
   DocumentsDemande,
   DemandeAbonnementRegulierResponse,
   ValidationOtpResponse,
   ApiProblemDetails,
+  DemandeRechercheResponse,
+  DemandeDetailResponse,
+  EnregistrementPaiementRequest,
+  EnregistrementPaiementResponse,
+  DecisionDemandeResponse,
+  RechercheRenouvellementRequest,
+  RenouvellementConsultationResponse,
+  DemandeRenouvellementRequest,
+  DemandeCorporateRequest,
+  DemandeCorporateResponse,
+  DemandeCorporateDetailResponse,
+  DecisionCorporateResponse,
+  ConvocationCorporateResponse,
 } from "../features/demandes/types";
+
+async function lireReponseJson<T>(response: Response): Promise<T> {
+  const body = await response.json();
+
+  if (!response.ok) {
+    throw body;
+  }
+
+  return body as T;
+}
 
 export async function creerDemandeAbonnementRegulier(
   demande: DemandeAbonnementRegulierRequest,
@@ -68,7 +92,341 @@ export async function validerOtp(
   return body as ValidationOtpResponse;
 }
 
+export async function rechercherRenouvellement(
+  requete: RechercheRenouvellementRequest
+): Promise<RenouvellementConsultationResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/recherche`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requete),
+    }
+  );
+
+  return lireReponseJson<RenouvellementConsultationResponse>(response);
+}
+
+export async function creerDemandeRenouvellement(
+  requete: DemandeRenouvellementRequest
+): Promise<DemandeAbonnementRegulierResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requete),
+    }
+  );
+
+  return lireReponseJson<DemandeAbonnementRegulierResponse>(response);
+}
+
+export async function validerOtpRenouvellement(
+  reference: string,
+  code: string
+): Promise<ValidationOtpResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/` +
+      `${encodeURIComponent(reference)}/otp/validation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ code }),
+    }
+  );
+
+  return lireReponseJson<ValidationOtpResponse>(response);
+}
+
+export async function renvoyerOtpRenouvellement(
+  reference: string
+): Promise<DemandeAbonnementRegulierResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/renouvellements/` +
+      `${encodeURIComponent(reference)}/otp/renvoi`,
+    {
+      method: "POST",
+      headers: { Accept: "application/json" },
+    }
+  );
+
+  return lireReponseJson<DemandeAbonnementRegulierResponse>(response);
+}
+
+export async function creerDemandeCorporate(
+  requete: DemandeCorporateRequest
+): Promise<DemandeCorporateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/corporate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(requete),
+    }
+  );
+
+  return lireReponseJson<DemandeCorporateResponse>(response);
+}
+
+export async function validerOtpCorporate(
+  reference: string,
+  code: string
+): Promise<ValidationOtpResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/demandes/corporate/` +
+      `${encodeURIComponent(reference)}/otp/validation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ code }),
+    }
+  );
+
+  return lireReponseJson<ValidationOtpResponse>(response);
+}
+
+export async function listerDemandesCorporateAValider(
+  recherche: string,
+  ordre: "ANCIEN" | "RECENT"
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/corporate/responsable/a-valider",
+    {
+      params: {
+        recherche: recherche.trim() || undefined,
+        ordre,
+      },
+    }
+  );
+  return response.data;
+}
+
+export async function obtenirDetailDemandeCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.get<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}`
+  );
+  return response.data;
+}
+
+export async function validerDemandeCorporate(
+  demandeId: number
+): Promise<DecisionCorporateResponse> {
+  const response = await client.post<DecisionCorporateResponse>(
+    `/demandes/corporate/responsable/${demandeId}/validation`
+  );
+  return response.data;
+}
+
+export async function refuserDemandeCorporate(
+  demandeId: number,
+  motif: string
+): Promise<DecisionCorporateResponse> {
+  const response = await client.post<DecisionCorporateResponse>(
+    `/demandes/corporate/responsable/${demandeId}/refus`,
+    { motif }
+  );
+  return response.data;
+}
+
+export async function convoquerClientCorporate(
+  demandeId: number
+): Promise<ConvocationCorporateResponse> {
+  const response = await client.post<ConvocationCorporateResponse>(
+    `/demandes/corporate/responsable/${demandeId}/convocation`
+  );
+  return response.data;
+}
+
+export async function enregistrerPaiementCorporate(
+  demandeId: number,
+  requete: EnregistrementPaiementRequest
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/paiement-cheque`,
+    requete
+  );
+  return response.data;
+}
+
+export async function declarerRetourContratCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/retour-contrat-legalise`
+  );
+  return response.data;
+}
+
+export async function genererFactureCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/facturation`
+  );
+  return response.data;
+}
+
+export async function finaliserDemandeCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/finalisation`
+  );
+  return response.data;
+}
+
+export async function telechargerContratCorporatePdf(
+  demandeId: number
+): Promise<string> {
+  const response = await client.get<Blob>(
+    `/demandes/corporate/responsable/${demandeId}/contrat/pdf`,
+    { responseType: "blob" }
+  );
+  return URL.createObjectURL(response.data);
+}
+
+export async function rechercherDemandesParReference(
+  reference: string
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/recherche",
+    {
+      params: {
+        reference: reference.trim(),
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function rechercherDemandesParCin(
+  cin: string
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/recherche",
+    {
+      params: {
+        cin: cin.trim(),
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function listerDemandesEnAttentePaiement(): Promise<
+  DemandeRechercheResponse[]
+> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/en-attente-paiement"
+  );
+
+  return response.data;
+}
+
+export async function listerDemandesAValider(
+  recherche: string,
+  ordre: "ANCIEN" | "RECENT"
+): Promise<DemandeRechercheResponse[]> {
+  const response = await client.get<DemandeRechercheResponse[]>(
+    "/demandes/a-valider",
+    {
+      params: {
+        recherche: recherche.trim() || undefined,
+        ordre,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function validerDemandeFinalement(
+  demandeId: number
+): Promise<DecisionDemandeResponse> {
+  const response = await client.post<DecisionDemandeResponse>(
+    `/demandes/${demandeId}/validation-finale`
+  );
+
+  return response.data;
+}
+
+export async function demanderCorrectionDemande(
+  demandeId: number,
+  motif: string
+): Promise<DecisionDemandeResponse> {
+  const response = await client.post<DecisionDemandeResponse>(
+    `/demandes/${demandeId}/demande-correction`,
+    { motif }
+  );
+
+  return response.data;
+}
+
+export async function obtenirDetailDemande(
+  id: number
+): Promise<DemandeDetailResponse> {
+  const response = await client.get<DemandeDetailResponse>(
+    `/demandes/${id}`
+  );
+
+  return response.data;
+}
+
+export async function enregistrerPaiement(
+  demandeId: number,
+  requete: EnregistrementPaiementRequest
+): Promise<EnregistrementPaiementResponse> {
+  const response =
+    await client.post<EnregistrementPaiementResponse>(
+      `/demandes/${demandeId}/paiements`,
+      requete
+    );
+
+  return response.data;
+}
+
+export async function chargerContenuPieceJointe(
+  id: number
+): Promise<string> {
+  const response = await client.get<Blob>(
+    `/pieces-jointes/${id}/contenu`,
+    {
+      responseType: "blob",
+    }
+  );
+
+  return URL.createObjectURL(response.data);
+}
+
 export function extraireMessageErreur(error: unknown): string {
+  if (axios.isAxiosError<ApiProblemDetails>(error)) {
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === "string" && detail.trim()) {
+      return detail;
+    }
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&

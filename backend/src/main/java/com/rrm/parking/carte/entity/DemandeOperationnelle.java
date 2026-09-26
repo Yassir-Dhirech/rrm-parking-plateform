@@ -1,7 +1,9 @@
 package com.rrm.parking.carte.entity;
 
 import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
+import com.rrm.parking.carte.enums.StatutCarteAcces;
 import com.rrm.parking.carte.enums.TypeOperationCarte;
+import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
 
@@ -128,6 +130,15 @@ public class DemandeOperationnelle {
     @Column(name = "resultat_execution", length = 1000)
     private String resultatExecution;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "demande_client_source_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_operation_carte_demande_source"
+            )
+    )
+    private DemandeClient demandeClientSource;
+
     @Version
     @Column(nullable = false)
     private Long version;
@@ -191,6 +202,14 @@ public class DemandeOperationnelle {
         }
 
         this.demandeDeclencheuse = demande;
+    }
+
+    public void definirDemandeClientSource(DemandeClient demande) {
+        verifierModifiable();
+        this.demandeClientSource = exigerNonNull(
+                demande,
+                "La demande cliente source est obligatoire"
+        );
     }
 
     public void affecterA(Utilisateur utilisateur) {
@@ -268,6 +287,24 @@ public class DemandeOperationnelle {
         terminer(
                 utilisateur,
                 "Carte activée avec succès"
+        );
+    }
+
+    public void terminerRemise(Utilisateur utilisateur) {
+        verifierExecution(
+                TypeOperationCarte.REMISE,
+                utilisateur
+        );
+
+        if (carteAcces.getStatut() != StatutCarteAcces.ACTIVE) {
+            throw new IllegalStateException(
+                    "Seule une carte active peut être remise au client"
+            );
+        }
+
+        terminer(
+                utilisateur,
+                "Carte remise au client"
         );
     }
 
@@ -406,7 +443,7 @@ public class DemandeOperationnelle {
             case ACTIVATION ->
                     carteAcces.demanderActivation();
 
-            case SUSPENSION, DESACTIVATION -> {
+            case REMISE, SUSPENSION, DESACTIVATION -> {
                 // La carte changera d'état lors de l'exécution.
             }
         }
@@ -540,6 +577,10 @@ public class DemandeOperationnelle {
 
     public TypeOperationCarte getTypeOperation() {
         return typeOperation;
+    }
+
+    public DemandeClient getDemandeClientSource() {
+        return demandeClientSource;
     }
 
     public StatutDemandeOperationnelle getStatut() {

@@ -35,6 +35,11 @@ import { ResponsableDashboardView } from "../components/dashboard/ResponsableDas
 import { ReportingDashboardView } from "../components/dashboard/ReportingDashboardView";
 import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
 import { getConsolidatedRevenue } from "../lib/chiffreAffairesService";
+import { ChiffreAffairesDashboard } from "../components/dashboard/financial/ChiffreAffairesDashboard";
+
+function utiliseDashboardFinancier(role: Role): boolean {
+  return role === "COMPTABLE";
+}
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -50,6 +55,10 @@ export function Dashboard() {
 
   if (role === "RESP_REPORTING") {
     return <ReportingDashboardView />;
+  }
+
+  if (utiliseDashboardFinancier(role)) {
+    return <ChiffreAffairesDashboard audience="COMPTABLE" />;
   }
 
   const currentRoleConfig = roleConfig[role];
@@ -109,7 +118,7 @@ export function Dashboard() {
   const recettesEnAttente = filteredRecettes.filter((r) => r.statut === "EN_COURS").length;
   const contratsEnAttenteSign = filteredContrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
   const demandesSoumises = filteredDemandes.filter((d) => d.statut === "SOUMISE").length;
-  const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAIEMENT_ENREGISTRE").length;
+  const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAYEE").length;
   const demandesValidees = filteredDemandes.filter((d) => d.statut === "VALIDEE").length;
   const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
   const parkingsCount = filteredParkings.length;
