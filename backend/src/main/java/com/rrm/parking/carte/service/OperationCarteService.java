@@ -1,5 +1,7 @@
 package com.rrm.parking.carte.service;
 
+import com.rrm.parking.abonnement.entity.AbonnementEntreprise;
+import com.rrm.parking.abonnement.entity.AbonnementRegulier;
 import com.rrm.parking.carte.dto.response.DemandeOperationnelleResponse;
 import com.rrm.parking.carte.entity.DemandeOperationnelle;
 import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
@@ -18,9 +20,11 @@ import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
+import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.repository.FactureRepository;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
+import com.rrm.parking.utilisateur.repository.AffectationAgentParkingRepository;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -33,6 +37,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -47,14 +52,16 @@ public class OperationCarteService {
 
     private final DemandeOperationnelleRepository operationRepository;
     private final DemandeClientRepository demandeRepository;
+    private final DemandeNouveauContratCorporateRepository corporateDemandeRepository;
     private final CarteAccesRepository carteRepository;
     private final FactureRepository factureRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AffectationAgentParkingRepository affectationAgentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public List<DemandeOperationnelleResponse> listerImpressions() {
-        return lister(TypeOperationCarte.IMPRESSION);
+    public List<DemandeOperationnelleResponse> listerImpressions(Long agentId) {
+        return listerPourAgent(TypeOperationCarte.IMPRESSION, agentId);
     }
 
     @Transactional(readOnly = true)
@@ -63,8 +70,8 @@ public class OperationCarteService {
     }
 
     @Transactional(readOnly = true)
-    public List<DemandeOperationnelleResponse> listerRemises() {
-        return lister(TypeOperationCarte.REMISE);
+    public List<DemandeOperationnelleResponse> listerRemises(Long agentId) {
+        return listerPourAgent(TypeOperationCarte.REMISE, agentId);
     }
 
     @Transactional
@@ -75,6 +82,7 @@ public class OperationCarteService {
     ) {
         DemandeOperationnelle operation = charger(operationId,
                 TypeOperationCarte.IMPRESSION);
+        verifierOperationAgent(operation, utilisateurId);
         Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerImpression(utilisateur, numeroCarte);
@@ -202,6 +210,7 @@ public class OperationCarteService {
     ) {
         DemandeOperationnelle operation = charger(operationId,
                 TypeOperationCarte.REMISE);
+        verifierOperationAgent(operation, utilisateurId);
         Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerRemise(utilisateur);
@@ -213,6 +222,100 @@ public class OperationCarteService {
                 .findByTypeOperationAndStatutInOrderByDateCreationAsc(
                         type, STATUTS_OUVERTS)
                 .stream().map(this::versReponse).toList();
+    }
+
+    private List<DemandeOperationnelleResponse> listerPourAgent(
+            TypeOperationCarte type,
+            Long agentId
+    ) {
+        Long parkingId = parkingAffectationAgent(agentId);
+        return operationRepository
+                .findByTypeOperationAndStatutInOrderByDateCreationAsc(
+                        type, STATUTS_OUVERTS)
+                .stream()
+                .filter(operation -> autoriseePourParking(operation, parkingId))
+                .map(this::versReponse)
+                .toList();
+    }
+
+    private void verifierOperationAgent(
+            DemandeOperationnelle operation,
+            Long agentId
+    ) {
+        Long parkingId = parkingAffectationAgent(agentId);
+        if (!autoriseePourParking(operation, parkingId)) {
+            throw new ConflitMetierException(
+                    "La carte n'appartient pas au parking affecté à l'agent "
+                            + "ou doit être remise au siège"
+            );
+        }
+    }
+
+    private Long parkingAffectationAgent(Long agentId) {
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
+        return affectationAgentRepository.findByUtilisateurIdAndActiveTrue(agentId)
+                .filter(affectation -> !affectation.getDateDebut().isAfter(aujourdHui))
+                .filter(affectation -> affectation.getDateFin() == null
+                        || !affectation.getDateFin().isBefore(aujourdHui))
+                .map(affectation -> affectation.getParking().getId())
+                .orElseThrow(() -> new ConflitMetierException(
+                        "L'agent ne possède pas d'affectation active à un parking"
+                ));
+    }
+
+    private boolean autoriseePourParking(
+            DemandeOperationnelle operation,
+            Long parkingId
+    ) {
+        var abonnement = Hibernate.unproxy(
+                operation.getCarteAcces().getAbonnement()
+        );
+        if (operation.getTypeOperation() == TypeOperationCarte.REMISE
+                && abonnement instanceof AbonnementEntreprise) {
+            return false;
+        }
+        return parkingOperation(operation)
+                .filter(parkingId::equals)
+                .isPresent();
+    }
+
+    private Optional<Long> parkingOperation(
+            DemandeOperationnelle operation
+    ) {
+        var abonnement = Hibernate.unproxy(
+                operation.getCarteAcces().getAbonnement()
+        );
+        DemandeClient source = operation.getDemandeClientSource();
+        if (source != null) {
+            source = (DemandeClient) Hibernate.unproxy(source);
+            if (source instanceof DemandeNouveauContratCorporate corporate) {
+                return Optional.of(corporate.getParking().getId());
+            }
+        }
+        if (!(abonnement instanceof AbonnementRegulier regulier)) {
+            return Optional.empty();
+        }
+
+        // Une carte déjà affectée suit le parking actuel de son abonnement.
+        Optional<Long> actuel = regulier
+                .obtenirAffectationActive(LocalDate.now(ZONE_RRM))
+                .map(affectation -> affectation.getParking().getId());
+        if (actuel.isPresent()) {
+            return actuel;
+        }
+        if (source instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            return Optional.of(nouvelle.getTarifParking().getParking().getId());
+        }
+        if (source instanceof DemandeRenouvellementRegulier renouvellement) {
+            return Optional.of(renouvellement.getTarifParking().getParking().getId());
+        }
+        // Anciennes opérations sans demande source : seul un abonnement
+        // régulier dont la demande initiale est identifiable est autorisé.
+        return demandeRepository.findByAbonnementGenereId(regulier.getId())
+                .map(Hibernate::unproxy)
+                .filter(DemandeNouvelAbonnementRegulier.class::isInstance)
+                .map(DemandeNouvelAbonnementRegulier.class::cast)
+                .map(demande -> demande.getTarifParking().getParking().getId());
     }
 
     private DemandeOperationnelle charger(Long id, TypeOperationCarte type) {
@@ -245,7 +348,31 @@ public class OperationCarteService {
     private DemandeOperationnelleResponse versReponse(
             DemandeOperationnelle operation
     ) {
-        return versReponse(operation, chargerContexte(operation));
+        try {
+            return versReponse(operation, chargerContexte(operation));
+        } catch (RessourceIntrouvableException exception) {
+            // Les anciennes opérations peuvent ne pas avoir de demande source.
+            // Elles restent visibles et exécutables depuis l'espace cartes.
+            return versReponseSansDemande(operation);
+        }
+    }
+
+    private DemandeOperationnelleResponse versReponseSansDemande(
+            DemandeOperationnelle operation
+    ) {
+        var carte = operation.getCarteAcces();
+        return DemandeOperationnelleResponse.depuis(
+                operation,
+                null,
+                null,
+                null,
+                null,
+                null,
+                carte.getImmatriculationAffectee(),
+                null,
+                null,
+                null
+        );
     }
 
     private DemandeOperationnelleResponse versReponse(
@@ -269,8 +396,10 @@ public class OperationCarteService {
         DemandeClient brute = operation.getDemandeClientSource();
         if (brute == null) {
             brute = demandeRepository.findByAbonnementGenereId(abonnementId)
-                    .orElseThrow(() -> new RessourceIntrouvableException(
-                            "Demande cliente liée à la carte introuvable"));
+                    .orElseGet(() -> corporateDemandeRepository
+                            .findByAbonnementGenereId(abonnementId)
+                            .orElseThrow(() -> new RessourceIntrouvableException(
+                                    "Demande cliente liée à la carte introuvable")));
         }
         DemandeClient reelle = (DemandeClient) Hibernate.unproxy(brute);
         Client clientBrut = (Client) Hibernate.unproxy(reelle.getClient());

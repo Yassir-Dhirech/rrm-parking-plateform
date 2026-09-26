@@ -36,9 +36,14 @@ import { ReportingDashboardView } from "../components/dashboard/ReportingDashboa
 import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
 import { getConsolidatedRevenue } from "../lib/chiffreAffairesService";
 import { ChiffreAffairesDashboard } from "../components/dashboard/financial/ChiffreAffairesDashboard";
+import { AgentDashboard } from "./agent/Dashboard";
 
 function utiliseDashboardFinancier(role: Role): boolean {
   return role === "COMPTABLE";
+}
+
+function utiliseDashboardAgent(role: Role): boolean {
+  return role === "AGENT";
 }
 
 export function Dashboard() {
@@ -48,6 +53,10 @@ export function Dashboard() {
   const [filters, setFilters] = useState<GlobalFilters>({});
 
   if (!role) return null;
+
+  if (utiliseDashboardAgent(role)) {
+    return <AgentDashboard />;
+  }
 
   if (role === "RESPONSABLE") {
     return <ResponsableDashboardView />;

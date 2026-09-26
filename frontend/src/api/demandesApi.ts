@@ -19,6 +19,8 @@ import type {
   DemandeCorporateDetailResponse,
   DecisionCorporateResponse,
   ConvocationCorporateResponse,
+  ModificationDemandeReguliereRequest,
+  DocumentsModificationDemande,
 } from "../features/demandes/types";
 
 async function lireReponseJson<T>(response: Response): Promise<T> {
@@ -35,19 +37,7 @@ export async function creerDemandeAbonnementRegulier(
   demande: DemandeAbonnementRegulierRequest,
   documents: DocumentsDemande
 ): Promise<DemandeAbonnementRegulierResponse> {
-  const formData = new FormData();
-
-  formData.append(
-    "demande",
-    new Blob([JSON.stringify(demande)], {
-      type: "application/json",
-    })
-  );
-
-  formData.append("cinRecto", documents.cinRecto);
-  formData.append("cinVerso", documents.cinVerso);
-  formData.append("carteGriseRecto", documents.carteGriseRecto);
-  formData.append("carteGriseVerso", documents.carteGriseVerso);
+  const formData = construireFormDataDemandeReguliere(demande, documents);
 
   const response = await fetch(
     `${API_BASE_URL}/api/public/demandes/abonnements-reguliers`,
@@ -64,6 +54,53 @@ export async function creerDemandeAbonnementRegulier(
   }
 
   return body as DemandeAbonnementRegulierResponse;
+}
+
+function construireFormDataDemandeReguliere(
+  demande: DemandeAbonnementRegulierRequest,
+  documents: DocumentsDemande
+): FormData {
+  const formData = new FormData();
+
+  formData.append(
+    "demande",
+    new Blob([JSON.stringify(demande)], {
+      type: "application/json",
+    })
+  );
+
+  formData.append("cinRecto", documents.cinRecto);
+  formData.append("cinVerso", documents.cinVerso);
+  formData.append("carteGriseRecto", documents.carteGriseRecto);
+  formData.append("carteGriseVerso", documents.carteGriseVerso);
+
+  return formData;
+}
+
+export async function creerDemandeAbonnementRegulierAssistee(
+  demande: DemandeAbonnementRegulierRequest,
+  documents: DocumentsDemande
+): Promise<DemandeAbonnementRegulierResponse> {
+  const formData = construireFormDataDemandeReguliere(demande, documents);
+
+  const response = await client.post<DemandeAbonnementRegulierResponse>(
+    "/agent/demandes/abonnements-reguliers",
+    formData
+  );
+
+  return response.data;
+}
+
+export async function validerOtpAssisteParAgent(
+  reference: string,
+  code: string
+): Promise<ValidationOtpResponse> {
+  const response = await client.post<ValidationOtpResponse>(
+    `/agent/demandes/abonnements-reguliers/${encodeURIComponent(reference)}/otp/validation`,
+    { code }
+  );
+
+  return response.data;
 }
 
 export async function validerOtp(
@@ -389,6 +426,30 @@ export async function obtenirDetailDemande(
     `/demandes/${id}`
   );
 
+  return response.data;
+}
+
+export async function modifierDemandeAgent(
+  demandeId: number,
+  demande: ModificationDemandeReguliereRequest,
+  documents: DocumentsModificationDemande
+): Promise<DemandeDetailResponse> {
+  const formData = new FormData();
+  formData.append(
+    "demande",
+    new Blob([JSON.stringify(demande)], { type: "application/json" })
+  );
+
+  Object.entries(documents).forEach(([nom, fichier]) => {
+    if (fichier) {
+      formData.append(nom, fichier);
+    }
+  });
+
+  const response = await client.put<DemandeDetailResponse>(
+    `/agent/demandes/${demandeId}`,
+    formData
+  );
   return response.data;
 }
 

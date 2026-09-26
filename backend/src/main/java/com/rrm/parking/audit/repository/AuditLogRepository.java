@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface AuditLogRepository
         extends Repository<AuditLog, Long> {
@@ -57,5 +58,12 @@ public interface AuditLogRepository
     findByCorrelationIdOrderByDateEvenementDesc(
             String correlationId,
             Pageable pageable
+    );
+
+    List<AuditLog>
+    findByActeurIdAndTypeActionAndTypeObjetOrderByDateEvenementDesc(
+            Long acteurId,
+            TypeActionAudit typeAction,
+            String typeObjet
     );
 }

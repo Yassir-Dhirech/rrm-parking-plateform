@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Empty, Input, Modal, Space, Table, Tag, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { CheckCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useSearchParams } from "react-router-dom";
 import {
   declarerCarteActivee,
   declarerCarteImprimee,
@@ -15,6 +16,8 @@ import {
 import type { DemandeOperationnelleCarte, TypeOperationCarte } from "../operationCarteTypes";
 
 export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
+  const [params, setParams] = useSearchParams();
+  const operationId = params.get("operationId");
   const queryClient = useQueryClient();
   const [selection, setSelection] = useState<DemandeOperationnelleCarte | null>(null);
   const [numeroCarte, setNumeroCarte] = useState("");
@@ -52,6 +55,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
       setSelection(null);
       setNumeroCarte("");
       await queryClient.invalidateQueries({ queryKey });
+      await queryClient.invalidateQueries({ queryKey: ["agent-dashboard-actions"] });
     },
   });
 
@@ -115,10 +119,13 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
         </Button>
       </Space>
       {query.isError && <Alert type="error" showIcon message="Chargement impossible" description={extraireErreurOperationCarte(query.error)} />}
+      {operationId && <Alert type="info" showIcon className="mb-4"
+        message="Opération sélectionnée depuis le tableau de bord"
+        action={<Button size="small" onClick={() => setParams({})}>Voir toutes les opérations</Button>} />}
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={query.data ?? []}
+        dataSource={operationId ? (query.data ?? []).filter((operation) => String(operation.id) === operationId) : (query.data ?? [])}
         loading={query.isLoading}
         scroll={{ x: 1300 }}
         pagination={{ pageSize: 10 }}

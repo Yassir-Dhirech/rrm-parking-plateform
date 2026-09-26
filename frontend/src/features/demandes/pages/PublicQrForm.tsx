@@ -52,12 +52,14 @@ import {
 import { submitPublicDemande } from "../../../api/demandes";
 import {
   creerDemandeAbonnementRegulier,
+  creerDemandeAbonnementRegulierAssistee,
   creerDemandeCorporate,
   creerDemandeRenouvellement,
   extraireMessageErreur,
   rechercherRenouvellement,
   renvoyerOtpRenouvellement,
   validerOtpRenouvellement,
+  validerOtpAssisteParAgent,
   validerOtpCorporate,
 } from "../../../api/demandesApi";
 import type {
@@ -76,6 +78,10 @@ import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCar
 const { Option } = Select;
 
 type TypeDemande = "NEW" | "RENEW" | "DUPLICATE" | "CORPORATE";
+
+interface PublicQrFormProps {
+  mode?: "PUBLIC" | "AGENT";
+}
 
 const PHONE_PATTERN = /^(?:0?[67][0-9]{8}|\+[1-9][0-9]{7,14})$/;
 const PHONE_RULES = [
@@ -189,11 +195,14 @@ function ScanUploadField({
   );
 }
 
-export function PublicQrForm() {
+export function PublicQrForm({ mode = "PUBLIC" }: PublicQrFormProps) {
   const [searchParams] = useSearchParams();
+  const isAgentMode = mode === "AGENT";
 
   // Stepper & Type State
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState<number>(
+    isAgentMode ? 1 : 0
+  );
   const [typeDemande, setTypeDemande] = useState<TypeDemande>("NEW");
 
   // Accordion Folding & Section Validation State
@@ -345,6 +354,11 @@ const {
 
   // Read URL parameters
   useEffect(() => {
+    if (isAgentMode) {
+      setTypeDemande("NEW");
+      return;
+    }
+
     const tabParam = searchParams.get("tab");
     const clientParam = searchParams.get("typeClient");
     const planParam = searchParams.get("plan");
@@ -371,7 +385,7 @@ const {
       form.setFieldValue("parkingId", Number(parkingParam));
       setFormValues((prev: any) => ({ ...prev, parkingId: Number(parkingParam) }));
     }
-  }, [searchParams, form, typeDemande]);
+  }, [searchParams, form, typeDemande, isAgentMode]);
 
   // BETA Quick Test Autofill Handler
   
@@ -778,7 +792,10 @@ const {
 
         setIsSubmittingBackend(true);
         try {
-          const res = await creerDemandeAbonnementRegulier(demandeReq, documents);
+          const creerDemande = isAgentMode
+            ? creerDemandeAbonnementRegulierAssistee
+            : creerDemandeAbonnementRegulier;
+          const res = await creerDemande(demandeReq, documents);
           setBackendDemandeResponse(res);
           setIsOtpModalOpen(true);
           message.success("Demande créée avec succès ! Code OTP envoyé.");
@@ -885,11 +902,18 @@ const {
   };
 
   const STEP_TITLES = getStepTitles();
+  const VISIBLE_STEP_TITLES = isAgentMode
+    ? STEP_TITLES.slice(1)
+    : STEP_TITLES;
 
   return (
-    <div className="bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pt-20 lg:pt-24 pb-0">
+    <div
+      className={`bg-background text-on-background font-body-md antialiased min-h-screen relative overflow-x-hidden flex flex-col justify-between pb-0 ${
+        isAgentMode ? "pt-0" : "pt-20 lg:pt-24"
+      }`}
+    >
       {/* Shared Desktop & Mobile Unified Glass Navbar */}
-      <PublicNavbar />
+      {!isAgentMode && <PublicNavbar />}
 
       {/* Hero Section Banner for Abonnement Page */}
       <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6 w-full">
@@ -910,7 +934,9 @@ const {
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <Tag color="cyan" className="px-3 py-1 rounded-full font-extrabold border-none shadow-md text-xs inline-flex items-center gap-1.5 m-0">
-                  <SafetyCertificateOutlined /> Portail Officiel des Démarches en Ligne
+                  <SafetyCertificateOutlined /> {isAgentMode
+                    ? "Souscription assistée au guichet"
+                    : "Portail Officiel des Démarches en Ligne"}
                 </Tag>
                 <Tag color="gold" className="px-3 py-1 rounded-full font-extrabold border-none shadow-md text-xs m-0">
                   Rabat Région Mobilité
@@ -918,14 +944,18 @@ const {
               </div>
 
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight">
-                {typeDemande === "CORPORATE"
+                {isAgentMode
+                  ? "Souscrire un nouvel abonnement"
+                  : typeDemande === "CORPORATE"
                   ? "Demande d'Abonnement Flotte Corporate"
                   : typeDemande === "DUPLICATE"
                   ? "Réclamation de Perte & Duplicata Carte RFID"
                   : "Demande d'Abonnement Parking"}
               </h1>
               <p className="text-slate-700 text-xs md:text-sm font-medium leading-relaxed max-w-xl">
-                Souscrivez, renouvelez ou transférez votre abonnement parking en ligne en 4 étapes simples avec validation sécurisée.
+                {isAgentMode
+                  ? "Accompagnez le client dans sa souscription. Le code OTP reste envoyé au client pour confirmer la demande."
+                  : "Souscrivez, renouvelez ou transférez votre abonnement parking en ligne en 4 étapes simples avec validation sécurisée."}
               </p>
             </div>
 
@@ -938,16 +968,17 @@ const {
         {/* Visual Stepper — Positioned initially between Hero Header & Form Choice, becoming Sticky on scroll */}
         <div className="sticky top-20 md:top-24 z-40 flex justify-center mb-8 px-2 max-w-full overflow-x-auto">
           <div className="bg-white/95 backdrop-blur-md px-3 md:px-4 py-2 rounded-full border border-slate-200/90 shadow-xl flex items-center gap-2 max-w-full shrink-0">
-            {STEP_TITLES.map((title, idx) => {
-              const isCompleted = idx < currentStep;
-              const isCurrent = idx === currentStep;
+            {VISIBLE_STEP_TITLES.map((title, idx) => {
+              const stepIndex = isAgentMode ? idx + 1 : idx;
+              const isCompleted = stepIndex < currentStep;
+              const isCurrent = stepIndex === currentStep;
 
               return (
                 <div key={idx} className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => {
-                      if (isCompleted) setCurrentStep(idx);
+                      if (isCompleted) setCurrentStep(stepIndex);
                     }}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black transition-all duration-300 border-none ${
                       isCurrent
@@ -979,10 +1010,10 @@ const {
                   </button>
 
                   {/* Connecting Line between step pills */}
-                  {idx < STEP_TITLES.length - 1 && (
+                  {idx < VISIBLE_STEP_TITLES.length - 1 && (
                     <div
                       className={`w-3 h-0.5 rounded-full transition-colors ${
-                        idx < currentStep ? "bg-emerald-400" : "bg-slate-200"
+                        stepIndex < currentStep ? "bg-emerald-400" : "bg-slate-200"
                       }`}
                     />
                   )}
@@ -993,7 +1024,7 @@ const {
         </div>
 
         {/* STEP 0: Select Request Type */}
-        {currentStep === 0 && (
+        {!isAgentMode && currentStep === 0 && (
           <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/70">
             <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-6">
               Sélectionnez le Type de Demande
@@ -1270,13 +1301,13 @@ const {
                 )}
 
                 <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
-                  <Button
+                  {!isAgentMode && <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
                     className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
-                  </Button>
+                  </Button>}
 
                   {typeDemande === "DUPLICATE" ? (
                     <Button
@@ -1578,13 +1609,13 @@ const {
                 </Form>
 
                 <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
-                  <Button
+                  {!isAgentMode && <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
                     className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
-                  </Button>
+                  </Button>}
                   <Button
                     type="primary"
                     icon={<ArrowRightOutlined />}
@@ -1870,13 +1901,13 @@ const {
                 </Form>
 
                 <div className="mt-6 md:mt-8 flex flex-col-reverse sm:flex-row justify-between gap-3">
-                  <Button
+                  {!isAgentMode && <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => setCurrentStep(0)}
                     className="w-full sm:w-auto rounded-xl h-11 px-6 font-semibold"
                   >
                     Retour
-                  </Button>
+                  </Button>}
                   <Button
                     type="primary"
                     icon={<ArrowRightOutlined />}
@@ -2607,7 +2638,9 @@ const {
                 loading={isSubmittingBackend}
                 className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white rounded-xl h-12 px-6 sm:px-8 font-extrabold shadow-md flex items-center justify-center text-center"
               >
-                Confirmer Ma Demande (Code OTP) →
+                {isAgentMode
+                  ? "Confirmer la demande du client (Code OTP) →"
+                  : "Confirmer Ma Demande (Code OTP) →"}
               </Button>
             </div>
           </div>
@@ -2630,7 +2663,9 @@ const {
         email={pendingValues?.email}
         referenceNumber={backendDemandeResponse?.reference || submittedResult?.reference}
         onValidateOtp={
-          typeDemande === "RENEW"
+          isAgentMode
+            ? validerOtpAssisteParAgent
+            : typeDemande === "RENEW"
             ? validerOtpRenouvellement
             : typeDemande === "CORPORATE"
               ? validerOtpCorporate
@@ -2639,9 +2674,10 @@ const {
         onResendOtp={
           typeDemande === "RENEW" ? renvoyerOtpRenouvellement : undefined
         }
+        context={isAgentMode ? "AGENT" : "PUBLIC"}
       />
 
-      <PublicFooter />
+      {!isAgentMode && <PublicFooter />}
     </div>
   );
 }

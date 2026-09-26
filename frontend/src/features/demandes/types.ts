@@ -88,6 +88,7 @@ export interface DemandeRechercheResponse {
   id: number;
   reference: string;
   typeDemande: TypeDemandeRecherche;
+  parkingNom: string | null;
   statut: StatutDemande;
   canalInitiation: CanalInitiation;
 
@@ -145,6 +146,8 @@ export interface DemandeDetailResponse {
   clientId: number;
   typeClient: TypeClientRecherche;
   clientNom: string;
+  nom: string;
+  prenom: string;
   cin: string;
   email: string;
   telephone: string;
@@ -201,6 +204,23 @@ export interface DocumentsDemande {
   carteGriseRecto: File;
   carteGriseVerso: File;
 }
+
+export interface ModificationDemandeReguliereRequest {
+  nom: string;
+  prenom: string;
+  cin: string;
+  telephone: string;
+  email: string;
+  immatriculation: string;
+  marque?: string;
+  modele?: string;
+  couleur?: string;
+  typeVehicule: TypeVehicule;
+  tarifParkingId: number;
+  modePaiement: ModePaiement;
+}
+
+export type DocumentsModificationDemande = Partial<DocumentsDemande>;
 
 export interface DemandeAbonnementRegulierResponse {
   reference: string;

@@ -4,7 +4,6 @@ import com.rrm.parking.abonnement.enums.StatutAbonnement;
 import com.rrm.parking.abonnement.repository.AffectationParkingRepository;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
-import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.parking.enums.StatutParking;
@@ -13,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.EnumSet;
 
 @Service
@@ -26,19 +26,7 @@ public class CapaciteCorporateService {
                     StatutAbonnement.SUSPENDU
             );
 
-    private static final EnumSet<StatutDemande> STATUTS_RESERVANT =
-            EnumSet.of(
-                    StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
-                    StatutDemande.EN_ATTENTE_PAIEMENT,
-                    StatutDemande.PAYEE,
-                    StatutDemande.VALIDEE,
-                    StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE,
-                    StatutDemande.EN_ATTENTE_RETOUR_CONTRAT_LEGALISE,
-                    StatutDemande.EN_ATTENTE_FACTURATION,
-                    StatutDemande.EN_PREPARATION_CARTES,
-                    StatutDemande.PRETE_A_FINALISER,
-                    StatutDemande.FINALISEE
-            );
+    private static final ZoneId ZONE_RRM = ZoneId.of("Africa/Casablanca");
 
     private final ParkingRepository parkingRepository;
     private final AffectationParkingRepository affectationParkingRepository;
@@ -71,14 +59,16 @@ public class CapaciteCorporateService {
             );
         }
 
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
         long placesRegulieres = affectationParkingRepository
                 .compterPlacesOccupees(
                         parkingId,
                         STATUTS_OCCUPANTS,
-                        LocalDate.now()
+                        aujourdHui
                 );
         long placesCorporate = corporateRepository
-                .compterPlacesReservees(parkingId, STATUTS_RESERVANT);
+                .compterPlacesReservees(parkingId,
+                        ReservationPlacesCorporate.STATUTS_RESERVANT, aujourdHui);
         long capacite = parking.getCapaciteReserveeAbonnements() == null
                 ? 0L
                 : parking.getCapaciteReserveeAbonnements();
@@ -130,17 +120,19 @@ public class CapaciteCorporateService {
             );
         }
 
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
         long placesRegulieres = affectationParkingRepository
                 .compterPlacesOccupees(
                         parkingId,
                         STATUTS_OCCUPANTS,
-                        LocalDate.now()
+                        aujourdHui
                 );
         long autresPlacesCorporate = corporateRepository
                 .compterPlacesReserveesHorsDemande(
                         parkingId,
-                        STATUTS_RESERVANT,
-                        demandeId
+                        ReservationPlacesCorporate.STATUTS_RESERVANT,
+                        demandeId,
+                        aujourdHui
                 );
         long capacite = parking.getCapaciteReserveeAbonnements() == null
                 ? 0L
