@@ -86,10 +86,16 @@ public class ResponsableDashboardController {
             """)
     public ResponseEntity<ResponsableMonthlyRevenueResponse> chiffreAffairesMensuel(
             @RequestParam(required = false)
-            Integer annee
+            Integer annee,
+
+            @RequestParam(required = false)
+            Long parkingId
     ) {
         return ResponseEntity.ok(
-                dashboardService.chargerChiffreAffairesMensuel(annee)
+                dashboardService.chargerChiffreAffairesMensuel(
+                        annee,
+                        parkingId
+                )
         );
     }
 

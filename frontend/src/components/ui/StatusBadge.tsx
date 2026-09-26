@@ -4,6 +4,12 @@ type StatutDemande =
   | "SOUMISE"
   | "EN_ATTENTE_PAIEMENT"
   | "EN_ATTENTE_VALIDATION_RESPONSABLE"
+  | "EN_ATTENTE_PAIEMENT_SIGNATURE"
+  | "EN_ATTENTE_RETOUR_CONTRAT_LEGALISE"
+  | "EN_ATTENTE_FACTURATION"
+  | "EN_PREPARATION_CARTES"
+  | "PRETE_A_FINALISER"
+  | "FINALISEE"
   | "PAYEE"
   | "EN_ATTENTE_CORRECTION"
   | "VALIDEE"
@@ -30,6 +36,12 @@ const colorMap: Record<AnyStatut, string> = {
   EN_COURS: "gold",
   EN_ATTENTE_PAIEMENT: "warning",
   EN_ATTENTE_VALIDATION_RESPONSABLE: "purple",
+  EN_ATTENTE_PAIEMENT_SIGNATURE: "gold",
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: "orange",
+  EN_ATTENTE_FACTURATION: "geekblue",
+  EN_PREPARATION_CARTES: "cyan",
+  PRETE_A_FINALISER: "lime",
+  FINALISEE: "green",
   PAYEE: "cyan",
   EN_ATTENTE_CORRECTION: "orange",
   VALIDEE: "green",
@@ -65,6 +77,12 @@ const labelMap: Record<AnyStatut, string> = {
   EN_COURS: "En cours",
   EN_ATTENTE_PAIEMENT: "En attente de paiement (Guichet)",
   EN_ATTENTE_VALIDATION_RESPONSABLE: "En attente de validation responsable",
+  EN_ATTENTE_PAIEMENT_SIGNATURE: "Paiement et signature attendus",
+  EN_ATTENTE_RETOUR_CONTRAT_LEGALISE: "Retour du contrat légalisé attendu",
+  EN_ATTENTE_FACTURATION: "Prête à facturer",
+  EN_PREPARATION_CARTES: "Cartes en préparation",
+  PRETE_A_FINALISER: "Prête à finaliser",
+  FINALISEE: "Finalisée",
   PAYEE: "Paiement enregistré",
   EN_ATTENTE_CORRECTION: "Correction demandée",
   EN_ATTENTE: "En attente",

@@ -1,14 +1,29 @@
 package com.rrm.parking.demande.service;
 
+import com.rrm.parking.abonnement.entity.AbonnementEntreprise;
+import com.rrm.parking.abonnement.entity.PeriodeAbonnement;
 import com.rrm.parking.client.entity.ClientEntreprise;
+import com.rrm.parking.carte.entity.CarteAcces;
 import com.rrm.parking.contrat.entity.ContratCorporate;
 import com.rrm.parking.contrat.enums.StatutContrat;
 import com.rrm.parking.contrat.repository.ContratCorporateRepository;
+import com.rrm.parking.abonnement.repository.AbonnementEntrepriseRepository;
+import com.rrm.parking.abonnement.repository.AbonnementRepository;
+import com.rrm.parking.abonnement.repository.PeriodeAbonnementRepository;
+import com.rrm.parking.carte.repository.CarteAccesRepository;
+import com.rrm.parking.carte.repository.DemandeOperationnelleRepository;
+import com.rrm.parking.facturation.repository.FactureRepository;
+import com.rrm.parking.facturation.entity.Facture;
+import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.demande.dto.response.DecisionCorporateResponse;
+import com.rrm.parking.demande.dto.response.ConvocationCorporateResponse;
+import com.rrm.parking.paiement.dto.request.EnregistrementPaiementRequest;
+import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.event.DemandeCorporateRefuseeEvent;
+import com.rrm.parking.demande.event.DemandeCorporateConvoqueeEvent;
 import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.model.DecompteCorporate;
@@ -24,12 +39,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -45,6 +63,20 @@ class DemandeCorporateResponsableServiceTest {
     @Mock
     private ContratCorporateRepository contratRepository;
     @Mock
+    private PaiementRepository paiementRepository;
+    @Mock
+    private FactureRepository factureRepository;
+    @Mock
+    private AbonnementEntrepriseRepository abonnementRepository;
+    @Mock
+    private AbonnementRepository abonnementGeneriqueRepository;
+    @Mock
+    private PeriodeAbonnementRepository periodeRepository;
+    @Mock
+    private CarteAccesRepository carteRepository;
+    @Mock
+    private DemandeOperationnelleRepository operationRepository;
+    @Mock
     private UtilisateurRepository utilisateurRepository;
     @Mock
     private CapaciteCorporateService capaciteCorporateService;
@@ -59,6 +91,13 @@ class DemandeCorporateResponsableServiceTest {
         service = new DemandeCorporateResponsableService(
                 demandeRepository,
                 contratRepository,
+                paiementRepository,
+                factureRepository,
+                abonnementRepository,
+                abonnementGeneriqueRepository,
+                periodeRepository,
+                carteRepository,
+                operationRepository,
                 utilisateurRepository,
                 capaciteCorporateService,
                 eventPublisher
@@ -137,6 +176,170 @@ class DemandeCorporateResponsableServiceTest {
         assertEquals("corporate@example.com", evenement.getValue().email());
         assertEquals("Capacité contractuelle insuffisante",
                 evenement.getValue().motif());
+    }
+
+    @Test
+    void doitConvoquerUneSeuleFoisApresGenerationDuContrat() {
+        DemandeNouveauContratCorporate demande = creerDemandeEnAttente();
+        demande.validerParResponsable(responsable, "Validation");
+        demande.associerContratGenere(
+                new ContratCorporate(
+                        "CTR-RRM-TEST",
+                        demande.getNombrePlaces(),
+                        (ClientEntreprise) demande.getClient()
+                )
+        );
+        when(demandeRepository.findByIdPourDecision(38L))
+                .thenReturn(Optional.of(demande));
+        when(utilisateurRepository.findById(7L))
+                .thenReturn(Optional.of(responsable));
+
+        ConvocationCorporateResponse resultat = service.convoquer(38L, 7L);
+
+        assertEquals(
+                StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE,
+                demande.getStatut()
+        );
+        assertEquals(demande.getStatut(), resultat.statutDemande());
+        assertNotNull(demande.getDateConvocation());
+        assertEquals("corporate@example.com", resultat.emailRepresentant());
+        verify(demandeRepository).save(demande);
+
+        ArgumentCaptor<DemandeCorporateConvoqueeEvent> evenement =
+                ArgumentCaptor.forClass(
+                        DemandeCorporateConvoqueeEvent.class
+                );
+        verify(eventPublisher).publishEvent(evenement.capture());
+        assertEquals("DEM-CORP-TEST", evenement.getValue().reference());
+        assertEquals("Bab Chellah", evenement.getValue().parkingNom());
+        assertEquals(
+                new BigDecimal("270150.00"),
+                evenement.getValue().montantTotalTtc()
+        );
+
+        assertThrows(
+                com.rrm.parking.common.exception.ConflitMetierException.class,
+                () -> service.convoquer(38L, 7L)
+        );
+    }
+
+    @Test
+    void doitConfirmerLeChequePuisDeclarerLeRetourDuContrat() {
+        DemandeNouveauContratCorporate demande = creerDemandeEnAttente();
+        demande.validerParResponsable(responsable, "Validation");
+        ContratCorporate contrat = new ContratCorporate(
+                "CTR-RRM-TEST",
+                demande.getNombrePlaces(),
+                (ClientEntreprise) demande.getClient()
+        );
+        demande.associerContratGenere(contrat);
+        demande.convoquerClient(responsable);
+
+        when(demandeRepository.findByIdPourDecision(38L))
+                .thenReturn(Optional.of(demande));
+        when(utilisateurRepository.findById(7L))
+                .thenReturn(Optional.of(responsable));
+        when(paiementRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var apresPaiement = service.enregistrerPaiement(
+                38L,
+                7L,
+                new EnregistrementPaiementRequest(
+                        "CHQ-2026-001",
+                        "Banque test",
+                        LocalDate.now()
+                )
+        );
+
+        assertEquals(
+                StatutDemande.EN_ATTENTE_RETOUR_CONTRAT_LEGALISE,
+                apresPaiement.statut()
+        );
+        assertEquals(
+                StatutPaiement.CONFIRME,
+                demande.getPaiementCorporate().getStatut()
+        );
+        assertEquals(
+                new BigDecimal("270150.00"),
+                demande.getPaiementCorporate().getMontant()
+        );
+
+        var apresRetour = service.declarerRetourContrat(38L, 7L);
+        assertEquals(
+                StatutDemande.EN_ATTENTE_FACTURATION,
+                apresRetour.statut()
+        );
+        assertNotNull(demande.getDateRetourContratLegalise());
+    }
+
+    @Test
+    void doitExclureLesFraisDeCartesDuPrixHtDeLaPeriodeCorporate() {
+        DemandeNouveauContratCorporate demande = creerDemandeEnAttente();
+        demande.validerParResponsable(responsable, "Validation");
+        ContratCorporate contrat = new ContratCorporate(
+                "CTR-RRM-TEST",
+                demande.getNombrePlaces(),
+                (ClientEntreprise) demande.getClient()
+        );
+        demande.associerContratGenere(contrat);
+        demande.convoquerClient(responsable);
+
+        when(demandeRepository.findByIdPourDecision(38L))
+                .thenReturn(Optional.of(demande));
+        when(utilisateurRepository.findById(7L))
+                .thenReturn(Optional.of(responsable));
+        when(paiementRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.enregistrerPaiement(
+                38L,
+                7L,
+                new EnregistrementPaiementRequest(
+                        "CHQ-2026-002",
+                        "Banque test",
+                        LocalDate.now()
+                )
+        );
+        service.declarerRetourContrat(38L, 7L);
+
+        when(abonnementRepository.save(any()))
+                .thenAnswer(invocation -> {
+                    AbonnementEntreprise abonnement = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(abonnement, "id", 99L);
+                    return abonnement;
+                });
+        when(periodeRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(factureRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(carteRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(carteRepository.findByAbonnementIdOrderByIdAsc(99L))
+                .thenReturn(List.of());
+
+        service.genererFactureEtCartes(38L, 7L);
+
+        ArgumentCaptor<PeriodeAbonnement> periodeCapturee =
+                ArgumentCaptor.forClass(PeriodeAbonnement.class);
+        verify(periodeRepository).save(periodeCapturee.capture());
+        assertEquals(
+                new BigDecimal("225000.00"),
+                periodeCapturee.getValue().getPrixHTApplique()
+        );
+
+        ArgumentCaptor<Facture> factureCapturee =
+                ArgumentCaptor.forClass(Facture.class);
+        verify(factureRepository).save(factureCapturee.capture());
+        assertEquals(
+                new BigDecimal("270150.00"),
+                factureCapturee.getValue().getTotalTtc()
+        );
+        assertEquals(3, demande.getNombrePlaces());
+        assertEquals(
+                new BigDecimal("150.00"),
+                demande.getFraisCartesTtc()
+        );
     }
 
     private DemandeNouveauContratCorporate creerDemandeEnAttente() {

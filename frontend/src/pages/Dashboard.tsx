@@ -35,6 +35,11 @@ import { ResponsableDashboardView } from "../components/dashboard/ResponsableDas
 import { ReportingDashboardView } from "../components/dashboard/ReportingDashboardView";
 import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffairesParkingTable";
 import { getConsolidatedRevenue } from "../lib/chiffreAffairesService";
+import { ChiffreAffairesDashboard } from "../components/dashboard/financial/ChiffreAffairesDashboard";
+
+function utiliseDashboardFinancier(role: Role): boolean {
+  return role === "COMPTABLE";
+}
 
 export function Dashboard() {
   const { role } = useAuth();
@@ -50,6 +55,10 @@ export function Dashboard() {
 
   if (role === "RESP_REPORTING") {
     return <ReportingDashboardView />;
+  }
+
+  if (utiliseDashboardFinancier(role)) {
+    return <ChiffreAffairesDashboard audience="COMPTABLE" />;
   }
 
   const currentRoleConfig = roleConfig[role];

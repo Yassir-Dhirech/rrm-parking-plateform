@@ -423,7 +423,14 @@ public abstract class DemandeClient {
             );
         }
 
-        if (statut != null && estTerminee()) {
+        boolean continuationCorporateAutorisee =
+                statut == StatutDemande.VALIDEE
+                        && nouveauStatut
+                        == StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE;
+
+        if (statut != null
+                && estTerminee()
+                && !continuationCorporateAutorisee) {
             throw new IllegalStateException(
                     "Une demande terminée ne peut plus changer de statut"
             );
@@ -458,6 +465,7 @@ public abstract class DemandeClient {
 
     public boolean estTerminee() {
         return statut == StatutDemande.VALIDEE
+                || statut == StatutDemande.FINALISEE
                 || statut == StatutDemande.REFUSEE
                 || statut == StatutDemande.EXPIREE
                 || statut == StatutDemande.ANNULEE;

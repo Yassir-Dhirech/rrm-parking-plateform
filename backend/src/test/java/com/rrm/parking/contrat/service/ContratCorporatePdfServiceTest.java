@@ -49,6 +49,12 @@ class ContratCorporatePdfServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 "SOCIETE CORPORATE TEST",
                 "009876543210123",
                 "RC-12345",
@@ -72,7 +78,18 @@ class ContratCorporatePdfServiceTest {
                 List.of("12345-A-1"),
                 1L,
                 "CTR-RRM-TEST",
-                "EN_PREPARATION"
+                "EN_PREPARATION",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0,
+                0
         );
     }
 }

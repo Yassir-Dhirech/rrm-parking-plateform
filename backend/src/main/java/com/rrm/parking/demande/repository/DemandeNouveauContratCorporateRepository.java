@@ -18,10 +18,14 @@ public interface DemandeNouveauContratCorporateRepository
         extends JpaRepository<DemandeNouveauContratCorporate, Long> {
 
     List<DemandeNouveauContratCorporate>
-    findByStatutOrderByDateSoumissionAsc(StatutDemande statut);
+    findByStatutInOrderByDateSoumissionAsc(
+            Collection<StatutDemande> statuts
+    );
 
     List<DemandeNouveauContratCorporate>
-    findByStatutOrderByDateSoumissionDesc(StatutDemande statut);
+    findByStatutInOrderByDateSoumissionDesc(
+            Collection<StatutDemande> statuts
+    );
 
     @Query("""
             select coalesce(sum(d.nombrePlaces), 0)

@@ -51,6 +51,9 @@ public class CarteAcces {
     @Column(name = "numero_carte", length = 100)
     private String numeroCarte;
 
+    @Column(name = "immatriculation_affectee", length = 30)
+    private String immatriculationAffectee;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "abonnement_id",
@@ -98,6 +101,14 @@ public class CarteAcces {
             String reference,
             Abonnement abonnement
     ) {
+        this(reference, abonnement, null);
+    }
+
+    public CarteAcces(
+            String reference,
+            Abonnement abonnement,
+            String immatriculationAffectee
+    ) {
         this.reference = normaliserReference(reference);
         this.abonnement = exigerNonNull(
                 abonnement,
@@ -106,6 +117,10 @@ public class CarteAcces {
 
         this.statut = StatutCarteAcces.EN_PREPARATION;
         this.dateCreation = LocalDateTime.now();
+        this.immatriculationAffectee = immatriculationAffectee == null
+                || immatriculationAffectee.isBlank()
+                ? null
+                : immatriculationAffectee.trim().toUpperCase(Locale.ROOT);
     }
 
     public void demanderImpression() {
@@ -312,6 +327,10 @@ public class CarteAcces {
 
     public String getNumeroCarte() {
         return numeroCarte;
+    }
+
+    public String getImmatriculationAffectee() {
+        return immatriculationAffectee;
     }
 
     public Abonnement getAbonnement() {

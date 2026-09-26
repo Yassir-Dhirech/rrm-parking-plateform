@@ -18,6 +18,7 @@ import type {
   DemandeCorporateResponse,
   DemandeCorporateDetailResponse,
   DecisionCorporateResponse,
+  ConvocationCorporateResponse,
 } from "../features/demandes/types";
 
 async function lireReponseJson<T>(response: Response): Promise<T> {
@@ -241,6 +242,53 @@ export async function refuserDemandeCorporate(
   const response = await client.post<DecisionCorporateResponse>(
     `/demandes/corporate/responsable/${demandeId}/refus`,
     { motif }
+  );
+  return response.data;
+}
+
+export async function convoquerClientCorporate(
+  demandeId: number
+): Promise<ConvocationCorporateResponse> {
+  const response = await client.post<ConvocationCorporateResponse>(
+    `/demandes/corporate/responsable/${demandeId}/convocation`
+  );
+  return response.data;
+}
+
+export async function enregistrerPaiementCorporate(
+  demandeId: number,
+  requete: EnregistrementPaiementRequest
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/paiement-cheque`,
+    requete
+  );
+  return response.data;
+}
+
+export async function declarerRetourContratCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/retour-contrat-legalise`
+  );
+  return response.data;
+}
+
+export async function genererFactureCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/facturation`
+  );
+  return response.data;
+}
+
+export async function finaliserDemandeCorporate(
+  demandeId: number
+): Promise<DemandeCorporateDetailResponse> {
+  const response = await client.post<DemandeCorporateDetailResponse>(
+    `/demandes/corporate/responsable/${demandeId}/finalisation`
   );
   return response.data;
 }

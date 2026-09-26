@@ -6,6 +6,7 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
+import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.enums.StatutFacture;
 import com.rrm.parking.paiement.entity.Paiement;
@@ -101,6 +102,17 @@ public record FactureResponse(
                             .getLibelle();
                 }
             }
+        } else if (demande instanceof DemandeNouveauContratCorporate corporate) {
+            if (corporate.getAbonnementGenere() != null) {
+                abonnementReference = corporate.getAbonnementGenere().getReference();
+            }
+            parkingNom = corporate.getParking().getNom();
+            forfaitLibelle = "Corporate - " + corporate.getNombrePlaces()
+                    + " place(s)";
+            dureeEnMois = 240;
+            immatriculation = corporate.getImmatriculationsDeclarees().isEmpty()
+                    ? null
+                    : String.join(", ", corporate.getImmatriculationsDeclarees());
         }
 
         LocalDate dateDebutAbonnement = null;

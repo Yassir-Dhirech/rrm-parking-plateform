@@ -34,6 +34,10 @@ public interface CarteAccesRepository
             Long abonnementId
     );
 
+    List<CarteAcces> findByAbonnementIdOrderByIdAsc(
+            Long abonnementId
+    );
+
     Optional<CarteAcces> findByAbonnementIdAndStatut(
             Long abonnementId,
             StatutCarteAcces statut

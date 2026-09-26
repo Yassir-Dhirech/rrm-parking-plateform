@@ -2,7 +2,9 @@ package com.rrm.parking.demande.controller;
 
 import com.rrm.parking.contrat.service.ContratCorporatePdfService;
 import com.rrm.parking.demande.dto.request.RefusDemandeCorporateRequest;
+import com.rrm.parking.paiement.dto.request.EnregistrementPaiementRequest;
 import com.rrm.parking.demande.dto.response.DecisionCorporateResponse;
+import com.rrm.parking.demande.dto.response.ConvocationCorporateResponse;
 import com.rrm.parking.demande.dto.response.DemandeCorporateDetailResponse;
 import com.rrm.parking.demande.dto.response.DemandeRechercheResponse;
 import com.rrm.parking.demande.service.DemandeCorporateResponsableService;
@@ -71,6 +73,73 @@ public class DemandeCorporateResponsableController {
                         demandeId,
                         utilisateurId(jwt),
                         requete.motif()
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/convocation")
+    public ResponseEntity<ConvocationCorporateResponse> convoquer(
+            @PathVariable Long demandeId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.convoquer(
+                        demandeId,
+                        utilisateurId(jwt)
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/paiement-cheque")
+    public ResponseEntity<DemandeCorporateDetailResponse> enregistrerPaiement(
+            @PathVariable Long demandeId,
+            @RequestBody EnregistrementPaiementRequest requete,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.enregistrerPaiement(
+                        demandeId,
+                        utilisateurId(jwt),
+                        requete
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/retour-contrat-legalise")
+    public ResponseEntity<DemandeCorporateDetailResponse> declarerRetourContrat(
+            @PathVariable Long demandeId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.declarerRetourContrat(
+                        demandeId,
+                        utilisateurId(jwt)
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/facturation")
+    public ResponseEntity<DemandeCorporateDetailResponse> genererFacture(
+            @PathVariable Long demandeId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.genererFactureEtCartes(
+                        demandeId,
+                        utilisateurId(jwt)
+                )
+        );
+    }
+
+    @PostMapping("/{demandeId}/finalisation")
+    public ResponseEntity<DemandeCorporateDetailResponse> finaliser(
+            @PathVariable Long demandeId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(
+                responsableService.finaliser(
+                        demandeId,
+                        utilisateurId(jwt)
                 )
         );
     }
