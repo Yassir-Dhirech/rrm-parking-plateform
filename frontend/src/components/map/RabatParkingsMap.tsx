@@ -197,39 +197,25 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
         </Col>
         <Col xs={24} lg={9}>
           <div style={{ padding: 20, height, overflowY: "auto", backgroundColor: "#f8fafc", borderLeft: "1px solid #e2e8f0" }}>
-            <Input
-              placeholder="Rechercher par nom, code ou adresse..."
-              prefix={<SearchOutlined style={{ color: "#0284c7" }} />}
-              allowClear
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ borderRadius: 8, marginBottom: 14 }}
-            />
-            {loading ? (
-              <div style={{ textAlign: "center", padding: 32 }}><Spin /></div>
-            ) : mapParkings.length === 0 ? (
-              <Alert type="info" showIcon message="Aucun parking géolocalisé n'est disponible." />
-            ) : (
-              <>
-                <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {mapParkings.map((parking) => (
-                    <button
-                      key={parking.id}
-                      onClick={() => handleSelectParkingItem(parking)}
-                      style={{
-                        minWidth: 38,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        border: activeParking?.id === parking.id ? "2px solid #006398" : "1px solid #cbd5e1",
-                        backgroundColor: activeParking?.id === parking.id ? "#001E3D" : "#fff",
-                        color: activeParking?.id === parking.id ? "#fff" : "#1e293b",
-                        fontWeight: 800,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {parking.numeroPin}
-                    </button>
-                  ))}
+            {/* Search Bar */}
+            <div style={{ marginBottom: 14 }}>
+              <Input
+                placeholder="Rechercher un parking (ex: Agdal, Hassan II, Bab El Had...)"
+                prefix={<SearchOutlined style={{ color: "#0284c7" }} />}
+                allowClear
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ borderRadius: 8, borderColor: "#cbd5e1", boxShadow: "0 2px 6px rgba(0,0,0,0.02)" }}
+              />
+            </div>
+
+            
+
+            {/* Filtered Search Results List (if searching) */}
+            {searchQuery.trim() && (
+              <div style={{ marginBottom: 14, backgroundColor: "#ffffff", borderRadius: 8, border: "1px solid #bae6fd", padding: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#0369a1", marginBottom: 6 }}>
+                  Résultats de recherche ({filteredParkings.length}) :
                 </div>
 
                 {searchQuery.trim() && (

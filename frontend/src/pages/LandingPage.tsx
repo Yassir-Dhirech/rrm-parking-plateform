@@ -46,7 +46,7 @@ export function LandingPage() {
               <p className="text-slate-700 text-base md:text-lg mb-8 leading-relaxed max-w-2xl font-medium">
                 Bienvenue sur le portail officiel de souscription et d'information
                 des parkings de Rabat Région Mobilité. Gérez vos abonnements,
-                consultez la carte des 17 parkings en ouvrage et facilitez votre stationnement quotidien.
+                consultez la carte des 15 parkings en ouvrage et facilitez votre stationnement quotidien.
               </p>
               <div className="flex flex-wrap gap-4">
                 <button
@@ -60,7 +60,7 @@ export function LandingPage() {
                   onClick={() => navigate("/parkings-public")}
                   className="bg-white/90 hover:bg-white text-slate-900 px-7 py-3.5 rounded-2xl font-bold text-sm border border-slate-300 shadow-md transition-all cursor-pointer"
                 >
-                  Explorer les 17 Parkings & Tarifs
+                  Explorer les 15 Parkings & Tarifs
                 </button>
               </div>
             </div>
@@ -70,11 +70,11 @@ export function LandingPage() {
               <div className="space-y-3 text-xs text-slate-700 font-medium">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Parkings Ouverts :</span>
-                  <span className="font-black text-emerald-700 text-sm">17 Parkings 24/7</span>
+                  <span className="font-black text-emerald-700 text-sm">15 Parkings 24/7</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Capacité Totale :</span>
-                  <span className="font-black text-secondary text-sm">5 000+ Places</span>
+                  <span className="font-black text-secondary text-sm">4 000+ Places</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Contrôle Accès :</span>
@@ -90,11 +90,11 @@ export function LandingPage() {
         {/* Quick General Statistics Section */}
         <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
-            <div className="text-3xl md:text-4xl font-black text-secondary mb-1">17</div>
+            <div className="text-3xl md:text-4xl font-black text-secondary mb-1">15</div>
             <p className="text-slate-600 text-xs md:text-sm font-semibold m-0">Parkings Régionaux</p>
           </div>
           <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
-            <div className="text-3xl md:text-4xl font-black text-emerald-600 mb-1">5 000+</div>
+            <div className="text-3xl md:text-4xl font-black text-emerald-600 mb-1">4 000+</div>
             <p className="text-slate-600 text-xs md:text-sm font-semibold m-0">Places de Stationnement</p>
           </div>
           <div className="glass-card p-6 rounded-2xl border border-white/80 shadow-md text-center">
@@ -127,7 +127,7 @@ export function LandingPage() {
                   <Tag color="cyan" className="mb-3 font-semibold">Réseau des 17 Parkings</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Nos Parkings & Carte</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    Carte interactive en temps réel des 17 ouvrages de stationnement, capacités et taux d'occupation.
+                    Carte interactive en temps réel des 15 ouvrages de stationnement, capacités et taux d'occupation.
                   </p>
                 </div>
                 <Button type="primary" block className="bg-cyan-600 border-cyan-600 rounded-xl h-11 font-bold">
@@ -184,7 +184,7 @@ export function LandingPage() {
         <section id="map" className="space-y-4 pt-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 17 Parkings Régionaux</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">Carte des 15 Parkings Régionaux</h2>
               <p className="text-slate-600 text-sm mt-1">Consultez la carte interactive de Rabat pour repérer les ouvrages de stationnement et leurs places libres.</p>
             </div>
             <Button
