@@ -122,7 +122,21 @@ function ScanUploadField({
       getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
       rules={
         isRequired
-          ? [{ required: true, message: `Le document (${label}) est obligatoire.` }]
+          ? [
+              {
+                required: true,
+                validator: (_, value) => {
+                  const list = Array.isArray(value) ? value : value?.fileList;
+                  if (Array.isArray(list) && list.length > 0) {
+                    return Promise.resolve();
+                  }
+                  if (value && !Array.isArray(value) && (value instanceof File || value?.originFileObj)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error(`Le document (${label}) est obligatoire.`));
+                },
+              },
+            ]
           : undefined
       }
       className="m-0"
@@ -451,21 +465,56 @@ const {
       message.success("Informations Personnelles & CIN validées !");
       setActiveCollapseKeys(["vehicule_particulier"]);
     } catch {
-      message.error("Veuillez remplir les informations et téléverser les photos CIN (Recto & Verso).");
+      setIsPersoValid(false);
+      setActiveCollapseKeys(["perso_particulier"]);
+      message.error("Veuillez remplir toutes les informations personnelles obligatoires et téléverser les photos CIN (Recto & Verso).");
     }
   };
 
   // Section 2 Validation (Informations Véhicule) -> Advance to Step 2 (Tarification)
   const handleValidateVehiculeAndNext = async () => {
+    // 1. Valider strictement la Section 1 (Informations Personnelles & CIN)
     try {
-      await form.validateFields(["immatriculation", "photoCarteGriseRecto", "photoCarteGriseVerso"]);
-      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
-      setIsVehiculeValid(true);
-      message.success("Informations Véhicule & Carte Grise validées !");
-      setCurrentStep(2);
+      await form.validateFields([
+        "nom",
+        "prenom",
+        "cin",
+        "telephone",
+        "email",
+        "photoCinRecto",
+        "photoCinVerso",
+      ]);
+      setIsPersoValid(true);
     } catch {
-      message.error("Veuillez remplir l'immatriculation et téléverser les photos de la Carte Grise.");
+      setIsPersoValid(false);
+      setActiveCollapseKeys(["perso_particulier"]);
+      message.error(
+        "Veuillez d'abord remplir les champs obligatoires des informations personnelles et téléverser la CIN (Recto & Verso)."
+      );
+      return;
     }
+
+    // 2. Valider strictement la Section 2 (Véhicule & Carte Grise)
+    try {
+      await form.validateFields([
+        "immatriculation",
+        "photoCarteGriseRecto",
+        "photoCarteGriseVerso",
+      ]);
+      setIsVehiculeValid(true);
+    } catch {
+      setIsVehiculeValid(false);
+      setActiveCollapseKeys(["vehicule_particulier"]);
+      message.error(
+        "Veuillez renseigner le matricule et téléverser les photos de la Carte Grise (Recto & Verso)."
+      );
+      return;
+    }
+
+    // 3. Les deux sections sont valides : sauvegarder et passer à l'étape 2 (Tarification)
+    setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
+    message.success("Informations Personnelles et Véhicule validées avec succès !");
+    setCurrentStep(2);
   };
 
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
@@ -477,6 +526,8 @@ const {
           "formuleCode",
           "dureeMois",
           "tarifParkingId",
+          "canalOtp",
+          "modePaiement",
         ]);
         const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
         if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
@@ -484,7 +535,7 @@ const {
           return;
         }
       } else if (typeDemande === "CORPORATE") {
-        await form.validateFields(["parkingId"]);
+        await form.validateFields(["parkingId", "modePaiement"]);
         const parkingCorporate = parkings.find(
           (parking) => parking.id === Number(form.getFieldValue("parkingId"))
         );
@@ -498,7 +549,7 @@ const {
           return;
         }
       } else {
-        await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+        await form.validateFields(["parkingId", "formuleCode", "dureeMois", "modePaiement"]);
       }
 
       setFormValues((prev: any) => ({
@@ -515,8 +566,8 @@ const {
     } catch {
       message.error(
         typeDemande === "CORPORATE"
-          ? "Veuillez sélectionner un parking disposant de suffisamment de places."
-          : "Veuillez sélectionner un parking, une formule et une durée."
+          ? "Veuillez sélectionner un parking valide disposant de suffisamment de places."
+          : "Veuillez sélectionner un parking, un forfait et une durée."
       );
     }
   };
@@ -543,7 +594,8 @@ const {
       message.success("Informations Société validées !");
       setCurrentStep(2);
     } catch {
-      message.error("Veuillez vérifier les informations de l'entreprise et du projet.");
+      setIsCorporateValid(false);
+      message.error("Veuillez remplir tous les champs obligatoires de l'entreprise et du représentant.");
     }
   };
 
@@ -1239,7 +1291,13 @@ const {
                     <Button
                       type="primary"
                       disabled={!hasFoundAccount}
-                      onClick={() => setCurrentStep(2)}
+                      onClick={() => {
+                        if (!hasFoundAccount || !renewalAccount) {
+                          message.error("Veuillez d'abord identifier votre abonnement avec votre CIN et numéro de carte.");
+                          return;
+                        }
+                        setCurrentStep(2);
+                      }}
                       className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                     >
                       Étape Suivante (Parking & Durée) →
@@ -2194,7 +2252,7 @@ const {
               </Tag>
             </div>
 
-            <Form form={form} layout="vertical">
+            <Form form={form} preserve={true} layout="vertical">
               {/* Dynamic Live Subscription Summary Card */}
               <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 border-b border-slate-200/80 pb-3 gap-2">
