@@ -205,7 +205,6 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ borderRadius: 8, marginBottom: 14 }}
             />
-
             {loading ? (
               <div style={{ textAlign: "center", padding: 32 }}><Spin /></div>
             ) : mapParkings.length === 0 ? (
