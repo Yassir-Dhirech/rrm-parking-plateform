@@ -16,6 +16,7 @@ import com.rrm.parking.paiement.event.PaiementConfirmeEvent;
 import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
+import com.rrm.parking.utilisateur.repository.AffectationAgentParkingRepository;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,6 +36,7 @@ public class PaiementService {
     private final PaiementRepository paiementRepository;
     private final DemandeClientRepository demandeClientRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AffectationAgentParkingRepository affectationAgentParkingRepository;
     private final RecuRepository recuRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -73,6 +75,29 @@ public class PaiementService {
             );
         }
 
+        DecomptePaiementDemande decompte =
+                DecomptePaiementDemande.depuis(demande);
+
+        var affectation = affectationAgentParkingRepository
+                .findByUtilisateurIdAndActiveTrue(agentId)
+                .orElseThrow(() -> new ConflitMetierException(
+                        "Aucun parking actif n'est affecté à cet agent"
+                ));
+
+        Long parkingDemandeId = decompte.tarifParking()
+                .getParking()
+                .getId();
+        Long parkingAgentId = affectation.getParking().getId();
+
+        if (!parkingAgentId.equals(parkingDemandeId)) {
+            throw new ConflitMetierException(
+                    "Cette demande appartient au parking "
+                            + decompte.tarifParking().getParking().getNom()
+                            + ". Vous ne pouvez encaisser que les demandes du parking "
+                            + affectation.getParking().getNom()
+            );
+        }
+
         Utilisateur agent = utilisateurRepository
                 .findById(agentId)
                 .orElseThrow(() ->
@@ -80,9 +105,6 @@ public class PaiementService {
                                 "Utilisateur authentifié introuvable"
                         )
                 );
-
-        DecomptePaiementDemande decompte =
-                DecomptePaiementDemande.depuis(demande);
 
         ModePaiement modePaiement = decompte.modePaiement();
         BigDecimal montant = decompte.montantTotalTTC();
