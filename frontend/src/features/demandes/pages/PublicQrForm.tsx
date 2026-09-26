@@ -360,60 +360,8 @@ const {
   }, [searchParams, form, typeDemande]);
 
   // BETA Quick Test Autofill Handler
-  const handleBetaAutofill = () => {
-    const mockDocumentList = [
-      {
-        uid: "-1",
-        name: "scan_document_test_rrm.pdf",
-        status: "done",
-        url: "#",
-      },
-    ];
-
-    const vals = {
-      nom: "BENNANI",
-      prenom: "Karim",
-      cin: "AB123456",
-      telephone: "0661234567",
-      email: "karim.bennani@gmail.com",
-      immatriculation: "12345-A-1",
-      marque: "Dacia Logan 2023",
-      carteRfidActuelle: "RFID-889901",
-      photoCinRecto: mockDocumentList,
-      photoCinVerso: mockDocumentList,
-      photoCarteGriseRecto: mockDocumentList,
-      photoCarteGriseVerso: mockDocumentList,
-      raisonSociale: "Maroc Telecom SA",
-      ice: "001234567000089",
-      rc: "998877",
-      titreFoncier: "TF-12345/2026",
-      nomRepresentant: "BENNANI",
-      prenomRepresentant: "Karim",
-      cinRepresentant: "AB123456",
-      libelleProjet: "Projet corporate RRM",
-      adresseProjet: "Avenue Annakhil, Rabat",
-      plageHoraire: "Tous les jours de 08h00 à 20h00",
-      flotteVehicules: [
-        { immatriculation: "12345-A-1" },
-        { immatriculation: "67890-B-2" },
-        { immatriculation: "" },
-      ],
-      parkingId: parkings[0]?.id || 1,
-      formuleCode: "24H7J",
-      dureeMois: 6,
-      modePaiement: "ESPECE",
-      acceptTerms: true,
-    };
-
-    form.setFieldsValue(vals);
-    setFormValues((prev: any) => ({ ...prev, ...vals }));
-
-    setIsPersoValid(true);
-    setIsVehiculeValid(true);
-    setIsCorporateValid(true);
-
-    message.success("⚡ Mode BETA Test : Formulaire et documents pré-remplis avec succès !");
-  };
+  
+    
 
   // Account search handler
   const handleLookupSubscriber = async () => {
@@ -929,17 +877,7 @@ const {
               </p>
             </div>
 
-            {/* BETA Test Autofill Action */}
-            <div className="w-full sm:w-auto shrink-0">
-              <Button
-                size="large"
-                icon={<ThunderboltOutlined />}
-                onClick={handleBetaAutofill}
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center justify-center gap-2 h-12 text-xs"
-              >
-                Mode Remplissage Rapide (BETA Test)
-              </Button>
-            </div>
+            
           </div>
         </div>
       </div>
