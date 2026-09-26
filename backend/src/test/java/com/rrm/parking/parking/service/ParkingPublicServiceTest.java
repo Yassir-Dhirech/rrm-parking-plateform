@@ -1,6 +1,7 @@
 package com.rrm.parking.parking.service;
 
 import com.rrm.parking.abonnement.repository.AffectationParkingRepository;
+import com.rrm.parking.demande.service.ReservationPlacesCorporate;
 import com.rrm.parking.parking.dto.response.ParkingPublicResponse;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.parking.enums.StatutParking;
@@ -14,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ParkingPublicServiceTest {
@@ -66,7 +70,8 @@ class ParkingPublicServiceTest {
                 any()
         )).thenReturn(List.of());
         when(demandeCorporateRepository.compterPlacesReserveesParParking(
-                anySet()
+                anySet(),
+                any()
         )).thenReturn(List.of());
         when(parkingRepository.findAllByStatutInOrderByNomAsc(anyCollection()))
                 .thenReturn(List.of(parkingDisponible, parkingComplet));
@@ -78,6 +83,9 @@ class ParkingPublicServiceTest {
         assertEquals(2, resultats.size());
         assertTrue(resultats.get(0).souscriptionDisponible());
         assertFalse(resultats.get(1).souscriptionDisponible());
+        verify(demandeCorporateRepository).compterPlacesReserveesParParking(
+                ReservationPlacesCorporate.STATUTS_RESERVANT,
+                LocalDate.now(ZoneId.of("Africa/Casablanca")));
     }
 
     private void preparerParking(

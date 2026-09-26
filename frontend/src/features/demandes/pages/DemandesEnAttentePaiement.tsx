@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Alert, Button, Empty, Table, Tag } from "antd";
+import { Alert, Button, Empty, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useQuery } from "@tanstack/react-query";
 import { listerDemandesEnAttentePaiement } from "../../../api/demandesApi";
@@ -7,6 +7,7 @@ import type { DemandeRechercheResponse } from "../types";
 import { useNavigate } from "react-router-dom";
 import {
   EyeOutlined,
+  EditOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 
@@ -69,6 +70,12 @@ export function DemandesEnAttentePaiement() {
       render: (value: string) => value.replaceAll("_", " "),
     },
     {
+      title: "PARKING",
+      dataIndex: "parkingNom",
+      key: "parkingNom",
+      render: (value?: string | null) => value || "—",
+    },
+    {
       title: "STATUT",
       dataIndex: "statut",
       key: "statut",
@@ -94,18 +101,25 @@ export function DemandesEnAttentePaiement() {
       title: "ACTIONS",
       key: "actions",
       fixed: "right",
-      width: 150,
+      width: 260,
       render: (_, demande) => (
-        <Button
-          type="primary"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() =>
-            navigate(`/agent/demandes/${demande.id}`)
-          }
-        >
-          Plus de détails
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => navigate(`/agent/demandes/${demande.id}`)}
+          >
+            Détails
+          </Button>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => navigate(`/agent/demandes/${demande.id}/modifier`)}
+          >
+            Modifier
+          </Button>
+        </Space>
       ),
     },
   ];

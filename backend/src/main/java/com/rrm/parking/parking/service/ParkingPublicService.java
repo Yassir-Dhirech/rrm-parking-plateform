@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.rrm.parking.parking.entity.Parking;
-import com.rrm.parking.demande.enums.StatutDemande;
+import com.rrm.parking.demande.service.ReservationPlacesCorporate;
 import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.tarification.dto.response.TarifParkingPublicResponse;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ParkingPublicService {
+
+    private static final ZoneId ZONE_RRM = ZoneId.of("Africa/Casablanca");
 
     private static final EnumSet<StatutAbonnement>
             STATUTS_OCCUPANT_UNE_PLACE = EnumSet.of(
@@ -108,11 +111,12 @@ public class ParkingPublicService {
     construireReponses(
             Collection<StatutParking> statutsParkings
     ) {
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
         Map<Long, Long> occupationsParParking =
                 affectationParkingRepository
                         .compterPlacesOccupeesParParking(
                                 STATUTS_OCCUPANT_UNE_PLACE,
-                                LocalDate.now()
+                                aujourdHui
                         )
                         .stream()
                         .collect(
@@ -126,18 +130,8 @@ public class ParkingPublicService {
 
         demandeCorporateRepository
                 .compterPlacesReserveesParParking(
-                        EnumSet.of(
-                                StatutDemande.EN_ATTENTE_VALIDATION_RESPONSABLE,
-                                StatutDemande.EN_ATTENTE_PAIEMENT,
-                                StatutDemande.PAYEE,
-                                StatutDemande.VALIDEE,
-                                StatutDemande.EN_ATTENTE_PAIEMENT_SIGNATURE,
-                                StatutDemande.EN_ATTENTE_RETOUR_CONTRAT_LEGALISE,
-                                StatutDemande.EN_ATTENTE_FACTURATION,
-                                StatutDemande.EN_PREPARATION_CARTES,
-                                StatutDemande.PRETE_A_FINALISER,
-                                StatutDemande.FINALISEE
-                        )
+                        ReservationPlacesCorporate.STATUTS_RESERVANT,
+                        aujourdHui
                 )
                 .forEach(occupation -> occupationsParParking.merge(
                         occupation.getParkingId(),

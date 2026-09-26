@@ -15,6 +15,8 @@ import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
 import { CartesList } from "../features/cartes/pages/CartesList";
+import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
+import { AgentParkingVue } from "../components/dashboard/AgentParkingVue";
 import { CarteDetail } from "../features/cartes/pages/CarteDetail";
 import { ContratDetail } from "../features/contrats/pages/ContratDetail";
 import { ContratsList } from "../features/contrats/pages/ContratsList";
@@ -38,6 +40,8 @@ import { DemandesValidees } from "../features/demandes/pages/DemandesValidees";
 import { OperationsCartesPage } from "../features/cartes/pages/OperationsCartesPage";
 import { DemandesCorporateResponsable } from "../features/demandes/pages/DemandesCorporateResponsable";
 import { DemandeCorporateDetail } from "../features/demandes/pages/DemandeCorporateDetail";
+import { AgentHistoriquePage } from "../pages/agent/Historique";
+import { ModificationDemandeAgent } from "../features/demandes/pages/ModificationDemandeAgent";
 
 function RootLayout() {
   return (
@@ -78,12 +82,24 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   if (role === "AGENT") {
     extraRoutes.push(
       {
+        path: "/agent/nouvel-abonnement",
+        element: <PublicQrForm mode="AGENT" />,
+      },
+      {
         path: "/agent/impressions-cartes",
         element: <OperationsCartesPage type="IMPRESSION" />,
       },
       {
         path: "/agent/remises-cartes",
         element: <OperationsCartesPage type="REMISE" />,
+      },
+      {
+        path: "/agent/historique",
+        element: <AgentHistoriquePage />,
+      },
+      {
+        path: "/agent/demandes/:id/modifier",
+        element: <ModificationDemandeAgent />,
       },
     );
   }
@@ -112,8 +128,11 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "AGENT" || role === "SUPERVISEUR") {
     extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/cartes`, element: <CartesList /> },
-      { path: `${roleConfig[role].homePath}/cartes/:id`, element: <CarteDetail /> },
+      { path: `${roleConfig[role].homePath}/cartes`,
+        element: role === "AGENT" ? <CartesAgentRegistrePage /> : <CartesList /> },
+      ...(role === "SUPERVISEUR"
+        ? [{ path: `${roleConfig[role].homePath}/cartes/:id`, element: <CarteDetail /> }]
+        : []),
     );
   }
   if (role === "RESPONSABLE") {
@@ -168,7 +187,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
       {
         element: <RoleLayout />,
         children: [
-          { path: roleConfig[role].homePath, element: <Dashboard /> },
+          { path: roleConfig[role].homePath,
+            element: role === "AGENT"
+              ? <><Dashboard /><AgentParkingVue /></>
+              : <Dashboard /> },
           ...extraRoutes,
         ],
       },
