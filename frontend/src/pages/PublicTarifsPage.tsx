@@ -1,232 +1,382 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate ,useSearchParams} from "react-router-dom";
 import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
 import {
-  StarOutlined,
-  SunOutlined,
-  MoonOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   BankOutlined,
-  PieChartOutlined,
-  SafetyCertificateOutlined,
+  CheckCircleOutlined,
   DollarOutlined,
-  ArrowRightOutlined,
+  DownOutlined,
+  EnvironmentOutlined,
+  PieChartOutlined,
+  RightOutlined,
+  SafetyCertificateOutlined,
+  SearchOutlined,
+  StarOutlined,
+  UpOutlined,
 } from "@ant-design/icons";
-import { Tag } from "antd";
-
-// Editable Formules Array — Easily modify prices, features, titles and badges here
-export const FORMULES_DATA = [
-  {
-    id: "permanent",
-    planKey: "24H7J",
-    title: "Pass Permanent",
-    priceDH: 600,
-    period: "/ mois",
-    popularBadge: "Le Plus Populaire",
-    isPopular: true,
-    icon: <StarOutlined style={{ fontSize: "20px", color: "#006398" }} />,
-    colorTheme: "border-secondary-container/60 bg-white/70",
-    features: [
-      { text: "Accès permanent 24/7 à tous les ouvrages RRM", active: true },
-      { text: "Entrées & sorties illimitées par badge RFID & LPR", active: true },
-      { text: "Service assistance & support client prioritaire", active: true },
-    ],
-    buttonText: "Sélectionner 24h/7j",
-    buttonStyle: "bg-primary text-white hover:bg-slate-800 shadow-lg shadow-primary/20",
-  },
-  {
-    id: "diurne",
-    planKey: "JOUR",
-    title: "Pass Diurne",
-    priceDH: 420,
-    period: "/ mois",
-    popularBadge: null,
-    isPopular: false,
-    icon: <SunOutlined style={{ fontSize: "20px", color: "#d97706" }} />,
-    colorTheme: "bg-white/60",
-    features: [
-      { text: "Accès de jour du lundi au samedi (08:00 - 20:00)", active: true },
-      { text: "Idéal pour trajets actifs & domicile-travail", active: true },
-      { text: "Hors créneaux de stationnement nocturne", active: false },
-    ],
-    buttonText: "Sélectionner Diurne",
-    buttonStyle: "bg-white/80 text-primary hover:bg-white border border-white/80 shadow-sm",
-  },
-  {
-    id: "nocturne",
-    planKey: "NUIT",
-    title: "Pass Nocturne",
-    priceDH: 350,
-    period: "/ mois",
-    popularBadge: null,
-    isPopular: false,
-    icon: <MoonOutlined style={{ fontSize: "20px", color: "#7c3aed" }} />,
-    colorTheme: "bg-white/60",
-    features: [
-      { text: "Accès nocturne sécurisé (19:00 - 08:00)", active: true },
-      { text: "Formule résidentielle spéciale nuit", active: true },
-      { text: "Tarification horaire standard en journée", active: false },
-    ],
-    buttonText: "Sélectionner Nocturne",
-    buttonStyle: "bg-white/80 text-primary hover:bg-white border border-white/80 shadow-sm",
-  },
-];
-
+import { Alert, Button, Input, Spin, Tag } from "antd";
+import {
+  getPublicParkings,
+  getTarifsParking,
+  type Parking,
+  type TarifParkingPublicResponse,
+} from "../api/parkings";
 export function PublicTarifsPage() {
   const navigate = useNavigate();
-  const [formules] = useState(FORMULES_DATA);
+  const [searchParams] = useSearchParams();
+  const urlParkingId = searchParams.get("parkingId");
+
+  // États pour les parkings et tarifs
+  const [parkings, setParkings] = useState<Parking[]>([]);
+  const [loadingParkings, setLoadingParkings] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // ID du parking actuellement déplié
+  const [expandedParkingId, setExpandedParkingId] = useState<number | null>(null);
+
+  // Cache des tarifs par parkingId : { 8: [tarif1, tarif2, ...], 9: [...] }
+  const [tarifsCache, setTarifsCache] = useState<Record<number, TarifParkingPublicResponse[]>>({});
+  const [loadingTarifsId, setLoadingTarifsId] = useState<number | null>(null);
+
+  // 1. Charger la liste des parkings au montage et déplier le parking ciblé
+  useEffect(() => {
+    async function chargerParkings() {
+      try {
+        setLoadingParkings(true);
+        setLoadError(null);
+        const data = await getPublicParkings();
+        setParkings(data);
+
+        // Si un parkingId est fourni (?parkingId=8), on ouvre celui-ci, sinon le 1er parking
+        const targetId = urlParkingId ? Number(urlParkingId) : (data.length > 0 ? data[0].id : null);
+
+        if (targetId) {
+          void toggleParking(targetId);
+          setTimeout(() => {
+            const el = document.getElementById(`parking-tarif-card-${targetId}`);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 350);
+        }
+      } catch (err) {
+        console.error("Erreur de chargement des parkings:", err);
+        setLoadError("Impossible de récupérer la liste des parkings.");
+      } finally {
+        setLoadingParkings(false);
+      }
+    }
+
+    void chargerParkings();
+  }, [urlParkingId]);
+
+
+  // 2. Déplier/replier un parking et charger ses tarifs si nécessaire
+  const toggleParking = async (parkingId: number) => {
+    if (expandedParkingId === parkingId) {
+      setExpandedParkingId(null);
+      return;
+    }
+
+    setExpandedParkingId(parkingId);
+
+    // Si les tarifs sont déjà en cache, pas besoin de réinterroger l'API
+    if (tarifsCache[parkingId]) return;
+
+    try {
+      setLoadingTarifsId(parkingId);
+      const tarifs = await getTarifsParking(parkingId);
+      setTarifsCache((prev) => ({ ...prev, [parkingId]: tarifs }));
+    } catch (err) {
+      console.error(`Erreur chargement tarifs parking ${parkingId}:`, err);
+    } finally {
+      setLoadingTarifsId(null);
+    }
+  };
+
+  // Filtrer les parkings selon la recherche
+  const filteredParkings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return parkings;
+    return parkings.filter(
+      (p) =>
+        p.nom.toLowerCase().includes(q) ||
+        p.code.toLowerCase().includes(q) ||
+        p.adresse.toLowerCase().includes(q)
+    );
+  }, [parkings, searchQuery]);
 
   return (
     <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col justify-between relative overflow-x-hidden pt-20 lg:pt-24 pb-0">
-      {/* Shared Unified Glass Header Navigation */}
       <PublicNavbar />
+            {/* FLOATING VIEW SWITCHER PILL BAR */}
+      <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-50 pointer-events-none flex justify-center">
+        <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1.5 rounded-full border border-slate-200/90 shadow-2xl flex items-center gap-1.5">
+          <button
+            onClick={() => navigate("/parkings-public")}
+            className="px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 text-slate-700 hover:text-slate-900 hover:bg-white/60"
+          >
+            <EnvironmentOutlined />
+            <span>Carte Interactive</span>
+          </button>
+          <button
+            onClick={() => navigate("/tarifs-public")}
+            className="px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 bg-secondary text-white shadow-md scale-105"
+          >
+            <DollarOutlined />
+            <span>Tarifs par Parking</span>
+          </button>
+        </div>
+      </div>
 
-      {/* Atmospheric Background Mesh Overlay */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none bg-gradient-mesh opacity-70"></div>
 
-      {/* Main Content Canvas */}
-      <main className="w-full max-w-[1500px] mx-auto px-4 md:px-8 pt-4 pb-lg">
-        {/* Header Title Section */}
-        <div className="mb-12 text-center md:text-left max-w-3xl">
+      <main className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-4 pb-16">
+        {/* Titre & Description */}
+        <div className="mb-8 max-w-3xl">
           <Tag color="gold" className="px-3.5 py-1 rounded-full font-semibold mb-3 border-none shadow-sm text-xs inline-flex items-center gap-1.5">
-            <DollarOutlined /> Grille Tarifaire Homologuée RRM
+            <DollarOutlined /> Grille Tarifaire Officielle RRM
           </Tag>
-          <h1 className="font-headline-lg-mobile text-3xl md:text-[40px] font-bold text-primary mb-3 tracking-tight leading-tight">
-            Tarifs & Formules d'Abonnement
+          <h1 className="text-3xl md:text-4xl font-extrabold text-[#001E3D] mb-3 tracking-tight">
+            Tarifs par Parking & Formules d'Abonnement
           </h1>
-          <p className="font-body-lg text-base md:text-lg text-on-surface-variant leading-relaxed">
-            Découvrez nos formules d'abonnement de stationnement adaptées à tous vos besoins. Tarification transparente et homologuée pour une mobilité fluide à Rabat.
+          <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+            Consultez les formules homologuées applicables à chaque ouvrage de Rabat. Choisissez un parking pour voir le détail des forfaits et souscrire en ligne.
           </p>
         </div>
 
-        {/* B2C Grid (Premium Rate Cards) */}
-        <section className="mb-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-headline-md text-xl md:text-2xl font-bold text-primary tracking-tight m-0">
-              Formules Individuelles Particuliers & Commuters
-            </h2>
-            <Tag color="blue" className="px-3 py-1 rounded-full font-semibold text-xs border-none">
-              Paiement Espèces & Chèques sur Reçu
-            </Tag>
+        {/* Barre de Recherche rapide de parking */}
+        <div className="mb-8 max-w-md">
+          <Input
+            placeholder="Rechercher un parking (ex: Bab Chellah, Agdal, Harhoura...)"
+            prefix={<SearchOutlined style={{ color: "#0284c7" }} />}
+            allowClear
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ borderRadius: 10, padding: "8px 12px", border: "1px solid #cbd5e1" }}
+          />
+        </div>
+
+        {loadError && (
+          <Alert type="error" showIcon message={loadError} className="mb-6 rounded-xl" />
+        )}
+
+        {/* Liste des Parkings Dépliables */}
+        {loadingParkings ? (
+          <div className="text-center py-16">
+            <Spin size="large" tip="Chargement des parkings..." />
           </div>
+        ) : (
+          <div className="space-y-4 mb-16">
+            {filteredParkings.map((parking, index) => {
+              const isExpanded = expandedParkingId === parking.id;
+              const tarifs = tarifsCache[parking.id] || [];
+              const isLoadingThisTarif = loadingTarifsId === parking.id;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {formules.map((f) => (
-              <div
-                key={f.id}
-                className={`glass-card rounded-2xl p-6 flex flex-col justify-between h-full relative overflow-hidden transition-all duration-300 ${
-                  f.isPopular ? "border-2 border-secondary-container/60 shadow-xl" : "border border-white/80 shadow-md"
-                }`}
-              >
-                {f.popularBadge && (
-                  <div className="absolute top-0 right-0 bg-secondary-container/90 backdrop-blur-md text-on-secondary-container font-label-sm text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-bl-xl font-extrabold shadow-sm">
-                    {f.popularBadge}
-                  </div>
-                )}
+                            // Grouper les tarifs et identifier les offres Corporate (300 DH et 350 DH)
+              const forfaitsUniques = Array.from(
+                new Set(tarifs.map((t) => t.forfaitLibelle))
+              ).map((libelle) => {
+                const variants = tarifs.filter((t) => t.forfaitLibelle === libelle);
+                const prixMin = Math.min(...variants.map((v) => Number(v.prixMensuelTTC)));
+                const isCorporate = prixMin === 300 || prixMin === 350;
 
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-white/60 p-2 rounded-xl shadow-sm flex items-center justify-center">
-                      {f.icon}
-                    </div>
-                    <h3 className="font-label-md text-xs uppercase tracking-wider font-extrabold text-secondary m-0">
-                      {f.title}
-                    </h3>
-                  </div>
+                return {
+                  libelle,
+                  description: isCorporate
+                    ? "Formule réservée aux entreprises & flottes (Contrat Longue Durée 20 ans)"
+                    : (variants[0]?.forfaitDescription || "Stationnement sécurisé & badge d'accès"),
+                  prixMin,
+                  durees: isCorporate ? ["Contrat 20 ans"] : variants.map((v) => `${v.dureeEnMois} mois`),
+                  isCorporate,
+                };
+              });
 
-                  <div className="mb-6">
-                    <span className="font-headline-lg-mobile text-3xl font-extrabold text-primary tracking-tight">
-                      {f.priceDH} DH
-                    </span>
-                    <span className="font-body-md text-xs text-on-surface-variant/70 font-medium ml-1">
-                      {f.period}
-                    </span>
-                  </div>
 
-                  <ul className="font-label-sm text-xs text-on-surface-variant space-y-3 mb-8 p-0 list-none">
-                    {f.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 leading-snug">
-                        {feat.active ? (
-                          <CheckCircleOutlined className="text-emerald-600 text-sm mt-0.5 shrink-0" />
-                        ) : (
-                          <CloseCircleOutlined className="text-slate-400 text-sm mt-0.5 shrink-0 opacity-70" />
-                        )}
-                        <span className={feat.active ? "text-slate-800 font-medium" : "text-slate-400 line-through opacity-70"}>
-                          {feat.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button
-                  onClick={() => navigate(`/demande-publique?plan=${f.planKey}`)}
-                  className={`w-full font-label-md text-sm py-3 rounded-xl transition-all font-bold active:scale-95 duration-200 cursor-pointer ${f.buttonStyle}`}
+              return (
+                  <div
+                  key={parking.id}
+                  id={`parking-tarif-card-${parking.id}`}
+                  className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden shadow-sm ${
+                    isExpanded ? "border-[#0077B6] ring-2 ring-[#0077B6]/15" : "border-slate-200 hover:border-slate-300"
+                  }`}
                 >
-                  {f.buttonText} →
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
 
-        {/* B2B Section (Corporate Fleet & 20-Year Long Term Agreements) */}
-        <section className="mb-8">
-          <div className="glass-card rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center gap-8 border border-white shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
-            <div className="md:w-1/2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-white/60 p-2 rounded-xl shadow-sm text-secondary flex items-center">
-                  <BankOutlined style={{ fontSize: "18px" }} />
+                  {/* Entête du Parking (Cliquable) */}
+                  <div
+                    onClick={() => void toggleParking(parking.id)}
+                    className="p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer select-none bg-gradient-to-r from-white via-white to-slate-50/60"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-[#001E3D] text-white flex items-center justify-center font-black text-lg shadow-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-bold text-[#001E3D] m-0">{parking.nom}</h3>
+                          <Tag color={parking.statut === "ACTIF" ? "green" : "orange"}>
+                            {parking.statut}
+                          </Tag>
+                          <Tag>{parking.code}</Tag>
+                        </div>
+                        <p className="text-xs text-slate-500 m-0 mt-1 flex items-center gap-1.5">
+                          <EnvironmentOutlined className="text-[#0284c7]" /> {parking.adresse}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                      <div className="text-right">
+                        <span className="text-[11px] text-slate-400 font-semibold block uppercase">
+                          Places abonnés disponibles
+                        </span>
+                        <span className="text-sm font-bold text-emerald-600">
+                          {parking.placesDisponiblesAbonnements} / {parking.capaciteReserveeAbonnements}
+                        </span>
+                      </div>
+
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors shrink-0">
+                        {isExpanded ? <UpOutlined /> : <DownOutlined />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contenu Déplié : Grille des Tarifs Réels du Backend */}
+                  {isExpanded && (
+                    <div className="p-6 border-t border-slate-100 bg-[#f8fafc]">
+                      {isLoadingThisTarif ? (
+                        <div className="text-center py-8">
+                          <Spin tip="Chargement des tarifs en temps réel..." />
+                        </div>
+                      ) : forfaitsUniques.length === 0 ? (
+                        <div className="text-center py-6 text-slate-500 text-sm">
+                          Aucun tarif actif n'est configuré pour ce parking.
+                        </div>
+                      ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {forfaitsUniques.map((forfait, fIdx) => (
+                            <div
+                              key={fIdx}
+                              className={`p-5 rounded-xl border shadow-xs flex flex-col justify-between hover:shadow-md transition-all ${
+                                forfait.isCorporate
+                                  ? "bg-purple-50/40 border-purple-200"
+                                  : "bg-white border-slate-200"
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  {forfait.isCorporate ? (
+                                    <BankOutlined style={{ color: "#7c3aed" }} />
+                                  ) : (
+                                    <StarOutlined style={{ color: "#0077B6" }} />
+                                  )}
+                                  <h4 className="font-bold text-[#001E3D] m-0 text-sm">
+                                    {forfait.libelle}
+                                  </h4>
+                                </div>
+
+                                <div className="mb-2">
+                                  {forfait.isCorporate ? (
+                                    <Tag color="purple" className="text-[11px] font-bold">
+                                      🏢 Offre Corporate · Contrat 20 Ans
+                                    </Tag>
+                                  ) : (
+                                    <Tag color="blue" className="text-[11px] font-bold">
+                                      👤 Abonnement Particulier
+                                    </Tag>
+                                  )}
+                                </div>
+
+                                <p className="text-xs text-slate-500 mb-3">
+                                  {forfait.description}
+                                </p>
+                                <div className="text-2xl font-black text-[#001E3D] mb-3">
+                                  {forfait.prixMin}{" "}
+                                  <span className="text-xs font-semibold text-slate-500">
+                                    MAD / mois TTC
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1 mb-4">
+                                  {forfait.durees.map((d, dIdx) => (
+                                    <Tag
+                                      key={dIdx}
+                                      color={forfait.isCorporate ? "purple" : "blue"}
+                                      className="text-[10px]"
+                                    >
+                                      {d}
+                                    </Tag>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {forfait.isCorporate ? (
+                                <Button
+                                  type="primary"
+                                  block
+                                  icon={<RightOutlined />}
+                                  onClick={() => navigate(`/demande-publique?typeClient=ENTREPRISE&parkingId=${parking.id}`)}
+                                  style={{
+                                    backgroundColor: "#7c3aed",
+                                    borderColor: "#7c3aed",
+                                    borderRadius: 8,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  Devis Corporate (+20 ans) →
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="primary"
+                                  block
+                                  icon={<RightOutlined />}
+                                  onClick={() => navigate(`/demande-publique?parkingId=${parking.id}`)}
+                                  disabled={!parking.souscriptionDisponible}
+                                  style={{
+                                    backgroundColor: parking.souscriptionDisponible ? "#001E3D" : undefined,
+                                    borderRadius: 8,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {parking.souscriptionDisponible ? "Souscrire ce parking" : "Complet"}
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                      )}
+                    </div>
+                  )}
                 </div>
-                <span className="font-label-sm text-xs uppercase tracking-[0.15em] font-extrabold text-secondary">
-                  Offres Entreprises & Flottes
-                </span>
-              </div>
+              );
+            })}
+          </div>
+        )}
 
-              <h2 className="font-headline-md text-2xl md:text-3xl font-extrabold leading-tight text-primary mb-4 tracking-tight">
-                Contrats Longue Durée (20 Ans)
-              </h2>
-
-              <p className="font-body-md text-sm md:text-base leading-relaxed text-on-surface-variant mb-6">
-                Garanti aux sociétés et institutions la réservation d'emplacements de stationnement dédiés à Rabat. Bénéficiez d'une formule sur mesure avec gestion multi-badges RFID pour vos collaborateurs et facturation centralisée.
-              </p>
-
-              <ul className="font-label-md text-sm text-primary space-y-3 mb-8 p-0 list-none">
-                <li className="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60 shadow-sm">
-                  <BankOutlined className="text-secondary bg-white p-1.5 rounded-lg shadow-xs" />
-                  <span className="font-semibold text-slate-800">Accompagnement et service commercial dédié aux entreprises</span>
-                </li>
-                <li className="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60 shadow-sm">
-                  <PieChartOutlined className="text-secondary bg-white p-1.5 rounded-lg shadow-xs" />
-                  <span className="font-semibold text-slate-800">Gestion simplifiée des cartes d'accès RFID collaborateurs</span>
-                </li>
-                <li className="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60 shadow-sm">
-                  <SafetyCertificateOutlined className="text-secondary bg-white p-1.5 rounded-lg shadow-xs" />
-                  <span className="font-semibold text-slate-800">Garantie d'emplacements réservés et sérénité sur 20 ans</span>
-                </li>
-              </ul>
-
-              <button
-                onClick={() => navigate("/demande-publique?typeClient=ENTREPRISE")}
-                className="bg-primary hover:bg-slate-900 text-white font-label-md text-sm px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 duration-200 w-full md:w-auto cursor-pointer font-bold flex items-center justify-center gap-2"
-              >
-                <span>Demander un Devis Entreprise</span>
-                <ArrowRightOutlined />
-              </button>
+        {/* Section B2B Entreprises & Flottes */}
+        <section className="bg-white rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center gap-8 border border-slate-200 shadow-sm">
+          <div className="md:w-1/2">
+            <div className="flex items-center gap-2 mb-3">
+              <BankOutlined style={{ fontSize: "18px", color: "#0077B6" }} />
+              <span className="text-xs uppercase font-extrabold text-[#0077B6] tracking-wider">
+                Offres Entreprises & Flottes
+              </span>
             </div>
-
-            <div className="md:w-1/2 w-full h-72 md:h-[440px] rounded-2xl overflow-hidden relative shadow-md">
-              <div
-                className="bg-cover bg-center w-full h-full absolute inset-0 transition-transform duration-700 hover:scale-105"
-                style={{
-                  backgroundImage:
-                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCQODW1HZ_NvXiKKSVVOX5SH4sgu1igMSmxOS0XoVaKgtYo2ucrDd6Ueetov0TP_AlBopE6PeMq_wZVHHV9oGO40DQjm3O_5yolQKuqZfxbX2km9XEgpI9tufvXXTc-43WjkPe0ybXaoCBh-MmAYGPm-m8W62T_GnnfYm7jj9o0-l-5y1LrB2N9SrI1hHsaZ4cPz660VvXRzfKVodhyW_gDO7berdjNLIBDxm0W5gLrOq-5H3q5atj')",
-                }}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent pointer-events-none"></div>
-            </div>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#001E3D] mb-4">
+              Contrats Longue Durée (20 Ans)
+            </h2>
+            <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+              Réservation d'emplacements dédiés pour les sociétés et institutions avec gestion centralisée multi-badges RFID.
+            </p>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => navigate("/demande-publique?typeClient=ENTREPRISE")}
+              style={{ backgroundColor: "#001E3D", borderRadius: 10, fontWeight: 700 }}
+            >
+              Demander un Devis Entreprise →
+            </Button>
           </div>
         </section>
       </main>

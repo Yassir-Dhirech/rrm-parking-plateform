@@ -4,9 +4,10 @@ import {
   MailOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
-  CarOutlined,
+  
   LockOutlined,
   ArrowRightOutlined,
+  FileExcelOutlined,
 } from "@ant-design/icons";
 
 export function PublicFooter() {
@@ -38,7 +39,7 @@ export function PublicFooter() {
           {/* Column 2: Navigation & Quick Links */}
           <div>
             <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <CarOutlined className="text-cyan-400" /> Navigation Publique
+              Navigation Publique
             </h4>
             <ul className="space-y-2.5 text-xs font-semibold p-0 m-0 list-none">
               <li>
@@ -77,16 +78,20 @@ export function PublicFooter() {
           {/* Column 3: Contact & Guichets RRM */}
           <div>
             <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <EnvironmentOutlined className="text-cyan-400" /> Contact & Guichets RRM
+              Contact & Guichets RRM
             </h4>
             <div className="space-y-3 text-xs text-slate-400">
               <div className="flex items-start gap-2.5">
                 <EnvironmentOutlined className="text-cyan-400 text-sm shrink-0 mt-0.5" />
-                <span>Avenue Annakhil, Espace Affaires, Hay Riad, Rabat</span>
+                <span>1, Rue Ghafsa Place El Joulane immeuble Houda 2ème étage</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <PhoneOutlined className="text-cyan-400 text-sm shrink-0" />
-                <span className="font-mono font-bold text-slate-200">+212 537 00 11 22</span>
+                <span className="font-mono font-bold text-slate-200">+212 537 216 000</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <FileExcelOutlined className="text-cyan-400 text-sm shrink-0" />
+                <span className="font-mono font-bold text-slate-200">+212 537 733 587</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <MailOutlined className="text-cyan-400 text-sm shrink-0" />
