@@ -50,13 +50,13 @@ export function PublicParkingsPage() {
   const markersRef = useRef<Record<number, L.Marker>>({});
 
   // Auto-switch view if URL has #tarifs or ?view=tarifs
+  // Rediriger vers la vraie page /tarifs-public si l'URL contient #tarifs
   useEffect(() => {
     if (location.hash === "#tarifs" || location.search.includes("view=tarifs")) {
-      setActiveTab("TARIFS");
-    } else {
-      setActiveTab("MAP");
+      navigate("/tarifs-public", { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
+
 
   const mapParkings = useMemo(() => toParkingMapItems(parkings), [parkings]);
 
@@ -164,26 +164,11 @@ export function PublicParkingsPage() {
           zoomControl: true,
           scrollWheelZoom: true,
         });
-
-        const reliefLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
-          maxZoom: 17,
-        });
-
-        const standardLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | RRM Rabat',
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | RRM Rabat',
           maxZoom: 19,
-        });
+        }).addTo(map);
 
-        reliefLayer.addTo(map);
-        L.control.layers(
-          {
-            "Relief": reliefLayer,
-            "Standard": standardLayer,
-          },
-          undefined,
-          { position: "topright", collapsed: false }
-        ).addTo(map);
 
         mapInstanceRef.current = map;
       } catch (err) {
@@ -320,39 +305,26 @@ export function PublicParkingsPage() {
       {/* 1. SHARED FIXED TOP NAVBAR (Height 80px) */}
       <PublicNavbar />
 
-      {/* 2. SINGLE FLOATING STICKY VIEW SWITCHER PILL BAR */}
+            {/* FLOATING VIEW SWITCHER PILL BAR */}
       <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-50 pointer-events-none flex justify-center">
         <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1.5 rounded-full border border-slate-200/90 shadow-2xl flex items-center gap-1.5">
           <button
-            onClick={() => {
-              setActiveTab("MAP");
-              window.history.replaceState(null, "", "/parkings-public");
-            }}
-            className={`px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 ${
-              activeTab === "MAP"
-                ? "bg-secondary text-white shadow-md scale-105"
-                : "text-slate-700 hover:text-slate-900 hover:bg-white/60"
-            }`}
+            onClick={() => navigate("/parkings-public")}
+            className="px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 bg-secondary text-white shadow-md scale-105"
           >
             <EnvironmentOutlined />
             <span>Carte Interactive</span>
           </button>
           <button
-            onClick={() => {
-              setActiveTab("TARIFS");
-              window.history.replaceState(null, "", "/parkings-public#tarifs");
-            }}
-            className={`px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 ${
-              activeTab === "TARIFS"
-                ? "bg-secondary text-white shadow-md scale-105"
-                : "text-slate-700 hover:text-slate-900 hover:bg-white/60"
-            }`}
+            onClick={() => navigate("/tarifs-public")}
+            className="px-5 py-2 rounded-full text-xs font-black transition-all duration-200 cursor-pointer flex items-center gap-2 text-slate-700 hover:text-slate-900 hover:bg-white/60"
           >
             <DollarOutlined />
             <span>Tarifs par Parking</span>
           </button>
         </div>
       </div>
+
 
       {/* VIEW 1: FULL SCREEN INTERACTIVE MAP VIEW (100% PAGE HEIGHT) */}
       <div
@@ -568,14 +540,15 @@ export function PublicParkingsPage() {
               >
                 Souscrire cet Ouvrage en Ligne →
               </Button>
-              <Button
+                <Button
                 block
                 icon={<DollarOutlined />}
-                onClick={() => handleViewParkingTarifs(activeParking.id)}
+                onClick={() => navigate(`/tarifs-public?parkingId=${activeParking.id}`)}
                 className="rounded-xl font-bold text-xs h-10 border-slate-300 text-slate-700 hover:text-secondary hover:border-secondary"
               >
                 Consulter les Tarifs & Formules
               </Button>
+
             </div>
           </aside>
         )}

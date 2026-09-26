@@ -34,14 +34,7 @@ export function PublicNavbar() {
     {
       key: "page-tarifs-section",
       label: "Grille Tarifaire",
-      onClick: () => {
-        if (location.pathname === "/parkings-public") {
-          const el = document.getElementById("tarifs");
-          el?.scrollIntoView({ behavior: "smooth" });
-        } else {
-          navigate("/parkings-public#tarifs");
-        }
-      },
+      onClick: () => navigate("/tarifs-public"),
     },
   ];
 
