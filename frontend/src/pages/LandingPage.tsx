@@ -169,7 +169,7 @@ export function LandingPage() {
                   <Tag color="blue" className="mb-3 font-semibold">Formulaire en Ligne</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Abonnement & Démarches</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    Effectuez votre souscription, renouvellement, transfert ou demande de duplicata RFID sans compte.
+                    Effectuez votre souscription, renouvellement,demande de duplicata RFID sans compte.
                   </p>
                 </div>
                 <Button type="primary" block className="bg-secondary rounded-xl h-11 font-bold">
