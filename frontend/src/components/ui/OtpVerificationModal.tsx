@@ -45,6 +45,7 @@ interface OtpVerificationModalProps {
   onResendOtp?: (
     reference: string
   ) => Promise<DemandeAbonnementRegulierResponse>;
+  context?: "PUBLIC" | "AGENT";
 }
 
 type ModalPhase = "INPUT_OTP" | "LOADING" | "CONFIRMED";
@@ -62,8 +63,10 @@ export function OtpVerificationModal({
   onOtpVerified,
   onValidateOtp,
   onResendOtp,
+  context = "PUBLIC",
 }: OtpVerificationModalProps) {
   const navigate = useNavigate();
+  const isAgentContext = context === "AGENT";
 
   // Internal Phase State
   const [phase, setPhase] = useState<ModalPhase>("INPUT_OTP");
@@ -482,7 +485,9 @@ export function OtpVerificationModal({
               </h2>
 
               <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
-                Votre dossier a bien été soumis aux services de Rabat Région Mobilité (RRM).
+                {isAgentContext
+                  ? "La demande assistée a été confirmée et peut maintenant être encaissée."
+                  : "Votre dossier a bien été soumis aux services de Rabat Région Mobilité (RRM)."}
               </p>
 
               <div
@@ -541,8 +546,12 @@ export function OtpVerificationModal({
                 type="info"
                 showIcon
                 icon={<InfoCircleOutlined />}
-                message="Finalisation du Paiement au Guichet"
-                description="Veuillez vous présenter au guichet du parking choisi muni de votre référence ou de votre carte CIN pour régler votre souscription."
+                message={isAgentContext ? "Demande prête à encaisser" : "Finalisation du Paiement au Guichet"}
+                description={
+                  isAgentContext
+                    ? "Retrouvez immédiatement cette référence dans les demandes en attente de paiement."
+                    : "Veuillez vous présenter au guichet du parking choisi muni de votre référence ou de votre carte CIN pour régler votre souscription."
+                }
                 style={{ marginBottom: 20, textAlign: "left", borderRadius: 12 }}
               />
 
@@ -565,23 +574,42 @@ export function OtpVerificationModal({
                   Copier la Référence
                 </Button>
 
-                {/* Button 2: Suivre ma demande */}
-                <Button
-                  size="large"
-                  icon={<SearchOutlined />}
-                  onClick={handleTrackDemande}
-                  style={{
-                    fontWeight: 700,
-                    borderRadius: 12,
-                    height: 44,
-                    borderColor: "#cbd5e1",
-                    color: "#334155",
-                  }}
-                >
-                  Suivre Ma Demande
-                </Button>
+                {isAgentContext ? (
+                  <Button
+                    size="large"
+                    icon={<SearchOutlined />}
+                    onClick={() => {
+                      onClose();
+                      navigate("/agent/demandes");
+                    }}
+                    style={{
+                      fontWeight: 700,
+                      borderRadius: 12,
+                      height: 44,
+                      borderColor: "#cbd5e1",
+                      color: "#334155",
+                    }}
+                  >
+                    Ouvrir les demandes à encaisser
+                  </Button>
+                ) : (
+                  <Button
+                    size="large"
+                    icon={<SearchOutlined />}
+                    onClick={handleTrackDemande}
+                    style={{
+                      fontWeight: 700,
+                      borderRadius: 12,
+                      height: 44,
+                      borderColor: "#cbd5e1",
+                      color: "#334155",
+                    }}
+                  >
+                    Suivre Ma Demande
+                  </Button>
+                )}
 
-                {/* Button 3: Retourner à l'accueil */}
+                {!isAgentContext && (
                 <Button
                   size="large"
                   icon={<HomeOutlined />}
@@ -599,6 +627,7 @@ export function OtpVerificationModal({
                 >
                   Retourner à l'Accueil
                 </Button>
+                )}
               </div>
             </div>
           )}
@@ -606,11 +635,13 @@ export function OtpVerificationModal({
       </Modal>
 
       {/* Dedicated Client Tracking & Modification Modal */}
-      <PublicSuiviDemandeModal
-        open={isTrackingModalOpen}
-        onClose={() => setIsTrackingModalOpen(false)}
-        initialReference={generatedRef || referenceNumber}
-      />
+      {!isAgentContext && (
+        <PublicSuiviDemandeModal
+          open={isTrackingModalOpen}
+          onClose={() => setIsTrackingModalOpen(false)}
+          initialReference={generatedRef || referenceNumber}
+        />
+      )}
     </>
   );
 }

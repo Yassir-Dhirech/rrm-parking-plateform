@@ -22,8 +22,10 @@ public class OperationCarteController {
 
     @GetMapping("/impressions")
     @PreAuthorize("hasAuthority('CARTE_IMPRIMER')")
-    public List<DemandeOperationnelleResponse> listerImpressions() {
-        return service.listerImpressions();
+    public List<DemandeOperationnelleResponse> listerImpressions(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return service.listerImpressions(extraireUtilisateurId(jwt));
     }
 
     @PostMapping("/{id}/impression-terminee")
@@ -55,8 +57,10 @@ public class OperationCarteController {
 
     @GetMapping("/remises")
     @PreAuthorize("hasAuthority('CARTE_REMETTRE')")
-    public List<DemandeOperationnelleResponse> listerRemises() {
-        return service.listerRemises();
+    public List<DemandeOperationnelleResponse> listerRemises(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return service.listerRemises(extraireUtilisateurId(jwt));
     }
 
     @PostMapping("/{id}/remise-terminee")

@@ -15,8 +15,11 @@ import com.rrm.parking.paiement.enums.StatutCheque;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.event.PaiementConfirmeEvent;
 import com.rrm.parking.paiement.repository.PaiementRepository;
+import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.utilisateur.entity.AffectationAgentParking;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
+import com.rrm.parking.utilisateur.repository.AffectationAgentParkingRepository;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +54,9 @@ class PaiementServiceTest {
     private UtilisateurRepository utilisateurRepository;
 
     @Mock
+    private AffectationAgentParkingRepository affectationAgentParkingRepository;
+
+    @Mock
     private RecuRepository recuRepository;
 
     @Mock
@@ -71,6 +77,12 @@ class PaiementServiceTest {
     @Mock
     private Utilisateur agent;
 
+    @Mock
+    private AffectationAgentParking affectationAgent;
+
+    @Mock
+    private Parking parking;
+
     private PaiementService paiementService;
 
     @BeforeEach
@@ -79,6 +91,7 @@ class PaiementServiceTest {
                 paiementRepository,
                 demandeClientRepository,
                 utilisateurRepository,
+                affectationAgentParkingRepository,
                 recuRepository,
                 eventPublisher
         );
@@ -165,6 +178,7 @@ class PaiementServiceTest {
                 .thenReturn(tarifParking);
         when(tarifParking.calculerMontantTotalTTC())
                 .thenReturn(new BigDecimal("1500.00"));
+        preparerAffectationValide(5L);
         when(paiementRepository.existsByDemandeIdAndStatut(
                 20L,
                 StatutPaiement.CONFIRME
@@ -231,6 +245,51 @@ class PaiementServiceTest {
         verify(utilisateurRepository, never()).findById(any());
     }
 
+    @Test
+    void doitRefuserLePaiementDuneDemandeDunAutreParking() {
+        Parking autreParking = org.mockito.Mockito.mock(Parking.class);
+
+        when(demandeClientRepository.findByIdPourMiseAJour(10L))
+                .thenReturn(Optional.of(demande));
+        when(demande.getStatut())
+                .thenReturn(StatutDemande.EN_ATTENTE_PAIEMENT);
+        when(paiementRepository.existsByDemandeIdAndStatut(
+                10L,
+                StatutPaiement.CONFIRME
+        )).thenReturn(false);
+        when(demande.getModePaiementSouhaite())
+                .thenReturn(ModePaiement.ESPECE);
+        when(demande.getTarifParking()).thenReturn(tarifParking);
+        when(tarifParking.calculerMontantTotalTTC())
+                .thenReturn(new BigDecimal("1200.00"));
+        when(tarifParking.getParking()).thenReturn(autreParking);
+        when(autreParking.getId()).thenReturn(9L);
+        when(autreParking.getNom()).thenReturn("Bab El Had");
+        when(affectationAgentParkingRepository
+                .findByUtilisateurIdAndActiveTrue(5L))
+                .thenReturn(Optional.of(affectationAgent));
+        when(affectationAgent.getParking()).thenReturn(parking);
+        when(parking.getId()).thenReturn(8L);
+        when(parking.getNom()).thenReturn("Bab Chellah");
+
+        ConflitMetierException erreur = assertThrows(
+                ConflitMetierException.class,
+                () -> paiementService.enregistrer(
+                        10L,
+                        new EnregistrementPaiementRequest(null, null, null),
+                        5L
+                )
+        );
+
+        assertEquals(
+                "Cette demande appartient au parking Bab El Had. "
+                        + "Vous ne pouvez encaisser que les demandes du parking Bab Chellah",
+                erreur.getMessage()
+        );
+        verify(paiementRepository, never()).save(any());
+        verify(utilisateurRepository, never()).findById(any());
+    }
+
     private void preparerDemande(ModePaiement modePaiement) {
         when(demandeClientRepository.findByIdPourMiseAJour(10L))
                 .thenReturn(Optional.of(demande));
@@ -245,6 +304,7 @@ class PaiementServiceTest {
                 .thenReturn(tarifParking);
         when(tarifParking.calculerMontantTotalTTC())
                 .thenReturn(new BigDecimal("1200.00"));
+        preparerAffectationValide(5L);
         when(paiementRepository.existsByDemandeIdAndStatut(
                 10L,
                 StatutPaiement.CONFIRME
@@ -264,5 +324,14 @@ class PaiementServiceTest {
                 .thenReturn("REC-20260916-TEST");
         when(demande.getId()).thenReturn(10L);
         when(demande.getReference()).thenReturn("DEM-20260915-TEST");
+    }
+
+    private void preparerAffectationValide(Long agentId) {
+        when(affectationAgentParkingRepository
+                .findByUtilisateurIdAndActiveTrue(agentId))
+                .thenReturn(Optional.of(affectationAgent));
+        when(affectationAgent.getParking()).thenReturn(parking);
+        when(tarifParking.getParking()).thenReturn(parking);
+        when(parking.getId()).thenReturn(8L);
     }
 }

@@ -23,6 +23,8 @@ public record DemandeRechercheResponse(
 
         String typeDemande,
 
+        String parkingNom,
+
         StatutDemande statut,
 
         CanalInitiation canalInitiation,
@@ -50,18 +52,21 @@ public record DemandeRechercheResponse(
     public static DemandeRechercheResponse depuis(
             DemandeClient demande
     ) {
+        DemandeClient demandeReelle =
+                (DemandeClient) Hibernate.unproxy(demande);
         Client client = (Client) Hibernate.unproxy(
-                demande.getClient()
+                demandeReelle.getClient()
         );
         return new DemandeRechercheResponse(
-                demande.getId(),
-                demande.getReference(),
-                determinerTypeDemande(demande),
-                demande.getStatut(),
-                demande.getCanalInitiation(),
-                demande.getDateSoumission(),
-                demande.getDateValidationOtp(),
-                demande.getDateModification(),
+                demandeReelle.getId(),
+                demandeReelle.getReference(),
+                determinerTypeDemande(demandeReelle),
+                determinerParking(demandeReelle),
+                demandeReelle.getStatut(),
+                demandeReelle.getCanalInitiation(),
+                demandeReelle.getDateSoumission(),
+                demandeReelle.getDateValidationOtp(),
+                demandeReelle.getDateModification(),
                 client.getId(),
                 determinerTypeClient(client),
                 determinerNomClient(client),
@@ -69,6 +74,22 @@ public record DemandeRechercheResponse(
                 client.getEmail(),
                 client.getTelephone()
         );
+    }
+
+    private static String determinerParking(DemandeClient demande) {
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            return nouvelle.getTarifParking().getParking().getNom();
+        }
+
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            return renouvellement.getTarifParking().getParking().getNom();
+        }
+
+        if (demande instanceof DemandeNouveauContratCorporate corporate) {
+            return corporate.getParking().getNom();
+        }
+
+        return null;
     }
 
     private static String determinerTypeDemande(

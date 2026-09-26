@@ -1,0 +1,57 @@
+.agent-dashboard {
+  padding: 4px;
+}
+
+.agent-dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.agent-dashboard__header .ant-typography {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.agent-dashboard__kpi {
+  height: 100%;
+  min-height: 190px;
+  border-top: 4px solid;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
+}
+
+.agent-dashboard__kpi .ant-card-body {
+  height: 100%;
+}
+
+.agent-dashboard__kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 10px;
+  font-size: 21px;
+}
+
+.agent-dashboard__kpi-description {
+  margin-top: 12px;
+  margin-bottom: 0 !important;
+  line-height: 1.45;
+}
+
+.agent-dashboard__sections { margin-top: 20px; }
+.agent-dashboard__sections .ant-card { height: 100%; border-radius: 12px; }
+.agent-dashboard__alert { margin-bottom: 14px; }
+.agent-dashboard__search-hint { margin: 10px 0 14px; font-size: 12px; }
+
+@media (max-width: 576px) {
+  .agent-dashboard__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

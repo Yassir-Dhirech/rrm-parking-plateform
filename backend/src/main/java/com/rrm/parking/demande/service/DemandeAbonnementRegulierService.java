@@ -20,6 +20,8 @@ import com.rrm.parking.document.service.FichierStocke;
 import com.rrm.parking.document.service.StockageDocumentService;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
+import com.rrm.parking.utilisateur.entity.Utilisateur;
+import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import com.rrm.parking.vehicule.entity.Vehicule;
 import com.rrm.parking.vehicule.repository.VehiculeRepository;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +62,8 @@ public class DemandeAbonnementRegulierService {
     private final OtpEmissionService
             otpEmissionService;
 
+    private final UtilisateurRepository utilisateurRepository;
+
     @Transactional
     public DemandeAbonnementRegulierResponse creer(
             DemandeAbonnementRegulierRequest requete,
@@ -67,6 +71,51 @@ public class DemandeAbonnementRegulierService {
             MultipartFile cinVerso,
             MultipartFile carteGriseRecto,
             MultipartFile carteGriseVerso
+    ) {
+        return creer(
+                requete,
+                cinRecto,
+                cinVerso,
+                carteGriseRecto,
+                carteGriseVerso,
+                CanalInitiation.EN_LIGNE,
+                null
+        );
+    }
+
+    @Transactional
+    public DemandeAbonnementRegulierResponse creerAssisteeParAgent(
+            DemandeAbonnementRegulierRequest requete,
+            MultipartFile cinRecto,
+            MultipartFile cinVerso,
+            MultipartFile carteGriseRecto,
+            MultipartFile carteGriseVerso,
+            Long agentId
+    ) {
+        Utilisateur agent = utilisateurRepository.findById(agentId)
+                .orElseThrow(() -> new RessourceIntrouvableException(
+                        "Agent initiateur introuvable"
+                ));
+
+        return creer(
+                requete,
+                cinRecto,
+                cinVerso,
+                carteGriseRecto,
+                carteGriseVerso,
+                CanalInitiation.ASSISTE_PAR_AGENT,
+                agent
+        );
+    }
+
+    private DemandeAbonnementRegulierResponse creer(
+            DemandeAbonnementRegulierRequest requete,
+            MultipartFile cinRecto,
+            MultipartFile cinVerso,
+            MultipartFile carteGriseRecto,
+            MultipartFile carteGriseVerso,
+            CanalInitiation canalInitiation,
+            Utilisateur initiateur
     ) {
         verifierConditions(requete);
 
@@ -93,7 +142,9 @@ public class DemandeAbonnementRegulierService {
                             requete,
                             client,
                             vehicule,
-                            tarif
+                            tarif,
+                            canalInitiation,
+                            initiateur
                     );
 
             enregistrerDocuments(
@@ -278,14 +329,16 @@ public class DemandeAbonnementRegulierService {
             DemandeAbonnementRegulierRequest requete,
             ClientParticulier client,
             Vehicule vehicule,
-            TarifParking tarif
+            TarifParking tarif,
+            CanalInitiation canalInitiation,
+            Utilisateur initiateur
     ) {
         DemandeNouvelAbonnementRegulier demande =
                 new DemandeNouvelAbonnementRegulier(
                         genererReferenceDemande(),
-                        CanalInitiation.EN_LIGNE,
+                        canalInitiation,
                         client,
-                        null
+                        initiateur
                 );
 
         demande.selectionnerTarif(tarif);

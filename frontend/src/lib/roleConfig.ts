@@ -41,9 +41,9 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/agent",
       },
       {
-        key: "carte-parkings",
-        label: "Carte des parkings",
-        path: "/agent/carte-parkings",
+        key: "nouvel-abonnement",
+        label: "Nouvel abonnement",
+        path: "/agent/nouvel-abonnement",
       },
       {
         key: "demandes",
@@ -67,6 +67,11 @@ export const roleConfig: Record<Role, RoleConfig> = {
         label: "Cartes à remettre",
         path: "/agent/remises-cartes",
         requiredAuthority: "CARTE_REMETTRE",
+      },
+      {
+        key: "historique",
+        label: "Historique",
+        path: "/agent/historique",
       },
     ],
   },
