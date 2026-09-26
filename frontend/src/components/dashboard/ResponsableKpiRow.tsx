@@ -54,8 +54,8 @@ function Evolution({
     );
   }
 
-  const stable = value >= -1 && value <= 1;
-  const hausse = value > 1;
+  const stable = value === 0;
+  const hausse = value > 0;
   const favorable =
     mode === "inverse" ? !hausse : hausse;
 
@@ -263,7 +263,7 @@ function ProcessingDelayCard({
       <KpiHeader
         icon={<ClockCircleOutlined />}
         title="Délai moyen de traitement"
-        tooltip="Moyenne entre PAYEE et la décision finale VALIDEE ou REFUSEE. Les demandes annulées, expirées, en correction ou en cours sont exclues."
+        tooltip="Moyenne entre la confirmation du paiement et la déclaration de disponibilité des cartes. Chaque abonnement ou renouvellement finalisé compte une seule fois."
       />
       <div className="responsable-kpi-value-row">
         <span className="responsable-kpi-value">
@@ -281,7 +281,7 @@ function ProcessingDelayCard({
         />
       </div>
       <div className="responsable-kpi-description">
-        Objectif : moins de 24 h
+        Du paiement confirmé jusqu’au mail de disponibilité
       </div>
     </KpiShell>
   );

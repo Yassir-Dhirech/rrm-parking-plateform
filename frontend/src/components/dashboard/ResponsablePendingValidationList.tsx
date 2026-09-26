@@ -1,13 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRightOutlined, FileSearchOutlined } from "@ant-design/icons";
+import {
+  ArrowRightOutlined,
+  FileSearchOutlined,
+} from "@ant-design/icons";
 import { Button, Skeleton, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 import { getPendingValidationRequests } from "../../api/responsableDashboard";
 import "./ResponsablePendingValidationList.css";
 
 function formatStatus(statut: string): string {
-  if (statut === "PAYEE") return "À valider";
+  if (statut === "PAYEE") {
+    return "À valider";
+  }
+
+  if (statut === "EN_ATTENTE_VALIDATION_RESPONSABLE") {
+    return "Validation responsable";
+  }
+
   return statut.replaceAll("_", " ");
+}
+
+function statusClassName(statut: string): string {
+  if (statut === "EN_ATTENTE_VALIDATION_RESPONSABLE") {
+    return "responsable-pending-status responsable-pending-status--corporate";
+  }
+
+  return "responsable-pending-status responsable-pending-status--paid";
 }
 
 export function ResponsablePendingValidationList() {
@@ -22,7 +40,7 @@ export function ResponsablePendingValidationList() {
   if (query.isLoading) {
     return (
       <section className="responsable-pending-card glass-effect">
-        <Skeleton active paragraph={{ rows: 6 }} />
+        <Skeleton active paragraph={{ rows: 7 }} />
       </section>
     );
   }
@@ -46,72 +64,78 @@ export function ResponsablePendingValidationList() {
             <FileSearchOutlined />
           </span>
 
-          <div>
+          <div className="responsable-pending-heading-copy">
             <h3>Demandes en attente de validation</h3>
-            <p>Les 6 dossiers les plus anciens à examiner</p>
+            <p>
+              Toutes les demandes nécessitant une décision du responsable,
+              classées des plus anciennes aux plus récentes.
+            </p>
           </div>
         </div>
 
         <div className="responsable-pending-kpi">
-          <span>Total</span>
+          <span>En attente</span>
           <strong>{data.total.toLocaleString("fr-FR")}</strong>
         </div>
       </header>
 
       {data.demandes.length === 0 ? (
         <div className="responsable-pending-empty">
-          Aucune demande en attente de validation.
+          <span className="responsable-pending-empty__icon">
+            <FileSearchOutlined />
+          </span>
+          <strong>Aucune demande à valider</strong>
+          <p>Toutes les demandes ont été traitées.</p>
         </div>
       ) : (
-        <div className="responsable-pending-table-wrap">
-          <table className="responsable-pending-table">
-            <thead>
-              <tr>
-                <th>Référence</th>
-                <th>Client</th>
-                <th>Statut</th>
-                <th aria-label="Action" />
-              </tr>
-            </thead>
+        <div className="responsable-pending-list" role="list">
+          {data.demandes.map((demande) => (
+            <article
+              key={demande.id}
+              className="responsable-pending-item"
+              role="listitem"
+            >
+              <div className="responsable-pending-item__main">
+                <div className="responsable-pending-reference">
+                  {demande.reference}
+                </div>
 
-            <tbody>
-              {data.demandes.map((demande) => (
-                <tr key={demande.id}>
-                  <td className="responsable-pending-reference">
-                    {demande.reference}
-                  </td>
-                  <td className="responsable-pending-client">
-                    {demande.client}
-                  </td>
-                  <td>
-                    <Tag className="responsable-pending-status">
-                      {formatStatus(demande.statut)}
-                    </Tag>
-                  </td>
-                  <td className="responsable-pending-action">
-                    <Button
-                      type="text"
-                      size="small"
-                      onClick={() => navigate("/responsable/demandes")}
-                      icon={<ArrowRightOutlined />}
-                    >
-                      Examiner
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                <div
+                  className="responsable-pending-client"
+                  title={demande.client}
+                >
+                  {demande.client}
+                </div>
+              </div>
+
+              <div className="responsable-pending-item__status">
+                <Tag className={statusClassName(demande.statut)}>
+                  {formatStatus(demande.statut)}
+                </Tag>
+              </div>
+
+              <div className="responsable-pending-action">
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() => navigate("/responsable/demandes")}
+                  icon={<ArrowRightOutlined />}
+                >
+                  Examiner
+                </Button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
 
-      {data.total > 6 && (
+      {data.demandes.length > 0 && (
         <button
           type="button"
-          className="responsable-pending-view-all"
+          className="responsable-pending-open-workspace"
           onClick={() => navigate("/responsable/demandes")}
         >
-          Voir toutes les demandes en attente
+          Ouvrir l’espace de validation
           <ArrowRightOutlined />
         </button>
       )}

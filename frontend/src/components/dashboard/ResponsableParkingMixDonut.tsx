@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PieChartOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { Skeleton, Tooltip } from "antd";
@@ -12,6 +13,51 @@ function formatDate(dateIso: string): string {
   }).format(new Date(`${dateIso}T12:00:00`));
 }
 
+function formatPercent(value: number): string {
+  return value.toLocaleString("fr-FR", {
+    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
+    maximumFractionDigits: 1,
+  });
+}
+
+type MixRingProps = {
+  variant: "corporate" | "regulier";
+  title: string;
+  subtitle: string;
+  count: number;
+  percent: number;
+  centerLabel: string;
+};
+
+function MixRing({
+  variant,
+  title,
+  subtitle,
+  count,
+  percent,
+  centerLabel,
+}: MixRingProps) {
+  return (
+    <article className={`responsable-mix-ring-card responsable-mix-ring-card--${variant}`}>
+      <div
+        className={`responsable-mix-ring responsable-mix-ring--${variant}`}
+        style={{ "--progress": `${Math.max(0, Math.min(100, percent))}%` } as CSSProperties & { "--progress": string }}
+      >
+        <div className="responsable-mix-ring__inner">
+          <strong>{count.toLocaleString("fr-FR")}</strong>
+          <span>{centerLabel}</span>
+        </div>
+      </div>
+
+      <div className="responsable-mix-ring-meta">
+        <h4>{title}</h4>
+        <b>{formatPercent(percent)} %</b>
+        <p>{subtitle}</p>
+      </div>
+    </article>
+  );
+}
+
 export function ResponsableParkingMixDonut() {
   const query = useQuery({
     queryKey: ["responsable-dashboard-parking-mix"],
@@ -22,7 +68,7 @@ export function ResponsableParkingMixDonut() {
   if (query.isLoading) {
     return (
       <section className="responsable-mix-card glass-effect">
-        <Skeleton active paragraph={{ rows: 5 }} />
+        <Skeleton active paragraph={{ rows: 6 }} />
       </section>
     );
   }
@@ -37,10 +83,6 @@ export function ResponsableParkingMixDonut() {
   }
 
   const data = query.data;
-  const corporateAngle = Math.max(
-    0,
-    Math.min(360, (data.partCorporatePct / 100) * 360),
-  );
 
   return (
     <section className="responsable-mix-card glass-effect">
@@ -49,46 +91,41 @@ export function ResponsableParkingMixDonut() {
           <span className="responsable-mix-icon">
             <PieChartOutlined />
           </span>
-          <div>
+
+          <div className="responsable-mix-heading-copy">
             <h3>Places Corporate vs Régulier</h3>
-            <p>Situation au {formatDate(data.dateReference)}</p>
+            <p>Répartition actuelle des abonnements actifs par segment au {formatDate(data.dateReference)}.</p>
           </div>
         </div>
 
-        <Tooltip title="Une place par abonnement régulier actif et les places contractuelles des abonnements corporate actifs, à la date actuelle.">
+        <Tooltip title="Chaque anneau indique la part des abonnements actifs du segment concerné dans le total des places actives à la date de référence.">
           <InfoCircleOutlined className="responsable-mix-info" />
         </Tooltip>
       </header>
 
+      <div className="responsable-mix-description">
+        <span>Total observé</span>
+        <strong>{data.totalPlacesActives.toLocaleString("fr-FR")} abonnements actifs</strong>
+      </div>
+
       <div className="responsable-mix-content">
-        <div
-          className="responsable-mix-donut"
-          style={{
-            background: `conic-gradient(
-              rgba(70, 166, 255, 0.95) 0deg ${corporateAngle}deg,
-              rgba(0, 210, 180, 0.92) ${corporateAngle}deg 360deg
-            )`,
-          }}
-        >
-          <div className="responsable-mix-donut-center">
-            <strong>{data.totalPlacesActives.toLocaleString("fr-FR")}</strong>
-            <span>places actives</span>
-          </div>
-        </div>
+        <MixRing
+          variant="corporate"
+          title="Corporate"
+          subtitle="Part des abonnements corporate dans le total actuel"
+          count={data.placesCorporate}
+          percent={data.partCorporatePct}
+          centerLabel="abonnements"
+        />
 
-        <div className="responsable-mix-legend">
-          <div className="responsable-mix-legend-row">
-            <span className="responsable-mix-dot responsable-mix-dot--corporate" />
-            <div><span>Corporate</span><strong>{data.placesCorporate}</strong></div>
-            <b>{data.partCorporatePct.toLocaleString("fr-FR")} %</b>
-          </div>
-
-          <div className="responsable-mix-legend-row">
-            <span className="responsable-mix-dot responsable-mix-dot--regulier" />
-            <div><span>Régulier</span><strong>{data.placesRegulieres}</strong></div>
-            <b>{data.partRegulierPct.toLocaleString("fr-FR")} %</b>
-          </div>
-        </div>
+        <MixRing
+          variant="regulier"
+          title="Régulier"
+          subtitle="Part des abonnements réguliers dans le total actuel"
+          count={data.placesRegulieres}
+          percent={data.partRegulierPct}
+          centerLabel="abonnements"
+        />
       </div>
     </section>
   );

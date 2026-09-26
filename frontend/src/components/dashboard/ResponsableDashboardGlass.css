@@ -747,3 +747,24 @@ body .rrm-role-shell--glass main .responsable-dashboard-glass
 }
 
 /* === RRM_TWO_CHARTS_DARK_GLASS_END === */
+/* === RRM_PENDING_VALIDATION_FINAL_STYLE_START === */
+
+/* Override final : gagne contre les anciens styles globaux du dashboard. */
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-pending-card.glass-effect {
+  background: rgba(0, 0, 0, 0.53) !important;
+  background-color: rgba(0, 0, 0, 0.53) !important;
+  background-image: none !important;
+
+  -webkit-backdrop-filter: blur(50px) !important;
+  backdrop-filter: blur(50px) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 18px !important;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+/* === RRM_PENDING_VALIDATION_FINAL_STYLE_END === */
