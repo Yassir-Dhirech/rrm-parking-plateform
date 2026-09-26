@@ -169,7 +169,7 @@ export function LandingPage() {
                   <Tag color="blue" className="mb-3 font-semibold">Formulaire en Ligne</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Abonnement & Démarches</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    Effectuez votre souscription, renouvellement, transfert ou demande de duplicata RFID sans compte.
+                    Effectuez votre souscription, renouvellement,demande de duplicata RFID sans compte.
                   </p>
                 </div>
                 <Button type="primary" block className="bg-secondary rounded-xl h-11 font-bold">
@@ -221,9 +221,7 @@ export function LandingPage() {
                 <p className="text-slate-600 text-sm leading-relaxed mb-4">
                   Nos ouvrages sont implantés à proximité immédiate des gares et centres névralgiques de la capitale pour garantir une intermodalité fluide avec le réseau de tramway et de train.
                 </p>
-                <Button block onClick={() => navigate("/public-about")} className="rounded-xl font-bold">
-                  En savoir plus sur RRM →
-                </Button>
+       
               </Card>
             </Col>
           </Row>

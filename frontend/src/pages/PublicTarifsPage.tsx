@@ -4,11 +4,11 @@ import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
 import {
   BankOutlined,
-  CheckCircleOutlined,
+ 
   DollarOutlined,
   DownOutlined,
   EnvironmentOutlined,
-  PieChartOutlined,
+  
   RightOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
@@ -174,24 +174,22 @@ export function PublicTarifsPage() {
               const tarifs = tarifsCache[parking.id] || [];
               const isLoadingThisTarif = loadingTarifsId === parking.id;
 
-                            // Grouper les tarifs et identifier les offres Corporate (300 DH et 350 DH)
+                                         // Grouper les tarifs uniques et EXCLURE totalement les tarifs corporate (300 DH et 350 DH)
               const forfaitsUniques = Array.from(
                 new Set(tarifs.map((t) => t.forfaitLibelle))
-              ).map((libelle) => {
-                const variants = tarifs.filter((t) => t.forfaitLibelle === libelle);
-                const prixMin = Math.min(...variants.map((v) => Number(v.prixMensuelTTC)));
-                const isCorporate = prixMin === 300 || prixMin === 350;
+              )
+                .map((libelle) => {
+                  const variants = tarifs.filter((t) => t.forfaitLibelle === libelle);
+                  const prixMin = Math.min(...variants.map((v) => Number(v.prixMensuelTTC)));
+                  return {
+                    libelle,
+                    description: variants[0]?.forfaitDescription || "Stationnement sécurisé & badge d'accès RFID",
+                    prixMin,
+                    durees: variants.map((v) => `${v.dureeEnMois} mois`),
+                  };
+                })
+                .filter((f) => f.prixMin !== 300 && f.prixMin !== 350);
 
-                return {
-                  libelle,
-                  description: isCorporate
-                    ? "Formule réservée aux entreprises & flottes (Contrat Longue Durée 20 ans)"
-                    : (variants[0]?.forfaitDescription || "Stationnement sécurisé & badge d'accès"),
-                  prixMin,
-                  durees: isCorporate ? ["Contrat 20 ans"] : variants.map((v) => `${v.dureeEnMois} mois`),
-                  isCorporate,
-                };
-              });
 
 
               return (
@@ -254,43 +252,27 @@ export function PublicTarifsPage() {
                           Aucun tarif actif n'est configuré pour ce parking.
                         </div>
                       ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {forfaitsUniques.map((forfait, fIdx) => (
                             <div
                               key={fIdx}
-                              className={`p-5 rounded-xl border shadow-xs flex flex-col justify-between hover:shadow-md transition-all ${
-                                forfait.isCorporate
-                                  ? "bg-purple-50/40 border-purple-200"
-                                  : "bg-white border-slate-200"
-                              }`}
+                              className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all"
                             >
                               <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                  {forfait.isCorporate ? (
-                                    <BankOutlined style={{ color: "#7c3aed" }} />
-                                  ) : (
-                                    <StarOutlined style={{ color: "#0077B6" }} />
-                                  )}
+                                  <StarOutlined style={{ color: "#0077B6" }} />
                                   <h4 className="font-bold text-[#001E3D] m-0 text-sm">
                                     {forfait.libelle}
                                   </h4>
                                 </div>
 
                                 <div className="mb-2">
-                                  {forfait.isCorporate ? (
-                                    <Tag color="purple" className="text-[11px] font-bold">
-                                      🏢 Offre Corporate · Contrat 20 Ans
-                                    </Tag>
-                                  ) : (
-                                    <Tag color="blue" className="text-[11px] font-bold">
-                                      👤 Abonnement Particulier
-                                    </Tag>
-                                  )}
+                                  <Tag color="blue" className="text-[11px] font-bold">
+                                    Abonnement Particulier
+                                  </Tag>
                                 </div>
 
-                                <p className="text-xs text-slate-500 mb-3">
-                                  {forfait.description}
-                                </p>
+                                
                                 <div className="text-2xl font-black text-[#001E3D] mb-3">
                                   {forfait.prixMin}{" "}
                                   <span className="text-xs font-semibold text-slate-500">
@@ -301,7 +283,7 @@ export function PublicTarifsPage() {
                                   {forfait.durees.map((d, dIdx) => (
                                     <Tag
                                       key={dIdx}
-                                      color={forfait.isCorporate ? "purple" : "blue"}
+                                      color="blue"
                                       className="text-[10px]"
                                     >
                                       {d}
@@ -310,40 +292,24 @@ export function PublicTarifsPage() {
                                 </div>
                               </div>
 
-                              {forfait.isCorporate ? (
-                                <Button
-                                  type="primary"
-                                  block
-                                  icon={<RightOutlined />}
-                                  onClick={() => navigate(`/demande-publique?typeClient=ENTREPRISE&parkingId=${parking.id}`)}
-                                  style={{
-                                    backgroundColor: "#7c3aed",
-                                    borderColor: "#7c3aed",
-                                    borderRadius: 8,
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  Devis Corporate (+20 ans) →
-                                </Button>
-                              ) : (
-                                <Button
-                                  type="primary"
-                                  block
-                                  icon={<RightOutlined />}
-                                  onClick={() => navigate(`/demande-publique?parkingId=${parking.id}`)}
-                                  disabled={!parking.souscriptionDisponible}
-                                  style={{
-                                    backgroundColor: parking.souscriptionDisponible ? "#001E3D" : undefined,
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {parking.souscriptionDisponible ? "Souscrire ce parking" : "Complet"}
-                                </Button>
-                              )}
+                              <Button
+                                type="primary"
+                                block
+                                icon={<RightOutlined />}
+                                onClick={() => navigate(`/demande-publique?parkingId=${parking.id}`)}
+                                disabled={!parking.souscriptionDisponible}
+                                style={{
+                                  backgroundColor: parking.souscriptionDisponible ? "#001E3D" : undefined,
+                                  borderRadius: 8,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {parking.souscriptionDisponible ? "Souscrire ce parking" : "Complet"}
+                              </Button>
                             </div>
                           ))}
                         </div>
+      
 
                       )}
                     </div>
