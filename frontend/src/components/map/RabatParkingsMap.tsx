@@ -144,26 +144,11 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
         zoomControl: true,
         scrollWheelZoom: false,
       });
-
-      const reliefLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
-        maxZoom: 17,
-      });
-
-      const standardLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | RRM Rabat',
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | RRM Rabat',
         maxZoom: 19,
-      });
+      }).addTo(mapInstanceRef.current);
 
-      reliefLayer.addTo(mapInstanceRef.current);
-      L.control.layers(
-        {
-          "Relief": reliefLayer,
-          "Standard": standardLayer,
-        },
-        undefined,
-        { position: "topright", collapsed: false }
-      ).addTo(mapInstanceRef.current);
     }
 
     const map = mapInstanceRef.current;
