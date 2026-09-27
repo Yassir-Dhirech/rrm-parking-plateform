@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -6,20 +6,21 @@ import {
   Button,
   Input,
   Radio,
+  Space,
   Table,
   Tag,
 } from "antd";
 import type { TableProps } from "antd";
 import {
   EyeOutlined,
+  EditOutlined,
   FileSearchOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import {
   extraireMessageErreur,
-  rechercherDemandesParCin,
-  rechercherDemandesParReference,
+  rechercherDemandes,
 } from "../../../api/demandesApi";
 import type {
   DemandeRechercheResponse,
@@ -27,7 +28,7 @@ import type {
   TypeDemandeRecherche,
 } from "../types";
 
-type CritereRecherche = "REFERENCE" | "CIN";
+
 
 const statutConfig: Record<
   StatutDemande,
@@ -102,184 +103,189 @@ function formaterDate(date: string | null): string {
 
 export function RechercheDemandes() {
   const navigate = useNavigate();
-  const [critere, setCritere] =
-    useState<CritereRecherche>("REFERENCE");
   const [valeur, setValeur] = useState("");
-  const [resultats, setResultats] = useState<
-    DemandeRechercheResponse[]
-  >([]);
+  const [resultats, setResultats] = useState<DemandeRechercheResponse[]>([]);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [rechercheEffectuee, setRechercheEffectuee] =
-    useState(false);
+  const [rechercheEffectuee, setRechercheEffectuee] = useState(false);
 
-  const reinitialiser = () => {
-    setValeur("");
-    setResultats([]);
-    setErreur(null);
-    setRechercheEffectuee(false);
-  };
+  const lancerRecherche = useCallback(
+    async (
+      termeCherche: string = valeur,
+    ) => {
+      setChargement(true);
+      setErreur(null);
 
-  const changerCritere = (nouveauCritere: CritereRecherche) => {
-    setCritere(nouveauCritere);
-    reinitialiser();
-  };
-
-  const rechercher = async () => {
-    const valeurNormalisee = valeur.trim();
-
-    if (!valeurNormalisee) {
-      setErreur(
-        critere === "REFERENCE"
-          ? "Veuillez saisir une référence."
-          : "Veuillez saisir une CIN."
-      );
-      setResultats([]);
-      setRechercheEffectuee(false);
-      return;
-    }
-
-    setChargement(true);
-    setErreur(null);
-
-    try {
-      const demandes =
-        critere === "REFERENCE"
-          ? await rechercherDemandesParReference(
-              valeurNormalisee
-            )
-          : await rechercherDemandesParCin(
-              valeurNormalisee
-            );
-
-      setResultats(demandes);
-      setRechercheEffectuee(true);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        // En cas de 404 (non trouvé), on affiche simplement 0 résultat sans panique
-        setResultats([]);
+      try {
+        const demandes = await rechercherDemandes(
+          termeCherche.trim() || undefined,
+          
+        );
+        setResultats(demandes);
         setRechercheEffectuee(true);
-        setErreur(null);
-      } else {
-        setResultats([]);
-        setRechercheEffectuee(true);
-        setErreur(extraireMessageErreur(error));
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setResultats([]);
+          setRechercheEffectuee(true);
+          setErreur(null);
+        } else {
+          setResultats([]);
+          setRechercheEffectuee(true);
+          setErreur(extraireMessageErreur(error));
+        }
+      } finally {
+        setChargement(false);
       }
-    } finally {
-      setChargement(false);
-    }
-  };
+    },
+    [valeur]
+  );
 
-  const columns: TableProps<DemandeRechercheResponse>["columns"] =
-    [
-      {
-        title: "DEMANDE",
-        key: "demande",
-        render: (_, demande) => (
-          <div>
-            <div className="font-extrabold text-xs text-slate-900">
-              {demande.reference}
-            </div>
+  useEffect(() => {
+  // 1. Si la barre est vide (au chargement ou après effacement), on affiche tout immédiatement
+  if (!valeur.trim()) {
+    void lancerRecherche("");
+    return;
+  }
+  // 2. Dès que vous tapez du texte, on attend 250ms après la dernière touche avant de chercher
+  const timer = setTimeout(() => {
+    void lancerRecherche(valeur);
+  }, 250);
+  // Nettoyer le timer si l'utilisateur continue de taper
+  return () => clearTimeout(timer);
+}, [valeur, lancerRecherche]);
+const reinitialiser = () => {
+  setValeur("");
+};
 
-            <div className="text-[11px] text-slate-500 mt-1">
-              {typeDemandeLabels[demande.typeDemande]}
-            </div>
+
+ 
+
+  const columns: TableProps<DemandeRechercheResponse>["columns"] = [
+    {
+      title: "DEMANDE",
+      key: "demande",
+      render: (_, demande) => (
+        <div>
+          <div className="font-extrabold text-xs text-slate-900">
+            {demande.reference}
           </div>
-        ),
-      },
-      {
-        title: "STATUT",
-        dataIndex: "statut",
-        key: "statut",
-        render: (statut: StatutDemande) => {
-          const config = statutConfig[statut];
 
-          return (
-            <Tag
-              color={config.color}
-              className="font-bold rounded-full"
-            >
-              {config.label}
+          <div className="text-[11px] text-slate-500 mt-1">
+            {typeDemandeLabels[demande.typeDemande] ?? demande.typeDemande}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "STATUT",
+      dataIndex: "statut",
+      key: "statut",
+      render: (statut: StatutDemande) => {
+        const config = statutConfig[statut] ?? {
+          label: statut,
+          color: "default",
+        };
+
+        return (
+          <Tag color={config.color} className="font-bold rounded-full">
+            {config.label}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "PARKING",
+      key: "parking",
+      render: (_, demande) => (
+        <div>
+          {demande.parkingNom ? (
+            <Tag color="cyan" className="font-bold rounded-md">
+              {demande.parkingNom}
             </Tag>
-          );
-        },
-      },
-      {
-        title: "CLIENT",
-        key: "client",
-        render: (_, demande) => (
-          <div>
-            <div className="font-bold text-xs text-slate-800">
-              {demande.nomClient ?? "Nom indisponible"}
-            </div>
-
-            <div className="text-[11px] text-slate-500">
-              {demande.typeClient}
-              {demande.identifiantClient
-                ? ` · ${demande.identifiantClient}`
-                : ""}
-            </div>
+          ) : (
+            <span className="text-slate-400 text-xs">—</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "CLIENT",
+      key: "client",
+      render: (_, demande) => (
+        <div>
+          <div className="font-bold text-xs text-slate-800">
+            {demande.nomClient ?? "Nom indisponible"}
           </div>
-        ),
-      },
-      {
-        title: "CONTACT",
-        key: "contact",
-        render: (_, demande) => (
-          <div className="text-xs text-slate-700">
-            <div>{demande.telephone ?? "—"}</div>
-            <div className="text-[11px] text-slate-500">
-              {demande.email ?? "—"}
-            </div>
-          </div>
-        ),
-      },
-      {
-        title: "INITIATION",
-        dataIndex: "canalInitiation",
-        key: "canalInitiation",
-        render: (
-          canal: DemandeRechercheResponse["canalInitiation"]
-        ) =>
-          canal === "EN_LIGNE"
-            ? "En ligne"
-            : "Assistée par un agent",
-      },
-      {
-        title: "SOUMISSION",
-        dataIndex: "dateSoumission",
-        key: "dateSoumission",
-        render: (date: string) => formaterDate(date),
-        sorter: (a, b) =>
-          new Date(a.dateSoumission).getTime() -
-          new Date(b.dateSoumission).getTime(),
-      },
-      {
-        title: "VALIDATION OTP",
-        dataIndex: "dateValidationOtp",
-        key: "dateValidationOtp",
-        render: (date: string | null) => formaterDate(date),
-      },
 
-      {
-        title: "ACTIONS",
-        key: "actions",
-        fixed: "right",
-        width: 150,
-        render: (_, demande) => (
+          <div className="text-[11px] text-slate-500">
+            {demande.typeClient}
+            {demande.identifiantClient
+              ? ` · ${demande.identifiantClient}`
+              : ""}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "CONTACT",
+      key: "contact",
+      render: (_, demande) => (
+        <div className="text-xs text-slate-700">
+          <div>{demande.telephone ?? "—"}</div>
+          <div className="text-[11px] text-slate-500">
+            {demande.email ?? "—"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "INITIATION",
+      dataIndex: "canalInitiation",
+      key: "canalInitiation",
+      render: (canal: DemandeRechercheResponse["canalInitiation"]) =>
+        canal === "EN_LIGNE" ? "En ligne" : "Assistée par un agent",
+    },
+    {
+      title: "SOUMISSION",
+      dataIndex: "dateSoumission",
+      key: "dateSoumission",
+      render: (date: string) => formaterDate(date),
+      sorter: (a, b) =>
+        new Date(a.dateSoumission ?? 0).getTime() -
+        new Date(b.dateSoumission ?? 0).getTime(),
+    },
+    {
+      title: "ACTIONS",
+      key: "actions",
+      fixed: "right",
+      width: 170,
+      render: (_, demande) => (
+        <Space size="small">
           <Button
             type="primary"
             size="small"
             icon={<EyeOutlined />}
-            onClick={() =>
-              navigate(`/agent/demandes/${demande.id}`)
-            }
+            onClick={() => navigate(`/agent/demandes/${demande.id}`)}
           >
-            Plus de détails
+            Détails
           </Button>
-        ),
-      },
-    ];
+
+          {(demande.statut === "SOUMISE" ||
+            demande.statut === "EN_ATTENTE_PAIEMENT") && (
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() =>
+                navigate(`/agent/demandes/${demande.id}/modifier`)
+              }
+            >
+              Modifier
+            </Button>
+          )}
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -290,48 +296,39 @@ export function RechercheDemandes() {
         </h2>
 
         <p className="mt-1 mb-0 text-xs md:text-sm font-medium text-slate-500">
-          Recherchez une demande par sa référence ou toutes les
-          demandes associées à une CIN.
+          Recherchez sur l'ensemble des demandes de la base de données (référence,
+          nom, CIN, parking, email, téléphone ou statut).
         </p>
       </div>
 
       <div className="p-5 bg-white/80 border border-white rounded-2xl shadow-md">
         <div className="flex flex-col gap-4">
-          <Radio.Group
-            value={critere}
-            onChange={(event) =>
-              changerCritere(event.target.value)
-            }
-            optionType="button"
-            buttonStyle="solid"
-          >
-            <Radio.Button value="REFERENCE">
-              Référence
-            </Radio.Button>
+          <div className="flex items-center justify-between">
+  <span className="text-xs font-bold text-slate-700">
+    Recherche rapide
+  </span>
+  <span className="text-xs font-semibold text-slate-500">
+    {resultats.length} demande{resultats.length > 1 ? "s" : ""} trouvée{resultats.length > 1 ? "s" : ""}
+  </span>
+</div>
 
-            <Radio.Button value="CIN">CIN</Radio.Button>
-          </Radio.Group>
 
-          <div className="flex flex-col md:flex-row gap-3">
+                   <div className="flex flex-col md:flex-row gap-3">
             <Input
               value={valeur}
               onChange={(event) => setValeur(event.target.value)}
-              onPressEnter={rechercher}
-              prefix={<SearchOutlined />}
-              placeholder={
-                critere === "REFERENCE"
-                  ? "Ex. DEM-20260912-7A4C3D7F"
-                  : "Ex. X34567"
-              }
+              prefix={<SearchOutlined className="text-slate-400" />}
+              placeholder="Recherche instantanée : tapez un nom, parking, CIN, référence, téléphone..."
               allowClear
-              className="rounded-xl"
+              onClear={() => setValeur("")}
+              className="rounded-xl text-sm"
             />
 
             <Button
               type="primary"
               icon={<SearchOutlined />}
               loading={chargement}
-              onClick={rechercher}
+              onClick={() => void lancerRecherche(valeur)}
               className="rounded-xl font-bold"
             >
               Rechercher
@@ -346,8 +343,10 @@ export function RechercheDemandes() {
               Réinitialiser
             </Button>
           </div>
-        </div>
-      </div>
+          </div>
+          </div>
+
+
 
       {erreur && (
         <Alert
@@ -362,25 +361,27 @@ export function RechercheDemandes() {
 
       {rechercheEffectuee && !erreur && (
         <div className="overflow-hidden bg-white/80 border border-white rounded-2xl shadow-xl">
-          <div className="px-5 py-4 border-b border-slate-200">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <span className="font-extrabold text-sm text-slate-900">
-              {resultats.length} résultat
-              {resultats.length > 1 ? "s" : ""}
+              {resultats.length} résultat{resultats.length > 1 ? "s" : ""}
             </span>
+
+            {valeur.trim() && (
+              <span className="text-xs text-slate-500">
+                Filtre : <span className="font-semibold text-slate-700">« {valeur} »</span>
+              </span>
+            )}
           </div>
 
           <div className="p-2 overflow-x-auto">
             <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={resultats}
-              loading={chargement}
-              pagination={{
-                pageSize: 8,
-                hideOnSinglePage: true,
-              }}
-              scroll={{ x: "max-content" }}
-            />
+  rowKey="id"
+  columns={columns}
+  dataSource={resultats}
+  loading={chargement}
+  pagination={false}
+  scroll={{ y: 500, x: "max-content" }}
+/>
           </div>
         </div>
       )}

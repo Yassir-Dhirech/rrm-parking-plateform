@@ -12,7 +12,14 @@ export function AgentAbonnementsMensuels() {
     queryKey: ["agent", "abonnements-mensuels", annee],
     queryFn: () => getAbonnementsMensuelsAgent(annee),
   });
-  const maximum = Math.max(1, ...(data?.mois.map((point) => point.nombreAbonnements) ?? []));
+     const pointsMois = data?.mois ?? Array.from({ length: 12 }, (_, i) => ({
+    numero: i + 1,
+    nombreAbonnements: 0,
+  }));
+
+
+  const maximum = Math.max(1, ...pointsMois.map((p) => p.nombreAbonnements));
+
 
   return (
     <Card
@@ -41,7 +48,7 @@ export function AgentAbonnementsMensuels() {
           style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(34px, 1fr))", gap: 8,
             height: 220, alignItems: "end", overflowX: "auto", marginTop: 24 }}
         >
-          {data?.mois.map((point) => (
+          {pointsMois.map((point) => (
             <div key={point.numero} title={`${mois[point.numero - 1]} : ${point.nombreAbonnements} abonnement(s)`}
               style={{ minWidth: 34, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", textAlign: "center" }}>
               <span style={{ fontWeight: 700, marginBottom: 4 }}>{point.nombreAbonnements}</span>

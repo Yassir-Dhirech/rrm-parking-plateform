@@ -339,36 +339,28 @@ export async function telechargerContratCorporatePdf(
   );
   return URL.createObjectURL(response.data);
 }
-
-export async function rechercherDemandesParReference(
-  reference: string
+export async function rechercherDemandes(
+  terme?: string
 ): Promise<DemandeRechercheResponse[]> {
+  const params: Record<string, string> = {};
+  const valeur = terme?.trim();
+
+  if (valeur) {
+    params.terme = valeur;
+  }
+
   const response = await client.get<DemandeRechercheResponse[]>(
     "/demandes/recherche",
-    {
-      params: {
-        reference: reference.trim(),
-      },
-    }
+    { params }
   );
 
   return response.data;
 }
 
-export async function rechercherDemandesParCin(
-  cin: string
-): Promise<DemandeRechercheResponse[]> {
-  const response = await client.get<DemandeRechercheResponse[]>(
-    "/demandes/recherche",
-    {
-      params: {
-        cin: cin.trim(),
-      },
-    }
-  );
 
-  return response.data;
-}
+
+
+
 
 export async function listerDemandesEnAttentePaiement(): Promise<
   DemandeRechercheResponse[]

@@ -27,13 +27,22 @@ const colonnes: TableProps<CarteAgent>["columns"] = [
   {
     title: "Carte",
     dataIndex: "numeroCarte",
-    render: (numero: string | null, ligne) => (
-      <Space direction="vertical" size={0}>
-        <strong>{numero || "En attente d'impression"}</strong>
-        <Text type="secondary">{ligne.reference}</Text>
-      </Space>
-    ),
+    render: (numero: string | null, ligne) => {
+      const numAffiche = numero && numero.startsWith("CRT-")
+        ? numero
+        :`CRT-${new Date().getFullYear()}-${String(ligne.id).padStart(4, "0")}`;
+;
+      return (
+        <Space direction="vertical" size={0}>
+          <Tag color="blue" style={{ fontWeight: 700, fontSize: 13, padding: "2px 8px" }}>
+            {numAffiche}
+          </Tag>
+          <Text type="secondary" style={{ fontSize: 11 }}>{ligne.reference}</Text>
+        </Space>
+      );
+    },
   },
+
   { title: "Titulaire", dataIndex: "clientNom" },
   { title: "Abonnement", dataIndex: "referenceAbonnement" },
   {
@@ -106,14 +115,15 @@ export function CartesAgentRegistrePage() {
       {error && (
         <Alert type="error" showIcon message="Impossible de charger les cartes de votre parking" />
       )}
-      <Table<CarteAgent>
+            <Table<CarteAgent>
         rowKey="id"
         dataSource={data ?? []}
         columns={colonnes}
         loading={isPending}
-        scroll={{ x: 1000 }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ y: 550, x: 1000 }}
+        pagination={false}
       />
+
     </Card>
   );
 }

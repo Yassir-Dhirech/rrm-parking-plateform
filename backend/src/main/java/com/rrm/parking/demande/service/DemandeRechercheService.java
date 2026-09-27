@@ -1,7 +1,6 @@
 package com.rrm.parking.demande.service;
 
-import com.rrm.parking.client.entity.ClientParticulier;
-import com.rrm.parking.client.repository.ClientParticulierRepository;
+
 import com.rrm.parking.demande.dto.response.DemandeRechercheResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.enums.StatutDemande;
@@ -26,8 +25,8 @@ public class DemandeRechercheService {
     private final DemandeClientRepository
             demandeClientRepository;
 
-    private final ClientParticulierRepository
-            clientParticulierRepository;
+    
+            
 
     private final PieceJointeRepository
             pieceJointeRepository;
@@ -35,70 +34,59 @@ public class DemandeRechercheService {
     @Transactional(readOnly = true)
     public List<DemandeRechercheResponse> rechercher(
             String reference,
-            String cin
+            String cin,
+            String terme
     ) {
-        boolean referenceRenseignee =
-                estRenseignee(reference);
 
-        boolean cinRenseigne =
-                estRenseignee(cin);
-
-        if (referenceRenseignee == cinRenseigne) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Renseignez soit la référence, soit la CIN"
-            );
+        String query = estRenseignee(terme) ? terme : (estRenseignee(reference) ? reference : cin);
+       if (!estRenseignee(query)) {
+            return listerToutesLesDemandes();
         }
 
-        if (referenceRenseignee) {
-            return rechercherParReference(reference);
-        }
-
-        return rechercherParCin(cin);
+        return rechercherGlobale(query);
     }
 
-    private List<DemandeRechercheResponse>
-    rechercherParReference(
-            String reference
+    @Transactional(readOnly = true)
+    public List<DemandeRechercheResponse> rechercher(
+            String reference,
+            String cin
     ) {
-        String referenceNormalisee =
-                reference
-                        .trim()
-                        .toUpperCase(Locale.ROOT);
+        return rechercher(reference, cin, null);
+    }
 
-        return demandeClientRepository
-                .findByReferenceIgnoreCase(
-                        referenceNormalisee
-                )
+    @Transactional(readOnly = true)
+    public List<DemandeRechercheResponse> listerToutesLesDemandes() {
+        return demandeClientRepository.findAll()
+                .stream()
+                .sorted((a, b) -> {
+                    var dateA = a.getDateSoumission() != null ? a.getDateSoumission() : a.getDateCreation();
+                    var dateB = b.getDateSoumission() != null ? b.getDateSoumission() : b.getDateCreation();
+                    if (dateA == null && dateB == null) return 0;
+                    if (dateA == null) return 1;
+                    if (dateB == null) return -1;
+                    return dateB.compareTo(dateA);
+                })
                 .map(DemandeRechercheResponse::depuis)
-                .map(List::of)
-                .orElse(List.of());
+                .toList();
     }
 
-    private List<DemandeRechercheResponse>
-    rechercherParCin(
-            String cin
-    ) {
-        String cinNormalisee =
-                cin
-                        .trim()
-                        .toUpperCase(Locale.ROOT);
 
-        return clientParticulierRepository
-                .findByCinIgnoreCase(
-                        cinNormalisee
-                )
-                .map(client ->
-                        demandeClientRepository
-                                .findByClientIdOrderByDateSoumissionDesc(
-                                        client.getId()
-                                )
-                                .stream()
-                                .map(DemandeRechercheResponse::depuis)
-                                .toList()
-                )
-                .orElse(List.of());
+    @Transactional(readOnly = true)
+    public List<DemandeRechercheResponse> rechercherGlobale(String terme) {
+        if (!estRenseignee(terme)) {
+            return listerToutesLesDemandes();
+        }
+
+        String termeNormalise = normaliserTexte(terme);
+
+        return listerToutesLesDemandes().stream()
+                .filter(d -> correspondAuTerme(d, termeNormalise))
+                .toList();
     }
+
+     
+
+    
 
     @Transactional(readOnly = true)
     public List<DemandeRechercheResponse>
@@ -132,9 +120,7 @@ public class DemandeRechercheService {
                         StatutDemande.PAYEE
                 );
 
-        String terme = recherche == null
-                ? ""
-                : recherche.trim().toUpperCase(Locale.ROOT);
+        String terme = normaliserTexte(recherche);
 
         return demandes.stream()
                 .map(DemandeRechercheResponse::depuis)
@@ -142,6 +128,7 @@ public class DemandeRechercheService {
                         terme.isBlank()
                                 || contient(demande.reference(), terme)
                                 || contient(demande.identifiantClient(), terme)
+                                || contient(demande.nomClient(), terme)
                 )
                 .toList();
     }
@@ -205,15 +192,75 @@ public class DemandeRechercheService {
         );
     }
 
+    private boolean correspondAuTerme(DemandeRechercheResponse d, String termeNormalise) {
+        if (termeNormalise == null || termeNormalise.isBlank()) {
+            return true;
+        }
+
+        return contient(d.reference(), termeNormalise)
+                || contient(d.nomClient(), termeNormalise)
+                || contient(d.identifiantClient(), termeNormalise)
+                || contient(d.email(), termeNormalise)
+                || contient(d.telephone(), termeNormalise)
+                || contient(d.parkingNom(), termeNormalise)
+                || contient(d.typeDemande(), termeNormalise)
+                || contient(traduireTypeDemande(d.typeDemande()), termeNormalise)
+                || (d.statut() != null && (contient(d.statut().name(), termeNormalise) || contient(traduireStatut(d.statut()), termeNormalise)));
+    }
+
+    private String normaliserTexte(String valeur) {
+        if (valeur == null) {
+            return "";
+        }
+        String nfd = java.text.Normalizer.normalize(valeur.trim().toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD);
+        return nfd.replaceAll("\\p{M}", "");
+    }
+
+    private boolean contient(String valeur, String termeNormalise) {
+        if (valeur == null || termeNormalise == null || termeNormalise.isBlank()) {
+            return false;
+        }
+        String valeurNormalisee = normaliserTexte(valeur);
+        return valeurNormalisee.contains(termeNormalise);
+    }
+
+    private String traduireStatut(StatutDemande statut) {
+        if (statut == null) return "";
+        return switch (statut) {
+            case SOUMISE -> "Soumise";
+            case EN_ATTENTE_PAIEMENT -> "En attente de paiement";
+            case EN_ATTENTE_VALIDATION_RESPONSABLE -> "En attente de validation responsable";
+            case EN_ATTENTE_PAIEMENT_SIGNATURE -> "Paiement et signature attendus";
+            case EN_ATTENTE_RETOUR_CONTRAT_LEGALISE -> "Retour contrat légalisé";
+            case EN_ATTENTE_FACTURATION -> "Prête à facturer";
+            case EN_PREPARATION_CARTES -> "Cartes en préparation";
+            case PRETE_A_FINALISER -> "Prête à finaliser";
+            case FINALISEE -> "Finalisée";
+            case PAYEE -> "Payée";
+            case EN_ATTENTE_CORRECTION -> "En attente de correction";
+            case VALIDEE -> "Validée";
+            case REFUSEE -> "Refusée";
+            case EXPIREE -> "Expirée";
+            case ANNULEE -> "Annulée";
+        };
+    }
+
+    private String traduireTypeDemande(String type) {
+        if (type == null) return "";
+        return switch (type) {
+            case "NOUVEL_ABONNEMENT_REGULIER" -> "Nouvel abonnement régulier";
+            case "RENOUVELLEMENT_REGULIER" -> "Renouvellement régulier";
+            case "CHANGEMENT_PARKING" -> "Changement de parking";
+            case "CHANGEMENT_VEHICULE" -> "Changement de véhicule";
+            case "NOUVEAU_CONTRAT_CORPORATE" -> "Nouveau contrat corporate";
+            default -> type;
+        };
+    }
+
     private boolean estRenseignee(
             String valeur
     ) {
         return valeur != null
                 && !valeur.isBlank();
-    }
-
-    private boolean contient(String valeur, String terme) {
-        return valeur != null
-                && valeur.toUpperCase(Locale.ROOT).contains(terme);
     }
 }

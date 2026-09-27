@@ -32,12 +32,20 @@ public class DemandeRechercheController {
             String reference,
 
             @RequestParam(required = false)
-            String cin
+            String cin,
+
+            @RequestParam(required = false)
+            String terme,
+
+            @RequestParam(required = false)
+            String q
     ) {
+        String query = (terme != null && !terme.isBlank()) ? terme : q;
         return ResponseEntity.ok(
                 demandeRechercheService.rechercher(
                         reference,
-                        cin
+                        cin,
+                        query
                 )
         );
     }
