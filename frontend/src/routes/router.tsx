@@ -15,6 +15,7 @@ import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
 import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
+import { AnalyseCaPage } from "../pages/comptable/AnalyseCaPage";
 import { FactureComptableDetailPage } from "../features/factures/pages/FactureComptableDetailPage";
 import { CartesList } from "../features/cartes/pages/CartesList";
 import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
@@ -136,6 +137,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
       { path: `${roleConfig[role].homePath}/factures/:id`,
         element: role === "COMPTABLE" ? <FactureComptableDetailPage /> : <FactureDetail /> },
     );
+  }
+
+  if (role === "COMPTABLE") {
+    extraRoutes.push({ path: "/comptable/analyse-ca", element: <AnalyseCaPage /> });
   }
 
   if (role === "AGENT" || role === "SUPERVISEUR") {

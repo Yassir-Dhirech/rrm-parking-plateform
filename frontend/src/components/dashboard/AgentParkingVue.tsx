@@ -8,7 +8,7 @@ export function AgentParkingVue() {
     <div style={{ display: "grid", gap: 20 }}>
       <AgentAbonnementsMensuels />
       <Card title="Carte des parkings">
-        <RabatParkingsMap height={370} />
+        <RabatParkingsMap height={580} />
       </Card>
     </div>
   );
