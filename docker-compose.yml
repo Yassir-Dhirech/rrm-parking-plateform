@@ -92,10 +92,7 @@ services:
       RRM_RESPONSABLE_PRENOM: ${RRM_RESPONSABLE_PRENOM:-Stationnement}
 
 
-      RRM_STORAGE_TYPE: google-drive
-      RRM_GOOGLE_DRIVE_FOLDER_ID: 1sG05PhR8PiMwJz-9Sz1Y6Q1dE94eSrMK
-      RRM_GOOGLE_DRIVE_CREDENTIALS_PATH: /app/secrets/google-drive-oauth.json
-      RRM_GOOGLE_DRIVE_TOKENS_PATH: /app/secrets/google-drive-tokens
+      RRM_STORAGE_TYPE: ${RRM_STORAGE_TYPE:-local}
     volumes:
       - backend_storage:/app/storage
       - ./backend/secrets:/app/secrets
