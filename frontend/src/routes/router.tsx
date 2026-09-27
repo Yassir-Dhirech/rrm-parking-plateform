@@ -44,6 +44,7 @@ import { DemandesCorporateResponsable } from "../features/demandes/pages/Demande
 import { DemandeCorporateDetail } from "../features/demandes/pages/DemandeCorporateDetail";
 import { AgentHistoriquePage } from "../pages/agent/Historique";
 import { ModificationDemandeAgent } from "../features/demandes/pages/ModificationDemandeAgent";
+import { RejetsChequesPage } from "../features/cheques/RejetsChequesPage";
 
 function RootLayout() {
   return (
@@ -60,6 +61,13 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     { path: `${roleConfig[role].homePath}/notifications`, element: <NotificationsPage /> },
     { path: `${roleConfig[role].homePath}/carte-parkings`, element: <InternalParkingsMapPage /> },
   ];
+
+  if (["COMPTABLE", "RESPONSABLE", "SUPERVISEUR", "AGENT"].includes(role)) {
+    extraRoutes.push({
+      path: `${roleConfig[role].homePath}/rejets-cheques`,
+      element: <RejetsChequesPage />,
+    });
+  }
 
  if (
    role === "AGENT"

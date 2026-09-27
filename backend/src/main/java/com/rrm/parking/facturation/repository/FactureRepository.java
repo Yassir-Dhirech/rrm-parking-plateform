@@ -19,7 +19,7 @@ public interface FactureRepository
             Long paiementId
     );
 
-    Optional<Facture> findByPaiementDemandeId(
+    Optional<Facture> findFirstByPaiementDemandeIdOrderByIdAsc(
             Long demandeId
     );
 

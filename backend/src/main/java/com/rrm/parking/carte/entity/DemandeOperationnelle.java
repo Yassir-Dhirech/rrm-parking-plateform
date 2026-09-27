@@ -3,6 +3,7 @@ package com.rrm.parking.carte.entity;
 import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
 import com.rrm.parking.carte.enums.StatutCarteAcces;
 import com.rrm.parking.carte.enums.TypeOperationCarte;
+import com.rrm.parking.cheque.entity.DossierRejetCheque;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
@@ -138,6 +139,20 @@ public class DemandeOperationnelle {
             )
     )
     private DemandeClient demandeClientSource;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dossier_rejet_cheque_id")
+    private DossierRejetCheque dossierRejetCheque;
+
+    public void definirDossierRejetCheque(DossierRejetCheque dossier) {
+        verifierModifiable();
+        this.dossierRejetCheque = exigerNonNull(
+                dossier, "Le dossier de rejet est obligatoire");
+    }
+
+    public DossierRejetCheque getDossierRejetCheque() {
+        return dossierRejetCheque;
+    }
 
     @Version
     @Column(nullable = false)
