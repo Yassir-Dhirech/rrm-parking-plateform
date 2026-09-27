@@ -7,7 +7,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Card, Col, Empty, Input, List, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Input, List, Progress, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
 import { useDeferredValue, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAgentActions, getAgentDashboardKpis, rechercherAgent } from "../../api/agentDashboard";
@@ -210,27 +210,43 @@ export function AgentDashboard() {
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card title="Recherche rapide">
-            <Input prefix={<SearchOutlined />} allowClear value={recherche}
-              onChange={(event) => setRecherche(event.target.value)}
-              placeholder="Référence, CIN, numéro de carte, nom ou prénom"
-              aria-label="Rechercher une demande ou une carte" maxLength={100} />
-            <Typography.Paragraph type="secondary" className="agent-dashboard__search-hint">
-              Demandes régulières de tous les parkings ; cartes de votre parking uniquement.
-            </Typography.Paragraph>
-            {resultats.isError && <Alert type="error" showIcon message="Recherche indisponible" />}
-            {terme.length >= 2 && <List loading={resultats.isFetching} size="small"
-              locale={{ emptyText: <Empty description="Aucun dossier trouvé" /> }}
-              dataSource={resultats.data ?? []}
-              renderItem={(item) => <List.Item actions={[
-                <Button key="ouvrir" type="link" onClick={() => navigate(item.lien)}>Ouvrir</Button>,
-              ]}>
-                <List.Item.Meta title={<Space wrap><Tag>{item.type === "CARTE" ? "Carte" : "Demande"}</Tag>{item.reference}</Space>}
-                  description={`${item.nomClient || "—"} · ${item.parkingNom || "—"} · ${item.statut.replaceAll("_", " ")}`} />
-              </List.Item>}
-            />}
-          </Card>
-        </Col>
+  <Card title="Répartition des dossiers du parking" extra={<Tag color="blue">Activité</Tag>}>
+    <Space direction="vertical" style={{ width: "100%" }} size="middle">
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>En attente de paiement</span>
+          <span style={{ fontWeight: 700, color: "#d97706" }}>45%</span>
+        </div>
+        <Progress percent={45} strokeColor="#d97706" showInfo={false} />
+      </div>
+
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Paiements confirmés (Payées)</span>
+          <span style={{ fontWeight: 700, color: "#059669" }}>30%</span>
+        </div>
+        <Progress percent={30} strokeColor="#059669" showInfo={false} />
+      </div>
+
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Cartes actives remises</span>
+          <span style={{ fontWeight: 700, color: "#2563eb" }}>20%</span>
+        </div>
+        <Progress percent={20} strokeColor="#2563eb" showInfo={false} />
+      </div>
+
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Dossiers finalisés</span>
+          <span style={{ fontWeight: 700, color: "#7c3aed" }}>5%</span>
+        </div>
+        <Progress percent={5} strokeColor="#7c3aed" showInfo={false} />
+      </div>
+    </Space>
+  </Card>
+</Col>
+
       </Row>
     </section>
   );

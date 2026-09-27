@@ -65,7 +65,14 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
     { title: "CIN / ICE", dataIndex: "cin" },
     { title: "DEMANDE", dataIndex: "referenceDemandeClient" },
     { title: "CARTE", dataIndex: "referenceCarte" },
-    { title: "N° PHYSIQUE", dataIndex: "numeroCarte", render: (v) => v || "—" },
+    {
+      title: "N° PHYSIQUE",
+      dataIndex: "numeroCarte",
+      render: (v, r) => v ? (
+        <Tag color="green">{v}</Tag>
+      ) : (
+<Tag color="blue">{`CRT-${new Date().getFullYear()}-${String(r.carteId).padStart(4, "0")}`}</Tag>      ),
+    },
     { title: "PARKING", dataIndex: "parkingNom" },
     {
       title: "FACTURE",
@@ -83,7 +90,14 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
           title={activation && !row.factureId
             ? "Le responsable doit d'abord générer la facture"
             : undefined}
-          onClick={() => setSelection(row)}
+                    onClick={() => {
+            setSelection(row);
+            if (impression) {
+              const annee = new Date().getFullYear();
+        setNumeroCarte(`CRT-${annee}-${String(row.carteId).padStart(4, "0")}`);
+            }
+          }}
+
         >
           {impression
             ? "Déclarer imprimée"
@@ -122,15 +136,16 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
       {operationId && <Alert type="info" showIcon className="mb-4"
         message="Opération sélectionnée depuis le tableau de bord"
         action={<Button size="small" onClick={() => setParams({})}>Voir toutes les opérations</Button>} />}
-      <Table
+            <Table
         rowKey="id"
         columns={columns}
         dataSource={operationId ? (query.data ?? []).filter((operation) => String(operation.id) === operationId) : (query.data ?? [])}
         loading={query.isLoading}
-        scroll={{ x: 1300 }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ y: 550, x: 1300 }}
+        pagination={false}
         locale={{ emptyText: <Empty description="Aucune demande en attente" /> }}
       />
+
       <Modal
         open={Boolean(selection)}
         title={impression
