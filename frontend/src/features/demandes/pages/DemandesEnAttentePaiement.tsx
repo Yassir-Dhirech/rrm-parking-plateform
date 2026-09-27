@@ -161,7 +161,7 @@ export function DemandesEnAttentePaiement() {
   dataSource={data}
   loading={isLoading}
   pagination={false}
-  scroll={{ y: 380, x: 1100 }}
+  scroll={{ y: 500, x: 1100 }}
   locale={{
     emptyText: (
       <Empty description="Aucune demande en attente de paiement" />

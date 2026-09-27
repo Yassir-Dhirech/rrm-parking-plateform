@@ -380,7 +380,7 @@ const reinitialiser = () => {
   dataSource={resultats}
   loading={chargement}
   pagination={false}
-  scroll={{ y: 420, x: "max-content" }}
+  scroll={{ y: 500, x: "max-content" }}
 />
           </div>
         </div>
