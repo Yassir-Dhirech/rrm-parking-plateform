@@ -3,12 +3,13 @@ package com.rrm.parking.facturation.repository;
 import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.enums.StatutFacture;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface FactureRepository
-        extends JpaRepository<Facture, Long> {
+        extends JpaRepository<Facture, Long>, JpaSpecificationExecutor<Facture> {
 
     Optional<Facture> findByNumero(String numero);
 

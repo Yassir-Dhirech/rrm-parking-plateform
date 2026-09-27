@@ -1,0 +1,63 @@
+.comptable-factures { padding: 8px 0 36px; color: #212338; }
+.comptable-factures-header { margin-bottom: 24px; }
+.comptable-factures-surtitre { color: #7458c5; font-weight: 700; margin: 0 0 4px; }
+.comptable-factures-header h1 { font-size: 28px; margin: 0 0 6px; }
+.comptable-factures-header p:last-child { color: #717487; margin: 0; }
+.comptable-factures-resume { display: grid; grid-template-columns: minmax(210px, 1fr) minmax(360px, 2fr); gap: 18px; margin-bottom: 24px; }
+.comptable-factures-kpi, .comptable-factures-repartition, .comptable-facture-card, .comptable-factures-vide { background: #fff; border: 1px solid #edf0f4; border-radius: 16px; box-shadow: 0 3px 14px rgba(32, 36, 61, .045); }
+.comptable-factures-kpi { padding: 23px; display: flex; flex-direction: column; gap: 8px; }
+.comptable-factures-kpi > span { color: #62667b; }
+.comptable-factures-kpi > strong { font-size: 34px; line-height: 1.2; }
+.comptable-factures-kpi > small { color: #7b7e90; }
+.comptable-factures-repartition { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 26px; }
+.comptable-factures-repartition-texte { display: flex; flex-direction: column; gap: 5px; }
+.comptable-factures-repartition-texte > span { color: #7b7e90; font-size: 13px; }
+.comptable-factures-legende { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 13px; }
+.comptable-factures-legende span { white-space: nowrap; }
+.comptable-factures-point { display: inline-block; vertical-align: middle; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.comptable-factures-point--cheque { background: #7458c5; }
+.comptable-factures-point--espece { background: #32a783; }
+.comptable-factures-camembert { flex: 0 0 108px; width: 108px; height: 108px; border-radius: 50%; display: grid; place-items: center; }
+.comptable-factures-camembert span { background: #fff; width: 66px; height: 66px; display: grid; place-items: center; border-radius: 50%; font-weight: 700; }
+.comptable-factures-filtres { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 22px; }
+.comptable-factures-recherche { width: min(100%, 290px); }
+.comptable-factures-filtres .ant-select { min-width: 158px; }
+.comptable-factures-filtres label { display: flex; align-items: center; gap: 6px; color: #62667b; font-size: 13px; }
+.comptable-factures-filtres input[type="date"] { height: 32px; padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: 6px; color: #212338; background: white; }
+.comptable-factures-liste-entete { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 15px; }
+.comptable-factures-liste-entete h2 { font-size: 20px; margin: 0; }
+.comptable-factures-liste-entete span { color: #7b7e90; }
+.comptable-factures-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.comptable-facture-card { padding: 20px; min-width: 0; display: flex; flex-direction: column; }
+.comptable-facture-personne { display: flex; gap: 11px; align-items: center; margin-bottom: 19px; }
+.comptable-facture-avatar { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; background: #f0eaff; border-radius: 12px; color: #7458c5; font-weight: 700; }
+.comptable-facture-card:nth-child(3n+2) .comptable-facture-avatar { background: #e2f5ef; color: #2d9975; }
+.comptable-facture-card:nth-child(3n) .comptable-facture-avatar { background: #fff0de; color: #bf7a26; }
+.comptable-facture-identite { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.comptable-facture-identite strong { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.comptable-facture-statut { border-radius: 20px; padding: 2px 9px; background: #f5f0ff; color: #7458c5; font-size: 11px; font-weight: 600; }
+.comptable-facture-statut--emise { background: #e5f5ee; color: #21845b; }
+.comptable-facture-statut--annulee { background: #fce9e9; color: #b24242; }
+.comptable-facture-meta { display: flex; justify-content: space-between; gap: 9px; font-size: 13px; margin-bottom: 8px; }
+.comptable-facture-meta span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comptable-facture-meta span:last-child { white-space: nowrap; }
+.comptable-facture-meta--secondaire { color: #797d90; margin-bottom: 19px; }
+.comptable-facture-lignes { flex: 1; border-top: 1px solid #eceef3; border-bottom: 1px solid #eceef3; padding: 12px 0; }
+.comptable-facture-ligne { display: grid; grid-template-columns: minmax(0, 1fr) 35px auto; gap: 6px; margin: 0 0 10px; align-items: start; font-size: 12px; }
+.comptable-facture-ligne > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comptable-facture-ligne > span:nth-child(2) { text-align: center; }
+.comptable-facture-ligne > span:last-child { text-align: right; white-space: nowrap; }
+.comptable-facture-ligne--entete { color: #8c8fa1; font-size: 11px; }
+.comptable-facture-autres { display: block; color: #7458c5; font-size: 11px; }
+.comptable-facture-total { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 17px 0; font-size: 14px; }
+.comptable-facture-total strong { font-size: 17px; white-space: nowrap; }
+.comptable-facture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.comptable-facture-erreur { font-size: 12px; color: #b24242; margin-top: 8px; }
+.comptable-factures-pagination { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 24px; }
+.comptable-factures-vide, .comptable-factures-chargement { padding: 48px 18px; text-align: center; color: #717487; }
+@media (max-width: 1150px) { .comptable-factures-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .comptable-factures-resume, .comptable-factures-grille { grid-template-columns: minmax(0, 1fr); }
+  .comptable-factures-repartition { flex-wrap: wrap; }
+  .comptable-factures-recherche, .comptable-factures-filtres .ant-select { width: 100%; }
+}

@@ -4,13 +4,10 @@ import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
 import {
   BankOutlined,
- 
   DollarOutlined,
   DownOutlined,
   EnvironmentOutlined,
-  
   RightOutlined,
-  SafetyCertificateOutlined,
   SearchOutlined,
   StarOutlined,
   UpOutlined,

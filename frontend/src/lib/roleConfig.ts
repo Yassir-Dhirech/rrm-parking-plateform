@@ -153,7 +153,6 @@ export const roleConfig: Record<Role, RoleConfig> = {
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
-      { key: "recettes", label: "Recettes (Versement)", path: "/comptable/recettes" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
     ],
   },

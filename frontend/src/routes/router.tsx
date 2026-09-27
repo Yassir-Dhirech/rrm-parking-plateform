@@ -14,6 +14,8 @@ import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
+import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
+import { FactureComptableDetailPage } from "../features/factures/pages/FactureComptableDetailPage";
 import { CartesList } from "../features/cartes/pages/CartesList";
 import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
 import { AgentParkingVue } from "../components/dashboard/AgentParkingVue";
@@ -121,8 +123,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "SUPERVISEUR" || role === "COMPTABLE") {
     extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/factures`, element: <FacturesList /> },
-      { path: `${roleConfig[role].homePath}/factures/:id`, element: <FactureDetail /> },
+      { path: `${roleConfig[role].homePath}/factures`,
+        element: role === "COMPTABLE" ? <FacturesComptablePage /> : <FacturesList /> },
+      { path: `${roleConfig[role].homePath}/factures/:id`,
+        element: role === "COMPTABLE" ? <FactureComptableDetailPage /> : <FactureDetail /> },
     );
   }
 
@@ -154,7 +158,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
-  if (role === "SUPERVISEUR" || role === "COMPTABLE" || role === "RESPONSABLE") {
+  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
       { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }
