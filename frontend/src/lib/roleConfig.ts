@@ -73,6 +73,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
         label: "Historique",
         path: "/agent/historique",
       },
+      { key: "rejets-cheques", label: "Paiements · comptes bloqués", path: "/agent/rejets-cheques" },
     ],
   },
   SUPERVISEUR: {
@@ -103,6 +104,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/superviseur/activations-cartes",
         requiredAuthority: "CARTE_ACTIVER",
       },
+      { key: "rejets-cheques", label: "Cartes des chèques rejetés", path: "/superviseur/rejets-cheques" },
     ],
   },
   RESPONSABLE: {
@@ -139,6 +141,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
+      { key: "rejets-cheques", label: "Rejets de chèques", path: "/responsable/rejets-cheques" },
     ],
   },
   COMPTABLE: {
@@ -153,8 +156,8 @@ export const roleConfig: Record<Role, RoleConfig> = {
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
-      { key: "recettes", label: "Recettes (Versement)", path: "/comptable/recettes" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
+      { key: "rejets-cheques", label: "Déclarer un chèque rejeté", path: "/comptable/rejets-cheques" },
     ],
   },
   RESP_REPORTING: {

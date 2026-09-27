@@ -4,8 +4,11 @@ import com.rrm.parking.paiement.entity.Paiement;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,7 +16,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PaiementRepository
-        extends JpaRepository<Paiement, Long> {
+        extends JpaRepository<Paiement, Long>, JpaSpecificationExecutor<Paiement> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Paiement p where p.id = :id")
+    Optional<Paiement> findByIdPourMiseAJour(@Param("id") Long id);
 
     Optional<Paiement> findByReference(String reference);
 

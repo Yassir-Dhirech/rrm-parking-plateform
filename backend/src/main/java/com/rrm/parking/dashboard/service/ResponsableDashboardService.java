@@ -443,6 +443,13 @@ public class ResponsableDashboardService {
                         ) as reconnaissance_fin
                     from periode_abonnement p
                     where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1 from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                          'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                       and p.date_debut <= :fin
                       and p.date_fin >= :debut
                     """,
@@ -474,6 +481,13 @@ public class ResponsableDashboardService {
                 join affectation_parking a
                   on a.abonnement_regulier_id = ar.id
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1 from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                          'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and a.parking_id = :parkingId
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
@@ -516,6 +530,13 @@ public class ResponsableDashboardService {
                 left join tarif_parking t
                   on t.id = dnc.tarif_parking_id
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1 from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                          'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and coalesce(
                         dnc.parking_id,
                         t.parking_id

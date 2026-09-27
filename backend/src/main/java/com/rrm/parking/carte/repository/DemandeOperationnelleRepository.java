@@ -47,6 +47,17 @@ public interface DemandeOperationnelleRepository
     );
 
     List<DemandeOperationnelle>
+    findByDossierRejetChequeIdAndTypeOperationAndStatutInOrderByIdAsc(
+            Long dossierId,
+            TypeOperationCarte typeOperation,
+            List<StatutDemandeOperationnelle> statuts
+    );
+
+    List<DemandeOperationnelle> findByDossierRejetChequeIdAndTypeOperationOrderByIdAsc(
+            Long dossierId, TypeOperationCarte typeOperation
+    );
+
+    List<DemandeOperationnelle>
     findByAffecteeAIdAndStatut(
             Long utilisateurId,
             StatutDemandeOperationnelle statut

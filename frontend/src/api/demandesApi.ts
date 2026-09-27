@@ -480,11 +480,35 @@ export async function chargerContenuPieceJointe(
 }
 
 export function extraireMessageErreur(error: unknown): string {
-  if (axios.isAxiosError<ApiProblemDetails>(error)) {
-    const detail = error.response?.data?.detail;
+  if (axios.isAxiosError<{ detail?: string; message?: string; error?: string }>(error)) {
+    const data = error.response?.data;
 
-    if (typeof detail === "string" && detail.trim()) {
-      return detail;
+    // 1. RFC 7807 problem detail
+    if (typeof data?.detail === "string" && data.detail.trim()) {
+      return data.detail;
+    }
+
+    // 2. Spring Boot standard error message
+    if (typeof data?.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+
+    // 3. Status-specific friendly messages
+    if (error.response?.status === 404) {
+      return "Aucun élément trouvé pour cette recherche.";
+    }
+    if (error.response?.status === 403) {
+      return "Accès refusé : vous n'avez pas l'autorisation requise (DEMANDE_CONSULTER).";
+    }
+    if (error.response?.status === 401) {
+      return "Session expirée. Veuillez vous reconnecter.";
+    }
+    if (error.response?.status === 500) {
+      return "Erreur serveur lors du traitement. Veuillez vérifier les données.";
+    }
+
+    if (typeof data?.error === "string" && data.error.trim()) {
+      return data.error;
     }
   }
 

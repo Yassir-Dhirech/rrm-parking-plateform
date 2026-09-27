@@ -111,6 +111,10 @@ public class OperationCarteService {
     ) {
         DemandeOperationnelle operation = charger(operationId,
                 TypeOperationCarte.ACTIVATION);
+        if (operation.getDossierRejetCheque() != null) {
+            throw new ConflitMetierException(
+                    "Cette activation relève du dossier de rejet de chèque");
+        }
         Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
         ContexteDemande contexte = chargerContexte(operation);
         Facture facture = contexte.facture();
@@ -221,7 +225,8 @@ public class OperationCarteService {
         return operationRepository
                 .findByTypeOperationAndStatutInOrderByDateCreationAsc(
                         type, STATUTS_OUVERTS)
-                .stream().map(this::versReponse).toList();
+                .stream().filter(operation -> operation.getDossierRejetCheque() == null)
+                .map(this::versReponse).toList();
     }
 
     private List<DemandeOperationnelleResponse> listerPourAgent(
@@ -407,7 +412,7 @@ public class OperationCarteService {
         if (reelle instanceof DemandeNouveauContratCorporate corporate
                 && clientBrut instanceof ClientEntreprise entreprise) {
             Facture facture = factureRepository
-                    .findByPaiementDemandeId(reelle.getId())
+                    .findFirstByPaiementDemandeIdOrderByIdAsc(reelle.getId())
                     .orElse(null);
             return new ContexteDemande(
                     reelle,
@@ -439,7 +444,7 @@ public class OperationCarteService {
                 ? ((DemandeRenouvellementRegulier) reelle)
                         .getTarifParking().getParking().getNom()
                 : demandeInitiale.getTarifParking().getParking().getNom();
-        Facture facture = factureRepository.findByPaiementDemandeId(reelle.getId())
+        Facture facture = factureRepository.findFirstByPaiementDemandeIdOrderByIdAsc(reelle.getId())
                 .orElse(null);
         return new ContexteDemande(
                 reelle,

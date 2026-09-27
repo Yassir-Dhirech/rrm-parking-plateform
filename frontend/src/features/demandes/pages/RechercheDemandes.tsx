@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Alert,
   Button,
@@ -154,9 +155,16 @@ export function RechercheDemandes() {
       setResultats(demandes);
       setRechercheEffectuee(true);
     } catch (error) {
-      setResultats([]);
-      setRechercheEffectuee(true);
-      setErreur(extraireMessageErreur(error));
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // En cas de 404 (non trouvé), on affiche simplement 0 résultat sans panique
+        setResultats([]);
+        setRechercheEffectuee(true);
+        setErreur(null);
+      } else {
+        setResultats([]);
+        setRechercheEffectuee(true);
+        setErreur(extraireMessageErreur(error));
+      }
     } finally {
       setChargement(false);
     }

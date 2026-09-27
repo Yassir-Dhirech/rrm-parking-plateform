@@ -141,7 +141,7 @@ class OperationCarteServiceAgentParkingTest {
         when(impression.getCarteAcces().getAbonnement().getId()).thenReturn(17L);
         when(demandeRepository.findByAbonnementGenereId(17L))
                 .thenReturn(Optional.of(demande));
-        when(factureRepository.findByPaiementDemandeId(37L))
+        when(factureRepository.findFirstByPaiementDemandeIdOrderByIdAsc(37L))
                 .thenReturn(Optional.empty());
         when(operationRepository.findByTypeOperationAndStatutInOrderByDateCreationAsc(
                 eq(TypeOperationCarte.IMPRESSION), anyList()))

@@ -5,6 +5,51 @@ import type {
   FactureResponse,
 } from "../features/factures/facturationTypes";
 
+export interface PageFacturesComptable {
+  content: FactureResponse[];
+  totalElements: number;
+  number: number;
+  size: number;
+}
+
+export interface FiltresFacturesComptable {
+  recherche?: string;
+  statut?: "BROUILLON" | "EMISE" | "ANNULEE";
+  modePaiement?: "ESPECE" | "CHEQUE";
+  dateDebut?: string;
+  dateFin?: string;
+}
+
+export interface FacturesComptableResponse {
+  factures: PageFacturesComptable;
+  totalFactures: number;
+  nombreCheques: number;
+  nombreEspeces: number;
+}
+
+export async function listerFacturesComptable(
+  page: number,
+  filtres: FiltresFacturesComptable,
+  taille = 12,
+): Promise<FacturesComptableResponse> {
+  const response = await client.get<FacturesComptableResponse>("/comptable/factures", {
+    params: { page, taille, ...filtres },
+  });
+  return response.data;
+}
+
+export async function consulterFactureComptable(id: number): Promise<FactureResponse> {
+  const response = await client.get<FactureResponse>(`/comptable/factures/${id}`);
+  return response.data;
+}
+
+export async function telechargerFactureComptablePdf(id: number): Promise<Blob> {
+  const response = await client.get<Blob>(`/comptable/factures/${id}/pdf`, {
+    responseType: "blob",
+  });
+  return response.data;
+}
+
 export async function listerDemandesValideesPourFacturation(
   recherche: string,
   ordre: "ANCIEN" | "RECENT"
