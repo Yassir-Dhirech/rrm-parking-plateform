@@ -24,21 +24,32 @@ import {
   MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  PrinterOutlined,
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  HistoryOutlined,
+  DollarCircleOutlined,
 } from "@ant-design/icons";
 import "./RoleLayout.css";
 
 const menuIconMap: Record<string, React.ReactNode> = {
   dashboard: <DashboardOutlined />,
   "recherche-demandes": <FileTextOutlined />,
-    paiements: <FileDoneOutlined />,
+  paiements: <FileDoneOutlined />,
   "carte-parkings": <EnvironmentOutlined />,
   "nouvel-abonnement": <SolutionOutlined />,
   demandes: <FileTextOutlined />,
+  "demandes-corporate": <TeamOutlined />,
+  "demandes-validees": <FileDoneOutlined />,
   abonnements: <SolutionOutlined />,
   factures: <FileDoneOutlined />,
   cartes: <IdcardOutlined />,
+  "impressions-cartes": <PrinterOutlined />,
+  "remises-cartes": <CheckCircleOutlined />,
+  "activations-cartes": <SafetyCertificateOutlined />,
+  historique: <HistoryOutlined />,
   contrats: <FileProtectOutlined />,
-  recettes: <FileDoneOutlined />,
+  recettes: <DollarCircleOutlined />,
   utilisateurs: <TeamOutlined />,
   parkings: <EnvironmentOutlined />,
   tarifs: <TagsOutlined />,
@@ -129,13 +140,28 @@ return (
           }`}
         >
           {/* Left: page title */}
-          <div className="rrm-responsable-topbar-left flex items-center min-w-0">
+          <div className="rrm-responsable-topbar-left flex items-center gap-2 min-w-0">
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: 20 }} />}
               onClick={() => setMobileDrawerOpen(true)}
               className="rrm-responsable-mobile-menu md:hidden"
             />
+
+            <Tooltip title={isCollapsed ? "Déplier le menu" : "Replier le menu"}>
+              <Button
+                type="text"
+                icon={
+                  isCollapsed ? (
+                    <MenuUnfoldOutlined style={{ fontSize: 18, color: "#ffffff" }} />
+                  ) : (
+                    <MenuFoldOutlined style={{ fontSize: 18, color: "#ffffff" }} />
+                  )
+                }
+                onClick={toggleSidebar}
+                className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all shrink-0 cursor-pointer"
+              />
+            </Tooltip>
 
             <h1 className="rrm-responsable-page-title truncate">
               {currentPageTitle}
@@ -185,13 +211,15 @@ return (
               className="md:hidden flex items-center justify-center p-1"
             />
 
+            
+
             <div
               className="flex items-center cursor-pointer ml-1"
               onClick={() => navigate(config.homePath)}
             >
               <img
                 src="/pictures/logo-rrm.png"
-                alt="Rabat RÃ©gion MobilitÃ©"
+                alt="Rabat Région Mobilité"
                 className="h-8 md:h-9 object-contain"
               />
             </div>
@@ -208,7 +236,7 @@ return (
               <Button
                 shape="circle"
                 icon={<MessageOutlined style={{ fontSize: 16, color: "#003566" }} />}
-                title="Messagerie Interne Ã‰quipe"
+                title="Messagerie Interne Équipe"
                 onClick={() => setMessagerieOpen(true)}
                 className="border-slate-200 bg-slate-50 hover:bg-white shadow-xs"
               />
@@ -218,18 +246,28 @@ return (
           </div>
         </header>
       )}
-{/* 2. DESKTOP SIDEBAR NAVIGATION (Foldable with Smooth Transition) */}
+      {/* 2. DESKTOP SIDEBAR NAVIGATION (Foldable with Smooth Transition) */}
       <aside
-        className={`hidden md:flex fixed left-0 top-[64px] h-[calc(100vh-64px)] border-r border-slate-200/80 shadow-2xs flex-col py-5 z-40 bg-white/85 backdrop-blur-3xl transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-[76px]" : "w-[260px]"
+        className={`hidden md:flex fixed left-0 top-[64px] h-[calc(100vh-64px)] border-r border-slate-200/80 shadow-2xs flex-col pt-2 pb-3 z-40 bg-white/95 backdrop-blur-3xl transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-[76px] rrm-sidebar--collapsed" : "w-[260px] rrm-sidebar--expanded"
         }`}
       >
-        {/* Top of Sidebar: only the fold / unfold control */}
+        {/* Top of Sidebar: Slim fold / unfold header */}
         <div
-          className={`flex items-center mb-4 pb-3 border-b border-white/15 transition-all duration-300 ${
-            isCollapsed ? "justify-center px-2" : "justify-end px-4"
-          }`}
+          className={`flex items-center mb-1.5 px-3 py-1 border-b transition-all duration-300 ${
+            role === "RESPONSABLE" ? "border-white/10" : "border-slate-100"
+          } ${isCollapsed ? "justify-center px-1" : "justify-between"}`}
         >
+          {!isCollapsed && (
+            <span
+              className={`text-[10.5px] font-black uppercase tracking-wider select-none ${
+                role === "RESPONSABLE" ? "text-white/60" : "text-slate-400"
+              }`}
+            >
+              Menu
+            </span>
+          )}
+
           <Tooltip
             title={isCollapsed ? "Déplier la barre latérale" : "Replier la barre latérale"}
             placement={isCollapsed ? "right" : "bottom"}
@@ -238,19 +276,33 @@ return (
               type="text"
               icon={
                 isCollapsed ? (
-                  <MenuUnfoldOutlined style={{ fontSize: 16, color: "#f8fafc" }} />
+                  <MenuUnfoldOutlined
+                    style={{
+                      fontSize: 15,
+                      color: role === "RESPONSABLE" ? "#ffffff" : "#003566",
+                    }}
+                  />
                 ) : (
-                  <MenuFoldOutlined style={{ fontSize: 16, color: "#f8fafc" }} />
+                  <MenuFoldOutlined
+                    style={{
+                      fontSize: 15,
+                      color: role === "RESPONSABLE" ? "#ffffff" : "#003566",
+                    }}
+                  />
                 )
               }
               onClick={toggleSidebar}
-              className="rrm-sidebar-toggle-button flex items-center justify-center w-9 h-9 rounded-xl border-none cursor-pointer transition-all shrink-0"
+              className={`rrm-sidebar-toggle-button flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all shrink-0 ${
+                role === "RESPONSABLE"
+                  ? "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80"
+              }`}
             />
           </Tooltip>
         </div>
 
-        {/* Main Navigation Items */}
-        <div className="flex-1 overflow-y-auto px-3 flex flex-col gap-1 custom-scrollbar">
+        {/* Main Navigation Items (Starts right at the top!) */}
+        <div className="flex-1 overflow-y-auto px-2 flex flex-col gap-1 justify-start custom-scrollbar">
           {menuItems.map((item) => {
             const isSelected = selectedKey === item.key;
             const icon = menuIconMap[item.key] || <DashboardOutlined />;
@@ -259,15 +311,17 @@ return (
               <button
                 key={item.key}
                 onClick={() => navigate(item.path)}
-                className={`rrm-sidebar-nav-button flex items-center rounded-xl transition-all duration-200 text-xs font-extrabold cursor-pointer border-none text-left w-full ${
-                  isCollapsed ? "justify-center px-0 py-3" : "gap-3 px-4 py-2.5"
+                className={`rrm-sidebar-nav-button flex items-center rounded-xl transition-all duration-200 text-xs font-bold cursor-pointer border-none text-left w-full ${
+                  isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3.5 py-2.5"
                 } ${
                   isSelected
-                    ? "rrm-sidebar-nav-button--active shadow-xs scale-[1.02]"
+                    ? "rrm-sidebar-nav-button--active shadow-xs"
                     : "hover:translate-x-0.5"
                 }`}
               >
-                <span className="text-base shrink-0">{icon}</span>
+                <span className={`${isCollapsed ? "text-lg" : "text-base"} shrink-0 flex items-center justify-center`}>
+                  {icon}
+                </span>
                 {!isCollapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
@@ -284,8 +338,8 @@ return (
 
         {/* Footer Navigation */}
         <div
-          className={`mt-auto flex flex-col gap-1 pt-4 border-t border-slate-200/80 transition-all duration-300 ${
-            isCollapsed ? "px-2 mx-1 items-center" : "px-3 mx-3"
+          className={`mt-auto flex flex-col gap-1 pt-3 border-t border-slate-200/80 transition-all duration-300 ${
+            isCollapsed ? "px-1.5 items-center" : "px-3 mx-2"
           }`}
         >
           {isCollapsed ? (
@@ -293,7 +347,7 @@ return (
               <Tooltip title="Mon Profil" placement="right">
                 <button
                   onClick={() => setProfileModalOpen(true)}
-                  className="rrm-sidebar-footer-button flex items-center justify-center w-10 h-10 rounded-xl transition-all border-none bg-transparent cursor-pointer"
+                  className="rrm-sidebar-footer-button flex items-center justify-center w-9 h-9 rounded-xl transition-all border-none bg-transparent cursor-pointer"
                 >
                   <UserOutlined className="text-base" />
                 </button>
@@ -301,7 +355,7 @@ return (
               <Tooltip title="Déconnexion" placement="right">
                 <button
                   onClick={handleLogout}
-                  className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center justify-center w-10 h-10 rounded-xl transition-all border-none bg-transparent cursor-pointer"
+                  className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center justify-center w-9 h-9 rounded-xl transition-all border-none bg-transparent cursor-pointer"
                 >
                   <LogoutOutlined className="text-base" />
                 </button>
@@ -311,14 +365,14 @@ return (
             <>
               <button
                 onClick={() => setProfileModalOpen(true)}
-                className="rrm-sidebar-footer-button flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
+                className="rrm-sidebar-footer-button flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
               >
                 <UserOutlined className="text-base" />
                 <span>Mon Profil</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-extrabold border-none bg-transparent cursor-pointer w-full text-left"
+                className="rrm-sidebar-footer-button rrm-sidebar-footer-button--logout flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all text-xs font-bold border-none bg-transparent cursor-pointer w-full text-left"
               >
                 <LogoutOutlined className="text-base" />
                 <span>Déconnexion</span>
@@ -404,7 +458,7 @@ return (
       {/* Main Content Canvas — Dynamically adjusts left padding based on folded/unfolded sidebar */}
       <main
         className={`pt-[68px] md:pt-[72px] pb-8 px-3 md:px-6 relative z-10 min-w-0 max-w-full transition-all duration-300 ease-in-out ${
-          isCollapsed ? "md:pl-[96px]" : "md:pl-[280px]"
+          isCollapsed ? "md:pl-[92px]" : "md:pl-[276px]"
         }`}
       >
         <Outlet />

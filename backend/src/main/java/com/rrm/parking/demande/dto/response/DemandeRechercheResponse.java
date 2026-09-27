@@ -54,9 +54,9 @@ public record DemandeRechercheResponse(
     ) {
         DemandeClient demandeReelle =
                 (DemandeClient) Hibernate.unproxy(demande);
-        Client client = (Client) Hibernate.unproxy(
-                demandeReelle.getClient()
-        );
+        Client client = demandeReelle.getClient() != null
+                ? (Client) Hibernate.unproxy(demandeReelle.getClient())
+                : null;
         return new DemandeRechercheResponse(
                 demandeReelle.getId(),
                 demandeReelle.getReference(),
@@ -67,26 +67,35 @@ public record DemandeRechercheResponse(
                 demandeReelle.getDateSoumission(),
                 demandeReelle.getDateValidationOtp(),
                 demandeReelle.getDateModification(),
-                client.getId(),
-                determinerTypeClient(client),
-                determinerNomClient(client),
-                determinerIdentifiantClient(client),
-                client.getEmail(),
-                client.getTelephone()
+                client != null ? client.getId() : null,
+                client != null ? determinerTypeClient(client) : "INCONNU",
+                client != null ? determinerNomClient(client) : null,
+                client != null ? determinerIdentifiantClient(client) : null,
+                client != null ? client.getEmail() : null,
+                client != null ? client.getTelephone() : null
         );
     }
 
     private static String determinerParking(DemandeClient demande) {
         if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
-            return nouvelle.getTarifParking().getParking().getNom();
+            if (nouvelle.getTarifParking() != null && nouvelle.getTarifParking().getParking() != null) {
+                return nouvelle.getTarifParking().getParking().getNom();
+            }
+            return null;
         }
 
         if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
-            return renouvellement.getTarifParking().getParking().getNom();
+            if (renouvellement.getTarifParking() != null && renouvellement.getTarifParking().getParking() != null) {
+                return renouvellement.getTarifParking().getParking().getNom();
+            }
+            return null;
         }
 
         if (demande instanceof DemandeNouveauContratCorporate corporate) {
-            return corporate.getParking().getNom();
+            if (corporate.getParking() != null) {
+                return corporate.getParking().getNom();
+            }
+            return null;
         }
 
         return null;

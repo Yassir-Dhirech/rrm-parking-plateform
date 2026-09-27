@@ -24,7 +24,7 @@ import {
 import {
   PlusCircleOutlined,
   SyncOutlined,
-  SwapOutlined,
+  
   CopyOutlined,
   BankOutlined,
   ArrowRightOutlined,
@@ -77,7 +77,7 @@ import { ChequeSpecimenCard } from "../../../components/cheque/ChequeSpecimenCar
 
 const { Option } = Select;
 
-type TypeDemande = "NEW" | "RENEW" | "TRANSFER" | "DUPLICATE" | "CORPORATE";
+type TypeDemande = "NEW" | "RENEW" | "DUPLICATE" | "CORPORATE";
 
 interface PublicQrFormProps {
   mode?: "PUBLIC" | "AGENT";
@@ -128,7 +128,21 @@ function ScanUploadField({
       getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
       rules={
         isRequired
-          ? [{ required: true, message: `Le document (${label}) est obligatoire.` }]
+          ? [
+              {
+                required: true,
+                validator: (_, value) => {
+                  const list = Array.isArray(value) ? value : value?.fileList;
+                  if (Array.isArray(list) && list.length > 0) {
+                    return Promise.resolve();
+                  }
+                  if (value && !Array.isArray(value) && (value instanceof File || value?.originFileObj)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error(`Le document (${label}) est obligatoire.`));
+                },
+              },
+            ]
           : undefined
       }
       className="m-0"
@@ -353,7 +367,6 @@ const {
     if (tabParam) {
       if (tabParam === "NEW") setTypeDemande("NEW");
       if (tabParam === "RENEW") setTypeDemande("RENEW");
-      if (tabParam === "TRANSFER") setTypeDemande("TRANSFER");
       if (tabParam === "DUPLICATE") setTypeDemande("DUPLICATE");
     }
 
@@ -375,60 +388,8 @@ const {
   }, [searchParams, form, typeDemande, isAgentMode]);
 
   // BETA Quick Test Autofill Handler
-  const handleBetaAutofill = () => {
-    const mockDocumentList = [
-      {
-        uid: "-1",
-        name: "scan_document_test_rrm.pdf",
-        status: "done",
-        url: "#",
-      },
-    ];
-
-    const vals = {
-      nom: "BENNANI",
-      prenom: "Karim",
-      cin: "AB123456",
-      telephone: "0661234567",
-      email: "karim.bennani@gmail.com",
-      immatriculation: "12345-A-1",
-      marque: "Dacia Logan 2023",
-      carteRfidActuelle: "RFID-889901",
-      photoCinRecto: mockDocumentList,
-      photoCinVerso: mockDocumentList,
-      photoCarteGriseRecto: mockDocumentList,
-      photoCarteGriseVerso: mockDocumentList,
-      raisonSociale: "Maroc Telecom SA",
-      ice: "001234567000089",
-      rc: "998877",
-      titreFoncier: "TF-12345/2026",
-      nomRepresentant: "BENNANI",
-      prenomRepresentant: "Karim",
-      cinRepresentant: "AB123456",
-      libelleProjet: "Projet corporate RRM",
-      adresseProjet: "Avenue Annakhil, Rabat",
-      plageHoraire: "Tous les jours de 08h00 à 20h00",
-      flotteVehicules: [
-        { immatriculation: "12345-A-1" },
-        { immatriculation: "67890-B-2" },
-        { immatriculation: "" },
-      ],
-      parkingId: parkings[0]?.id || 1,
-      formuleCode: "24H7J",
-      dureeMois: 6,
-      modePaiement: "ESPECE",
-      acceptTerms: true,
-    };
-
-    form.setFieldsValue(vals);
-    setFormValues((prev: any) => ({ ...prev, ...vals }));
-
-    setIsPersoValid(true);
-    setIsVehiculeValid(true);
-    setIsCorporateValid(true);
-
-    message.success("⚡ Mode BETA Test : Formulaire et documents pré-remplis avec succès !");
-  };
+  
+    
 
   // Account search handler
   const handleLookupSubscriber = async () => {
@@ -518,21 +479,56 @@ const {
       message.success("Informations Personnelles & CIN validées !");
       setActiveCollapseKeys(["vehicule_particulier"]);
     } catch {
-      message.error("Veuillez remplir les informations et téléverser les photos CIN (Recto & Verso).");
+      setIsPersoValid(false);
+      setActiveCollapseKeys(["perso_particulier"]);
+      message.error("Veuillez remplir toutes les informations personnelles obligatoires et téléverser les photos CIN (Recto & Verso).");
     }
   };
 
   // Section 2 Validation (Informations Véhicule) -> Advance to Step 2 (Tarification)
   const handleValidateVehiculeAndNext = async () => {
+    // 1. Valider strictement la Section 1 (Informations Personnelles & CIN)
     try {
-      await form.validateFields(["immatriculation", "photoCarteGriseRecto", "photoCarteGriseVerso"]);
-      setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
-      setIsVehiculeValid(true);
-      message.success("Informations Véhicule & Carte Grise validées !");
-      setCurrentStep(2);
+      await form.validateFields([
+        "nom",
+        "prenom",
+        "cin",
+        "telephone",
+        "email",
+        "photoCinRecto",
+        "photoCinVerso",
+      ]);
+      setIsPersoValid(true);
     } catch {
-      message.error("Veuillez remplir l'immatriculation et téléverser les photos de la Carte Grise.");
+      setIsPersoValid(false);
+      setActiveCollapseKeys(["perso_particulier"]);
+      message.error(
+        "Veuillez d'abord remplir les champs obligatoires des informations personnelles et téléverser la CIN (Recto & Verso)."
+      );
+      return;
     }
+
+    // 2. Valider strictement la Section 2 (Véhicule & Carte Grise)
+    try {
+      await form.validateFields([
+        "immatriculation",
+        "photoCarteGriseRecto",
+        "photoCarteGriseVerso",
+      ]);
+      setIsVehiculeValid(true);
+    } catch {
+      setIsVehiculeValid(false);
+      setActiveCollapseKeys(["vehicule_particulier"]);
+      message.error(
+        "Veuillez renseigner le matricule et téléverser les photos de la Carte Grise (Recto & Verso)."
+      );
+      return;
+    }
+
+    // 3. Les deux sections sont valides : sauvegarder et passer à l'étape 2 (Tarification)
+    setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
+    message.success("Informations Personnelles et Véhicule validées avec succès !");
+    setCurrentStep(2);
   };
 
   // Step 2 Validation (Parking & Option) -> Advance to Step 3 (Récapitulatif & OTP)
@@ -544,6 +540,8 @@ const {
           "formuleCode",
           "dureeMois",
           "tarifParkingId",
+          "canalOtp",
+          "modePaiement",
         ]);
         const tarifParkingId = Number(form.getFieldValue("tarifParkingId"));
         if (!Number.isInteger(tarifParkingId) || tarifParkingId <= 0) {
@@ -551,7 +549,7 @@ const {
           return;
         }
       } else if (typeDemande === "CORPORATE") {
-        await form.validateFields(["parkingId"]);
+        await form.validateFields(["parkingId", "modePaiement"]);
         const parkingCorporate = parkings.find(
           (parking) => parking.id === Number(form.getFieldValue("parkingId"))
         );
@@ -565,7 +563,7 @@ const {
           return;
         }
       } else {
-        await form.validateFields(["parkingId", "formuleCode", "dureeMois"]);
+        await form.validateFields(["parkingId", "formuleCode", "dureeMois", "modePaiement"]);
       }
 
       setFormValues((prev: any) => ({
@@ -582,8 +580,8 @@ const {
     } catch {
       message.error(
         typeDemande === "CORPORATE"
-          ? "Veuillez sélectionner un parking disposant de suffisamment de places."
-          : "Veuillez sélectionner un parking, une formule et une durée."
+          ? "Veuillez sélectionner un parking valide disposant de suffisamment de places."
+          : "Veuillez sélectionner un parking, un forfait et une durée."
       );
     }
   };
@@ -610,7 +608,8 @@ const {
       message.success("Informations Société validées !");
       setCurrentStep(2);
     } catch {
-      message.error("Veuillez vérifier les informations de l'entreprise et du projet.");
+      setIsCorporateValid(false);
+      message.error("Veuillez remplir tous les champs obligatoires de l'entreprise et du représentant.");
     }
   };
 
@@ -683,8 +682,6 @@ const {
         return "Nouvel Abonnement Particulier";
       case "RENEW":
         return "Renouvellement d'Abonnement Actif";
-      case "TRANSFER":
-        return "Transfert & Changement de Parking";
       case "DUPLICATE":
         return "Duplicata / Remplacement Carte RFID";
       case "CORPORATE":
@@ -898,7 +895,7 @@ const {
     if (typeDemande === "DUPLICATE") {
       return ["Type", "Recherche", "Vérification OTP", "Confirmation"];
     }
-    if (typeDemande === "RENEW" || typeDemande === "TRANSFER") {
+    if (typeDemande === "RENEW" ) {
       return ["Type", "Recherche", "Tarification", "Récapitulatif & OTP"];
     }
     return ["1. Type de Demande", "2. Saisie Informations", "3. Tarification", "4. Récapitulatif & OTP"];
@@ -962,17 +959,7 @@ const {
               </p>
             </div>
 
-            {/* BETA Test Autofill Action */}
-            {!isAgentMode && <div className="w-full sm:w-auto shrink-0">
-              <Button
-                size="large"
-                icon={<ThunderboltOutlined />}
-                onClick={handleBetaAutofill}
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 border-amber-500 text-white font-extrabold rounded-2xl px-5 shadow-lg shadow-amber-900/40 inline-flex items-center justify-center gap-2 h-12 text-xs"
-              >
-                Mode Remplissage Rapide (BETA Test)
-              </Button>
-            </div>}
+            
           </div>
         </div>
       </div>
@@ -1043,106 +1030,102 @@ const {
               Sélectionnez le Type de Demande
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Option 1: Nouvel Abonnement Particulier */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option 1: Nouvel Abonnement Particulier (Bleu Océan) */}
               <div
                 onClick={() => setTypeDemande("NEW")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 ${
                   typeDemande === "NEW"
-                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
-                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                    ? "border-sky-600 bg-sky-50/80 shadow-md ring-2 ring-sky-500/30 scale-[1.01]"
+                    : "border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300 hover:shadow-xs"
                 }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center text-xl shrink-0">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
+                  typeDemande === "NEW" ? "bg-sky-600 text-white shadow-sm" : "bg-sky-100 text-sky-700"
+                }`}>
                   <PlusCircleOutlined />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1">Nouvel Abonnement</h3>
+                  <h3 className={`text-base font-bold mb-1 transition-colors ${typeDemande === "NEW" ? "text-sky-950" : "text-slate-900"}`}>
+                    Nouvel Abonnement
+                  </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Créer une nouvelle souscription pour votre véhicule (Particulier).
                   </p>
                 </div>
               </div>
 
-              {/* Option 2: Renouvellement */}
+              {/* Option 2: Renouvellement (Vert Émeraude) */}
               <div
                 onClick={() => setTypeDemande("RENEW")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 ${
                   typeDemande === "RENEW"
-                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
-                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                    ? "border-emerald-600 bg-emerald-50/80 shadow-md ring-2 ring-emerald-500/30 scale-[1.01]"
+                    : "border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300 hover:shadow-xs"
                 }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
+                  typeDemande === "RENEW" ? "bg-emerald-600 text-white shadow-sm" : "bg-emerald-100 text-emerald-700"
+                }`}>
                   <SyncOutlined />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1">Renouvellement</h3>
+                  <h3 className={`text-base font-bold mb-1 transition-colors ${typeDemande === "RENEW" ? "text-emerald-950" : "text-slate-900"}`}>
+                    Renouvellement
+                  </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Prolonger un abonnement existant (Recherche CIN/RFID + Choix Durée).
                   </p>
                 </div>
               </div>
 
-              {/* Option 3: Transfert / Changement */}
-              <div
-                onClick={() => setTypeDemande("TRANSFER")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
-                  typeDemande === "TRANSFER"
-                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
-                    : "border-slate-200 bg-white/60 hover:bg-white/90"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
-                  <SwapOutlined />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1">Transfert & Changement de Parking</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Changer de parking d'affectation ou mettre à jour votre abonnement actif.
-                  </p>
-                </div>
-              </div>
-
-              {/* Option 4: Duplicata / Réclamation Perte */}
+              {/* Option 3: Duplicata RFID (Violet Élégant) */}
               <div
                 onClick={() => setTypeDemande("DUPLICATE")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 ${
                   typeDemande === "DUPLICATE"
-                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
-                    : "border-slate-200 bg-white/60 hover:bg-white/90"
+                    ? "border-purple-600 bg-purple-50/80 shadow-md ring-2 ring-purple-500/30 scale-[1.01]"
+                    : "border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300 hover:shadow-xs"
                 }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl shrink-0">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
+                  typeDemande === "DUPLICATE" ? "bg-purple-600 text-white shadow-sm" : "bg-purple-100 text-purple-700"
+                }`}>
                   <CopyOutlined />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1">Duplicata RFID (Réclamation Perte)</h3>
+                  <h3 className={`text-base font-bold mb-1 transition-colors ${typeDemande === "DUPLICATE" ? "text-purple-950" : "text-slate-900"}`}>
+                    Duplicata RFID (Réclamation Perte)
+                  </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     Déclarer la perte d'une carte RFID et demander l'édition d’un duplicata via OTP.
                   </p>
                 </div>
               </div>
 
-              {/* Option 5: Abonnement Long Terme Corporate */}
+              {/* Option 4: Abonnement Long Terme (Ambre Doré Corporate) */}
               <div
                 onClick={() => setTypeDemande("CORPORATE")}
-                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 md:col-span-2 ${
+                className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-4 ${
                   typeDemande === "CORPORATE"
-                    ? "border-secondary bg-secondary-container/20 shadow-md ring-2 ring-secondary/30"
-                    : "border-amber-200 bg-amber-50/50 hover:bg-amber-100/60"
+                    ? "border-amber-600 bg-amber-50/90 shadow-md ring-2 ring-amber-500/35 scale-[1.01]"
+                    : "border-amber-200/90 bg-amber-50/30 hover:bg-amber-50/70 hover:border-amber-300"
                 }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
+                  typeDemande === "CORPORATE" ? "bg-amber-600 text-white shadow-sm" : "bg-amber-100 text-amber-800"
+                }`}>
                   <BankOutlined />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-base font-extrabold text-slate-900 m-0">Abonnement Long Terme (Entreprises & Flottes)</h3>
-                    <Tag color="gold" className="font-bold border-none">Flottes Multi-Véhicules</Tag>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <h3 className={`text-base font-bold m-0 transition-colors ${typeDemande === "CORPORATE" ? "text-amber-950" : "text-slate-900"}`}>
+                      Abonnement Long Terme
+                    </h3>
+                    <Tag color="gold" className="font-bold border-none text-[10px] m-0 shrink-0">Corporate</Tag>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Formulaire dédié aux sociétés pour saisir le responsable, les documents entreprise et la liste des véhicules de la flotte.
+                  <p className="text-xs text-slate-600 leading-relaxed m-0">
+                    Réservé aux sociétés & flottes (Contrat 20 ans, multi-véhicules).
                   </p>
                 </div>
               </div>
@@ -1166,7 +1149,7 @@ const {
         {currentStep === 1 && (
           <div className="glass-panel rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/80 shadow-xl bg-white/80">
             {/* FLOW 1: RENOUVELLEMENT / TRANSFERT / DUPLICATE -> SEARCH ACCOUNT ONLY */}
-            {["RENEW", "TRANSFER", "DUPLICATE"].includes(typeDemande) ? (
+            {["RENEW", "DUPLICATE"].includes(typeDemande) ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
@@ -1339,7 +1322,13 @@ const {
                     <Button
                       type="primary"
                       disabled={!hasFoundAccount}
-                      onClick={() => setCurrentStep(2)}
+                      onClick={() => {
+                        if (!hasFoundAccount || !renewalAccount) {
+                          message.error("Veuillez d'abord identifier votre abonnement avec votre CIN et numéro de carte.");
+                          return;
+                        }
+                        setCurrentStep(2);
+                      }}
                       className="w-full sm:w-auto bg-primary rounded-xl h-11 px-8 font-bold flex items-center justify-center"
                     >
                       Étape Suivante (Parking & Durée) →
@@ -2294,7 +2283,7 @@ const {
               </Tag>
             </div>
 
-            <Form form={form} layout="vertical">
+            <Form form={form} preserve={true} layout="vertical">
               {/* Dynamic Live Subscription Summary Card */}
               <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-secondary/30 bg-gradient-to-br from-secondary/5 via-white to-secondary/10 mb-6 shadow-md">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 border-b border-slate-200/80 pb-3 gap-2">
