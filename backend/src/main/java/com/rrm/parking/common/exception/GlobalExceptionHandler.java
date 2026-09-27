@@ -236,4 +236,21 @@ public class GlobalExceptionHandler {
 
         return probleme;
     }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> gererResponseStatusException(
+            org.springframework.web.server.ResponseStatusException exception,
+            HttpServletRequest request
+    ) {
+        String detail = exception.getReason() != null
+                ? exception.getReason()
+                : exception.getStatusCode().toString();
+
+        return construireReponse(
+                HttpStatus.valueOf(exception.getStatusCode().value()),
+                "Requête impossible",
+                detail,
+                request
+        );
+    }
 }

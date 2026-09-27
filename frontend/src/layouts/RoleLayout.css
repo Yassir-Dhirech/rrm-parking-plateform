@@ -246,6 +246,102 @@
   }
 }
 
+/* ==========================================================================
+   DEFAULT / LIGHT THEME SIDEBAR STYLES (AGENT, ADMIN, SUPERVISEUR, etc.)
+   ========================================================================== */
+
+.rrm-sidebar-nav-button {
+  background: transparent;
+  color: #334155;
+  min-height: 38px;
+}
+
+.rrm-sidebar-nav-button:hover {
+  background: #f1f5f9;
+  color: #003566;
+}
+
+.rrm-sidebar-nav-button--active {
+  background: #003566 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(0, 53, 102, 0.22) !important;
+}
+
+.rrm-sidebar-nav-button--active .anticon,
+.rrm-sidebar-nav-button--active span {
+  color: #ffffff !important;
+}
+
+.rrm-sidebar-toggle-button {
+  color: #003566 !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.rrm-sidebar-toggle-button:hover {
+  background: #e2e8f0 !important;
+  color: #001d3d !important;
+}
+
+.rrm-sidebar-footer-button {
+  color: #475569;
+  background: transparent;
+}
+
+.rrm-sidebar-footer-button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.rrm-sidebar-footer-button--logout {
+  color: #e11d48 !important;
+}
+
+.rrm-sidebar-footer-button--logout:hover {
+  background: #ffe4e6 !important;
+  color: #be123c !important;
+}
+
+/* Mobile Sidebar Buttons Default Styles */
+.rrm-mobile-sidebar-nav-button {
+  background: transparent;
+  color: #334155;
+}
+
+.rrm-mobile-sidebar-nav-button:hover {
+  background: #f1f5f9;
+  color: #003566;
+}
+
+.rrm-mobile-sidebar-nav-button--active {
+  background: #003566 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(0, 53, 102, 0.20) !important;
+}
+
+.rrm-mobile-sidebar-nav-button--active .anticon,
+.rrm-mobile-sidebar-nav-button--active span {
+  color: #ffffff !important;
+}
+
+.rrm-mobile-sidebar-footer-button {
+  color: #475569;
+}
+
+.rrm-mobile-sidebar-footer-button:hover {
+  background: #f1f5f9;
+}
+
+.rrm-mobile-sidebar-footer-button--logout {
+  color: #e11d48 !important;
+}
+
+.rrm-mobile-sidebar-footer-button--logout:hover {
+  background: #ffe4e6 !important;
+}
+
 .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
   color: #f8fafc !important;
   background: rgba(255, 255, 255, 0.06) !important;
@@ -313,16 +409,16 @@
 
 @media (min-width: 769px) {
   /*
-   * Sidebar RESPONSABLE inspirÃ©e de la rÃ©fÃ©rence :
-   * flottante, lÃ©gÃ¨rement dÃ©collÃ©e du bord gauche,
-   * du haut jusqu'au bas de l'Ã©cran, avec le logo RRM intÃ©grÃ©.
+   * Sidebar RESPONSABLE inspirée de la référence :
+   * flottante, légèrement décollée du bord gauche,
+   * du haut jusqu'au bas de l'écran, avec le logo RRM intégré.
    */
   .rrm-role-shell--glass > aside {
     left: 10px !important;
     top: 10px !important;
     height: calc(100vh - 20px) !important;
 
-    padding-top: 82px !important;
+    padding-top: 54px !important;
     padding-bottom: 12px !important;
 
     border-radius: 12px !important;
@@ -340,17 +436,25 @@
     z-index: 60 !important;
   }
 
+  .rrm-role-shell--glass > aside.rrm-sidebar--collapsed {
+    padding-top: 10px !important;
+  }
+
+  .rrm-role-shell--glass > aside.rrm-sidebar--collapsed::before {
+    display: none !important;
+  }
+
   /*
-   * Logo RRM intÃ©grÃ© Ã  l'intÃ©rieur de la sidebar.
-   * On rÃ©utilise l'asset dÃ©jÃ  prÃ©sent dans le projet.
+   * Logo RRM intégré à l'intérieur de la sidebar.
+   * On réutilise l'asset déjà présent dans le projet.
    */
   .rrm-role-shell--glass > aside::before {
     content: "";
     position: absolute;
-    top: 12px;
-    left: 10px;
-    right: 10px;
-    height: 52px;
+    top: 10px;
+    left: 14px;
+    right: 14px;
+    height: 36px;
 
     background-image: url("/pictures/logo-rrm.png");
     background-repeat: no-repeat;

@@ -66,23 +66,13 @@ public class DemandeRechercheService {
                         .trim()
                         .toUpperCase(Locale.ROOT);
 
-        DemandeClient demande =
-                demandeClientRepository
-                        .findByReferenceIgnoreCase(
-                                referenceNormalisee
-                        )
-                        .orElseThrow(() ->
-                                new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Demande introuvable"
-                                )
-                        );
-
-        return List.of(
-                DemandeRechercheResponse.depuis(
-                        demande
+        return demandeClientRepository
+                .findByReferenceIgnoreCase(
+                        referenceNormalisee
                 )
-        );
+                .map(DemandeRechercheResponse::depuis)
+                .map(List::of)
+                .orElse(List.of());
     }
 
     private List<DemandeRechercheResponse>
@@ -94,35 +84,20 @@ public class DemandeRechercheService {
                         .trim()
                         .toUpperCase(Locale.ROOT);
 
-        ClientParticulier client =
-                clientParticulierRepository
-                        .findByCinIgnoreCase(
-                                cinNormalisee
-                        )
-                        .orElseThrow(() ->
-                                new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Aucun client trouvé pour cette CIN"
+        return clientParticulierRepository
+                .findByCinIgnoreCase(
+                        cinNormalisee
+                )
+                .map(client ->
+                        demandeClientRepository
+                                .findByClientIdOrderByDateSoumissionDesc(
+                                        client.getId()
                                 )
-                        );
-
-        List<DemandeRechercheResponse> demandes =
-                demandeClientRepository
-                        .findByClientIdOrderByDateSoumissionDesc(
-                                client.getId()
-                        )
-                        .stream()
-                        .map(DemandeRechercheResponse::depuis)
-                        .toList();
-
-        if (demandes.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Aucune demande trouvée pour cette CIN"
-            );
-        }
-
-        return demandes;
+                                .stream()
+                                .map(DemandeRechercheResponse::depuis)
+                                .toList()
+                )
+                .orElse(List.of());
     }
 
     @Transactional(readOnly = true)
