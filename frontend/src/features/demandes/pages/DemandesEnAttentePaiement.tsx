@@ -156,18 +156,19 @@ export function DemandesEnAttentePaiement() {
       )}
 
       <Table<DemandeRechercheResponse>
-        rowKey="id"
-        columns={columns}
-        dataSource={data}
-        loading={isLoading}
-        scroll={{ x: 1100 }}
-        pagination={{ pageSize: 10 }}
-        locale={{
-          emptyText: (
-            <Empty description="Aucune demande en attente de paiement" />
-          ),
-        }}
-      />
+  rowKey="id"
+  columns={columns}
+  dataSource={data}
+  loading={isLoading}
+  pagination={false}
+  scroll={{ y: 380, x: 1100 }}
+  locale={{
+    emptyText: (
+      <Empty description="Aucune demande en attente de paiement" />
+    ),
+  }}
+/>
+
     </section>
   );
 }

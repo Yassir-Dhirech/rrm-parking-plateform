@@ -123,6 +123,13 @@ public interface DemandeClientRepository
             Pageable limite
     );
 
+    @Query("""
+            select d from DemandeClient d
+            left join fetch d.client
+            order by coalesce(d.dateSoumission, d.dateCreation) desc, d.id desc
+            """)
+    List<DemandeClient> findAllOrderByPlusRecente();
+
     // La liste des demandes est consultable sur tous les parkings ; les actions
     // de paiement restent contrôlées séparément par le service de paiement.
     @Query(value = """
