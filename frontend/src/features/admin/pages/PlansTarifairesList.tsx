@@ -17,6 +17,8 @@ import {
   Col,
   Tooltip,
   Popconfirm,
+  Upload,
+  Divider,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,7 +32,8 @@ import {
   StopOutlined,
   CheckCircleOutlined,
   EyeOutlined,
-  DeleteOutlined ,
+  DeleteOutlined, 
+  UploadOutlined,
 } from "@ant-design/icons";
 import { getAdminTarifs, deleteAdminTarif } from "../../../api/adminTarifsApi";
 import { getAdminParkings } from "../../../api/adminParkingsApi";
@@ -54,8 +57,12 @@ export function PlansTarifairesList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Pop-up Suppression avec motif
   const [selectedTarif, setSelectedTarif] = useState<PlanTarifaire | null>(null);
   const [deactivateReason, setDeactivateReason] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [attachedDocName, setAttachedDocName] = useState<string | null>(null); // Pièce jointe attachée
+
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -258,25 +265,22 @@ export function PlansTarifairesList() {
               Détails
             </Button>
           </Tooltip>
-                    {/* Action : Supprimer définitivement de la base */}
-          <Popconfirm
-            title="Supprimer ce tarif ?"
-            description="Êtes-vous sûr de vouloir supprimer définitivement ce tarif de la base de données ?"
-            okText="Supprimer"
-            cancelText="Annuler"
-            okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
-            onConfirm={() => deleteMutation.mutate(record.id)}
-          >
-            <Tooltip title="Supprimer définitivement de MySQL">
-              <Button
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              >
-                Supprimer
-              </Button>
-            </Tooltip>
-          </Popconfirm>
+                             {/* Action 4 : Supprimer définitivement (Ouvre la Pop-up avec motif et pièce jointe) */}
+          <Tooltip title="Supprimer avec justification et PV officiel">
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                setSelectedTarif(record);
+                setDeleteReason("");
+                setAttachedDocName(null);
+                setIsDeleteModalOpen(true);
+              }}
+            >
+              Supprimer
+            </Button>
+          </Tooltip>
 
           
         </Space>
@@ -346,11 +350,16 @@ export function PlansTarifairesList() {
         pagination={false}
         scroll={{ y: 550, x: "max-content" }}
       />
-      {/* Modal 1: Ajouter / Configurer un Tarif pour un Parking */}
+           {/* -------------------------------------------------------------
+          MODAL 1 : AJOUTER UN TARIF (AVEC MOTIF & DOCUMENT ATTACHÉ)
+          ------------------------------------------------------------- */}
       <Modal
-        title="Ajouter un Tarif Spécifique pour un Parking"
+        title="Ajouter / Configurer un Tarif Parking"
         open={isCreateModalOpen}
-        onCancel={() => setIsCreateModalOpen(false)}
+        onCancel={() => {
+          setIsCreateModalOpen(false);
+          setAttachedDocName(null);
+        }}
         onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
         okText="Valider & Enregistrer"
@@ -403,16 +412,47 @@ export function PlansTarifairesList() {
           </Row>
 
           <Form.Item name="tarifHT" label="Tarif Mensuel HT (MAD HT)" rules={[{ required: true, message: "Tarif requis" }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" addonAfter="MAD HT" />
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" />
+          </Form.Item>
+
+          <Divider style={{ margin: "14px 0 10px 0" }}>Justification Réglementaire</Divider>
+
+          <Form.Item
+            name="motifCreation"
+            label={<span className="font-bold text-xs">Motif officiel / Réf. Arrêté communal *</span>}
+            rules={[{ required: true, message: "Veuillez renseigner le motif officiel" }]}
+          >
+            <Input.TextArea rows={2} placeholder="Ex: Délibération du Conseil de la Ville de Rabat n°45 du 12/09/2026..." />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Document officiel attaché (Optionnel)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV officiel (PDF, Image)"}
+              </Button>
+            </Upload>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal 2: Modifier le Prix d'un Forfait */}
+      {/* -------------------------------------------------------------
+          MODAL 2 : MODIFIER LE PRIX (AVEC MOTIF & DOCUMENT ATTACHÉ)
+          ------------------------------------------------------------- */}
       <Modal
-        title={`Modifier le Prix: ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
+        title={`Modifier le Prix : ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
         open={isEditModalOpen}
-        onCancel={() => setIsEditModalOpen(false)}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setAttachedDocName(null);
+        }}
         onOk={() => editForm.submit()}
         confirmLoading={editMutation.isPending}
         okText="Enregistrer les modifications"
@@ -428,40 +468,161 @@ export function PlansTarifairesList() {
           </Form.Item>
 
           <Form.Item name="tarifHT" label="Nouveau Tarif HT (MAD HT)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} addonAfter="MAD HT" />
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} />
+          </Form.Item>
+
+          <Divider style={{ margin: "14px 0 10px 0" }}>Justification de la Révision</Divider>
+
+          <Form.Item
+            name="motifModification"
+            label={<span className="font-bold text-xs">Motif officiel justifiant la révision *</span>}
+            rules={[{ required: true, message: "Le motif est obligatoire pour toute modification" }]}
+          >
+            <Input.TextArea
+              rows={2}
+              placeholder="Ex: Décision de révision tarifaire annuelle, harmonisation grille 2026..."
+            />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Pièce justificative attachée (PDF / Image)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV de modification"}
+              </Button>
+            </Upload>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal 3: Désactivation d'un Forfait */}
+      {/* -------------------------------------------------------------
+          MODAL 3 : DÉSACTIVATION / SUSPENSION DU TARIF
+          ------------------------------------------------------------- */}
       <Modal
         title="Désactivation du Forfait Tarifaire"
         open={isDeactivateModalOpen}
-        onCancel={() => setIsDeactivateModalOpen(false)}
-        onOk={() => deactivateMutation.mutate()}
+        onCancel={() => {
+          setIsDeactivateModalOpen(false);
+          setAttachedDocName(null);
+        }}
+        onOk={() => {
+          if (!deactivateReason.trim()) {
+            message.error("Veuillez renseigner le motif officiel de désactivation.");
+            return;
+          }
+          deactivateMutation.mutate();
+        }}
         confirmLoading={deactivateMutation.isPending}
         okText="Désactiver le Forfait"
         okButtonProps={{ danger: true }}
         cancelText="Annuler"
       >
         <Alert
-          message="Protection Contre les Suppressions en Cascade :"
-          description="Ce forfait sera désactivé pour ce parking sans suppression en base de données, préservant les abonnements en cours."
+          message="Protection des Abonnés Actuels :"
+          description="Ce forfait sera suspendu pour les nouvelles souscriptions tout en préservant les contrats en cours."
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
         />
         <Form layout="vertical">
-          <Form.Item label="Motif de désactivation du forfait" required>
+          <Form.Item label={<span className="font-bold text-xs">Motif officiel de suspension *</span>} required>
             <Input.TextArea
-              rows={3}
-              placeholder="Raison de la désactivation pour ce parking..."
+              rows={2}
+              placeholder="Ex: Travaux d'infrastructure, fermeture temporaire d'un étage, réajustement..."
               value={deactivateReason}
               onChange={(e) => setDeactivateReason(e.target.value)}
             />
           </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Document justificatif (Optionnel)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre la Note de service / Décision"}
+              </Button>
+            </Upload>
+          </Form.Item>
         </Form>
       </Modal>
+
+      {/* -------------------------------------------------------------
+          MODAL 4 : SUPPRESSION DÉFINITIVE DE LA BASE DE DONNÉES
+          ------------------------------------------------------------- */}
+      <Modal
+        title={
+          <div style={{ color: "#dc2626", display: "flex", alignItems: "center", gap: 8, fontWeight: 800 }}>
+            <DeleteOutlined /> Suppression Définitive du Tarif
+          </div>
+        }
+        open={isDeleteModalOpen}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setAttachedDocName(null);
+        }}
+        onOk={() => {
+          if (!deleteReason.trim()) {
+            message.error("Veuillez renseigner le motif officiel de suppression.");
+            return;
+          }
+          if (selectedTarif) {
+            deleteMutation.mutate(selectedTarif.id);
+            setIsDeleteModalOpen(false);
+          }
+        }}
+        confirmLoading={deleteMutation.isPending}
+        okText="Supprimer Définitivement de MySQL"
+        okButtonProps={{ danger: true }}
+        cancelText="Annuler"
+      >
+        <Alert
+          message="Attention : Suppression Irréversible"
+          description={`Vous vous apprêtez à supprimer définitivement le tarif "${selectedTarif?.libelle}" (${selectedTarif?.parkingNom}) de la base de données.`}
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+        <Form layout="vertical">
+          <Form.Item label={<span className="font-bold text-xs">Motif officiel de suppression de la grille *</span>} required>
+            <Input.TextArea
+              rows={2}
+              placeholder="Ex: Arrêté d'abrogation tarifaire n°2026-88, radiation définitive suite à restructuration..."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Pièce jointe officielle (PV / Arrêté de radiation)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté de radiation (PDF, Image)"}
+              </Button>
+            </Upload>
+          </Form.Item>
+        </Form>
+      </Modal>
+
     </Card>
   );
 }
