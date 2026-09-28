@@ -12,7 +12,7 @@ import {
   StarOutlined,
   UpOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Input, Spin, Tag } from "antd";
+import { Alert, Button, Input, Spin, Tag, Tabs } from "antd";
 import {
   getPublicParkings,
   getTarifsParking,
@@ -171,21 +171,72 @@ export function PublicTarifsPage() {
               const tarifs = tarifsCache[parking.id] || [];
               const isLoadingThisTarif = loadingTarifsId === parking.id;
 
-                                         // Grouper les tarifs uniques et EXCLURE totalement les tarifs corporate (300 DH et 350 DH)
-              const forfaitsUniques = Array.from(
-                new Set(tarifs.map((t) => t.forfaitLibelle))
-              )
-                .map((libelle) => {
-                  const variants = tarifs.filter((t) => t.forfaitLibelle === libelle);
-                  const prixMin = Math.min(...variants.map((v) => Number(v.prixMensuelTTC)));
-                  return {
-                    libelle,
-                    description: variants[0]?.forfaitDescription || "Stationnement sécurisé & badge d'accès RFID",
-                    prixMin,
-                    durees: variants.map((v) => `${v.dureeEnMois} mois`),
-                  };
-                })
-                .filter((f) => f.prixMin !== 300 && f.prixMin !== 350);
+              // 1. Extraire les tarifs réels de la Base de Données
+              const tarifsReguliersDb = tarifs.filter((t) => !t.forfaitCode?.startsWith("CORP"));
+              const tarifsCorporateDb = tarifs.filter((t) => t.forfaitCode?.startsWith("CORP"));
+
+              // 2. Formater les forfaits réguliers venant de MySQL
+              const forfaitsReguliersDb = Array.from(
+                new Set(tarifsReguliersDb.map((t) => t.forfaitLibelle))
+              ).map((libelle) => {
+                const variants = tarifsReguliersDb.filter((t) => t.forfaitLibelle === libelle);
+                const prixMin = Math.min(...variants.map((v) => Number(v.prixMensuelTTC)));
+                const placeReservee = variants.some((v) => v.placeReservee);
+                return {
+                  libelle,
+                  description: variants[0]?.forfaitDescription || "Accès sécurisé 7j/7 avec badge RFID et barrières automatiques",
+                  prixMin,
+                  placeReservee,
+                  durees: Array.from(new Set(variants.map((v) => `${v.dureeEnMois} mois`))),
+                  sourceDb: true,
+                };
+              });
+
+              // 3. Données de secours (Fallback) : affichées UNIQUEMENT si la base de données est vide
+              const fallbackReguliers = [
+                {
+                  libelle: "Abonnement Résident Nuit (20h - 08h)",
+                  description: "Stationnement sécurisé en soirée et la nuit pour les riverains 7j/7.",
+                  prixMin: 300,
+                  placeReservee: false,
+                  durees: ["3 mois", "6 mois", "9 mois", "12 mois"],
+                  sourceDb: false,
+                },
+                {
+                  libelle: "Abonnement Jour 7j/7 (08h - 20h)",
+                  description: "Accès en journée pour professionnels et commerçants du quartier.",
+                  prixMin: 500,
+                  placeReservee: false,
+                  durees: ["3 mois", "6 mois", "9 mois", "12 mois"],
+                  sourceDb: false,
+                },
+                {
+                  libelle: "Pass Permanent 24h/24 et 7j/7 (Non Réservée)",
+                  description: "Accès illimité jour et nuit, barrières automatiques par badge RFID.",
+                  prixMin: 650,
+                  placeReservee: false,
+                  durees: ["3 mois", "6 mois", "9 mois", "12 mois"],
+                  sourceDb: false,
+                },
+                {
+                  libelle: "Pass Permanent 24h/24 et 7j/7 (Place Réservée)",
+                  description: "Emplacement nominatif numéroté garanti 24h/24 et 7j/7.",
+                  prixMin: 1000,
+                  placeReservee: true,
+                  durees: ["3 mois", "6 mois", "9 mois", "12 mois"],
+                  sourceDb: false,
+                },
+              ];
+
+              // Utiliser en priorité la base de données, sinon le fallback
+              const forfaitsAffiches = forfaitsReguliersDb.length > 0 ? forfaitsReguliersDb : fallbackReguliers;
+
+              // Tarifs Corporate : priorité BD, sinon fallback 375 MAD / 325 MAD
+              const corpStandardDb = tarifsCorporateDb.find((t) => t.forfaitCode === "CORP_STANDARD");
+              const corpGrandCompteDb = tarifsCorporateDb.find((t) => t.forfaitCode === "CORP_GRAND_COMPTE");
+              const prixCorpStandard = corpStandardDb ? Number(corpStandardDb.prixMensuelTTC) : 375;
+              const prixCorpGrandCompte = corpGrandCompteDb ? Number(corpGrandCompteDb.prixMensuelTTC) : 325;
+              const isCorpFromDb = tarifsCorporateDb.length > 0;
 
 
 
@@ -236,82 +287,170 @@ export function PublicTarifsPage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Contenu Déplié : Grille des Tarifs Réels du Backend */}
+                  {/* Contenu Déplié : Défilement vertical naturel avec la page */}
                   {isExpanded && (
-                    <div className="p-6 border-t border-slate-100 bg-[#f8fafc]">
+                    <div className="p-6 border-t border-slate-100 bg-[#f8fafc] space-y-6">
                       {isLoadingThisTarif ? (
                         <div className="text-center py-8">
-                          <Spin tip="Chargement des tarifs en temps réel..." />
-                        </div>
-                      ) : forfaitsUniques.length === 0 ? (
-                        <div className="text-center py-6 text-slate-500 text-sm">
-                          Aucun tarif actif n'est configuré pour ce parking.
+                          <Spin tip="Chargement des tarifs en direct de la base de données..." />
                         </div>
                       ) : (
-                                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {forfaitsUniques.map((forfait, fIdx) => (
-                            <div
-                              key={fIdx}
-                              className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all"
-                            >
-                              <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <StarOutlined style={{ color: "#0077B6" }} />
-                                  <h4 className="font-bold text-[#001E3D] m-0 text-sm">
-                                    {forfait.libelle}
-                                  </h4>
-                                </div>
+                        <>
+                          {/* 1. Formules Régulières de la Base de Données */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="font-black text-[#001E3D] m-0 text-base flex items-center gap-2">
+                                <StarOutlined style={{ color: "#0284c7" }} />
+                                Formules d'Abonnement ({forfaitsAffiches.length} Tarifs)
+                              </h4>
+                              {forfaitsReguliersDb.length > 0 ? (
+                                <Tag color="green" className="text-xs font-bold rounded-full border-none px-2.5 py-0.5">
+                                  ● En direct de la Base MySQL
+                                </Tag>
+                              ) : (
+                                <Tag color="default" className="text-xs text-slate-500 rounded-full border-none px-2.5 py-0.5">
+                                  Tarifs indicatifs (Fallback)
+                                </Tag>
+                              )}
+                            </div>
 
-                                <div className="mb-2">
-                                  <Tag color="blue" className="text-[11px] font-bold">
-                                    Abonnement Particulier
-                                  </Tag>
-                                </div>
+                            <div className="flex flex-col gap-3">
+                              {forfaitsAffiches.map((forfait, fIdx) => (
+                                <div
+                                  key={fIdx}
+                                  className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-sky-400 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
+                                      <h5 className="font-extrabold text-[#001E3D] m-0 text-base">
+                                        {forfait.libelle}
+                                      </h5>
+                                      <Tag color={forfait.placeReservee ? "purple" : "blue"} className="font-bold text-[11px] m-0">
+                                        {forfait.placeReservee ? "Place Réservée" : "Emplacement Libre"}
+                                      </Tag>
+                                    </div>
+                                    <p className="text-xs text-slate-500 m-0 mb-2 leading-relaxed">
+                                      {forfait.description}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                      <span className="text-[11px] text-slate-400 font-semibold mr-1">Durées :</span>
+                                      {forfait.durees.map((d, dIdx) => (
+                                        <Tag key={dIdx} color="default" className="text-[10px] font-semibold">
+                                          {d}
+                                        </Tag>
+                                      ))}
+                                    </div>
+                                  </div>
 
-                                
-                                <div className="text-2xl font-black text-[#001E3D] mb-3">
-                                  {forfait.prixMin}{" "}
-                                  <span className="text-xs font-semibold text-slate-500">
-                                    MAD / mois TTC
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap gap-1 mb-4">
-                                  {forfait.durees.map((d, dIdx) => (
-                                    <Tag
-                                      key={dIdx}
-                                      color="blue"
-                                      className="text-[10px]"
+                                  <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                                    <div className="text-left md:text-right">
+                                      <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                                        À partir de
+                                      </span>
+                                      <div className="text-2xl font-black text-[#001E3D]">
+                                        {forfait.prixMin}{" "}
+                                        <span className="text-xs font-semibold text-slate-500">
+                                          MAD / mois
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      type="primary"
+                                      icon={<RightOutlined />}
+                                      onClick={() => navigate(`/demande-publique?parkingId=${parking.id}`)}
+                                      disabled={!parking.souscriptionDisponible}
+                                      className="bg-[#001E3D] hover:bg-[#002B5B] rounded-xl font-bold h-11 px-5 border-none shadow-xs text-sm"
                                     >
-                                      {d}
+                                      {parking.souscriptionDisponible ? "Souscrire" : "Complet"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 2. Formules Corporate (Directement en dessous, empilées verticalement) */}
+                          <div className="pt-4 border-t border-slate-200">
+                            <h4 className="font-black text-[#001E3D] m-0 text-base mb-3 flex items-center gap-2">
+                              <BankOutlined style={{ color: "#d97706" }} />
+                              Offres Professionnelles & Entreprises
+                            </h4>
+
+                            <div className="flex flex-col gap-3">
+                              {/* Contrat Pro */}
+                              <div className="bg-gradient-to-r from-amber-50/40 via-white to-white p-4 md:p-5 rounded-2xl border border-amber-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Tag color="gold" className="font-black text-[10px] uppercase">
+                                      Contrat Pro (1 à 10 places)
                                     </Tag>
-                                  ))}
+                                    <h5 className="font-extrabold text-slate-900 m-0 text-base">
+                                      Flotte Standard — {parking.nom}
+                                    </h5>
+                                  </div>
+                                  <p className="text-xs text-slate-600 m-0">
+                                    Attribution d'emplacements dédiés avec facturation mensuelle centralisée et gestion multi-véhicules.
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end shrink-0">
+                                  <div className="text-left md:text-right">
+                                    <div className="text-2xl font-black text-amber-900">
+                                      {prixCorpStandard} <span className="text-xs font-semibold text-slate-500">MAD / mois</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 block">+ 50 MAD / carte RFID</span>
+                                  </div>
+                                  <Button
+                                    type="primary"
+                                    onClick={() => navigate(`/demande-publique?typeClient=ENTREPRISE&parkingId=${parking.id}`)}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl h-11 px-5 border-none"
+                                  >
+                                    Demander
+                                  </Button>
                                 </div>
                               </div>
 
-                              <Button
-                                type="primary"
-                                block
-                                icon={<RightOutlined />}
-                                onClick={() => navigate(`/demande-publique?parkingId=${parking.id}`)}
-                                disabled={!parking.souscriptionDisponible}
-                                style={{
-                                  backgroundColor: parking.souscriptionDisponible ? "#001E3D" : undefined,
-                                  borderRadius: 8,
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {parking.souscriptionDisponible ? "Souscrire ce parking" : "Complet"}
-                              </Button>
+                              {/* Grand Compte */}
+                              <div className="bg-gradient-to-r from-blue-50/40 via-white to-white p-4 md:p-5 rounded-2xl border border-blue-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Tag color="blue" className="font-black text-[10px] uppercase">
+                                      Grand Compte (11 places et +)
+                                    </Tag>
+                                    <Tag color="green" className="font-bold text-[10px]">
+                                      Remise Volume -13%
+                                    </Tag>
+                                    <h5 className="font-extrabold text-slate-900 m-0 text-base">
+                                      Grandes Flottes & Institutions — {parking.nom}
+                                    </h5>
+                                  </div>
+                                  <p className="text-xs text-slate-600 m-0">
+                                    Tarif dégressif institutionnel pour sièges sociaux, ministères et banques.
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end shrink-0">
+                                  <div className="text-left md:text-right">
+                                    <div className="text-2xl font-black text-[#001E3D]">
+                                      {prixCorpGrandCompte} <span className="text-xs font-semibold text-slate-500">MAD / mois</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 block">Contrat longue durée</span>
+                                  </div>
+                                  <Button
+                                    type="primary"
+                                    onClick={() => navigate(`/demande-publique?typeClient=ENTREPRISE&parkingId=${parking.id}`)}
+                                    className="bg-[#001E3D] hover:bg-[#002B5B] text-white font-black rounded-xl h-11 px-5 border-none"
+                                  >
+                                    Demander
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          ))}
-                        </div>
-      
-
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
-                </div>
+
+                  </div>
               );
             })}
           </div>

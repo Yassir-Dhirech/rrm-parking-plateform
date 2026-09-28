@@ -288,7 +288,10 @@ export function Dashboard() {
       )}
 
       {/* Barre de Filtres Globaux (Positionnée au-dessus des composants d'analyse / après le header pour Comptable) */}
-      <GlobalFilterBar filters={filters} onChange={setFilters} />
+{/* Barre de Filtres Globaux (Masquée pour l'Admin SI) */}
+{role !== "ADMIN_SI" && (
+  <GlobalFilterBar filters={filters} onChange={setFilters} />
+)}
 
       {/* -------------------------------------------------------------
          2. AGENT DASHBOARD VIEW (Action Items / To-Do List First)

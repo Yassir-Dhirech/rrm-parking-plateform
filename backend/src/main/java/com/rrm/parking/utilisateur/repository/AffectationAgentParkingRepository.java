@@ -12,6 +12,10 @@ public interface AffectationAgentParkingRepository
     Optional<AffectationAgentParking>
     findByUtilisateurIdAndActiveTrue(Long utilisateurId);
 
+    // Support multi-parkings actifs par utilisateur
+    List<AffectationAgentParking>
+    findAllByUtilisateurIdAndActiveTrue(Long utilisateurId);
+
     boolean existsByUtilisateurIdAndActiveTrue(Long utilisateurId);
 
     List<AffectationAgentParking>

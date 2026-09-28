@@ -187,6 +187,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "disponibiliteSysteme", title: "Disponibilité Système", color: "#10b981", suffix: "%" },
     ],
     menuItems: [
+      { key: "dashboard", label: "Tableau de bord", path: "/admin" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/admin/carte-parkings" },
       { key: "utilisateurs", label: "Utilisateurs", path: "/admin/utilisateurs" },
       { key: "parkings", label: "Parkings", path: "/admin/parkings" },

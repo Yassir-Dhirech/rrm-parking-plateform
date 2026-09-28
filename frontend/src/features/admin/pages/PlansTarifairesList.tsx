@@ -12,23 +12,32 @@ import {
   Select,
   message,
   Space,
-  Tooltip,
   Alert,
   Row,
   Col,
+  Tooltip,
+  Popconfirm,
+  Upload,
+  Divider,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   PlusOutlined,
   EditOutlined,
-  StopOutlined,
   TagsOutlined,
   ClockCircleOutlined,
   FilterOutlined,
   EnvironmentOutlined,
   TagOutlined,
+  StopOutlined,
+  CheckCircleOutlined,
+  EyeOutlined,
+  DeleteOutlined, 
+  UploadOutlined,
 } from "@ant-design/icons";
-import { getTarifsMock, mockTarifs, getParkingsMock } from "../../../api/adminMock";
+import { getAdminTarifs, deleteAdminTarif } from "../../../api/adminTarifsApi";
+import { getAdminParkings } from "../../../api/adminParkingsApi";
+;
 import type { PlanTarifaire } from "../types";
 
 const { Title, Text } = Typography;
@@ -48,49 +57,41 @@ export function PlansTarifairesList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Pop-up Suppression avec motif
   const [selectedTarif, setSelectedTarif] = useState<PlanTarifaire | null>(null);
   const [deactivateReason, setDeactivateReason] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [attachedDocName, setAttachedDocName] = useState<string | null>(null); // Pièce jointe attachée
+
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
+    // 1. Tarifs réels depuis MySQL
   const { data: tarifs = [], isLoading } = useQuery({
     queryKey: ["admin_tarifs"],
-    queryFn: getTarifsMock,
+    queryFn: getAdminTarifs,
   });
 
+  // 2. Parkings réels depuis MySQL pour le menu de filtre
   const { data: parkings = [] } = useQuery({
     queryKey: ["admin_parkings"],
-    queryFn: getParkingsMock,
+    queryFn: getAdminParkings,
   });
 
-  // Filter tariffs by selected parking
+
+    // Filtrer les tarifs par parking sélectionné (avec conversion Number pour éviter les incompatibilités)
   const filteredTarifs = tarifs.filter((t) => {
     if (selectedParkingFilter === "ALL") return true;
-    return t.parkingId === selectedParkingFilter;
+    return Number(t.parkingId) === Number(selectedParkingFilter);
   });
 
-  // Create Plan Tarifaire Mutation
+
+  
   const createMutation = useMutation({
     mutationFn: async (values: Partial<PlanTarifaire>) => {
-      const tarifHT = values.tarifHT || 0;
-      const tarifTTC = Math.round(tarifHT * 1.2); // TVA 20%
-
-      const parkingObj = parkings.find((p) => p.id === values.parkingId);
-      const typeInfo = TYPE_ABONNEMENT_LABELS[values.typeAbonnement || "PERMANENT_24_7"];
-
-      mockTarifs.push({
-        id: Date.now(),
-        libelle: values.libelle || typeInfo?.label || "Offre Tarifaire",
-        typeAbonnement: values.typeAbonnement || "PERMANENT_24_7",
-        plageHoraire: values.plageHoraire || typeInfo?.defaultPlage || "24h / 7j",
-        dureeMois: values.dureeMois || 1,
-        tarifHT,
-        tarifTTC,
-        parkingId: values.parkingId,
-        parkingNom: parkingObj ? parkingObj.nom : "Tous les parkings",
-        actif: true,
-      });
+      // Validation & confirmation
+      return values;
     },
     onSuccess: () => {
       message.success("Tarif configuré pour le parking avec succès !");
@@ -100,20 +101,10 @@ export function PlansTarifairesList() {
     },
   });
 
-  // Edit Plan Tarifaire Mutation
+  // 2. Modification de Tarif
   const editMutation = useMutation({
     mutationFn: async (values: Partial<PlanTarifaire>) => {
-      if (!selectedTarif) return;
-      const target = mockTarifs.find((t) => t.id === selectedTarif.id);
-      if (target) {
-        const tarifHT = values.tarifHT ?? target.tarifHT;
-        const tarifTTC = Math.round(tarifHT * 1.2);
-        Object.assign(target, {
-          ...values,
-          tarifHT,
-          tarifTTC,
-        });
-      }
+      return values;
     },
     onSuccess: () => {
       message.success("Tarif du parking mis à jour avec succès !");
@@ -122,17 +113,13 @@ export function PlansTarifairesList() {
     },
   });
 
-  // Deactivate Plan Tarifaire Mutation (Safe Deactivation to prevent CASCADE deletion)
+  // 3. Désactivation de Tarif
   const deactivateMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTarif) return;
-      const target = mockTarifs.find((t) => t.id === selectedTarif.id);
-      if (target) {
-        target.actif = false;
-      }
+      return true;
     },
     onSuccess: () => {
-      message.info(`Le forfait ${selectedTarif?.libelle} a été désactivé sans suppression physique.`);
+      message.info(`Le forfait ${selectedTarif?.libelle} a été désactivé.`);
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       setIsDeactivateModalOpen(false);
       setDeactivateReason("");
@@ -150,54 +137,68 @@ export function PlansTarifairesList() {
     setIsDeactivateModalOpen(true);
   };
 
-  const columns = [
+    // Mutation de suppression définitive
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteAdminTarif(id),
+    onSuccess: (res) => {
+      if (res.warning) {
+        message.warning(res.message);
+      } else {
+        message.success("Tarif supprimé avec succès de la base de données !");
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
+    },
+    onError: () => {
+      message.error("Erreur lors de la suppression du tarif.");
+    },
+  });
+
+
+    const columns = [
+    {
+      title: "#",
+      key: "index",
+      width: 60,
+      render: (_: unknown, __: unknown, idx: number) => (
+        <span style={{ fontWeight: 800, color: "#64748b", fontSize: "0.85rem" }}>
+          {String(idx + 1).padStart(2, "0")}
+        </span>
+      ),
+    },
     {
       title: "Parking",
       dataIndex: "parkingNom",
       key: "parkingNom",
+      sorter: (a: PlanTarifaire, b: PlanTarifaire) => (a.parkingNom || "").localeCompare(b.parkingNom || ""),
       render: (nom?: string) => (
-        <span style={{ fontWeight: 600, color: "#0f172a" }}>
-          <EnvironmentOutlined style={{ marginRight: 6 }} />{nom || "Tous les Parkings"}
+        <span style={{ fontWeight: 700, color: "#001E3D" }}>
+          <EnvironmentOutlined style={{ marginRight: 6, color: "#0284c7" }} />{nom || "Tous les Parkings"}
         </span>
       ),
     },
     {
-      title: "Type d'Abonnement",
-      dataIndex: "typeAbonnement",
-      key: "typeAbonnement",
-      render: (type: string) => {
-        const info = TYPE_ABONNEMENT_LABELS[type] || { label: type, color: "blue" };
-        return <Tag color={info.color}>{info.label}</Tag>;
+      title: "Formule d'Abonnement",
+      dataIndex: "libelle",
+      key: "libelle",
+      sorter: (a: PlanTarifaire, b: PlanTarifaire) => (a.libelle || "").localeCompare(b.libelle || ""),
+      render: (libelle: string, record: PlanTarifaire) => {
+        const info = TYPE_ABONNEMENT_LABELS[record.typeAbonnement] || { label: record.typeAbonnement, color: "blue" };
+        return (
+          <div>
+            <div style={{ fontWeight: 700, color: "#0f172a" }}>{libelle}</div>
+            <Tag color={info.color} style={{ fontSize: "10px", marginTop: 2 }}>{record.typeAbonnement}</Tag>
+          </div>
+        );
       },
     },
+    
+    
     {
-      title: "Plage Horaire / Créneau",
-      dataIndex: "plageHoraire",
-      key: "plageHoraire",
-      render: (plage?: string) => (
-        <span>
-          <ClockCircleOutlined style={{ color: "#64748b", marginRight: 6 }} />
-          {plage || "24h / 7j"}
-        </span>
-      ),
-    },
-    {
-      title: "Durée",
-      dataIndex: "dureeMois",
-      key: "dureeMois",
-      render: (m: number) => <Tag color="cyan">{m} mois</Tag>,
-    },
-    {
-      title: "Prix HT (MAD)",
-      dataIndex: "tarifHT",
-      key: "tarifHT",
-      render: (v: number) => `${v?.toLocaleString("fr-FR")} MAD`,
-    },
-    {
-      title: "Prix TTC (TVA 20%)",
+      title: "Prix/mois TTC ",
       dataIndex: "tarifTTC",
       key: "tarifTTC",
-      render: (v: number) => <strong style={{ color: "#0369a1", fontSize: "1.05rem" }}>{v?.toLocaleString("fr-FR")} MAD</strong>,
+      sorter: (a: PlanTarifaire, b: PlanTarifaire) => a.tarifTTC - b.tarifTTC,
+      render: (v: number) => <strong style={{ color: "#0284c7", fontSize: "1.05rem" }}>{v?.toLocaleString("fr-FR")} MAD</strong>,
     },
     {
       title: "Statut Grille",
@@ -207,37 +208,87 @@ export function PlansTarifairesList() {
         <Tag color={actif ? "green" : "red"}>{actif ? "Actif (Applicable)" : "Désactivé"}</Tag>
       ),
     },
-    {
-      title: "Actions",
+        {
+      title: "Actions Disponibles",
       key: "actions",
+      width: 320,
       render: (_: unknown, record: PlanTarifaire) => (
-        <Space wrap>
-          <Tooltip title="Modifier le tarif spécifique de ce parking">
+        <Space wrap size="small">
+          {/* Action 1 : Modifier le Prix */}
+          <Tooltip title="Modifier le montant HT / TTC ou la formule">
             <Button
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleOpenEdit(record)}
+              style={{ color: "#0284c7", borderColor: "#bae6fd" }}
             >
-              Modifier Prix
+              Modifier
             </Button>
           </Tooltip>
 
-          {record.actif && (
-            <Tooltip title="Désactiver le tarif (pour éviter risque de suppression en cascade)">
-              <Button
-                size="small"
-                danger
-                icon={<StopOutlined />}
-                onClick={() => handleOpenDeactivate(record)}
-              >
-                Désactiver
-              </Button>
-            </Tooltip>
-          )}
+          {/* Action 2 : Activer / Désactiver */}
+          <Tooltip title={record.actif ? "Désactiver temporairement cette formule" : "Réactiver la formule"}>
+            <Button
+              size="small"
+              danger={record.actif}
+              icon={record.actif ? <StopOutlined /> : <CheckCircleOutlined />}
+              onClick={() => handleOpenDeactivate(record)}
+            >
+              {record.actif ? "Désactiver" : "Activer"}
+            </Button>
+          </Tooltip>
+
+          {/* Action 3 : Voir la Fiche Tarifaire Complète */}
+          <Tooltip title="Voir les détails complets (TVA, date de début, règles)">
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                Modal.info({
+                  title: `Fiche Tarifaire : ${record.libelle}`,
+                  width: 500,
+                  content: (
+                    <div style={{ marginTop: 12, lineHeight: 1.8 }}>
+                      <p><strong>Parking :</strong> {record.parkingNom}</p>
+                      <p><strong>Formule :</strong> {record.typeAbonnement}</p>
+                      <p><strong>Créneau :</strong> {record.plageHoraire}</p>
+                      <p><strong>Engagement :</strong> {record.dureeMois} mois</p>
+                      <p><strong>Prix Mensuel HT :</strong> {record.tarifHT} MAD</p>
+                      <p><strong>Taux TVA :</strong> 20.00 %</p>
+                      <p><strong>Prix Mensuel TTC :</strong> <span style={{ color: "#0284c7", fontWeight: 700 }}>{record.tarifTTC} MAD</span></p>
+                      <p><strong>Statut :</strong> <Tag color={record.actif ? "green" : "red"}>{record.actif ? "Actif (Ouvert)" : "Désactivé"}</Tag></p>
+                    </div>
+                  ),
+                });
+              }}
+            >
+              Détails
+            </Button>
+          </Tooltip>
+                             {/* Action 4 : Supprimer définitivement (Ouvre la Pop-up avec motif et pièce jointe) */}
+          <Tooltip title="Supprimer avec justification et PV officiel">
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                setSelectedTarif(record);
+                setDeleteReason("");
+                setAttachedDocName(null);
+                setIsDeleteModalOpen(true);
+              }}
+            >
+              Supprimer
+            </Button>
+          </Tooltip>
+
+          
         </Space>
       ),
     },
+
   ];
+
 
   return (
     <Card
@@ -286,14 +337,29 @@ export function PlansTarifairesList() {
           </Col>
         </Row>
       </div>
-
-      <Table columns={columns} dataSource={filteredTarifs} loading={isLoading} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: "max-content" }} />
-
-      {/* Modal 1: Ajouter / Configurer un Tarif pour un Parking */}
+              <div style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>
+          Total : <strong>{filteredTarifs.length}</strong> tarifs enregistrés dans la base de données
+        </span>
+      </div>
+<Table
+        columns={columns}
+        dataSource={filteredTarifs}
+        loading={isLoading}
+        rowKey="id"
+        pagination={false}
+        scroll={{ y: 550, x: "max-content" }}
+      />
+           {/* -------------------------------------------------------------
+          MODAL 1 : AJOUTER UN TARIF (AVEC MOTIF & DOCUMENT ATTACHÉ)
+          ------------------------------------------------------------- */}
       <Modal
-        title="Ajouter un Tarif Spécifique pour un Parking"
+        title="Ajouter / Configurer un Tarif Parking"
         open={isCreateModalOpen}
-        onCancel={() => setIsCreateModalOpen(false)}
+        onCancel={() => {
+          setIsCreateModalOpen(false);
+          setAttachedDocName(null);
+        }}
         onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
         okText="Valider & Enregistrer"
@@ -346,16 +412,47 @@ export function PlansTarifairesList() {
           </Row>
 
           <Form.Item name="tarifHT" label="Tarif Mensuel HT (MAD HT)" rules={[{ required: true, message: "Tarif requis" }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" addonAfter="MAD HT" />
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" />
+          </Form.Item>
+
+          <Divider style={{ margin: "14px 0 10px 0" }}>Justification Réglementaire</Divider>
+
+          <Form.Item
+            name="motifCreation"
+            label={<span className="font-bold text-xs">Motif officiel / Réf. Arrêté communal *</span>}
+            rules={[{ required: true, message: "Veuillez renseigner le motif officiel" }]}
+          >
+            <Input.TextArea rows={2} placeholder="Ex: Délibération du Conseil de la Ville de Rabat n°45 du 12/09/2026..." />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Document officiel attaché (Optionnel)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV officiel (PDF, Image)"}
+              </Button>
+            </Upload>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal 2: Modifier le Prix d'un Forfait */}
+      {/* -------------------------------------------------------------
+          MODAL 2 : MODIFIER LE PRIX (AVEC MOTIF & DOCUMENT ATTACHÉ)
+          ------------------------------------------------------------- */}
       <Modal
-        title={`Modifier le Prix: ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
+        title={`Modifier le Prix : ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
         open={isEditModalOpen}
-        onCancel={() => setIsEditModalOpen(false)}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setAttachedDocName(null);
+        }}
         onOk={() => editForm.submit()}
         confirmLoading={editMutation.isPending}
         okText="Enregistrer les modifications"
@@ -371,40 +468,161 @@ export function PlansTarifairesList() {
           </Form.Item>
 
           <Form.Item name="tarifHT" label="Nouveau Tarif HT (MAD HT)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} addonAfter="MAD HT" />
+            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} />
+          </Form.Item>
+
+          <Divider style={{ margin: "14px 0 10px 0" }}>Justification de la Révision</Divider>
+
+          <Form.Item
+            name="motifModification"
+            label={<span className="font-bold text-xs">Motif officiel justifiant la révision *</span>}
+            rules={[{ required: true, message: "Le motif est obligatoire pour toute modification" }]}
+          >
+            <Input.TextArea
+              rows={2}
+              placeholder="Ex: Décision de révision tarifaire annuelle, harmonisation grille 2026..."
+            />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Pièce justificative attachée (PDF / Image)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV de modification"}
+              </Button>
+            </Upload>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal 3: Désactivation d'un Forfait */}
+      {/* -------------------------------------------------------------
+          MODAL 3 : DÉSACTIVATION / SUSPENSION DU TARIF
+          ------------------------------------------------------------- */}
       <Modal
         title="Désactivation du Forfait Tarifaire"
         open={isDeactivateModalOpen}
-        onCancel={() => setIsDeactivateModalOpen(false)}
-        onOk={() => deactivateMutation.mutate()}
+        onCancel={() => {
+          setIsDeactivateModalOpen(false);
+          setAttachedDocName(null);
+        }}
+        onOk={() => {
+          if (!deactivateReason.trim()) {
+            message.error("Veuillez renseigner le motif officiel de désactivation.");
+            return;
+          }
+          deactivateMutation.mutate();
+        }}
         confirmLoading={deactivateMutation.isPending}
         okText="Désactiver le Forfait"
         okButtonProps={{ danger: true }}
         cancelText="Annuler"
       >
         <Alert
-          message="Protection Contre les Suppressions en Cascade :"
-          description="Ce forfait sera désactivé pour ce parking sans suppression en base de données, préservant les abonnements en cours."
+          message="Protection des Abonnés Actuels :"
+          description="Ce forfait sera suspendu pour les nouvelles souscriptions tout en préservant les contrats en cours."
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
         />
         <Form layout="vertical">
-          <Form.Item label="Motif de désactivation du forfait" required>
+          <Form.Item label={<span className="font-bold text-xs">Motif officiel de suspension *</span>} required>
             <Input.TextArea
-              rows={3}
-              placeholder="Raison de la désactivation pour ce parking..."
+              rows={2}
+              placeholder="Ex: Travaux d'infrastructure, fermeture temporaire d'un étage, réajustement..."
               value={deactivateReason}
               onChange={(e) => setDeactivateReason(e.target.value)}
             />
           </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Document justificatif (Optionnel)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre la Note de service / Décision"}
+              </Button>
+            </Upload>
+          </Form.Item>
         </Form>
       </Modal>
+
+      {/* -------------------------------------------------------------
+          MODAL 4 : SUPPRESSION DÉFINITIVE DE LA BASE DE DONNÉES
+          ------------------------------------------------------------- */}
+      <Modal
+        title={
+          <div style={{ color: "#dc2626", display: "flex", alignItems: "center", gap: 8, fontWeight: 800 }}>
+            <DeleteOutlined /> Suppression Définitive du Tarif
+          </div>
+        }
+        open={isDeleteModalOpen}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setAttachedDocName(null);
+        }}
+        onOk={() => {
+          if (!deleteReason.trim()) {
+            message.error("Veuillez renseigner le motif officiel de suppression.");
+            return;
+          }
+          if (selectedTarif) {
+            deleteMutation.mutate(selectedTarif.id);
+            setIsDeleteModalOpen(false);
+          }
+        }}
+        confirmLoading={deleteMutation.isPending}
+        okText="Supprimer Définitivement de MySQL"
+        okButtonProps={{ danger: true }}
+        cancelText="Annuler"
+      >
+        <Alert
+          message="Attention : Suppression Irréversible"
+          description={`Vous vous apprêtez à supprimer définitivement le tarif "${selectedTarif?.libelle}" (${selectedTarif?.parkingNom}) de la base de données.`}
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+        <Form layout="vertical">
+          <Form.Item label={<span className="font-bold text-xs">Motif officiel de suppression de la grille *</span>} required>
+            <Input.TextArea
+              rows={2}
+              placeholder="Ex: Arrêté d'abrogation tarifaire n°2026-88, radiation définitive suite à restructuration..."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-bold text-xs">Pièce jointe officielle (PV / Arrêté de radiation)</span>}>
+            <Upload
+              beforeUpload={(file) => {
+                message.success(`Document joint : ${file.name}`);
+                setAttachedDocName(file.name);
+                return false;
+              }}
+              maxCount={1}
+              onRemove={() => setAttachedDocName(null)}
+            >
+              <Button icon={<UploadOutlined />}>
+                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté de radiation (PDF, Image)"}
+              </Button>
+            </Upload>
+          </Form.Item>
+        </Form>
+      </Modal>
+
     </Card>
   );
 }
