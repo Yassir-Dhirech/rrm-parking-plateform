@@ -10,6 +10,9 @@ import {
   ReloadOutlined,
   RiseOutlined,
 } from "@ant-design/icons";
+import { DatePicker } from "antd";
+import dayjs from "dayjs";
+
 import {
   getChiffreAffairesDashboard,
   type ChiffreAffairesDashboardResponse,
@@ -46,15 +49,23 @@ function formatMoney(value: number): string {
   return `${moneyFormatter.format(value)} DH`;
 }
 
+function formatDate(value?: string | Date): string {
+  if (!value) return "";
+  const d = typeof value === "string" 
+    ? new Date(`${value.includes("T") ? value : value + "T12:00:00"}`) 
+    : value;
+  if (isNaN(d.getTime())) return String(value);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+
+
 function formatPeriod(start?: string, end?: string): string {
   if (!start || !end) return "Période sélectionnée";
-  const format = (value: string) =>
-    new Intl.DateTimeFormat("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(`${value}T12:00:00`));
-  return `${format(start)} – ${format(end)}`;
+  return `${formatDate(start)} – ${formatDate(end)}`;
 }
 
 function EvolutionBadge({ value }: { value: number | null }) {
@@ -90,7 +101,7 @@ function EvolutionBadge({ value }: { value: number | null }) {
   );
 }
 
-function RevenueTrend({ data }: { data: ChiffreAffairesDashboardResponse }) {
+function RevenueTrend({ data, parkingNom }: { data: ChiffreAffairesDashboardResponse; parkingNom?: string }) {
   const points = data.douzeDerniersMois;
   const width = 760;
   const height = 248;
@@ -109,19 +120,25 @@ function RevenueTrend({ data }: { data: ChiffreAffairesDashboardResponse }) {
     ? `${left},${top + chartHeight} ${line} ${left + chartWidth},${top + chartHeight}`
     : "";
 
+  const totalSerie = points.reduce((sum, item) => sum + item.chiffreAffairesHt, 0);
+
   return (
     <article className="ca-panel ca-trend-panel">
       <header className="ca-panel__header">
         <div>
-          <span className="ca-eyebrow">Tendance consolidée</span>
-          <h3>Chiffre d’affaires HT — 12 derniers mois</h3>
+          <span className="ca-eyebrow">Tendance Mensuelle</span>
+          <h3>
+            {parkingNom 
+              ? `Chiffre d’affaires HT — ${parkingNom}` 
+              : "Chiffre d’affaires HT — 12 derniers mois"}
+          </h3>
         </div>
         <span className="ca-panel__total">
-          {formatMoney(points.reduce((sum, item) => sum + item.chiffreAffairesHt, 0))}
+          Total série : {formatMoney(totalSerie)}
         </span>
       </header>
 
-      <div className="ca-trend" role="img" aria-label="Évolution du chiffre d’affaires HT sur douze mois">
+      <div className="ca-trend" role="img" aria-label="Évolution du chiffre d’affaires HT">
         <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
           <defs>
             <linearGradient id="ca-area-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -144,7 +161,7 @@ function RevenueTrend({ data }: { data: ChiffreAffairesDashboardResponse }) {
           {coordinates.map((point) => (
             <g key={`${point.annee}-${point.mois}`}>
               <circle cx={point.x} cy={point.y} r="5" className="ca-point" />
-              <title>{`${point.libelle} ${point.annee} : ${formatMoney(point.chiffreAffairesHt)}`}</title>
+              <title>{`${point.libelle} ${point.annee} (${formatDate(point.dateDebut)} au ${formatDate(point.dateFin)}) : ${formatMoney(point.chiffreAffairesHt)}`}</title>
             </g>
           ))}
         </svg>
@@ -160,15 +177,16 @@ function RevenueTrend({ data }: { data: ChiffreAffairesDashboardResponse }) {
   );
 }
 
-function SubscriptionMix({ data }: { data: ChiffreAffairesDashboardResponse }) {
-  const { synthese } = data;
+function SubscriptionMix({ data, parkingNom }: { data: ChiffreAffairesDashboardResponse; parkingNom?: string }) {
+  const { synthese, filtres } = data;
   const regular = Math.max(0, Math.min(100, synthese.partRegulierPourcentage));
+
   return (
     <article className="ca-panel ca-mix-panel">
       <header className="ca-panel__header">
         <div>
-          <span className="ca-eyebrow">Composition</span>
-          <h3>CA régulier / corporate</h3>
+          <span className="ca-eyebrow">Composition du Portefeuille</span>
+          <h3>{parkingNom ? `Mix Abonnements — ${parkingNom}` : "CA régulier / corporate"}</h3>
         </div>
       </header>
       <div className="ca-mix">
@@ -185,12 +203,12 @@ function SubscriptionMix({ data }: { data: ChiffreAffairesDashboardResponse }) {
         <div className="ca-mix__legend">
           <div>
             <span className="ca-legend-dot ca-legend-dot--regular" />
-            <p><strong>Régulier</strong><span>{synthese.partRegulierPourcentage.toFixed(1)} %</span></p>
+            <p><strong>Particuliers (Régulier)</strong><span>{synthese.partRegulierPourcentage.toFixed(1)} %</span></p>
             <b>{formatMoney(synthese.caRegulierHt)}</b>
           </div>
           <div>
             <span className="ca-legend-dot ca-legend-dot--corporate" />
-            <p><strong>Corporate</strong><span>{synthese.partCorporatePourcentage.toFixed(1)} %</span></p>
+            <p><strong>Entreprises (Corporate)</strong><span>{synthese.partCorporatePourcentage.toFixed(1)} %</span></p>
             <b>{formatMoney(synthese.caCorporateHt)}</b>
           </div>
         </div>
@@ -199,17 +217,23 @@ function SubscriptionMix({ data }: { data: ChiffreAffairesDashboardResponse }) {
   );
 }
 
+
 function ParkingRevenue({ data }: { data: ChiffreAffairesDashboardResponse }) {
   const maximum = Math.max(...data.repartitionParParking.map((item) => item.chiffreAffairesHt), 1);
   return (
     <article className="ca-panel ca-parking-panel">
-      <header className="ca-panel__header">
+            <header className="ca-panel__header">
         <div>
-          <span className="ca-eyebrow">Répartition réseau</span>
-          <h3>Chiffre d’affaires HT par parking</h3>
+          <span className="ca-eyebrow">Répartition par Parking</span>
+          <h3>Chiffre d’affaires HT par Parking</h3>
         </div>
-        <span className="ca-panel__hint">Somme réconciliée avec le total général</span>
+        <span className="ca-panel__hint">
+          {data.filtres.parkingId 
+            ? "Affichage restreint au parking sélectionné" 
+            : "Classement réseau par volume décroissant"}
+        </span>
       </header>
+
       {data.repartitionParParking.length === 0 ? (
         <div className="ca-empty">Aucun chiffre d’affaires sur cette période.</div>
       ) : (
@@ -233,45 +257,79 @@ function ParkingRevenue({ data }: { data: ChiffreAffairesDashboardResponse }) {
   );
 }
 
-function DashboardContent({ data }: { data: ChiffreAffairesDashboardResponse }) {
+function DashboardContent({ data, selectedParkingNom }: { data: ChiffreAffairesDashboardResponse; selectedParkingNom?: string }) {
   const { synthese, filtres } = data;
+  const tvaEstimee = synthese.caActuelHt * 0.20;
+  const totalTtc = synthese.caActuelHt + tvaEstimee;
+
+  // Calcul du nombre de jours de la période pour la moyenne journalière
+  const nbJours = useMemo(() => {
+    if (!filtres.dateDebut || !filtres.dateFin) return 30;
+    const dDebut = new Date(`${filtres.dateDebut}T00:00:00`);
+    const dFin = new Date(`${filtres.dateFin}T00:00:00`);
+    const diffTime = Math.abs(dFin.getTime() - dDebut.getTime());
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(diffDays, 1);
+  }, [filtres.dateDebut, filtres.dateFin]);
+
+  const caJournalier = synthese.caActuelHt / nbJours;
+
   return (
     <>
+      {/* 4 KPIs Financiers & Trésorerie réagissant à tous les filtres */}
       <section className="ca-kpi-grid">
+        {/* KPI 1 : CA HT de la période avec badge d'évolution */}
         <article className="ca-kpi ca-kpi--primary">
           <span className="ca-kpi__icon"><DollarOutlined /></span>
           <span className="ca-kpi__label">CA HT de la période</span>
           <strong>{formatMoney(synthese.caActuelHt)}</strong>
           <EvolutionBadge value={synthese.evolutionPourcentage} />
+          <small>{formatPeriod(filtres.dateDebut, filtres.dateFin)}</small>
         </article>
-        <article className="ca-kpi">
-          <span className="ca-kpi__icon"><CalendarOutlined /></span>
-          <span className="ca-kpi__label">Période précédente</span>
-          <strong>{formatMoney(synthese.caPrecedentHt)}</strong>
-          <small>{formatPeriod(filtres.dateDebutPrecedente, filtres.dateFinPrecedente)}</small>
-        </article>
-        <article className="ca-kpi">
-          <span className="ca-kpi__icon"><RiseOutlined /></span>
-          <span className="ca-kpi__label">CA annuel HT</span>
-          <strong>{formatMoney(synthese.caAnnuelHt)}</strong>
-          <small>Du 1er janvier à la date de fin sélectionnée</small>
-        </article>
+
+        {/* KPI 2 : Total Facturé TTC (Trésorerie avec TVA intégrée) */}
         <article className="ca-kpi">
           <span className="ca-kpi__icon"><BankOutlined /></span>
-          <span className="ca-kpi__label">Total général HT</span>
-          <strong>{formatMoney(synthese.totalGeneralHt)}</strong>
-          <small>Cartes exclues · prorata journalier inclusif</small>
+          <span className="ca-kpi__label">Total Facturé TTC</span>
+          <strong>{formatMoney(totalTtc)}</strong>
+          <small>Dont TVA collectée (20 %) : {formatMoney(tvaEstimee)}</small>
+        </article>
+
+        {/* KPI 3 : Cumul Annuel YTD */}
+        <article className="ca-kpi">
+          <span className="ca-kpi__icon"><RiseOutlined /></span>
+          <span className="ca-kpi__label">CA annuel cumulé (YTD)</span>
+          <strong>{formatMoney(synthese.caAnnuelHt)}</strong>
+          <small>
+            Du 01/01/{filtres.annee ?? new Date().getFullYear()} au {formatDate(filtres.dateFin)}
+          </small>
+        </article>
+
+        {/* KPI 4 : Moyenne Journalière */}
+        <article className="ca-kpi">
+          <span className="ca-kpi__icon"><CalendarOutlined /></span>
+          <span className="ca-kpi__label">Moyenne Journalière</span>
+          <strong>{formatMoney(caJournalier)}</strong>
+          <small>
+            {nbJours > 1 
+              ? `Moyenne sur ${nbJours} jours d'exploitation` 
+              : "Activité sur 1 jour"}
+          </small>
         </article>
       </section>
 
+      {/* Graphiques dynamiques connectés aux filtres */}
       <section className="ca-chart-grid">
-        <RevenueTrend data={data} />
-        <SubscriptionMix data={data} />
+        <RevenueTrend data={data} parkingNom={selectedParkingNom} />
+        <SubscriptionMix data={data} parkingNom={selectedParkingNom} />
       </section>
+
+      {/* Répartition par Parking */}
       <ParkingRevenue data={data} />
     </>
   );
 }
+
 
 export function ChiffreAffairesDashboard({ audience }: Props) {
   const now = useMemo(() => new Date(), []);
@@ -314,26 +372,11 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
     setTypeAbonnement("TOUS");
   };
 
-  return (
+  
+      return (
     <div className={`ca-dashboard ca-dashboard--${audience.toLowerCase()}`}>
-      <header className="ca-hero">
-        <div>
-          <span className="ca-hero__eyebrow">
-            {audience === "COMPTABLE" ? "Pilotage financier" : "Vue financière partagée"}
-          </span>
-          <h1>Chiffre d’affaires des abonnements</h1>
-          <p>
-            Données réelles calculées au prorata journalier, selon la méthode validée sur le parking Badr.
-          </p>
-        </div>
-        {dashboardQuery.data && (
-          <div className="ca-hero__period">
-            <CalendarOutlined />
-            <span>Période analysée</span>
-            <strong>{formatPeriod(dashboardQuery.data.filtres.dateDebut, dashboardQuery.data.filtres.dateFin)}</strong>
-          </div>
-        )}
-      </header>
+      
+
 
       <section className="ca-filter-panel" aria-label="Filtres du chiffre d’affaires">
         <div className="ca-mode-switch">
@@ -350,18 +393,43 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
         </div>
 
         <div className="ca-filter-grid">
-          {mode === "PERIODE" && (
+                    {mode === "PERIODE" && (
             <>
               <label>
                 <span>Date de début</span>
-                <input type="date" value={dateDebut} max={dateFin} onChange={(event) => setDateDebut(event.target.value)} />
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  value={dateDebut ? dayjs(dateDebut) : null}
+                  disabledDate={(current) =>
+                    dateFin ? current && current.isAfter(dayjs(dateFin), "day") : false
+                  }
+                  onChange={(date) =>
+                    setDateDebut(date ? date.format("YYYY-MM-DD") : "")
+                  }
+                  style={{ width: "100%", height: 40, borderRadius: 10 }}
+                  allowClear={false}
+                  placeholder="JJ/MM/AAAA"
+                />
               </label>
               <label>
                 <span>Date de fin</span>
-                <input type="date" value={dateFin} min={dateDebut} onChange={(event) => setDateFin(event.target.value)} />
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  value={dateFin ? dayjs(dateFin) : null}
+                  disabledDate={(current) =>
+                    dateDebut ? current && current.isBefore(dayjs(dateDebut), "day") : false
+                  }
+                  onChange={(date) =>
+                    setDateFin(date ? date.format("YYYY-MM-DD") : "")
+                  }
+                  style={{ width: "100%", height: 40, borderRadius: 10 }}
+                  allowClear={false}
+                  placeholder="JJ/MM/AAAA"
+                />
               </label>
             </>
           )}
+
           {(mode === "MOIS" || mode === "ANNEE") && (
             <label>
               <span>Année</span>
@@ -426,7 +494,12 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
           <button type="button" onClick={() => dashboardQuery.refetch()}>Réessayer</button>
         </div>
       )}
-      {dashboardQuery.data && <DashboardContent data={dashboardQuery.data} />}
+      {dashboardQuery.data && (
+        <DashboardContent 
+          data={dashboardQuery.data} 
+          selectedParkingNom={parkingsQuery.data?.find((p) => p.id === parkingId)?.nom}
+        />
+      )}
     </div>
   );
 }
