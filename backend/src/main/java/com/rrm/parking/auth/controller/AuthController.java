@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import com.rrm.parking.auth.dto.CurrentUserResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
@@ -39,6 +38,14 @@ public class AuthController {
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(response);
     }
+        @PostMapping("/logout")
+        public ResponseEntity<Void> deconnecter(@AuthenticationPrincipal Jwt jwt) {
+                if (jwt != null && jwt.hasClaim("userId")) {
+                Number userId = jwt.getClaim("userId");
+                authService.deconnecter(userId.longValue());
+                }
+                return ResponseEntity.ok().build();
+        }
 
     // ================================================
     // Controller me => infos sur l'utilisateur courant
@@ -56,4 +63,6 @@ public class AuthController {
                 authorities == null ? List.of() : authorities
         );
     }
+
+     
 }

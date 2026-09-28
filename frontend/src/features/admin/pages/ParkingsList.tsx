@@ -45,13 +45,15 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import {
-  getParkingsMock,
-  getUtilisateursMock,
-  mockParkings,
-  mockTarifs,
-  mockUtilisateurs,
-  recalculerQuotasParking,
-} from "../../../api/adminMock";
+  getAdminParkings,
+  createAdminParking,
+  updateAdminParking,
+  toggleLockAdminParking,
+  deactivateAdminParking,
+} from "../../../api/adminParkingsApi";
+import { getBackendUtilisateurs } from "../../../api/adminUtilisateursApi";
+
+
 import type { Parking } from "../types";
 import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
 
@@ -81,16 +83,16 @@ export function ParkingsList() {
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
-
   const { data: parkings = [], isLoading } = useQuery({
     queryKey: ["admin_parkings"],
-    queryFn: getParkingsMock,
+    queryFn: getAdminParkings,
   });
 
   const { data: utilisateurs = [] } = useQuery({
     queryKey: ["admin_utilisateurs"],
-    queryFn: getUtilisateursMock,
+    queryFn: getBackendUtilisateurs,
   });
+
 
   const agentsDisponibles = utilisateurs.filter(
     (u) => (u.role === "AGENT" || u.role === "SUPERVISEUR") && u.actif
@@ -221,140 +223,66 @@ export function ParkingsList() {
   };
 
   // Create Parking Mutation with Step-by-Step Data, Assigned Agent, and Pre-configured Plans
-  const createMutation = useMutation({
+    const createMutation = useMutation({
     mutationFn: async (values: any) => {
-      const newId = Date.now();
-      const capTotale = values.capaciteTotale || 450;
-      const pctTickets = values.pourcentageTickets || 50;
-      const pctAbos = values.pourcentageAbonnements || 50;
-      const pctCorp = values.pourcentageCorporate || 60;
-      const pctPart = values.pourcentageParticulier || 40;
-
-      const qTickets = Math.round((capTotale * pctTickets) / 100);
-      const qAbosTotal = Math.round((capTotale * pctAbos) / 100);
-      const qCorp = Math.round((qAbosTotal * pctCorp) / 100);
-      const qPart = Math.round((qAbosTotal * pctPart) / 100);
-
-      const newP = recalculerQuotasParking({
-        id: newId,
-        code: values.code?.toUpperCase() || `PRK-${newId}`,
-        nom: values.nom!,
-        adresse: values.adresse!,
-        zone: values.zone,
-        capaciteTotale: capTotale,
-        placesReserveesAbonnes: qAbosTotal,
-        pourcentageTickets: pctTickets,
-        pourcentageAbonnements: pctAbos,
-        pourcentageCorporate: pctCorp,
-        pourcentageParticulier: pctPart,
-        quotaTickets: qTickets,
-        quotaAbonnementsTotal: qAbosTotal,
-        quotaCorporate: qCorp,
-        quotaParticulier: qPart,
-        abonnementsParticulierActifs: 0,
-        abonnementsCorporateActifs: 0,
-        placesRestantesParticulier: qPart,
-        placesRestantesCorporate: qCorp,
-        actif: true,
-        verrouille: false,
-        latitude: values.latitude ?? 34.02088,
-        longitude: values.longitude ?? -6.84165,
-      });
-      mockParkings.push(newP);
-
-      // Assign the selected Agent / Supervisor account to this new parking
-      if (values.agentAssigneId) {
-        const assignedUser = mockUtilisateurs.find((u) => u.id === values.agentAssigneId);
-        if (assignedUser) {
-          assignedUser.parkingAssigneId = newId;
-          assignedUser.parkingAssigneNom = newP.nom;
-        }
-      }
-
-      // Populate mockTarifs with the exact plans configured by the Responsable in Step 4
-      createPlans.forEach((plan, i) => {
-        mockTarifs.push({
-          id: Date.now() + 200 + i,
-          libelle: plan.libelle,
-          typeAbonnement: plan.typeAbonnement as any,
-          plageHoraire: plan.plageHoraire,
-          dureeMois: plan.dureeMois,
-          tarifHT: Math.round(plan.tarifTTC / 1.2),
-          tarifTTC: plan.tarifTTC,
-          parkingId: newId,
-          parkingNom: newP.nom,
-          actif: true,
-        });
+      return createAdminParking({
+        code: values.code,
+        nom: values.nom,
+        adresse: values.adresse,
+        capaciteTotale: values.capaciteTotale,
+        placesReserveesAbonnes: Math.round(
+          (values.capaciteTotale * (values.pourcentageAbonnements || 50)) / 100
+        ),
+        latitude: values.latitude,
+        longitude: values.longitude,
       });
     },
     onSuccess: (_, variables: any) => {
-      message.success(`Nouveau parking "${variables.nom}" créé et prêt avec agent et tarifs configurés !`);
+      message.success(`Nouveau parking "${variables.nom}" enregistré en base de données !`);
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
-      queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
-      queryClient.invalidateQueries({ queryKey: ["admin_utilisateurs"] });
       setIsCreateModalOpen(false);
       setCurrentCreateStep(0);
       createForm.resetFields();
     },
   });
 
+      
+
+      
+
+      
   // Edit Parking Basic Info
-  const editMutation = useMutation({
+    const editMutation = useMutation({
     mutationFn: async (values: Partial<Parking> & { motifModification?: string }) => {
       if (!selectedParking) return;
-      if (!values.motifModification?.trim()) {
-        throw new Error("Le motif officiel de la modification est obligatoire.");
-      }
-      const targetIndex = mockParkings.findIndex((p) => p.id === selectedParking.id);
-      if (targetIndex !== -1) {
-        Object.assign(mockParkings[targetIndex], values);
-        mockParkings[targetIndex] = recalculerQuotasParking(mockParkings[targetIndex]);
-      }
+      return updateAdminParking(selectedParking.id, values);
     },
     onSuccess: () => {
-      message.success(
-        `Caractéristiques du parking mises à jour avec motif officiel enregistré${attachedPvName ? ` et PV "${attachedPvName}" associé` : ""} !`
-      );
+      message.success(`Caractéristiques du parking mises à jour en base de données !`);
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
       setIsEditModeActive(false);
       setIsEditModalOpen(false);
     },
-    onError: (err: any) => {
-      message.error(err.message || "Erreur lors de la mise à jour");
-    },
   });
+
 
   // Lock / Unlock Parking Mutation
-  const toggleLockMutation = useMutation({
+    const toggleLockMutation = useMutation({
     mutationFn: async ({ lock, reason }: { lock: boolean; reason?: string }) => {
       if (!selectedParking) return;
-      const target = mockParkings.find((p) => p.id === selectedParking.id);
-      if (target) {
-        target.verrouille = lock;
-        target.motifVerrouillage = lock ? reason : undefined;
-      }
+      return toggleLockAdminParking(selectedParking.id, lock, reason);
     },
     onSuccess: (_, variables) => {
-      if (variables.lock) {
-        message.warning(`Parking ${selectedParking?.nom} verrouillé pour maintenance. Les souscriptions sont suspendues.`);
-      } else {
-        message.success(`Parking ${selectedParking?.nom} déverrouillé et disponible aux abonnements !`);
-      }
+      message.success(variables.lock ? "Parking verrouillé pour maintenance." : "Parking déverrouillé.");
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
       setIsLockModalOpen(false);
-      setLockReason("");
     },
   });
 
-  // Deactivate Parking Mutation
   const deactivateMutation = useMutation({
     mutationFn: async (reason: string) => {
       if (!selectedParking) return;
-      const target = mockParkings.find((p) => p.id === selectedParking.id);
-      if (target) {
-        target.actif = false;
-        target.motifDesactivation = reason;
-      }
+      return deactivateAdminParking(selectedParking.id, reason);
     },
     onSuccess: () => {
       message.info(`Parking ${selectedParking?.nom} désactivé.`);
@@ -363,6 +291,7 @@ export function ParkingsList() {
       setDeactivateReason("");
     },
   });
+
 
   const handleOpenEdit = (record: Parking) => {
     setSelectedParking(record);
@@ -397,6 +326,17 @@ export function ParkingsList() {
   };
 
   const columns = [
+    {
+      title: "N°",
+      key: "rowIndex",
+      width: 60,
+      align: "center" as const,
+      render: (_: unknown, __: unknown, index: number) => (
+        <span className="font-mono font-bold text-slate-500 text-xs">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      ),
+    },
     {
       title: "Code",
       dataIndex: "code",
@@ -526,14 +466,27 @@ export function ParkingsList() {
         </Button>
       }
     >
-      <Title level={4} style={{ margin: "0 0 4px 0" }}>
-        <SafetyCertificateOutlined /> Gestion des Parkings & Stationnement (Responsable)
-      </Title>
-      <Text type="secondary" style={{ display: "block", marginBottom: 20 }}>
+            <div className="flex items-center gap-3 mb-1">
+        <Title level={4} style={{ margin: 0 }}>
+          <SafetyCertificateOutlined /> Gestion des Parkings & Stationnement
+        </Title>
+        <Tag color="blue" className="font-bold text-xs rounded-full px-2.5 py-0.5">
+          {parkings.length} parkings au total
+        </Tag>
+      </div>
+      <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
         Gérez les parkings de Rabat, configurez les quotas d'abonnés, géolocalisez sur Google Maps et verrouillez en cas de maintenance.
       </Text>
 
-      <Table columns={columns} dataSource={parkings} loading={isLoading} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: "max-content" }} />
+      <Table
+        columns={columns}
+        dataSource={parkings}
+        loading={isLoading}
+        rowKey="id"
+        pagination={false}
+        scroll={{ y: 550, x: "max-content" }}
+      />
+
 
       {/* Modal 1: Configuration d'un Nouveau Parking par Étapes (Wizard 5 Étapes) */}
       <Modal

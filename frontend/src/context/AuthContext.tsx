@@ -2,9 +2,12 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
 import type { Role } from "../lib/roleConfig";
+import { message } from "antd";
+import { notifyBackendLogout } from "../api/adminUtilisateursApi";
 
 function lireAuthorities(): string[] {
   try {
@@ -14,6 +17,9 @@ function lireAuthorities(): string[] {
     return [];
   }
 }
+
+// 2 Heures d'inactivité en millisecondes (2 * 60 * 60 * 1000)
+const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000;
 
 interface AuthContextType {
   token: string | null;
@@ -30,25 +36,29 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token"),
-  );
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [role, setRole] = useState<Role | null>(localStorage.getItem("role") as Role | null);
+  const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
+  const [authorities, setAuthorities] = useState<string[]>(lireAuthorities);
+  const logout = () => {
+    // Fire-and-forget : informe le backend sans bloquer la déconnexion locale
+    notifyBackendLogout().catch(() => {});
 
-  const [role, setRole] = useState<Role | null>(
-    localStorage.getItem("role") as Role | null,
-  );
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("authorities");
+    localStorage.removeItem("lastActivityTime");
 
-  const [userName, setUserName] = useState<string | null>(
-    localStorage.getItem("userName"),
-  );
+    setToken(null);
+    setRole(null);
+    setUserName(null);
+    setAuthorities([]);
+  };
 
-  const [authorities, setAuthorities] =
-    useState<string[]>(lireAuthorities);
 
   const login = (
     newToken: string,
@@ -58,10 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     localStorage.setItem("token", newToken);
     localStorage.setItem("role", newRole);
-    localStorage.setItem(
-      "authorities",
-      JSON.stringify(newAuthorities),
-    );
+    localStorage.setItem("authorities", JSON.stringify(newAuthorities));
+    localStorage.setItem("lastActivityTime", Date.now().toString());
 
     if (newUserName) {
       localStorage.setItem("userName", newUserName);
@@ -75,20 +83,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthorities(newAuthorities);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("authorities");
+  // -------------------------------------------------------------
+  // DÉTECTEUR D'INACTIVITÉ (DÉCONNEXION AUTOMATIQUE APRÈS 2 HEURES)
+  // -------------------------------------------------------------
+  useEffect(() => {
+    if (!token) return;
 
-    setToken(null);
-    setRole(null);
-    setUserName(null);
-    setAuthorities([]);
-  };
+    const resetActivity = () => {
+      localStorage.setItem("lastActivityTime", Date.now().toString());
+    };
 
-  const hasAuthority = (authority: string) =>
-    authorities.includes(authority);
+    // Événements surveillant la présence de l'utilisateur
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    events.forEach((evt) => window.addEventListener(evt, resetActivity, { passive: true }));
+
+    // Vérifier l'inactivité toutes les 30 secondes
+    const interval = setInterval(() => {
+      const lastActiveStr = localStorage.getItem("lastActivityTime");
+      const lastActive = lastActiveStr ? parseInt(lastActiveStr, 10) : Date.now();
+      const elapsed = Date.now() - lastActive;
+
+      if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+        logout();
+        message.warning({
+          content: "Votre session a été déconnectée après 2 heures d'inactivité.",
+          duration: 6,
+          key: "inactivity_logout",
+        });
+        window.location.href = "/login";
+      }
+    }, 30000);
+
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, resetActivity));
+      clearInterval(interval);
+    };
+  }, [token]);
+
+  const hasAuthority = (authority: string) => authorities.includes(authority);
 
   return (
     <AuthContext.Provider
@@ -107,15 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-
   if (!context) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 }

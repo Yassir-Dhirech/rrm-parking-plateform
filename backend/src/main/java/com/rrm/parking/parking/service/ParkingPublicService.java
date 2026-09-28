@@ -13,6 +13,7 @@ import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.demande.service.ReservationPlacesCorporate;
 import com.rrm.parking.demande.repository.DemandeNouveauContratCorporateRepository;
 import com.rrm.parking.tarification.dto.response.TarifParkingPublicResponse;
+import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -69,7 +70,7 @@ public class ParkingPublicService {
         );
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public List<TarifParkingPublicResponse>
     listerTarifsApplicables(
             Long parkingId
@@ -97,15 +98,44 @@ public class ParkingPublicService {
             );
         }
 
-        return tarifParkingRepository
+        // 1. Chercher les tarifs spécifiques configurés pour ce parking
+        List<TarifParking> tarifs = tarifParkingRepository
                 .trouverTarifsApplicables(
                         parkingId,
                         LocalDate.now()
-                )
-                .stream()
-                .map(TarifParkingPublicResponse::depuis)
+                );
+
+        // 2. Si aucun tarif n'est configuré pour ce parking, utiliser la grille standard par défaut (BAB_EL_HAD)
+        if (tarifs.isEmpty()) {
+            tarifs = parkingRepository.findByCodeIgnoreCase("BAB_EL_HAD")
+                    .map(refParking -> tarifParkingRepository.trouverTarifsApplicables(refParking.getId(), LocalDate.now()))
+                    .orElseGet(List::of);
+        }
+
+        return tarifs.stream()
+                .map(t -> {
+                    // On s'assure que le parkingId retourné est bien celui du parking demandé
+                    TarifParkingPublicResponse resp = TarifParkingPublicResponse.depuis(t);
+                    return new TarifParkingPublicResponse(
+                            resp.tarifParkingId(),
+                            parkingId,
+                            resp.forfaitId(),
+                            resp.forfaitCode(),
+                            resp.forfaitLibelle(),
+                            resp.forfaitDescription(),
+                            resp.placeReservee(),
+                            resp.dureeEnMois(),
+                            resp.prixMensuelHT(),
+                            resp.tauxTVA(),
+                            resp.prixMensuelTTC(),
+                            resp.montantTotalTTC(),
+                            resp.dateDebutValidite(),
+                            resp.dateFinValidite()
+                    );
+                })
                 .toList();
     }
+
 
     private List<ParkingPublicResponse>
     construireReponses(
