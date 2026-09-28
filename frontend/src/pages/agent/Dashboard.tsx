@@ -1,5 +1,4 @@
 import {
-  SearchOutlined,
   CreditCardOutlined,
   DollarOutlined,
   FileDoneOutlined,
@@ -7,7 +6,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Card, Col, Empty, Input, List, Progress, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, List, Progress, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
 import { useDeferredValue, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAgentActions, getAgentDashboardKpis, rechercherAgent } from "../../api/agentDashboard";
@@ -35,7 +34,7 @@ const formatDateHeure = (date: string | null): string => date
 
 export function AgentDashboard() {
   const navigate = useNavigate();
-  const [recherche, setRecherche] = useState("");
+  const [recherche] = useState("");
   const terme = useDeferredValue(recherche.trim());
   const actions = useQuery({
     queryKey: ["agent-dashboard-actions"],

@@ -98,33 +98,33 @@ export function ResponsableParkingMixDonut() {
           </div>
         </div>
 
-        <Tooltip title="Chaque anneau indique la part des abonnements actifs du segment concerné dans le total des places actives à la date de référence.">
+        <Tooltip title="Chaque anneau indique la part des places occupées par des abonnements actifs : une place par abonnement régulier et les places contractuelles pour le corporate.">
           <InfoCircleOutlined className="responsable-mix-info" />
         </Tooltip>
       </header>
 
       <div className="responsable-mix-description">
         <span>Total observé</span>
-        <strong>{data.totalPlacesActives.toLocaleString("fr-FR")} abonnements actifs</strong>
+        <strong>{data.totalPlacesActives.toLocaleString("fr-FR")} places actives</strong>
       </div>
 
       <div className="responsable-mix-content">
         <MixRing
           variant="corporate"
           title="Corporate"
-          subtitle="Part des abonnements corporate dans le total actuel"
+          subtitle="Part des places contractuelles corporate dans le total actuel"
           count={data.placesCorporate}
           percent={data.partCorporatePct}
-          centerLabel="abonnements"
+          centerLabel="places"
         />
 
         <MixRing
           variant="regulier"
           title="Régulier"
-          subtitle="Part des abonnements réguliers dans le total actuel"
+          subtitle="Part des places régulières dans le total actuel"
           count={data.placesRegulieres}
           percent={data.partRegulierPct}
-          centerLabel="abonnements"
+          centerLabel="places"
         />
       </div>
     </section>

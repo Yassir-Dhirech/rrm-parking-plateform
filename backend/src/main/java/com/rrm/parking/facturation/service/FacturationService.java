@@ -10,17 +10,24 @@ import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.dto.response.FactureResponse;
+import com.rrm.parking.facturation.dto.response.FacturesComptableResponse;
 import com.rrm.parking.facturation.entity.Facture;
+import com.rrm.parking.facturation.enums.StatutFacture;
 import com.rrm.parking.facturation.entity.LigneFacture;
 import com.rrm.parking.facturation.enums.TypeLigneFacture;
 import com.rrm.parking.facturation.repository.FactureRepository;
 import com.rrm.parking.paiement.entity.Paiement;
+import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.repository.PaiementRepository;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +53,103 @@ public class FacturationService {
     private final DemandeClientRepository demandeRepository;
     private final PaiementRepository paiementRepository;
     private final FactureRepository factureRepository;
+
+    @Transactional(readOnly = true)
+    public FacturesComptableResponse listerFactures(
+            int page,
+            int taille,
+            String recherche,
+            StatutFacture statut,
+            ModePaiement modePaiement,
+            LocalDate dateDebut,
+            LocalDate dateFin
+    ) {
+        if (page < 0 || taille < 1 || taille > 50) {
+            throw new IllegalArgumentException(
+                    "La page doit être positive et la taille comprise entre 1 et 50"
+            );
+        }
+        if (dateDebut != null && dateFin != null && dateFin.isBefore(dateDebut)) {
+            throw new IllegalArgumentException("La date de fin précède la date de début");
+        }
+        String terme = recherche == null ? "" : recherche.trim();
+        if (terme.length() > 100) {
+            throw new IllegalArgumentException("La recherche ne peut pas dépasser 100 caractères");
+        }
+
+        Specification<Facture> filtres = (racine, requete, cb) -> cb.conjunction();
+        if (!terme.isEmpty()) {
+            String motif = "%" + terme.toLowerCase(Locale.ROOT)
+                    .replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+            filtres = filtres.and((racine, requete, cb) -> {
+                var paiement = racine.join("paiement");
+                var demande = paiement.join("demande");
+                var client = demande.join("client");
+                var particuliers = requete.subquery(Long.class);
+                var particulier = particuliers.from(ClientParticulier.class);
+                particuliers.select(particulier.get("id")).where(
+                        cb.equal(particulier.get("id"), client.get("id")),
+                        cb.or(
+                                cb.like(cb.lower(particulier.get("nom")), motif, '!'),
+                                cb.like(cb.lower(particulier.get("prenom")), motif, '!'),
+                                cb.like(cb.lower(cb.concat(
+                                        cb.concat(particulier.get("prenom"), " "),
+                                        particulier.get("nom")
+                                )), motif, '!')
+                        )
+                );
+                var entreprises = requete.subquery(Long.class);
+                var entreprise = entreprises.from(ClientEntreprise.class);
+                entreprises.select(entreprise.get("id")).where(
+                        cb.equal(entreprise.get("id"), client.get("id")),
+                        cb.like(cb.lower(entreprise.get("raisonSociale")), motif, '!')
+                );
+                return cb.or(
+                        cb.like(cb.lower(racine.get("numero")), motif, '!'),
+                        cb.like(cb.lower(paiement.get("reference")), motif, '!'),
+                        cb.like(cb.lower(demande.get("reference")), motif, '!'),
+                        cb.exists(particuliers),
+                        cb.exists(entreprises)
+                );
+            });
+        }
+        if (statut != null) {
+            filtres = filtres.and((racine, requete, cb) ->
+                    cb.equal(racine.get("statut"), statut));
+        }
+        if (modePaiement != null) {
+            filtres = filtres.and(mode(modePaiement));
+        }
+        if (dateDebut != null) {
+            LocalDateTime debut = dateDebut.atStartOfDay();
+            filtres = filtres.and((racine, requete, cb) ->
+                    cb.greaterThanOrEqualTo(racine.get("dateCreation"), debut));
+        }
+        if (dateFin != null) {
+            LocalDateTime finExclusive = dateFin.plusDays(1).atStartOfDay();
+            filtres = filtres.and((racine, requete, cb) ->
+                    cb.lessThan(racine.get("dateCreation"), finExclusive));
+        }
+
+        Page<FactureResponse> factures = factureRepository.findAll(filtres, PageRequest.of(
+                        page,
+                        taille,
+                        Sort.by(Sort.Direction.DESC, "dateCreation")
+                                .and(Sort.by(Sort.Direction.DESC, "id"))
+                ))
+                .map(FactureResponse::depuis);
+        return new FacturesComptableResponse(
+                factures,
+                factureRepository.count(),
+                factureRepository.count(filtres.and(mode(ModePaiement.CHEQUE))),
+                factureRepository.count(filtres.and(mode(ModePaiement.ESPECE)))
+        );
+    }
+
+    private Specification<Facture> mode(ModePaiement modePaiement) {
+        return (racine, requete, cb) ->
+                cb.equal(racine.join("paiement").get("modePaiement"), modePaiement);
+    }
 
     @Transactional(readOnly = true)
     public List<DemandeFacturationResponse> listerDemandesValidees(

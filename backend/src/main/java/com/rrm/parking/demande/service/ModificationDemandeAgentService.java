@@ -63,6 +63,22 @@ public class ModificationDemandeAgentService {
             Map<TypePieceJointe, MultipartFile> nouveauxDocuments,
             Long agentId
     ) {
+        return appliquer(demandeId, requete, nouveauxDocuments, agentId);
+    }
+
+    @Transactional
+    public DemandeDetailResponse modifierParClient(
+            Long demandeId,
+            ModificationDemandeReguliereRequest requete,
+            Map<TypePieceJointe, MultipartFile> nouveauxDocuments
+    ) {
+        return appliquer(demandeId, requete, nouveauxDocuments, null);
+    }
+
+    private DemandeDetailResponse appliquer(
+            Long demandeId, ModificationDemandeReguliereRequest requete,
+            Map<TypePieceJointe, MultipartFile> nouveauxDocuments, Long agentId
+    ) {
         DemandeClient brute = demandeRepository.findByIdPourMiseAJour(demandeId)
                 .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable"));
         DemandeClient demande = (DemandeClient) Hibernate.unproxy(brute);
@@ -71,9 +87,8 @@ public class ModificationDemandeAgentService {
                     "Seule une demande en attente de paiement peut être modifiée"
             );
         }
-        Utilisateur agent = utilisateurRepository.findById(agentId)
+        Utilisateur agent = agentId == null ? null : utilisateurRepository.findById(agentId)
                 .orElseThrow(() -> new RessourceIntrouvableException("Agent introuvable"));
-
         Contexte contexte = contexte(demande);
         TarifParking tarif = tarifRepository.findById(requete.tarifParkingId())
                 .filter(t -> t.estApplicableA(LocalDate.now()))
@@ -227,17 +242,19 @@ public class ModificationDemandeAgentService {
         details.put("documentsRemplaces", documents == null ? List.of() : documents.keySet());
         auditRepository.save(new AuditLog(
                 agent,
-                agent.getEmail(),
+                agent == null ? "CLIENT_PUBLIC" : agent.getEmail(),
                 tarif.getParking(),
                 TypeActionAudit.MODIFICATION,
                 ResultatAudit.SUCCES,
                 "DEMANDE_CLIENT",
                 demande.getId(),
                 demande.getReference(),
-                "Demande modifiée avant paiement",
+                agent == null ? "Demande modifiée par le client après validation OTP"
+                        : "Demande modifiée avant paiement",
                 json(details),
                 null, null, "PUT",
-                "/api/agent/demandes/" + demande.getId(),
+                agent == null ? "/api/public/demandes/suivi/modification"
+                        : "/api/agent/demandes/" + demande.getId(),
                 null
         ));
     }

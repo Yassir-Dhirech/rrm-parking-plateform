@@ -75,6 +75,9 @@ public class Paiement {
     @Column(name = "banque_cheque", length = 120)
     private String banqueCheque;
 
+    @Column(name = "cheque_certifie", nullable = false, columnDefinition = "boolean default false")
+    private boolean chequeCertifie;
+
     @Column(name = "date_emission_cheque")
     private LocalDate dateEmissionCheque;
 
@@ -185,11 +188,22 @@ public class Paiement {
         }
     }
 
+    public void marquerChequeCertifie() {
+        if (modePaiement != ModePaiement.CHEQUE || statut != StatutPaiement.EN_ATTENTE) {
+            throw new IllegalStateException("Seul un chèque en attente peut être marqué certifié");
+        }
+        this.chequeCertifie = true;
+    }
+
     public void rejeterCheque(
             String motif,
             Utilisateur utilisateur
     ) {
-        verifierEnAttente();
+        if (statut != StatutPaiement.CONFIRME) {
+            throw new IllegalStateException(
+                    "Seul un paiement confirmé peut faire l'objet d'un rejet bancaire tardif"
+            );
+        }
 
         if (modePaiement != ModePaiement.CHEQUE) {
             throw new IllegalStateException(
@@ -197,7 +211,7 @@ public class Paiement {
             );
         }
 
-        this.traitePar = exigerNonNull(
+        exigerNonNull(
                 utilisateur,
                 "L'utilisateur qui traite le rejet est obligatoire"
         );
@@ -210,7 +224,7 @@ public class Paiement {
         this.statut = StatutPaiement.REJETE;
         this.statutCheque = StatutCheque.REJETE;
         this.dateRejet = LocalDateTime.now();
-        this.dateConfirmation = null;
+        // Conserver la confirmation initiale et l'agent guichet pour l'audit.
     }
 
     public void annuler() {
@@ -389,6 +403,10 @@ public class Paiement {
 
     public StatutCheque getStatutCheque() {
         return statutCheque;
+    }
+
+    public boolean isChequeCertifie() {
+        return chequeCertifie;
     }
 
     public LocalDateTime getDateCreation() {

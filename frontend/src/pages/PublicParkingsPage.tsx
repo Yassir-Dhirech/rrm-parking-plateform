@@ -33,7 +33,7 @@ export function PublicParkingsPage() {
   const location = useLocation();
 
   // Active View Tab: 'MAP' or 'TARIFS'
-  const [activeTab, setActiveTab] = useState<"MAP" | "TARIFS">("MAP");
+  const [activeTab] = useState<"MAP" | "TARIFS">("MAP");
 
   // Active Selected Parking for Map
   const [parkings, setParkings] = useState<Parking[]>([]);
@@ -285,19 +285,6 @@ export function PublicParkingsPage() {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([parking.latitude, parking.longitude], 15, { animate: true, duration: 0.5 });
     }
-  };
-
-  // Handler to switch to TARIFS tab and open/scroll to requested parking
-  const handleViewParkingTarifs = (parkingId: number) => {
-    setActiveTab("TARIFS");
-    setExpandedParkingIds(new Set([parkingId]));
-    window.history.replaceState(null, "", `/parkings-public#tarifs-parking-${parkingId}`);
-    setTimeout(() => {
-      const el = document.getElementById(`parking-tarif-card-${parkingId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 150);
   };
 
   return (

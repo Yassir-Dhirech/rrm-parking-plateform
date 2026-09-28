@@ -4,6 +4,7 @@ import { EnvironmentOutlined, SettingOutlined } from "@ant-design/icons";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getPublicParkings, type Parking } from "../../api/parkings";
+import "./ResponsableParkingDetails.css";
 
 const { Text } = Typography;
 
@@ -64,25 +65,22 @@ function ParkingCapacityGauge({
   const roundedPercentage = Math.round(percentage * 10) / 10;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: 190,
-      }}
-    >
+    <div className="responsable-parking-details__gauge">
       <svg
         viewBox="0 0 220 120"
         role="img"
         aria-label={`${roundedPercentage}% des places sont réservées aux abonnements`}
-        style={{ width: "100%", maxWidth: 220, height: 116 }}
       >
+        <defs>
+          <linearGradient id="responsable-parking-turquoise" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#19c7c1" />
+            <stop offset="100%" stopColor="#65f2e3" />
+          </linearGradient>
+        </defs>
         <path
           d="M 20 108 A 90 90 0 0 1 200 108"
           fill="none"
-          stroke="#e8e8e8"
+          stroke="rgba(255, 255, 255, 0.12)"
           strokeWidth="18"
           strokeLinecap="round"
           pathLength="100"
@@ -90,22 +88,18 @@ function ParkingCapacityGauge({
         <path
           d="M 20 108 A 90 90 0 0 1 200 108"
           fill="none"
-          stroke="#0078d4"
+          stroke="url(#responsable-parking-turquoise)"
           strokeWidth="18"
           strokeLinecap="round"
           pathLength="100"
           strokeDasharray={`${roundedPercentage} ${100 - roundedPercentage}`}
+          className="responsable-parking-details__arc"
         />
         <text
           x="110"
           y="83"
           textAnchor="middle"
-          style={{
-            fontFamily: '"Segoe UI", Inter, sans-serif',
-            fontSize: 24,
-            fontWeight: 700,
-            fill: "#242424",
-          }}
+          className="responsable-parking-details__percentage"
         >
           {roundedPercentage}%
         </text>
@@ -113,12 +107,7 @@ function ParkingCapacityGauge({
           x="110"
           y="103"
           textAnchor="middle"
-          style={{
-            fontFamily: '"Segoe UI", Inter, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            fill: "#616161",
-          }}
+          className="responsable-parking-details__gauge-label"
         >
           places abonnements
         </text>
@@ -517,7 +506,7 @@ export function ResponsableParkingMap() {
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: "1 / 1",
+          aspectRatio: "8 / 7",
           borderRadius: 16,
           overflow: "hidden",
           background: "rgba(0, 0, 0, 0.30)",
@@ -568,113 +557,48 @@ export function ResponsableParkingMap() {
       </Card>
 
       <Card
-      className="responsable-map-card"
-      bordered={false}
+        className="responsable-parking-details-card glass-effect"
+        bordered={false}
         title={
-          <span style={{ fontWeight: 700, color: "#242424" }}>Détails du parking</span>
+          <div className="responsable-parking-details__heading">
+            <span className="responsable-parking-details__icon"><EnvironmentOutlined /></span>
+            <span>Détails du parking</span>
+          </div>
         }
-        styles={{
-          header: {
-            minHeight: 52,
-            borderBottom: "1px solid #edebe9",
-            paddingInline: 16,
-          },
-          body: {
-            height: 268,
-            padding: "16px 18px 14px",
-          },
-        }}
-        style={{
-          width: "100%",
-          height: 320,
-          background: "#ffffff",
-          border: "1px solid #edebe9",
-          borderRadius: 8,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-          overflow: "hidden",
-        }}
       >
         {selectedParking ? (
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: 10,
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr) minmax(170px, 0.85fr)",
-                gap: 16,
-                alignItems: "center",
-                minHeight: 184,
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <Text
-                  strong
-                  style={{
-                    display: "block",
-                    marginBottom: 16,
-                    color: "#242424",
-                    fontSize: 17,
-                  }}
-                >
-                  {selectedParking.nom}
-                </Text>
-
-                {[
-                  ["Places totales", selectedParking.capaciteTotale],
-                  ["Places réservées aux abonnements", selectedParking.capaciteReserveeAbonnements],
-                  ["Part réservée", `${Math.round(selectedParkingPercentage * 10) / 10}%`],
-                ].map(([label, value]) => (
-                  <div
-                    key={String(label)}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "8px 0",
-                      borderBottom: "1px solid #f0f0f0",
-                    }}
-                  >
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                      {label}
-                    </Text>
-                    <Text strong style={{ color: "#242424", whiteSpace: "nowrap" }}>
-                      {value}
-                    </Text>
-                  </div>
-                ))}
-              </div>
-
+          <div className="responsable-parking-details__content">
+            <div className="responsable-parking-details__panel">
+              <h3>{selectedParking.nom}</h3>
+              <dl>
+                <div>
+                  <dt>Places totales</dt>
+                  <dd>{selectedParking.capaciteTotale.toLocaleString("fr-FR")}</dd>
+                </div>
+                <div>
+                  <dt>Places réservées aux abonnements</dt>
+                  <dd>{selectedParking.capaciteReserveeAbonnements.toLocaleString("fr-FR")}</dd>
+                </div>
+                <div>
+                  <dt>Part réservée</dt>
+                  <dd>{selectedParkingPercentage.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %</dd>
+                </div>
+              </dl>
+              <Button className="responsable-parking-details__action" icon={<SettingOutlined />}>
+                Gérer parking
+              </Button>
+            </div>
+            <div className="responsable-parking-details__panel responsable-parking-details__panel--gauge">
               <ParkingCapacityGauge
                 total={selectedParking.capaciteTotale}
                 reserved={selectedParking.capaciteReserveeAbonnements}
               />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button type="primary" icon={<SettingOutlined />}>
-                Gérer parking
-              </Button>
+              <strong>Places réservées</strong>
+              <span>Part de la capacité dédiée aux abonnements</span>
             </div>
           </div>
         ) : (
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text type="secondary">Aucun parking disponible.</Text>
-          </div>
+          <div className="responsable-parking-details__empty">Aucun parking disponible.</div>
         )}
       </Card>
     </div>

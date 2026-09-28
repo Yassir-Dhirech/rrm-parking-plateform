@@ -211,6 +211,16 @@ public class ChiffreAffairesReportingService {
                 join abonnement_regulier ar
                   on ar.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1
+                      from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                            'BLOCAGE_EN_COURS',
+                            'BLOQUE',
+                            'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
 
@@ -230,6 +240,16 @@ public class ChiffreAffairesReportingService {
                 join abonnement_entreprise ae
                   on ae.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1
+                      from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                            'BLOCAGE_EN_COURS',
+                            'BLOQUE',
+                            'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
                 """,
@@ -269,6 +289,16 @@ public class ChiffreAffairesReportingService {
                 join parking pk
                   on pk.id = ap.parking_id
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1
+                      from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                            'BLOCAGE_EN_COURS',
+                            'BLOQUE',
+                            'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
                   and ap.date_debut <= :fin
@@ -311,6 +341,16 @@ public class ChiffreAffairesReportingService {
                         tp.parking_id
                   )
                 where p.statut <> 'ANNULEE'
+                  and not exists (
+                      select 1
+                      from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                            'BLOCAGE_EN_COURS',
+                            'BLOQUE',
+                            'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
                 """,

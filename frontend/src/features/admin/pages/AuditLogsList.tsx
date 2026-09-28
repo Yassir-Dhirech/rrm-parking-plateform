@@ -11,7 +11,6 @@ import {
   Drawer,
   Timeline,
   Tooltip,
-  Badge,
 } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,9 +21,6 @@ import {
   ClockCircleOutlined,
   GlobalOutlined,
   FilterOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { getAuditLogs } from "../../../api/adminAuditApi";
 import type { Role } from "../../../lib/roleConfig";
@@ -32,7 +28,7 @@ import { formatDate } from "../../../lib/dateUtils";
 import type { ColumnsType } from "antd/es/table";
 import type { AuditLog } from "../../admin/types";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export function AuditLogsList() {
   const [searchTerm, setSearchTerm] = useState("");

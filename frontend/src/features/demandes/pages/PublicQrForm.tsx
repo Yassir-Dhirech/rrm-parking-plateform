@@ -38,7 +38,6 @@ import {
   FileImageOutlined,
   CheckCircleOutlined,
   CheckOutlined,
-  ThunderboltOutlined,
   FileTextOutlined,
   CreditCardOutlined,
 } from "@ant-design/icons";

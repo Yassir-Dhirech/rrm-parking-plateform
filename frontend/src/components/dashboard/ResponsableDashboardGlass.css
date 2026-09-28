@@ -709,6 +709,7 @@ body .rrm-role-shell--glass main .responsable-dashboard-glass
  * Les deux graphes principaux :
  * 1) Abonnements actifs par parking
  * 2) Chiffre d'affaires mensuel
+ * La carte Places Corporate vs Régulier utilise le même verre.
  *
  * Fond noir translucide + blur trÃ¨s fort,
  * inspirÃ© de la rÃ©fÃ©rence fournie.
@@ -716,7 +717,9 @@ body .rrm-role-shell--glass main .responsable-dashboard-glass
 body .rrm-role-shell--glass main .responsable-dashboard-glass
 .responsable-chart-card.glass-effect,
 body .rrm-role-shell--glass main .responsable-dashboard-glass
-.responsable-area-card.glass-effect {
+.responsable-area-card.glass-effect,
+body .rrm-role-shell--glass main .responsable-dashboard-glass
+.responsable-mix-card.glass-effect {
   background: rgba(0, 0, 0, 0.53) !important;
   background-color: rgba(0, 0, 0, 0.53) !important;
   background-image: none !important;
