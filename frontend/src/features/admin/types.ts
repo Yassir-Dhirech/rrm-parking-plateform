@@ -73,11 +73,11 @@ export interface PlanTarifaire {
   parkingNom?: string;
   actif: boolean;
 }
-
 // Audit Logs
 export interface AuditLog {
-  id: number;
+  id: number | string;
   timestamp: string;
+  utilisateurId?: string;
   utilisateurEmail: string;
   role: Role;
   action: string;
