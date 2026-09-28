@@ -38,8 +38,8 @@ export function ResponsableMonthlyRevenueAreaChart() {
 
   const years = useMemo(
     () =>
-      Array.from({ length: 6 }, (_, index) => {
-        const value = currentYear - index;
+      Array.from({ length: 101 }, (_, index) => {
+        const value = 2100 - index;
         return { value, label: String(value) };
       }),
     [currentYear],

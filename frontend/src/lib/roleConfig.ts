@@ -139,9 +139,11 @@ export const roleConfig: Record<Role, RoleConfig> = {
         requiredAuthority: "DEMANDE_VALIDER",
       },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
+      { key: "base-clients", label: "Base des clients", path: "/responsable/clients" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
       { key: "rejets-cheques", label: "Rejets de chèques", path: "/responsable/rejets-cheques" },
+      { key: "avis-feedbacks", label: "Avis & feedbacks", path: "/responsable/avis" },
     ],
   },
   COMPTABLE: {

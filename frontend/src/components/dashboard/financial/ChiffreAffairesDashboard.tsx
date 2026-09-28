@@ -174,7 +174,7 @@ function SubscriptionMix({ data }: { data: ChiffreAffairesDashboardResponse }) {
       <div className="ca-mix">
         <div
           className="ca-donut"
-          style={{ background: `conic-gradient(#0f6cbd 0 ${regular}%, #8b5cf6 ${regular}% 100%)` }}
+          style={{ background: `conic-gradient(var(--ca-mix-regular) 0 ${regular}%, var(--ca-mix-corporate) ${regular}% 100%)` }}
           aria-label={`${regular}% régulier et ${synthese.partCorporatePourcentage}% corporate`}
         >
           <div className="ca-donut__center">
@@ -233,29 +233,33 @@ function ParkingRevenue({ data }: { data: ChiffreAffairesDashboardResponse }) {
   );
 }
 
-function DashboardContent({ data }: { data: ChiffreAffairesDashboardResponse }) {
+function DashboardContent({ data, audience }: { data: ChiffreAffairesDashboardResponse; audience: Props["audience"] }) {
   const { synthese, filtres } = data;
   return (
     <>
       <section className="ca-kpi-grid">
-        <article className="ca-kpi ca-kpi--primary">
-          <span className="ca-kpi__icon"><DollarOutlined /></span>
-          <span className="ca-kpi__label">CA HT de la période</span>
-          <strong>{formatMoney(synthese.caActuelHt)}</strong>
-          <EvolutionBadge value={synthese.evolutionPourcentage} />
-        </article>
+        {audience === "COMPTABLE" && (
+          <article className="ca-kpi ca-kpi--primary">
+            <span className="ca-kpi__icon"><DollarOutlined /></span>
+            <span className="ca-kpi__label">CA HT de la période</span>
+            <strong>{formatMoney(synthese.caActuelHt)}</strong>
+            <EvolutionBadge value={synthese.evolutionPourcentage} />
+          </article>
+        )}
         <article className="ca-kpi">
           <span className="ca-kpi__icon"><CalendarOutlined /></span>
           <span className="ca-kpi__label">Période précédente</span>
           <strong>{formatMoney(synthese.caPrecedentHt)}</strong>
           <small>{formatPeriod(filtres.dateDebutPrecedente, filtres.dateFinPrecedente)}</small>
         </article>
-        <article className="ca-kpi">
-          <span className="ca-kpi__icon"><RiseOutlined /></span>
-          <span className="ca-kpi__label">CA annuel HT</span>
-          <strong>{formatMoney(synthese.caAnnuelHt)}</strong>
-          <small>Du 1er janvier à la date de fin sélectionnée</small>
-        </article>
+        {audience === "COMPTABLE" && (
+          <article className="ca-kpi">
+            <span className="ca-kpi__icon"><RiseOutlined /></span>
+            <span className="ca-kpi__label">CA annuel HT</span>
+            <strong>{formatMoney(synthese.caAnnuelHt)}</strong>
+            <small>Du 1er janvier à la date de fin sélectionnée</small>
+          </article>
+        )}
         <article className="ca-kpi">
           <span className="ca-kpi__icon"><BankOutlined /></span>
           <span className="ca-kpi__label">Total général HT</span>
@@ -265,7 +269,7 @@ function DashboardContent({ data }: { data: ChiffreAffairesDashboardResponse }) 
       </section>
 
       <section className="ca-chart-grid">
-        <RevenueTrend data={data} />
+        {audience === "COMPTABLE" && <RevenueTrend data={data} />}
         <SubscriptionMix data={data} />
       </section>
       <ParkingRevenue data={data} />
@@ -316,24 +320,24 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
 
   return (
     <div className={`ca-dashboard ca-dashboard--${audience.toLowerCase()}`}>
-      <header className="ca-hero">
-        <div>
-          <span className="ca-hero__eyebrow">
-            {audience === "COMPTABLE" ? "Pilotage financier" : "Vue financière partagée"}
-          </span>
-          <h1>Chiffre d’affaires des abonnements</h1>
-          <p>
-            Données réelles calculées au prorata journalier, selon la méthode validée sur le parking Badr.
-          </p>
-        </div>
-        {dashboardQuery.data && (
-          <div className="ca-hero__period">
-            <CalendarOutlined />
-            <span>Période analysée</span>
-            <strong>{formatPeriod(dashboardQuery.data.filtres.dateDebut, dashboardQuery.data.filtres.dateFin)}</strong>
+      {audience === "COMPTABLE" && (
+        <header className="ca-hero">
+          <div>
+            <span className="ca-hero__eyebrow">Pilotage financier</span>
+            <h1>Chiffre d’affaires des abonnements</h1>
+            <p>
+              Données réelles calculées au prorata journalier, selon la méthode validée sur le parking Badr.
+            </p>
           </div>
-        )}
-      </header>
+          {dashboardQuery.data && (
+            <div className="ca-hero__period">
+              <CalendarOutlined />
+              <span>Période analysée</span>
+              <strong>{formatPeriod(dashboardQuery.data.filtres.dateDebut, dashboardQuery.data.filtres.dateFin)}</strong>
+            </div>
+          )}
+        </header>
+      )}
 
       <section className="ca-filter-panel" aria-label="Filtres du chiffre d’affaires">
         <div className="ca-mode-switch">
@@ -426,7 +430,7 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
           <button type="button" onClick={() => dashboardQuery.refetch()}>Réessayer</button>
         </div>
       )}
-      {dashboardQuery.data && <DashboardContent data={dashboardQuery.data} />}
+      {dashboardQuery.data && <DashboardContent data={dashboardQuery.data} audience={audience} />}
     </div>
   );
 }

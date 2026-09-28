@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicParkings } from "../../api/parkings";
+import { envoyerAvis, type CreerAvis } from "../../api/avisApi";
 
 interface PublicFeedbackModalProps {
   open: boolean;
@@ -30,22 +31,22 @@ export function PublicFeedbackModal({ open, onClose }: PublicFeedbackModalProps)
   });
 
   const handleSubmit = async () => {
+    let values: CreerAvis;
     try {
-      const values = await form.validateFields();
+      values = await form.validateFields();
+    } catch {
+      return;
+    }
+    try {
       setIsSubmitting(true);
-
-      // Simulate API submission delay
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      // Log feedback locally
-      console.log("Nouveau feedback usager enregistré :", values);
-
+      await envoyerAvis(values);
       message.success("Merci beaucoup pour votre avis ! Vos retours nous aident à améliorer nos services.");
       form.resetFields();
-      setIsSubmitting(false);
       onClose();
     } catch {
-      message.error("Veuillez renseigner les champs obligatoires avant d'envoyer.");
+      message.error("Votre avis n'a pas pu être enregistré. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,7 +90,6 @@ export function PublicFeedbackModal({ open, onClose }: PublicFeedbackModalProps)
           layout="vertical"
           initialValues={{
             typeAvis: "SUGGESTION",
-            noteSatisfaction: 5,
           }}
         >
           {/* Nature du retour */}
@@ -117,16 +117,14 @@ export function PublicFeedbackModal({ open, onClose }: PublicFeedbackModalProps)
           </Form.Item>
 
           {/* Évaluation par étoiles */}
-          <Form.Item
-            name="noteSatisfaction"
-            label="Évaluation globale de votre satisfaction"
-            rules={[{ required: true, message: "Veuillez sélectionner une note." }]}
-          >
-            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <Form.Item name="noteSatisfaction" label="Évaluation globale de votre satisfaction"
+              rules={[{ required: true, type: "number", min: 1, message: "Veuillez sélectionner au moins une étoile." }]}
+              style={{ marginBottom: 0 }}>
               <Rate className="text-amber-400 text-xl" />
-              <span className="text-xs text-slate-500 font-semibold">Note sur 5</span>
-            </div>
-          </Form.Item>
+            </Form.Item>
+            <span className="text-xs text-slate-500 font-semibold">Note sur 5</span>
+          </div>
 
           {/* Parking concerné (Optionnel) */}
           <Form.Item

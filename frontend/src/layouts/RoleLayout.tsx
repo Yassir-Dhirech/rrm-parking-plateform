@@ -42,6 +42,7 @@ const menuIconMap: Record<string, React.ReactNode> = {
   "demandes-corporate": <TeamOutlined />,
   "demandes-validees": <FileDoneOutlined />,
   abonnements: <SolutionOutlined />,
+  "base-clients": <TeamOutlined />,
   factures: <FileDoneOutlined />,
   cartes: <IdcardOutlined />,
   "impressions-cartes": <PrinterOutlined />,

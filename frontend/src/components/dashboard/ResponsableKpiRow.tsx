@@ -23,7 +23,10 @@ interface ResponsableKpiRowProps {
 type EvolutionMode = "normal" | "inverse";
 
 function formatDh(value: number): string {
-  return `${Math.round(value).toLocaleString("fr-FR")} DH`;
+  return `${value.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} DH`;
 }
 
 function formatDuration(minutes: number | null): string {

@@ -188,9 +188,17 @@ public class ResponsableDashboardService {
                 from periode_abonnement p
                 join abonnement_regulier ar on ar.id = p.abonnement_id
                 join affectation_parking a on a.abonnement_regulier_id = ar.id
+                join parking pk on pk.id = a.parking_id and pk.statut = 'ACTIF'
                 where p.statut = 'ACTIVE'
                   and p.date_debut <= :date
                   and p.date_fin >= :date
+                  and not exists (
+                      select 1 from dossier_rejet_cheque rejet
+                      where rejet.abonnement_id = p.abonnement_id
+                        and rejet.statut in (
+                            'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                        )
+                  )
                   and a.date_debut <= :date
                   and (a.date_fin is null or a.date_fin >= :date)
                 """,
@@ -210,10 +218,21 @@ public class ResponsableDashboardService {
                     join contrat_corporate c on c.id = ae.contrat_corporate_id
                     join demande_nouveau_contrat_corporate dnc
                       on dnc.contrat_genere_id = c.id
-                    join tarif_parking t on t.id = dnc.tarif_parking_id
                     where p.statut = 'ACTIVE'
                       and p.date_debut <= :date
                       and p.date_fin >= :date
+                      and not exists (
+                          select 1 from dossier_rejet_cheque rejet
+                          where rejet.abonnement_id = p.abonnement_id
+                            and rejet.statut in (
+                                'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                            )
+                      )
+                      and exists (
+                          select 1 from parking pk
+                          where pk.id = dnc.parking_id
+                            and pk.statut = 'ACTIF'
+                      )
                 ) x
                 """,
                 params,
@@ -369,6 +388,13 @@ public class ResponsableDashboardService {
                                 where p.statut = 'ACTIVE'
                                   and p.date_debut <= :date
                                   and p.date_fin >= :date
+                                  and not exists (
+                                      select 1 from dossier_rejet_cheque rejet
+                                      where rejet.abonnement_id = p.abonnement_id
+                                        and rejet.statut in (
+                                            'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                                        )
+                                  )
                                   and a.date_debut <= :date
                                   and (
                                         a.date_fin is null
@@ -378,7 +404,7 @@ public class ResponsableDashboardService {
                                 union all
 
                                 select
-                                    t.parking_id,
+                                    dnc.parking_id,
                                     p.abonnement_id
                                 from periode_abonnement p
                                 join abonnement_entreprise ae
@@ -387,11 +413,16 @@ public class ResponsableDashboardService {
                                   on c.id = ae.contrat_corporate_id
                                 join demande_nouveau_contrat_corporate dnc
                                   on dnc.contrat_genere_id = c.id
-                                join tarif_parking t
-                                  on t.id = dnc.tarif_parking_id
                                 where p.statut = 'ACTIVE'
                                   and p.date_debut <= :date
                                   and p.date_fin >= :date
+                                  and not exists (
+                                      select 1 from dossier_rejet_cheque rejet
+                                      where rejet.abonnement_id = p.abonnement_id
+                                        and rejet.statut in (
+                                            'BLOCAGE_EN_COURS', 'BLOQUE', 'REGULARISATION_ENREGISTREE'
+                                        )
+                                  )
                             ) source
                             group by source.parking_id
                         ) stats

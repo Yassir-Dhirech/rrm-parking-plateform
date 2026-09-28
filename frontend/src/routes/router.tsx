@@ -16,6 +16,8 @@ import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
 import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
 import { AnalyseCaPage } from "../pages/comptable/AnalyseCaPage";
+import { AvisFeedbackPage } from "../pages/responsable/AvisFeedbackPage";
+import { BaseClientsPage } from "../pages/responsable/BaseClientsPage";
 import { FactureComptableDetailPage } from "../features/factures/pages/FactureComptableDetailPage";
 import { CartesList } from "../features/cartes/pages/CartesList";
 import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
@@ -154,6 +156,8 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
   if (role === "RESPONSABLE") {
     extraRoutes.push(
+      { path: "/responsable/avis", element: <AvisFeedbackPage /> },
+      { path: "/responsable/clients", element: <BaseClientsPage /> },
       {
         path: "/responsable/demandes-corporate",
         element: <DemandesCorporateResponsable />,
