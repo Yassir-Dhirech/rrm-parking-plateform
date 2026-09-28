@@ -50,11 +50,11 @@ import {
   updateAdminParking,
   toggleLockAdminParking,
   deactivateAdminParking,
+  type AdminParking,
 } from "../../../api/adminParkingsApi";
 import { getBackendUtilisateurs } from "../../../api/adminUtilisateursApi";
 
 
-import type { Parking } from "../types";
 import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
 
 const { Title, Text } = Typography;
@@ -72,12 +72,12 @@ export function ParkingsList() {
   const [isEditModeActive, setIsEditModeActive] = useState(false);
   const [attachedPvName, setAttachedPvName] = useState<string | null>(null);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
-  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<Parking | null>(null);
+  const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<AdminParking | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
-  const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
+  const [selectedParking, setSelectedParking] = useState<AdminParking | null>(null);
   const [lockReason, setLockReason] = useState("");
   const [deactivateReason, setDeactivateReason] = useState("");
 
@@ -253,7 +253,7 @@ export function ParkingsList() {
       
   // Edit Parking Basic Info
     const editMutation = useMutation({
-    mutationFn: async (values: Partial<Parking> & { motifModification?: string }) => {
+    mutationFn: async (values: Partial<AdminParking> & { motifModification?: string }) => {
       if (!selectedParking) return;
       return updateAdminParking(selectedParking.id, values);
     },
@@ -293,7 +293,7 @@ export function ParkingsList() {
   });
 
 
-  const handleOpenEdit = (record: Parking) => {
+  const handleOpenEdit = (record: AdminParking) => {
     setSelectedParking(record);
     setIsEditModeActive(false);
     setAttachedPvName(null);
@@ -304,23 +304,23 @@ export function ParkingsList() {
     setIsEditModalOpen(true);
   };
 
-  const handleOpenPlansModal = (record: Parking) => {
+  const handleOpenPlansModal = (record: AdminParking) => {
     setSelectedParkingForPlans(record);
     setIsPlansModalOpen(true);
   };
 
-  const handleOpenLock = (record: Parking) => {
+  const handleOpenLock = (record: AdminParking) => {
     setSelectedParking(record);
     setLockReason(record.motifVerrouillage || "");
     setIsLockModalOpen(true);
   };
 
-  const handleOpenMap = (record: Parking) => {
+  const handleOpenMap = (record: AdminParking) => {
     setSelectedParking(record);
     setIsMapModalOpen(true);
   };
 
-  const handleOpenDeactivate = (record: Parking) => {
+  const handleOpenDeactivate = (record: AdminParking) => {
     setSelectedParking(record);
     setIsDeactivateModalOpen(true);
   };
@@ -347,7 +347,7 @@ export function ParkingsList() {
       title: "Parking & Adresse",
       dataIndex: "nom",
       key: "nom",
-      render: (nom: string, record: Parking) => (
+      render: (nom: string, record: AdminParking) => (
         <div>
           <strong>{nom}</strong>
           <div style={{ fontSize: 12, color: "#64748b" }}>{record.adresse}</div>
@@ -373,7 +373,7 @@ export function ParkingsList() {
       title: "Statut",
       dataIndex: "actif",
       key: "actif",
-      render: (actif: boolean, record: Parking) => {
+      render: (actif: boolean, record: AdminParking) => {
         if (!actif) return <Tag color="red">Désactivé</Tag>;
         if (record.verrouille) return <Tag color="orange">Sous Maintenance</Tag>;
         return <Tag color="green">En Exploitation</Tag>;
@@ -383,7 +383,7 @@ export function ParkingsList() {
       title: "Paramètres",
       key: "actions",
       width: 150,
-      render: (_: unknown, record: Parking) => {
+      render: (_: unknown, record: AdminParking) => {
         const menuItems = [
           {
             key: "plans",
