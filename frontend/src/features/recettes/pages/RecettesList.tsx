@@ -267,12 +267,14 @@ export function RecettesList() {
         dataSource={data}
         loading={isLoading}
         rowKey="id"
-        scroll={{ x: 1200 }}
+        pagination={false}
+        scroll={{ y: 550, x: 1200 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/recettes/${record.id}`),
           style: { cursor: "pointer" },
         })}
       />
+
 
       {/* MODALE DE GÉNÉRATION PAR LE SUPERVISEUR */}
       <Modal

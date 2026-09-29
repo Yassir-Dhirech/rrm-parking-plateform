@@ -296,9 +296,8 @@ export function AuditLogsList() {
         loading={isLoading}
         rowKey="id"
         size="small"
-        scroll={{ x: "max-content", y: 600 }}
-        pagination={{ pageSize: 15, showTotal: (total) => `${total} événements au total` }}
-      />
+         pagination={false} 
+         scroll={{ x: "max-content", y: 600 }}      />
 
       {/* -----------------------------------------------------------------
           TIROIR LATÉRAL (DRAWER) : HISTORIQUE COMPLET D'UN UTILISATEUR

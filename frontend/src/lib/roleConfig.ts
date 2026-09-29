@@ -141,7 +141,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
     ],
   },
-  COMPTABLE: {
+    COMPTABLE: {
     homePath: "/comptable",
     title: "Espace Comptable",
     kpis: [
@@ -153,10 +153,13 @@ export const roleConfig: Record<Role, RoleConfig> = {
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
+      { key: "abonnements", label: "Base Clients / Abonnements", path: "/comptable/abonnements" }, 
+      { key: "contrats", label: "Contrats Corporate", path: "/comptable/contrats" },
       { key: "recettes", label: "Recettes (Versement)", path: "/comptable/recettes" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
     ],
   },
+
   RESP_REPORTING: {
     homePath: "/reporting",
     title: "Espace Reporting",

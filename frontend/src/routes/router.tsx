@@ -111,7 +111,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     });
   }
 
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/abonnements`, element: <AbonnementsList /> },
       { path: `${roleConfig[role].homePath}/abonnements/:id`, element: <AbonnementDetail /> },
@@ -135,7 +135,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
         : []),
     );
   }
-  if (role === "RESPONSABLE") {
+  if (role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       {
         path: "/responsable/demandes-corporate",
