@@ -199,7 +199,7 @@ public class ChiffreAffairesReportingService {
                 """
                 select
                     p.id as periode_id,
-                    p.prixhtapplique as montant_ht,
+                    coalesce(p.prixhtapplique, 0) as montant_ht,
                     p.date_debut as periode_debut,
                     p.date_fin as periode_fin,
                     p.date_debut as eligibilite_debut,
@@ -208,8 +208,7 @@ public class ChiffreAffairesReportingService {
                     null as parking_nom,
                     'REGULIER' as type_abonnement
                 from periode_abonnement p
-                join abonnement_regulier ar
-                  on ar.id = p.abonnement_id
+                join abonnement_regulier ar on ar.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
                   and not exists (
                       select 1
@@ -228,7 +227,7 @@ public class ChiffreAffairesReportingService {
 
                 select
                     p.id as periode_id,
-                    p.prixhtapplique as montant_ht,
+                    coalesce(p.prixhtapplique, 0) as montant_ht,
                     p.date_debut as periode_debut,
                     p.date_fin as periode_fin,
                     p.date_debut as eligibilite_debut,
@@ -237,8 +236,7 @@ public class ChiffreAffairesReportingService {
                     null as parking_nom,
                     'CORPORATE' as type_abonnement
                 from periode_abonnement p
-                join abonnement_entreprise ae
-                  on ae.id = p.abonnement_id
+                join abonnement_entreprise ae on ae.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
                   and not exists (
                       select 1
@@ -270,10 +268,10 @@ public class ChiffreAffairesReportingService {
                 """
                 select
                     p.id as periode_id,
-                    p.prixhtapplique as montant_ht,
+                    coalesce(p.prixhtapplique, 0) as montant_ht,
                     p.date_debut as periode_debut,
                     p.date_fin as periode_fin,
-                    greatest(p.date_debut, ap.date_debut) as eligibilite_debut,
+                    greatest(p.date_debut, coalesce(ap.date_debut, p.date_debut)) as eligibilite_debut,
                     least(
                         p.date_fin,
                         coalesce(ap.date_fin, p.date_fin)
@@ -282,12 +280,9 @@ public class ChiffreAffairesReportingService {
                     pk.nom as parking_nom,
                     'REGULIER' as type_abonnement
                 from periode_abonnement p
-                join abonnement_regulier ar
-                  on ar.id = p.abonnement_id
-                join affectation_parking ap
-                  on ap.abonnement_regulier_id = ar.id
-                join parking pk
-                  on pk.id = ap.parking_id
+                join abonnement_regulier ar on ar.id = p.abonnement_id
+                left join affectation_parking ap on ap.abonnement_regulier_id = ar.id
+                left join parking pk on pk.id = ap.parking_id
                 where p.statut <> 'ANNULEE'
                   and not exists (
                       select 1
@@ -301,14 +296,11 @@ public class ChiffreAffairesReportingService {
                   )
                   and p.date_debut <= :fin
                   and p.date_fin >= :debut
-                  and ap.date_debut <= :fin
-                  and (
-                        ap.date_fin is null
-                        or ap.date_fin >= :debut
-                  )
+                  and (ap.date_debut is null or ap.date_debut <= :fin)
+                  and (ap.date_fin is null or ap.date_fin >= :debut)
                   and greatest(
                         p.date_debut,
-                        ap.date_debut
+                        coalesce(ap.date_debut, p.date_debut)
                   ) <= least(
                         p.date_fin,
                         coalesce(ap.date_fin, p.date_fin)
@@ -318,7 +310,7 @@ public class ChiffreAffairesReportingService {
 
                 select
                     p.id as periode_id,
-                    p.prixhtapplique as montant_ht,
+                    coalesce(p.prixhtapplique, 0) as montant_ht,
                     p.date_debut as periode_debut,
                     p.date_fin as periode_fin,
                     p.date_debut as eligibilite_debut,
@@ -327,19 +319,11 @@ public class ChiffreAffairesReportingService {
                     pk.nom as parking_nom,
                     'CORPORATE' as type_abonnement
                 from periode_abonnement p
-                join abonnement_entreprise ae
-                  on ae.id = p.abonnement_id
-                join contrat_corporate c
-                  on c.id = ae.contrat_corporate_id
-                join demande_nouveau_contrat_corporate dnc
-                  on dnc.contrat_genere_id = c.id
-                left join tarif_parking tp
-                  on tp.id = dnc.tarif_parking_id
-                join parking pk
-                  on pk.id = coalesce(
-                        dnc.parking_id,
-                        tp.parking_id
-                  )
+                join abonnement_entreprise ae on ae.id = p.abonnement_id
+                left join contrat_corporate c on c.id = ae.contrat_corporate_id
+                left join demande_nouveau_contrat_corporate dnc on dnc.contrat_genere_id = c.id
+                left join tarif_parking tp on tp.id = dnc.tarif_parking_id
+                left join parking pk on pk.id = coalesce(dnc.parking_id, tp.parking_id)
                 where p.statut <> 'ANNULEE'
                   and not exists (
                       select 1
@@ -363,20 +347,30 @@ public class ChiffreAffairesReportingService {
             java.sql.ResultSet rs
     ) throws java.sql.SQLException {
         Object parkingIdObjet = rs.getObject("parking_id");
+        java.sql.Date dDebut = rs.getDate("periode_debut");
+        java.sql.Date dFin = rs.getDate("periode_fin");
+        java.sql.Date dEligDebut = rs.getDate("eligibilite_debut");
+        java.sql.Date dEligFin = rs.getDate("eligibilite_fin");
+
+        LocalDate debut = dDebut != null ? dDebut.toLocalDate() : LocalDate.now();
+        LocalDate fin = dFin != null ? dFin.toLocalDate() : debut;
+        LocalDate eligDebut = dEligDebut != null ? dEligDebut.toLocalDate() : debut;
+        LocalDate eligFin = dEligFin != null ? dEligFin.toLocalDate() : fin;
+        BigDecimal montant = rs.getBigDecimal("montant_ht");
 
         return new LigneChiffreAffaires(
                 rs.getLong("periode_id"),
-                rs.getBigDecimal("montant_ht"),
-                rs.getObject("periode_debut", LocalDate.class),
-                rs.getObject("periode_fin", LocalDate.class),
-                rs.getObject("eligibilite_debut", LocalDate.class),
-                rs.getObject("eligibilite_fin", LocalDate.class),
+                montant != null ? montant : BigDecimal.ZERO,
+                debut,
+                fin,
+                eligDebut,
+                eligFin,
                 parkingIdObjet == null
                         ? null
                         : ((Number) parkingIdObjet).longValue(),
-                rs.getString("parking_nom"),
+                rs.getString("parking_nom") != null ? rs.getString("parking_nom") : "Non assigné",
                 TypeAbonnementReporting.valueOf(
-                        rs.getString("type_abonnement")
+                        rs.getString("type_abonnement") != null ? rs.getString("type_abonnement") : "REGULIER"
                 )
         );
     }
@@ -503,25 +497,15 @@ public class ChiffreAffairesReportingService {
                         .thenComparing(entree -> entree.getKey().nom()))
                 .toList();
 
-        List<BigDecimal> montantsAffiches =
-                ReconciliationArrondi.reconciler(
-                        lignesTriees.stream()
-                                .map(Map.Entry::getValue)
-                                .toList(),
-                        total
-                );
-
         List<ChiffreAffairesDashboardResponse.ChiffreAffairesParking> resultat =
                 new ArrayList<>(lignesTriees.size());
 
-        for (int index = 0; index < lignesTriees.size(); index++) {
-            Map.Entry<ParkingCle, BigDecimal> ligne = lignesTriees.get(index);
-
+        for (Map.Entry<ParkingCle, BigDecimal> ligne : lignesTriees) {
             resultat.add(
                     new ChiffreAffairesDashboardResponse.ChiffreAffairesParking(
                             ligne.getKey().id(),
                             ligne.getKey().nom(),
-                            montantsAffiches.get(index),
+                            montant(ligne.getValue()),
                             pourcentage(ligne.getValue(), total)
                     )
             );

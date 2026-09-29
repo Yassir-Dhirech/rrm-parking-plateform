@@ -293,17 +293,19 @@ export function FacturesList() {
           </div>
         )}
 
-        <Table
+                <Table
           rowKey="id"
           columns={columns}
           dataSource={data}
           loading={isLoading}
-          scroll={{ x: "max-content" }}
+          pagination={false}
+          scroll={{ y: 550, x: "max-content" }}
           onRow={(record) => ({
             onClick: () => navigate(`${basePath}/factures/${record.id}`),
             style: { cursor: "pointer" },
           })}
         />
+
       </Card>
 
       {/* Modal: Générer une Facture */}

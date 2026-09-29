@@ -312,8 +312,8 @@ export function UtilisateursList() {
         dataSource={utilisateurs}
         loading={isLoading}
         rowKey="id"
-        scroll={{ x: "max-content" }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ x: "max-content", y: 550 }}
+        pagination={false}
       />
 
       {/* MODAL CRÉATION */}

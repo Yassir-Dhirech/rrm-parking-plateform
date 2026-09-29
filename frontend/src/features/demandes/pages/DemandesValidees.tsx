@@ -226,8 +226,8 @@ export function DemandesValidees() {
         columns={columns}
         dataSource={query.data ?? []}
         loading={query.isLoading}
-        scroll={{ x: 1250 }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ x: 1250, y: 550 }}
+        pagination={false}
         locale={{
           emptyText: <Empty description="Aucune demande validée" />,
         }}

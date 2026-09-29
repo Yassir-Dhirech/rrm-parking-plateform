@@ -157,7 +157,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
         : []),
     );
   }
-  if (role === "RESPONSABLE") {
+  if (role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: "/responsable/avis", element: <AvisFeedbackPage /> },
       { path: "/responsable/clients", element: <BaseClientsPage /> },
