@@ -163,8 +163,8 @@ export function DemandesCorporateResponsable() {
         columns={columns}
         dataSource={query.data ?? []}
         loading={query.isLoading}
-        scroll={{ x: 900 }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ x: 900, y: 550 }}
+        pagination={false}
         locale={{ emptyText: <Empty description="Aucune demande corporate à traiter" /> }}
       />
     </section>

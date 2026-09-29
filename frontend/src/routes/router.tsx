@@ -186,6 +186,14 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
+  if (role === "COMPTABLE") {
+    extraRoutes.push(
+      { path: "/comptable/demandes-validees", element: <DemandesValidees /> },
+      { path: "/comptable/contrats", element: <ContratsList /> },
+      { path: "/comptable/contrats/:id", element: <ContratDetail /> },
+    );
+  }
+
   if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },

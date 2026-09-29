@@ -179,3 +179,17 @@ body {
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
 }
+
+/* Défilement fluide et discret pour tous les tableaux */
+.ant-table-body {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.ant-table-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ant-table-body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}

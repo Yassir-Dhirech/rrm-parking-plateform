@@ -170,8 +170,9 @@ export function DemandesAValider() {
         columns={columns}
         dataSource={query.data ?? []}
         loading={query.isLoading}
-        scroll={{ x: 1000 }}
-        pagination={{ pageSize: 10 }}
+        scroll={{ x: 1000, y: 550 }}
+pagination={false}
+
         locale={{
           emptyText: (
             <Empty description="Aucune demande payée à valider" />

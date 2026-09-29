@@ -380,8 +380,8 @@ export function DemandesList() {
               columns={columns}
               dataSource={filteredData}
               loading={isLoading}
-              pagination={{ pageSize: 8, className: "px-4" }}
-              scroll={{ x: "max-content" }}
+              pagination={false}
+              scroll={{ x: "max-content", y: 550 }}
               onRow={(record) => ({
                 onClick: () => navigate(`${basePath}/demandes/${record.id}`),
                 className: "cursor-pointer hover:bg-slate-50/80 transition-colors",

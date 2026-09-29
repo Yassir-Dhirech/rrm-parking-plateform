@@ -156,7 +156,7 @@ export function AgentHistoriquePage() {
           columns={colonnesDemandes}
           dataSource={data?.demandesCreees ?? []}
           loading={historique.isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           scroll={{ x: 1000 }}
         />
       ),
@@ -170,7 +170,7 @@ export function AgentHistoriquePage() {
           columns={colonnesPaiements}
           dataSource={data?.paiementsValides ?? []}
           loading={historique.isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           scroll={{ x: 1100 }}
         />
       ),
@@ -184,7 +184,7 @@ export function AgentHistoriquePage() {
           columns={colonnesOperations}
           dataSource={data?.impressionsDeclarees ?? []}
           loading={historique.isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           scroll={{ x: 1150 }}
         />
       ),
@@ -198,7 +198,7 @@ export function AgentHistoriquePage() {
           columns={colonnesOperations}
           dataSource={data?.remisesDeclarees ?? []}
           loading={historique.isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           scroll={{ x: 1150 }}
         />
       ),
@@ -212,7 +212,7 @@ export function AgentHistoriquePage() {
           columns={colonnesModifications}
           dataSource={data?.modificationsDemandes ?? []}
           loading={historique.isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           scroll={{ x: 1000 }}
           expandable={{
             expandedRowRender: (ligne) => <DetailsModification details={ligne.detailsAvantApres} />,

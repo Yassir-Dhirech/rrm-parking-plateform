@@ -292,12 +292,13 @@ export function AbonnementsList() {
         />
       </div>
 
-      <Table
+        <Table
         rowKey="id"
         columns={columns}
         dataSource={filteredData}
         loading={isLoading}
-        scroll={{ x: 1300 }}
+        pagination={false}
+        scroll={{ y: 550, x: 1300 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/abonnements/${record.id}`),
           style: { cursor: "pointer" },

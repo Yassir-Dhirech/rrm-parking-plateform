@@ -24,11 +24,26 @@ import {
 } from "@ant-design/icons";
 import { getAuditLogs } from "../../../api/adminAuditApi";
 import type { Role } from "../../../lib/roleConfig";
-import { formatDate } from "../../../lib/dateUtils";
 import type { ColumnsType } from "antd/es/table";
 import type { AuditLog } from "../../admin/types";
 
 const { Title } = Typography;
+// Formatage complet Date + Heure et Minute exactes
+function formatDateTime(dateStr?: string | Date | null): string {
+  if (!dateStr) return "-";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} à ${hours}:${minutes}`;
+  } catch {
+    return String(dateStr);
+  }
+}
 
 export function AuditLogsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,19 +119,32 @@ export function AuditLogsList() {
 
   // 2. Colonnes triables avec clic sur l'utilisateur
   const columns: ColumnsType<AuditLog> = [
-    {
+        {
       title: "Horodatage",
       dataIndex: "timestamp",
       key: "timestamp",
-      width: 170,
-      render: (v: string) => (
-        <span className="font-semibold text-slate-700">{formatDate(v)}</span>
-      ),
+      width: 210,
+      render: (v: string) => {
+        if (!v) return "-";
+        const d = new Date(v);
+        if (isNaN(d.getTime())) return v;
+        const datePart = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+        const timePart = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        return (
+          <span style={{ fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap" }}>
+            {datePart}{" "}
+            <Tag color="blue" style={{ marginLeft: 6, fontWeight: 700, fontSize: "0.78rem" }}>
+              <ClockCircleOutlined style={{ marginRight: 4 }} />
+              {timePart}
+            </Tag>
+          </span>
+        );
+      },
       sorter: (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       defaultSortOrder: "descend",
     },
     {
-      title: "Utilisateur (Cliquer pour voir tout)",
+      title: "Utilisateur ",
       dataIndex: "utilisateurEmail",
       key: "utilisateurEmail",
       sorter: (a, b) => (a.utilisateurEmail || "").localeCompare(b.utilisateurEmail || ""),
@@ -263,9 +291,8 @@ export function AuditLogsList() {
         loading={isLoading}
         rowKey="id"
         size="small"
-        scroll={{ x: "max-content", y: 600 }}
-        pagination={{ pageSize: 15, showTotal: (total) => `${total} événements au total` }}
-      />
+         pagination={false} 
+         scroll={{ x: "max-content", y: 600 }}      />
 
       {/* -----------------------------------------------------------------
           TIROIR LATÉRAL (DRAWER) : HISTORIQUE COMPLET D'UN UTILISATEUR
@@ -306,7 +333,7 @@ export function AuditLogsList() {
                   Dernière activité
                 </span>
                 <span className="text-xs font-bold text-slate-700">
-                  {userSpecificLogs[0] ? formatDate(userSpecificLogs[0].timestamp) : "Aucune"}
+{userSpecificLogs[0] ? formatDateTime(userSpecificLogs[0].timestamp) : "Aucune"}
                 </span>
               </div>
             </div>
@@ -357,9 +384,11 @@ export function AuditLogsList() {
                             <Tag color={color} className="font-black text-xs m-0">
                               {log.action}
                             </Tag>
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              {formatDate(log.timestamp)}
-                            </span>
+                            <span className="text-[11px] text-slate-500 font-bold flex items-center gap-1">
+  <ClockCircleOutlined style={{ color: "#0284c7" }} />
+  {formatDateTime(log.timestamp)}
+</span>
+
                           </div>
 
                           <div className="text-xs text-slate-700 font-medium my-1.5 leading-relaxed">

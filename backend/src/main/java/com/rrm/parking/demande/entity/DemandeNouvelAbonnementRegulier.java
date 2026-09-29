@@ -7,7 +7,6 @@ import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.vehicule.entity.Vehicule;
-import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import jakarta.persistence.*;
 

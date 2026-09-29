@@ -1,6 +1,5 @@
 package com.rrm.parking.facturation.service;
 
-import com.rrm.parking.client.entity.Client;
 import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.dto.response.DemandeFacturationResponse;

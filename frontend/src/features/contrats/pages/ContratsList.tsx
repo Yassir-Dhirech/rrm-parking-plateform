@@ -173,17 +173,19 @@ export function ContratsList() {
       <Title level={4} style={{ color: "#003566", margin: 0, marginBottom: 16 }}>
         Gestion de la Situation des Contrats Corporate
       </Title>
-      <Table
+            <Table
         rowKey="id"
         columns={columns}
         dataSource={data}
         loading={isLoading}
-        scroll={{ x: 1200 }}
+        pagination={false}
+        scroll={{ y: 550, x: 1200 }}
         onRow={(record) => ({
           onClick: () => navigate(`${basePath}/contrats/${record.id}`),
           style: { cursor: "pointer" },
         })}
       />
+
 
       {/* Modal Scanner Contrat */}
       {selectedContratToScan && (

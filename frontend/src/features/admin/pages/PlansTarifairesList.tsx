@@ -17,7 +17,7 @@ import {
   Col,
   Tooltip,
   Upload,
-  Divider,
+  Radio,
 } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,16 +27,17 @@ import {
   ClockCircleOutlined,
   FilterOutlined,
   EnvironmentOutlined,
-  TagOutlined,
   StopOutlined,
   CheckCircleOutlined,
   EyeOutlined,
   DeleteOutlined, 
   UploadOutlined,
+  UserOutlined,
+  BankOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
-import { getAdminTarifs, deleteAdminTarif } from "../../../api/adminTarifsApi";
+import { getAdminTarifs, deleteAdminTarif , createAdminTarif, updateAdminTarif} from "../../../api/adminTarifsApi";
 import { getAdminParkings } from "../../../api/adminParkingsApi";
-;
 import type { PlanTarifaire } from "../types";
 
 const { Title, Text } = Typography;
@@ -50,9 +51,51 @@ const TYPE_ABONNEMENT_LABELS: Record<string, { label: string; color: string; def
   PARTICULIER: { label: "Particulier Standard", color: "geekblue", defaultPlage: "24h / 7j" },
 };
 
+// Fonction de détection du segment Corporate (B2B multi-véhicules) vs Régulier (Particulier 1 véhicule)
+export function getSegmentTarif(record: PlanTarifaire): { isCorporate: boolean; label: string; tagColor: string; description: string } {
+  const code = (record.typeAbonnement || "").toUpperCase();
+  const lib = (record.libelle || "").toUpperCase();
+  
+  const isCorp = 
+    code === "CORPORATE" || 
+    code.startsWith("CORP") || 
+    code === "TAJIR" || 
+    lib.includes("CORPORATE") || 
+    lib.includes("FLOTTE") || 
+    lib.includes("ENTREPRISE") ||
+    lib.includes("CONVENTION") ||
+    (record.dureeMois && record.dureeMois > 36);
+
+      if (isCorp) {
+    return {
+      isCorporate: true,
+      label: "Corporate (Flotte B2B)",
+      tagColor: "magenta",
+      description: "Tarif dégressif multi-véhicules",
+    };
+  }
+
+  return {
+    isCorporate: false,
+    label: "Régulier (Particulier)",
+    tagColor: "blue",
+    description: "Tarif individuel (1 véhicule)",
+  };
+}
+
+// Calcul automatique du Hors Taxe (HT) et de la TVA (20%) à partir du prix TTC
+export function getHtAndTva(ttc?: number | null) {
+  const safeTtc = Number(ttc) || 0;
+  if (safeTtc <= 0) return { ht: 0, tva: 0 };
+  const ht = Math.round((safeTtc / 1.2) * 100) / 100;
+  const tva = Math.round((safeTtc - ht) * 100) / 100;
+  return { ht, tva };
+}
+
 export function PlansTarifairesList() {
   const queryClient = useQueryClient();
   const [selectedParkingFilter, setSelectedParkingFilter] = useState<number | "ALL">("ALL");
+  const [selectedSegmentFilter, setSelectedSegmentFilter] = useState<"ALL" | "REGULIER" | "CORPORATE">("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
@@ -62,11 +105,14 @@ export function PlansTarifairesList() {
   const [deleteReason, setDeleteReason] = useState("");
   const [attachedDocName, setAttachedDocName] = useState<string | null>(null); // Pièce jointe attachée
 
-
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
-    // 1. Tarifs réels depuis MySQL
+  // Écoute en temps réel du prix TTC saisi pour calculer immédiatement le HT et la TVA
+  const watchedCreateTTC = Form.useWatch("tarifTTC", createForm);
+  const watchedEditTTC = Form.useWatch("tarifTTC", editForm);
+
+  // 1. Tarifs réels depuis MySQL
   const { data: tarifs = [], isLoading } = useQuery({
     queryKey: ["admin_tarifs"],
     queryFn: getAdminTarifs,
@@ -78,39 +124,50 @@ export function PlansTarifairesList() {
     queryFn: getAdminParkings,
   });
 
-
-    // Filtrer les tarifs par parking sélectionné (avec conversion Number pour éviter les incompatibilités)
+  // Filtrer les tarifs par parking et par segment client (Régulier vs Corporate)
   const filteredTarifs = tarifs.filter((t) => {
-    if (selectedParkingFilter === "ALL") return true;
-    return Number(t.parkingId) === Number(selectedParkingFilter);
+    const matchParking = selectedParkingFilter === "ALL" || Number(t.parkingId) === Number(selectedParkingFilter);
+    const seg = getSegmentTarif(t);
+    const matchSegment = 
+      selectedSegmentFilter === "ALL" ||
+      (selectedSegmentFilter === "CORPORATE" && seg.isCorporate) ||
+      (selectedSegmentFilter === "REGULIER" && !seg.isCorporate);
+    return matchParking && matchSegment;
   });
 
-
-  
-  const createMutation = useMutation({
-    mutationFn: async (values: Partial<PlanTarifaire>) => {
-      // Validation & confirmation
-      return values;
+    const createMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const { ht } = getHtAndTva(values.tarifTTC);
+      values.tarifHT = ht;
+      return createAdminTarif(values);
     },
     onSuccess: () => {
-      message.success("Tarif configuré pour le parking avec succès !");
+      message.success("Tarif enregistré avec succès dans la base de données !");
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       setIsCreateModalOpen(false);
       createForm.resetFields();
     },
+    onError: () => {
+      message.error("Erreur lors de l'enregistrement du tarif.");
+    }
   });
 
-  // 2. Modification de Tarif
   const editMutation = useMutation({
-    mutationFn: async (values: Partial<PlanTarifaire>) => {
-      return values;
+    mutationFn: async (values: any) => {
+      const { ht } = getHtAndTva(values.tarifTTC);
+      values.tarifHT = ht;
+      return updateAdminTarif(selectedTarif!.id, values);
     },
     onSuccess: () => {
-      message.success("Tarif du parking mis à jour avec succès !");
+      message.success("Tarif mis à jour avec succès dans la base de données !");
       queryClient.invalidateQueries({ queryKey: ["admin_tarifs"] });
       setIsEditModalOpen(false);
     },
+    onError: () => {
+      message.error("Erreur lors de la mise à jour du tarif.");
+    }
   });
+
 
   // 3. Désactivation de Tarif
   const deactivateMutation = useMutation({
@@ -125,11 +182,22 @@ export function PlansTarifairesList() {
     },
   });
 
-  const handleOpenEdit = (record: PlanTarifaire) => {
+      const handleOpenEdit = (record: PlanTarifaire) => {
     setSelectedTarif(record);
-    editForm.setFieldsValue(record);
+    const seg = getSegmentTarif(record);
+    const ttc = record.tarifTTC || (record.tarifHT ? Math.round(record.tarifHT * 1.2) : 0);
+    editForm.setFieldsValue({
+      parkingNom: record.parkingNom,
+      segment: seg.isCorporate ? "CORPORATE" : "REGULIER",
+      libelle: record.libelle,
+      typeAbonnement: record.typeAbonnement,
+      plageHoraire: record.plageHoraire || "24h / 7j",
+      tarifTTC: ttc,
+      motifModification: "",
+    });
     setIsEditModalOpen(true);
   };
+
 
   const handleOpenDeactivate = (record: PlanTarifaire) => {
     setSelectedTarif(record);
@@ -190,14 +258,68 @@ export function PlansTarifairesList() {
         );
       },
     },
-    
-    
     {
-      title: "Prix/mois TTC ",
+      title: "Type de Client",
+      key: "segment",
+      width: 200,
+      filters: [
+        { text: "👤 Régulier (Particulier)", value: "REGULIER" },
+        { text: "🏢 Corporate (Flottes Entreprises)", value: "CORPORATE" },
+      ],
+      onFilter: (value: any, record: PlanTarifaire) => {
+        const seg = getSegmentTarif(record);
+        return value === "CORPORATE" ? seg.isCorporate : !seg.isCorporate;
+      },
+      render: (_: unknown, record: PlanTarifaire) => {
+        const seg = getSegmentTarif(record);
+        return seg.isCorporate ? (
+          <div>
+            <Tag color="magenta" style={{ fontWeight: 700, borderRadius: 6, padding: "3px 9px", fontSize: "12px" }}>
+              <BankOutlined style={{ marginRight: 5 }} /> Corporate
+            </Tag>
+            <div style={{ fontSize: "11px", color: "#9d174d", marginTop: 3, fontWeight: 600 }}>
+              Flottes (Multi-véhicules)
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Tag color="blue" style={{ fontWeight: 700, borderRadius: 6, padding: "3px 9px", fontSize: "12px" }}>
+              <UserOutlined style={{ marginRight: 5 }} /> Régulier
+            </Tag>
+            <div style={{ fontSize: "11px", color: "#64748b", marginTop: 3 }}>
+              Particulier (1 véhicule)
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Prix Mensuel TTC",
       dataIndex: "tarifTTC",
       key: "tarifTTC",
       sorter: (a: PlanTarifaire, b: PlanTarifaire) => a.tarifTTC - b.tarifTTC,
-      render: (v: number) => <strong style={{ color: "#0284c7", fontSize: "1.05rem" }}>{v?.toLocaleString("fr-FR")} MAD</strong>,
+      render: (v: number, record: PlanTarifaire) => {
+        const seg = getSegmentTarif(record);
+        return (
+          <div>
+            <strong style={{ color: seg.isCorporate ? "#9333ea" : "#0284c7", fontSize: "1.05rem" }}>
+              {v?.toLocaleString("fr-FR")} MAD
+            </strong>
+            <span style={{ fontSize: "11px", color: "#64748b", marginLeft: 4 }}>
+              {seg.isCorporate ? "/ place / mois" : "/ mois"}
+            </span>
+            {seg.isCorporate ? (
+              <div style={{ fontSize: "10px", color: "#a855f7", fontWeight: 600 }}>
+                Tarif groupé B2B (Dégressif)
+              </div>
+            ) : (
+              <div style={{ fontSize: "10px", color: "#94a3b8" }}>
+                Tarif standard unitaire
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Statut Grille",
@@ -313,12 +435,12 @@ export function PlansTarifairesList() {
         </Text>
       </div>
 
-      {/* Filter by Parking Bar */}
+      {/* Filter Bar : Parking & Type de Client */}
       <div style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 8, marginBottom: 20, border: "1px solid #e2e8f0" }}>
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={12} md={8}>
+          <Col xs={24} sm={12} md={6}>
             <div style={{ fontWeight: 600, color: "#334155", marginBottom: 6 }}>
-              <FilterOutlined /> Filtrer les Tarifs par Parking :
+              <FilterOutlined /> Filtrer par Parking :
             </div>
             <Select
               style={{ width: "100%" }}
@@ -326,12 +448,32 @@ export function PlansTarifairesList() {
               value={selectedParkingFilter}
               onChange={(val) => setSelectedParkingFilter(val)}
             >
-              <Option value="ALL"><EnvironmentOutlined style={{ marginRight: 6 }} />Tous les Parkings de Rabat</Option>
+              <Option value="ALL"><EnvironmentOutlined style={{ marginRight: 6 }} />Tous les Parkings ({parkings.length})</Option>
               {parkings.map((p) => (
                 <Option key={p.id} value={p.id}>
                   <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
                 </Option>
               ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={6}>
+            <div style={{ fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+              <TeamOutlined /> Type de Client / Segment :
+            </div>
+            <Select
+              style={{ width: "100%" }}
+              size="large"
+              value={selectedSegmentFilter}
+              onChange={(val) => setSelectedSegmentFilter(val)}
+            >
+              <Option value="ALL">Tous les Segments (Régulier & Corporate)</Option>
+              <Option value="REGULIER">
+                <UserOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Régulier (Particulier 1 véhicule)
+              </Option>
+              <Option value="CORPORATE">
+                <BankOutlined style={{ marginRight: 6, color: "#9333ea" }} /> Corporate (Flottes multi-véhicules)
+              </Option>
             </Select>
           </Col>
         </Row>
@@ -349,11 +491,21 @@ export function PlansTarifairesList() {
         pagination={false}
         scroll={{ y: 550, x: "max-content" }}
       />
-           {/* -------------------------------------------------------------
-          MODAL 1 : AJOUTER UN TARIF (AVEC MOTIF & DOCUMENT ATTACHÉ)
+                {/* -------------------------------------------------------------
+          MODAL 1 : AJOUTER UN TARIF (STRUCTURE PROPRE EN 4 ÉTAPES)
           ------------------------------------------------------------- */}
       <Modal
-        title="Ajouter / Configurer un Tarif Parking"
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#e0f2fe", display: "flex", alignItems: "center", justifyContent: "center", color: "#0284c7" }}>
+              <PlusOutlined style={{ fontSize: 18 }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "#0f172a" }}>Nouveau Tarif Parking</div>
+              <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 400 }}>Configuration homologuée d'un forfait d'abonnement</div>
+            </div>
+          </div>
+        }
         open={isCreateModalOpen}
         onCancel={() => {
           setIsCreateModalOpen(false);
@@ -361,92 +513,220 @@ export function PlansTarifairesList() {
         }}
         onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
-        okText="Valider & Enregistrer"
+        okText="Valider & Enregistrer dans la Base"
         cancelText="Annuler"
+        width={650}
       >
-        <Form form={createForm} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item name="parkingId" label="Parking Concerné" rules={[{ required: true, message: "Veuillez choisir un parking" }]}>
-            <Select placeholder="Sélectionnez un parking Rabat" size="large">
-              {parkings.map((p) => (
-                <Option key={p.id} value={p.id}>
-                  <EnvironmentOutlined style={{ marginRight: 6 }} />{p.nom} ({p.code})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+        <Form
+          form={createForm}
+          layout="vertical"
+          initialValues={{
+            segment: "REGULIER",
+            typeAbonnement: "H24_NON_RESERVEE",
+            libelle: "24h/24 et 7j/7 place non réservée",
+            plageHoraire: "24h / 7j",
+            dureeMois: 1,
+          }}
+          onFinish={(v) => createMutation.mutate(v)}
+        >
+          {/* Bloc 1 : Périmètre & Typologie Client */}
+          <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 16 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.05em", marginBottom: 12 }}>
+              1. Périmètre & Typologie Client
+            </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="parkingId"
+                  label={<span style={{ fontWeight: 600 }}>Parking Concerné *</span>}
+                  rules={[{ required: true, message: "Veuillez choisir un parking" }]}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Select placeholder="Sélectionnez un parking" size="large">
+                    {parkings.map((p) => (
+                      <Option key={p.id} value={p.id}>
+                        <EnvironmentOutlined style={{ marginRight: 6, color: "#0284c7" }} />{p.nom}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="segment"
+                  label={<span style={{ fontWeight: 600 }}>Type de Client / Segment *</span>}
+                  rules={[{ required: true }]}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Radio.Group buttonStyle="solid" style={{ width: "100%", display: "flex" }}>
+                    <Radio.Button value="REGULIER" style={{ flex: 1, textAlign: "center" }}>
+                      <UserOutlined style={{ marginRight: 4, color: "#0284c7" }} /> Régulier
+                    </Radio.Button>
+                    <Radio.Button value="CORPORATE" style={{ flex: 1, textAlign: "center" }}>
+                      <BankOutlined style={{ marginRight: 4, color: "#9333ea" }} /> Corporate
+                    </Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-          <Form.Item name="typeAbonnement" label="Type d'Abonnement" rules={[{ required: true, message: "Type requis" }]}>
-            <Select
-              size="large"
-              onChange={(val) => {
-                const info = TYPE_ABONNEMENT_LABELS[val];
-                if (info) {
-                  createForm.setFieldValue("libelle", info.label);
-                  createForm.setFieldValue("plageHoraire", info.defaultPlage);
-                }
-              }}
+          {/* Bloc 2 : Formule d'Abonnement */}
+          <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 16 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.05em", marginBottom: 12 }}>
+              2. Formule & Créneau d'Accès
+            </div>
+
+            <Form.Item
+              name="typeAbonnement"
+              label={<span style={{ fontWeight: 600 }}>Modèle de Forfait Homologué *</span>}
+              rules={[{ required: true, message: "Veuillez sélectionner un forfait" }]}
             >
-              <Option value="PERMANENT_24_7"><ClockCircleOutlined style={{ marginRight: 6 }} />Permanent 24h / 7j</Option>
-              <Option value="JOUR_8H_20H"><ClockCircleOutlined style={{ marginRight: 6 }} />Journée (08:00 - 20:00)</Option>
-              <Option value="NUIT_19H_8H"><ClockCircleOutlined style={{ marginRight: 6 }} />Nuit (19:00 - 08:00)</Option>
-              <Option value="CORPORATE"><TagOutlined style={{ marginRight: 6 }} />Corporate (Abonnement Flotte Entreprise)</Option>
-            </Select>
-          </Form.Item>
+              <Select
+                size="large"
+                onChange={(val) => {
+                  const FORFAITS_DEFAULTS: Record<string, { libelle: string; plage: string }> = {
+                    H24_NON_RESERVEE: { libelle: "24h/24 et 7j/7 place non réservée", plage: "24h / 7j" },
+                    H24_RESERVEE: { libelle: "24h/24 et 7j/7 place réservée", plage: "24h / 7j" },
+                    JOUR_7J_08H_20H: { libelle: "Jour 7j/7 08h-20h", plage: "08:00 - 20:00" },
+                    JOUR_7J_08H_22H: { libelle: "Jour 7j/7 08h-22h", plage: "08:00 - 22:00" },
+                    NUIT_7J_20H_08H: { libelle: "Nuit 7j/7 20h-08h", plage: "20:00 - 08:00" },
+                    NUIT_5J_20H_08H: { libelle: "Nuit 5j/7 hors week-end 20h-08h", plage: "20:00 - 08:00 (Lun-Ven)" },
+                    NUIT_5J_WE_24H: { libelle: "Nuit 5j/7 20h-08h et week-end 24h/24", plage: "20:00 - 08:00 + WE 24h" },
+                    RAHTI: { libelle: "Rahti - nuit 7j/7 18h-09h et week-end 24h/24", plage: "18:00 - 09:00 + WE 24h" },
+                    TAJIR: { libelle: "Tajir - jour 7j/7 08h-22h", plage: "08:00 - 22:00" },
+                    CORPORATE_FLOTTE: { libelle: "Abonnement Flotte Corporate Entreprise", plage: "Accès multi-véhicules" },
+                  };
+                  const f = FORFAITS_DEFAULTS[val];
+                  if (f) {
+                    createForm.setFieldValue("libelle", f.libelle);
+                    createForm.setFieldValue("plageHoraire", f.plage);
+                  }
+                }}
+              >
+                <Option value="H24_NON_RESERVEE"><ClockCircleOutlined style={{ marginRight: 6, color: "#0284c7" }} />24h/24 et 7j/7 — Non Réservée</Option>
+                <Option value="H24_RESERVEE"><ClockCircleOutlined style={{ marginRight: 6, color: "#16a34a" }} />24h/24 et 7j/7 — Place Réservée (VIP)</Option>
+                <Option value="JOUR_7J_08H_20H"><ClockCircleOutlined style={{ marginRight: 6, color: "#f59e0b" }} />Jour 7j/7 (08:00 - 20:00)</Option>
+                <Option value="JOUR_7J_08H_22H"><ClockCircleOutlined style={{ marginRight: 6, color: "#f97316" }} />Jour 7j/7 (08:00 - 22:00)</Option>
+                <Option value="NUIT_7J_20H_08H"><ClockCircleOutlined style={{ marginRight: 6, color: "#8b5cf6" }} />Nuit 7j/7 (20:00 - 08:00)</Option>
+                <Option value="NUIT_5J_20H_08H"><ClockCircleOutlined style={{ marginRight: 6, color: "#6366f1" }} />Nuit 5j/7 Semaine (20:00 - 08:00)</Option>
+                <Option value="NUIT_5J_WE_24H"><ClockCircleOutlined style={{ marginRight: 6, color: "#a855f7" }} />Nuit 5j/7 + Week-end 24h</Option>
+                <Option value="RAHTI"><TagsOutlined style={{ marginRight: 6, color: "#06b6d4" }} />Formule Rahti (Résidents)</Option>
+                <Option value="TAJIR"><TagsOutlined style={{ marginRight: 6, color: "#eab308" }} />Formule Tajir (Commerçants)</Option>
+                <Option value="CORPORATE_FLOTTE"><BankOutlined style={{ marginRight: 6, color: "#ec4899" }} />Convention Corporate (Flotte Entreprise)</Option>
+              </Select>
+            </Form.Item>
 
-          <Form.Item name="libelle" label="Libellé du Forfait" rules={[{ required: true }]}>
-            <Input placeholder="Ex: Abonnement Journée 8h-20h Agdal" />
-          </Form.Item>
+            <Row gutter={16}>
+              <Col span={14}>
+                <Form.Item name="libelle" label={<span style={{ fontWeight: 600 }}>Libellé Affiché *</span>} rules={[{ required: true }]}>
+                  <Input placeholder="Ex: 24h/24 et 7j/7 place non réservée" />
+                </Form.Item>
+              </Col>
+              <Col span={10}>
+                <Form.Item name="plageHoraire" label={<span style={{ fontWeight: 600 }}>Créneau Horaire</span>}>
+                  <Input placeholder="Ex: 24h / 7j" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="plageHoraire" label="Plage Horaire / Créneau">
-                <Input placeholder="08:00 - 20:00" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="dureeMois" label="Durée (Mois)" rules={[{ required: true }]} initialValue={1}>
-                <InputNumber style={{ width: "100%" }} min={1} max={36} />
-              </Form.Item>
-            </Col>
-          </Row>
+          {/* Bloc 3 : Tarification Homologuée & Calcul Automatique TTC -> HT */}
+          <div style={{ background: "#f0fdf4", padding: "14px 16px", borderRadius: 10, border: "1px solid #bbf7d0", marginBottom: 16 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#166534", letterSpacing: "0.05em", marginBottom: 12 }}>
+              3. Tarification Homologuée (TTC & Décomposition Fiscale)
+            </div>
 
-          <Form.Item name="tarifHT" label="Tarif Mensuel HT (MAD HT)" rules={[{ required: true, message: "Tarif requis" }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} placeholder="400" />
-          </Form.Item>
-
-          <Divider style={{ margin: "14px 0 10px 0" }}>Justification Réglementaire</Divider>
-
-          <Form.Item
-            name="motifCreation"
-            label={<span className="font-bold text-xs">Motif officiel / Réf. Arrêté communal *</span>}
-            rules={[{ required: true, message: "Veuillez renseigner le motif officiel" }]}
-          >
-            <Input.TextArea rows={2} placeholder="Ex: Délibération du Conseil de la Ville de Rabat n°45 du 12/09/2026..." />
-          </Form.Item>
-
-          <Form.Item label={<span className="font-bold text-xs">Document officiel attaché (Optionnel)</span>}>
-            <Upload
-              beforeUpload={(file) => {
-                message.success(`Document joint : ${file.name}`);
-                setAttachedDocName(file.name);
-                return false;
-              }}
-              maxCount={1}
-              onRemove={() => setAttachedDocName(null)}
+            <Form.Item
+              name="tarifTTC"
+              label={<span style={{ fontWeight: 700, color: "#166534" }}>Prix Public Mensuel TTC (MAD TTC) *</span>}
+              rules={[{ required: true, message: "Veuillez saisir le montant TTC" }]}
             >
-              <Button icon={<UploadOutlined />}>
-                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV officiel (PDF, Image)"}
-              </Button>
-            </Upload>
-          </Form.Item>
+              <InputNumber
+                style={{ width: "100%" }}
+                size="large"
+                min={0}
+                step={50}
+                placeholder="Ex: 600"
+                addonAfter="MAD TTC / mois"
+              />
+            </Form.Item>
+
+            {/* Carte de Décomposition Fiscale en direct */}
+            <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: 8, border: "1px solid #86efac" }}>
+              <Row gutter={12} align="middle">
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>PRIX SAISI TTC</div>
+                  <div style={{ fontWeight: 800, color: "#166534", fontSize: "1.05rem" }}>
+                    {Number(watchedCreateTTC || 0).toLocaleString("fr-FR")} MAD
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>TVA LÉGALE (20%)</div>
+                  <div style={{ fontWeight: 700, color: "#0284c7", fontSize: "1rem" }}>
+                    {getHtAndTva(watchedCreateTTC).tva.toLocaleString("fr-FR")} MAD
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>NET HORS TAXE (HT)</div>
+                  <div style={{ fontWeight: 800, color: "#0f172a", fontSize: "1.05rem" }}>
+                    {getHtAndTva(watchedCreateTTC).ht.toLocaleString("fr-FR")} MAD HT
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          </div>
+
+          {/* Bloc 4 : Justification & Traçabilité */}
+          <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.05em", marginBottom: 12 }}>
+              4. Cadre Réglementaire & Traçabilité
+            </div>
+            <Form.Item
+              name="motifCreation"
+              label={<span style={{ fontWeight: 600 }}>Motif officiel / Réf. Arrêté communal *</span>}
+              rules={[{ required: true, message: "Le motif réglementaire est obligatoire" }]}
+            >
+              <Input.TextArea rows={2} placeholder="Ex: Décision tarifaire communale n°2026/04..." />
+            </Form.Item>
+            <Form.Item label={<span style={{ fontWeight: 600 }}>Pièce jointe officielle (Optionnel)</span>}>
+              <Upload
+                beforeUpload={(file) => {
+                  message.success(`Fichier attaché : ${file.name}`);
+                  setAttachedDocName(file.name);
+                  return false;
+                }}
+                maxCount={1}
+                onRemove={() => setAttachedDocName(null)}
+              >
+                <Button icon={<UploadOutlined />}>
+                  {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté communal ou PV (PDF / Image)"}
+                </Button>
+              </Upload>
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 
-      {/* -------------------------------------------------------------
-          MODAL 2 : MODIFIER LE PRIX (AVEC MOTIF & DOCUMENT ATTACHÉ)
+           {/* -------------------------------------------------------------
+          MODAL 2 : MODIFIER LE PRIX (STRUCTURE ENRICHIE & PRÉ-REMPLIE)
           ------------------------------------------------------------- */}
       <Modal
-        title={`Modifier le Prix : ${selectedTarif?.libelle} (${selectedTarif?.parkingNom})`}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 8, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706" }}>
+              <EditOutlined style={{ fontSize: 20 }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#0f172a" }}>
+                Modifier le Tarif Homologué
+              </div>
+              <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 400 }}>
+                Ajustement du prix mensuel, du segment et des spécifications
+              </div>
+            </div>
+          </div>
+        }
         open={isEditModalOpen}
         onCancel={() => {
           setIsEditModalOpen(false);
@@ -456,48 +736,154 @@ export function PlansTarifairesList() {
         confirmLoading={editMutation.isPending}
         okText="Enregistrer les modifications"
         cancelText="Annuler"
+        width={650}
       >
+        {/* Bandeau d'Identification du Parking & Forfait en cours */}
+        {selectedTarif && (
+          <div style={{ background: "#f1f5f9", padding: "12px 16px", borderRadius: 8, border: "1px solid #cbd5e1", marginBottom: 16 }}>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Parking Affecté</div>
+                <div style={{ fontWeight: 800, color: "#001E3D", fontSize: "1.05rem" }}>
+                  <EnvironmentOutlined style={{ marginRight: 6, color: "#0284c7" }} />
+                  {selectedTarif.parkingNom}
+                </div>
+              </Col>
+              <Col style={{ textAlign: "right" }}>
+                <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Référence BDD</div>
+                <Tag color="blue" style={{ fontWeight: 700 }}>Tarif #{selectedTarif.id}</Tag>
+              </Col>
+            </Row>
+          </div>
+        )}
+
         <Form form={editForm} layout="vertical" onFinish={(v) => editMutation.mutate(v)}>
-          <Form.Item name="libelle" label="Libellé du Forfait" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+          {/* Section 1 : Segment & Libellé */}
+          <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 16 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.05em", marginBottom: 12 }}>
+              1. Typologie & Libellé
+            </div>
 
-          <Form.Item name="plageHoraire" label="Plage Horaire">
-            <Input />
-          </Form.Item>
-
-          <Form.Item name="tarifHT" label="Nouveau Tarif HT (MAD HT)" rules={[{ required: true }]}>
-            <InputNumber style={{ width: "100%" }} size="large" min={0} step={50} />
-          </Form.Item>
-
-          <Divider style={{ margin: "14px 0 10px 0" }}>Justification de la Révision</Divider>
-
-          <Form.Item
-            name="motifModification"
-            label={<span className="font-bold text-xs">Motif officiel justifiant la révision *</span>}
-            rules={[{ required: true, message: "Le motif est obligatoire pour toute modification" }]}
-          >
-            <Input.TextArea
-              rows={2}
-              placeholder="Ex: Décision de révision tarifaire annuelle, harmonisation grille 2026..."
-            />
-          </Form.Item>
-
-          <Form.Item label={<span className="font-bold text-xs">Pièce justificative attachée (PDF / Image)</span>}>
-            <Upload
-              beforeUpload={(file) => {
-                message.success(`Document joint : ${file.name}`);
-                setAttachedDocName(file.name);
-                return false;
-              }}
-              maxCount={1}
-              onRemove={() => setAttachedDocName(null)}
+            {/* Sélecteur de Segment avec boutons Radio pré-sélectionnés */}
+            <Form.Item
+              name="segment"
+              label={<span style={{ fontWeight: 600 }}>Type de Client / Segment *</span>}
+              rules={[{ required: true, message: "Veuillez sélectionner le segment" }]}
             >
-              <Button icon={<UploadOutlined />}>
-                {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV de modification"}
-              </Button>
-            </Upload>
-          </Form.Item>
+              <Radio.Group buttonStyle="solid" style={{ width: "100%", display: "flex" }}>
+                <Radio.Button value="REGULIER" style={{ flex: 1, textAlign: "center" }}>
+                  <UserOutlined style={{ marginRight: 6, color: "#0284c7" }} /> Régulier (Particulier — 1 véhicule)
+                </Radio.Button>
+                <Radio.Button value="CORPORATE" style={{ flex: 1, textAlign: "center" }}>
+                  <BankOutlined style={{ marginRight: 6, color: "#9333ea" }} /> Corporate (Flottes B2B — multi-véhicules)
+                </Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+
+            <Row gutter={16}>
+              <Col span={14}>
+                <Form.Item name="libelle" label={<span style={{ fontWeight: 600 }}>Libellé du Forfait *</span>} rules={[{ required: true }]}>
+                  <Input size="large" />
+                </Form.Item>
+              </Col>
+              <Col span={10}>
+                <Form.Item name="plageHoraire" label={<span style={{ fontWeight: 600 }}>Plage Horaire / Créneau</span>}>
+                  <Input size="large" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Section 2 : Nouveau Prix TTC & Calcul direct HT */}
+          <div style={{ background: "#f0fdf4", padding: "14px 16px", borderRadius: 10, border: "1px solid #bbf7d0", marginBottom: 16 }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#166534", letterSpacing: "0.05em", marginBottom: 12 }}>
+              2. Tarification Homologuée (TTC & Décomposition Fiscale)
+            </div>
+
+            <Form.Item
+              name="tarifTTC"
+              label={<span style={{ fontWeight: 700, color: "#166534" }}>Nouveau Prix Mensuel TTC (MAD TTC) *</span>}
+              rules={[{ required: true, message: "Veuillez saisir le prix TTC" }]}
+            >
+              <InputNumber
+                style={{ width: "100%" }}
+                size="large"
+                min={0}
+                step={50}
+                addonAfter="MAD TTC / mois"
+              />
+            </Form.Item>
+
+            {/* Comparatif Ancien vs Nouveau Prix */}
+            {selectedTarif && (
+              <div style={{ fontSize: "12px", color: "#64748b", marginBottom: 10 }}>
+                Prix actuel en base : <strong style={{ color: "#0f172a" }}>{selectedTarif.tarifTTC || Math.round((selectedTarif.tarifHT || 0) * 1.2)} MAD TTC</strong>
+                {Boolean(watchedEditTTC && watchedEditTTC !== (selectedTarif.tarifTTC || Math.round((selectedTarif.tarifHT || 0) * 1.2))) && (
+                  <span style={{ marginLeft: 8, fontWeight: 700, color: (watchedEditTTC || 0) > (selectedTarif.tarifTTC || 0) ? "#ef4444" : "#16a34a" }}>
+                    ({(watchedEditTTC || 0) > (selectedTarif.tarifTTC || 0) ? "+" : ""}{(watchedEditTTC || 0) - (selectedTarif.tarifTTC || 0)} MAD)
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Carte de Décomposition automatique HT & TVA en direct */}
+            <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: 8, border: "1px solid #86efac" }}>
+              <Row gutter={12} align="middle">
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>NOUVEAU TTC SAISI</div>
+                  <div style={{ fontWeight: 800, color: "#166534", fontSize: "1.05rem" }}>
+                    {Number(watchedEditTTC || 0).toLocaleString("fr-FR")} MAD
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>TVA (20%)</div>
+                  <div style={{ fontWeight: 700, color: "#0284c7", fontSize: "1rem" }}>
+                    {getHtAndTva(watchedEditTTC).tva.toLocaleString("fr-FR")} MAD
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>NET HORS TAXE (HT)</div>
+                  <div style={{ fontWeight: 800, color: "#0f172a", fontSize: "1.05rem" }}>
+                    {getHtAndTva(watchedEditTTC).ht.toLocaleString("fr-FR")} MAD HT
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          </div>
+
+          {/* Section 3 : Justification & Traçabilité */}
+          <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+            <div style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.05em", marginBottom: 12 }}>
+              3. Justification de la Révision & Traçabilité
+            </div>
+
+            <Form.Item
+              name="motifModification"
+              label={<span style={{ fontWeight: 600 }}>Motif officiel justifiant la révision *</span>}
+              rules={[{ required: true, message: "Le motif est obligatoire pour toute modification" }]}
+            >
+              <Input.TextArea
+                rows={2}
+                placeholder="Ex: Décision de révision tarifaire annuelle 2026, délibération communale n°..."
+              />
+            </Form.Item>
+
+            <Form.Item label={<span style={{ fontWeight: 600 }}>Pièce justificative attachée (Optionnel)</span>}>
+              <Upload
+                beforeUpload={(file) => {
+                  message.success(`Document joint : ${file.name}`);
+                  setAttachedDocName(file.name);
+                  return false;
+                }}
+                maxCount={1}
+                onRemove={() => setAttachedDocName(null)}
+              >
+                <Button icon={<UploadOutlined />}>
+                  {attachedDocName ? `Fichier : ${attachedDocName}` : "Joindre l'Arrêté / PV de modification"}
+                </Button>
+              </Upload>
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 

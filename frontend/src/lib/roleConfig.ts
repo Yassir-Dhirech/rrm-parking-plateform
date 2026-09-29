@@ -162,6 +162,8 @@ export const roleConfig: Record<Role, RoleConfig> = {
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
+      { key: "abonnements", label: "Base Clients / Abonnements", path: "/comptable/abonnements" },
+      { key: "contrats", label: "Contrats Corporate", path: "/comptable/contrats" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
       { key: "base-clients", label: "Base des clients", path: "/comptable/clients" },
       { key: "recettes", label: "Recettes à réceptionner", path: "/comptable/recettes" },
@@ -169,6 +171,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "rejets-cheques", label: "Déclarer un chèque rejeté", path: "/comptable/rejets-cheques" },
     ],
   },
+
   RESP_REPORTING: {
     homePath: "/reporting",
     title: "Espace Reporting",
