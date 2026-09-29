@@ -24,11 +24,10 @@ import {
 } from "@ant-design/icons";
 import { getAuditLogs } from "../../../api/adminAuditApi";
 import type { Role } from "../../../lib/roleConfig";
-import { formatDate } from "../../../lib/dateUtils";
 import type { ColumnsType } from "antd/es/table";
 import type { AuditLog } from "../../admin/types";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 // Formatage complet Date + Heure et Minute exactes
 function formatDateTime(dateStr?: string | Date | null): string {
   if (!dateStr) return "-";

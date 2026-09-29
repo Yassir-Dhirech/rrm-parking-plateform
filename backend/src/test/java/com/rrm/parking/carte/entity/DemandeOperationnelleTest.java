@@ -18,7 +18,6 @@ class DemandeOperationnelleTest {
                 "CARTE-RECONFIG-001",
                 mock(Abonnement.class)
         );
-        Utilisateur agent = new Utilisateur();
         Utilisateur superviseur = new Utilisateur();
 
         carte.demanderImpression();

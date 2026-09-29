@@ -3,7 +3,6 @@ package com.rrm.parking.demande.service;
 import com.rrm.parking.abonnement.entity.AbonnementEntreprise;
 import com.rrm.parking.abonnement.entity.PeriodeAbonnement;
 import com.rrm.parking.client.entity.ClientEntreprise;
-import com.rrm.parking.carte.entity.CarteAcces;
 import com.rrm.parking.contrat.entity.ContratCorporate;
 import com.rrm.parking.contrat.enums.StatutContrat;
 import com.rrm.parking.contrat.repository.ContratCorporateRepository;

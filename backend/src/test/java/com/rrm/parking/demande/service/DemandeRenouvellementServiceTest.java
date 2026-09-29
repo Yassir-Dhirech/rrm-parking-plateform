@@ -12,7 +12,6 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.demande.dto.request.DemandeRenouvellementRequest;
 import com.rrm.parking.demande.enums.CanalOtp;
-import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.demande.repository.DemandeRenouvellementRegulierRepository;
 import com.rrm.parking.paiement.enums.ModePaiement;
