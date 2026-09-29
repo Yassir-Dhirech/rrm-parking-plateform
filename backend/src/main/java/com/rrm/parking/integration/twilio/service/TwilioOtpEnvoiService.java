@@ -52,6 +52,7 @@ public class TwilioOtpEnvoiService
                         destinationNormalisee,
                         contenu
                 );
+                default -> throw new IllegalArgumentException("Unexpected value: " + canal);
             }
         } catch (RuntimeException exception) {
             throw new OtpEnvoiException(
