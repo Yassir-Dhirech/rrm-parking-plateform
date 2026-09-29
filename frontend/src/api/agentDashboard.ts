@@ -46,8 +46,8 @@ export interface AgentResultatRecherche {
   lien: string;
 }
 
-export async function getAgentActions(): Promise<AgentActions> {
-  const response = await client.get<AgentActions>("/agent/dashboard/actions");
+export async function getAgentActions(limite = 8): Promise<AgentActions> {
+  const response = await client.get<AgentActions>("/agent/dashboard/actions", { params: { limite } });
   return response.data;
 }
 

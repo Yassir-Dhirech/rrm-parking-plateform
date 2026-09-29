@@ -353,6 +353,9 @@ public class DemandeAbonnementRegulierService {
         demande.choisirModePaiement(
                 requete.modePaiement()
         );
+        if (requete.entrepriseNom() != null && !requete.entrepriseNom().isBlank()) {
+            demande.renseignerEntreprise(requete.entrepriseNom(), requete.entrepriseIce());
+        }
         demande.soumettre();
 
         return demandeClientRepository
@@ -521,6 +524,13 @@ public class DemandeAbonnementRegulierService {
             throw new IllegalArgumentException(
                     "Les conditions générales doivent être acceptées"
             );
+        }
+
+        if (!requete.isIdentiteEntrepriseComplete()
+                || (requete.entrepriseIce() != null
+                && !requete.entrepriseIce().isBlank()
+                && !requete.entrepriseIce().matches("[0-9]{15}"))) {
+            throw new IllegalArgumentException("Le nom de l'entreprise et un ICE de 15 chiffres sont obligatoires ensemble");
         }
     }
 

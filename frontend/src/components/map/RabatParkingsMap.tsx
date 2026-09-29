@@ -28,9 +28,10 @@ const { Title } = Typography;
 
 interface RabatParkingsMapProps {
   height?: number;
+  publicView?: boolean;
 }
 
-export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
+export function RabatParkingsMap({ height = 500, publicView = false }: RabatParkingsMapProps) {
   const navigate = useNavigate();
   const { role } = useAuth();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -176,7 +177,7 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
           <div style="background:#f0f9ff;padding:8px 10px;border-radius:8px;border:1px solid #bae6fd;">
             <div style="font-size:11px;color:#0369a1;font-weight:600;">Places abonnés disponibles</div>
             <div style="font-size:16px;font-weight:800;color:#16a34a;margin-top:2px;">${parking.placesDisponiblesAbonnements} / ${parking.capaciteReserveeAbonnements}</div>
-            <div style="font-size:10px;color:#64748b;margin-top:3px;">Occupation : ${parking.tauxOccupationAbonnements}%</div>
+            ${publicView ? "" : `<div style="font-size:10px;color:#64748b;margin-top:3px;">Occupation : ${parking.tauxOccupationAbonnements}%</div>`}
           </div>
         </div>`);
 
@@ -192,7 +193,7 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
       const bounds = L.latLngBounds(filteredParkings.map((p) => [p.latitude, p.longitude] as [number, number]));
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
-  }, [filteredParkings, searchQuery]);
+  }, [filteredParkings, searchQuery, publicView]);
 
   const handleSelectParkingItem = (parking: ParkingMapItem) => {
     setActiveParking(parking);
@@ -414,8 +415,8 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12, marginBottom: 12 }}>
                       <div><strong>Quota abonnements :</strong><br />{activeParking.capaciteReserveeAbonnements}</div>
-                      <div><strong>Abonnements actifs :</strong><br />{activeParking.placesOccupeesAbonnements}</div>
-                      <div><strong>Taux d'occupation :</strong><br />{activeParking.tauxOccupationAbonnements}%</div>
+                      {!publicView && <div><strong>Abonnements actifs :</strong><br />{activeParking.placesOccupeesAbonnements}</div>}
+                      {!publicView && <div><strong>Taux d'occupation :</strong><br />{activeParking.tauxOccupationAbonnements}%</div>}
                       <div><strong>Souscription :</strong><br />{activeParking.souscriptionDisponible ? "Disponible" : "Complète"}</div>
                     </div>
 

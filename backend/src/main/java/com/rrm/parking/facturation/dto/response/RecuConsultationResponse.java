@@ -2,6 +2,8 @@ package com.rrm.parking.facturation.dto.response;
 
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeClient;
+import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.facturation.entity.Recu;
 import com.rrm.parking.paiement.entity.Paiement;
@@ -11,6 +13,7 @@ import com.rrm.parking.paiement.enums.StatutPaiement;
 import com.rrm.parking.paiement.model.DecomptePaiementDemande;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
+import org.hibernate.Hibernate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,7 +54,9 @@ public record RecuConsultationResponse(
         String clientPrenom,
         String cin,
         String email,
-        String telephone
+        String telephone,
+        String entrepriseNom,
+        String entrepriseIce
 ) {
 
     public static RecuConsultationResponse depuis(
@@ -75,6 +80,17 @@ public record RecuConsultationResponse(
                 : agent.getPrenom()
                 + " "
                 + agent.getNom();
+
+        String entrepriseNom = null;
+        String entrepriseIce = null;
+        DemandeClient demandeReelle = (DemandeClient) Hibernate.unproxy(demande);
+        if (demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            entrepriseNom = nouvelle.getEntrepriseNom();
+            entrepriseIce = nouvelle.getEntrepriseIce();
+        } else if (demandeReelle instanceof DemandeRenouvellementRegulier renouvellement) {
+            entrepriseNom = renouvellement.getAbonnementConcerne().getEntrepriseNom();
+            entrepriseIce = renouvellement.getAbonnementConcerne().getEntrepriseIce();
+        }
 
         return new RecuConsultationResponse(
                 recu.getId(),
@@ -111,7 +127,9 @@ public record RecuConsultationResponse(
                 client.getPrenom(),
                 client.getCin(),
                 client.getEmail(),
-                client.getTelephone()
+                client.getTelephone(),
+                entrepriseNom,
+                entrepriseIce
         );
     }
 }

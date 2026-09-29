@@ -104,6 +104,9 @@ public class ModificationDemandeAgentService {
         if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
             nouvelle.selectionnerTarif(tarif);
             nouvelle.choisirModePaiement(requete.modePaiement());
+            if (requete.entrepriseNom() != null || requete.entrepriseIce() != null) {
+                nouvelle.renseignerEntreprise(requete.entrepriseNom(), requete.entrepriseIce());
+            }
         } else if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
             renouvellement.selectionnerTarif(tarif);
             renouvellement.choisirModePaiement(requete.modePaiement());
@@ -266,6 +269,10 @@ public class ModificationDemandeAgentService {
         valeurs.put("cin", c.client().getCin());
         valeurs.put("email", c.client().getEmail());
         valeurs.put("telephone", c.client().getTelephone());
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            valeurs.put("entrepriseNom", nouvelle.getEntrepriseNom());
+            valeurs.put("entrepriseIce", nouvelle.getEntrepriseIce());
+        }
         valeurs.put("immatriculation", c.vehicule().getImmatriculation());
         valeurs.put("marque", c.vehicule().getMarque());
         valeurs.put("modele", c.vehicule().getModele());

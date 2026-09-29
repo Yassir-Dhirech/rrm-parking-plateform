@@ -56,7 +56,7 @@ export function RecettesList() {
     { title: "Date paiement", dataIndex: "datePaiement", key: "datePaiement", render: (x: string) => dayjs(x).format("DD/MM/YYYY") },
     { title: "TTC", dataIndex: "montant", key: "montant", render: fmt },
   ];
-  return <Space direction="vertical" size="large" style={{ width: "100%" }}>
+  return <Space className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-recettes" : undefined} direction="vertical" size="large" style={{ width: "100%" }}>
     <Card className="rrm-glass-card" title={<Typography.Title level={4} style={{ margin: 0 }}>Flux des recettes</Typography.Title>}
       extra={role === "SUPERVISEUR" ? <Button type="primary" icon={<PlusOutlined />} onClick={() => { setParkingId(parkings[0]?.id); setDateArret(dayjs()); setSelected([]); setOpen(true); }}>Créer un arrêté</Button> : null}>
       <Typography.Text>Remise des espèces et chèques issus des paiements confirmés. Un paiement omis reste disponible pour le prochain arrêté.</Typography.Text>

@@ -1,10 +1,14 @@
 import { type Role } from "../lib/roleConfig";
+import { getAgentActions } from "./agentDashboard";
+import { listerRejetsCheques } from "./rejetsChequesApi";
+import client from "./client";
 
 export interface AppNotification {
   id: string;
   title: string;
   message: string;
   timestamp: string;
+  createdAt?: string | null;
   type: "info" | "warning" | "success" | "danger";
   category?: "PAIEMENT" | "DOSSIER" | "RECETTES" | "SYSTEME";
   read: boolean;
@@ -13,87 +17,6 @@ export interface AppNotification {
 }
 
 const initialNotifications: AppNotification[] = [
-  // AGENT
-  {
-    id: "notif-1",
-    title: "Nouvelles Demandes en Attente",
-    message: "3 nouvelles demandes d'abonnement nécessitent un encaissements au guichet.",
-    timestamp: "Il y a 10 min",
-    type: "warning",
-    category: "DOSSIER",
-    read: false,
-    link: "/agent/demandes",
-    targetRole: "AGENT",
-  },
-  {
-    id: "notif-2",
-    title: "Cartes physiques prêtes",
-    message: "2 cartes d'accès physiques sont prêtes pour remise au souscripteur.",
-    timestamp: "Il y a 1 heure",
-    type: "info",
-    category: "SYSTEME",
-    read: false,
-    link: "/agent/cartes",
-    targetRole: "AGENT",
-  },
-  {
-    id: "notif-12",
-    title: "Encaissement Espèces Reçu",
-    message: "Paiement de 600 MAD enregistré avec succès pour la demande DEM-2026-00102.",
-    timestamp: "Il y a 2 heures",
-    type: "success",
-    category: "PAIEMENT",
-    read: true,
-    link: "/agent/demandes",
-    targetRole: "AGENT",
-  },
-
-  // SUPERVISEUR
-  {
-    id: "notif-3",
-    title: "Arrêté de Recette à Valider",
-    message: "La recette du 11/09/2026 pour Parking Agdal Gare (32 400 MAD) attend votre validation.",
-    timestamp: "Il y a 25 min",
-    type: "warning",
-    category: "RECETTES",
-    read: false,
-    link: "/superviseur/recettes",
-    targetRole: "SUPERVISEUR",
-  },
-  {
-    id: "notif-sup-facture-1",
-    title: "Facture en Attente de Signature",
-    message: "La facture FACT-AGD-2026-000002 (Société Atlas Trans - 54 500 MAD) nécessite un visa et une signature avant remise au client.",
-    timestamp: "Il y a 35 min",
-    type: "warning",
-    category: "PAIEMENT",
-    read: false,
-    link: "/superviseur/factures/2",
-    targetRole: "SUPERVISEUR",
-  },
-  {
-    id: "notif-sup-facture-2",
-    title: "Facture en Attente de Signature",
-    message: "La facture FACT-BEH-2026-000003 (Sara Bennis - 800 MAD) a été émise au guichet et attend votre visa de conformité.",
-    timestamp: "Il y a 1 heure",
-    type: "warning",
-    category: "PAIEMENT",
-    read: false,
-    link: "/superviseur/factures/3",
-    targetRole: "SUPERVISEUR",
-  },
-  {
-    id: "notif-4",
-    title: "Dossier Client Payé - À Valider",
-    message: "Le règlement de Karim El Amrani a été encaissé. La conformité finale reste à valider.",
-    timestamp: "Il y a 2 heures",
-    type: "info",
-    category: "DOSSIER",
-    read: false,
-    link: "/superviseur/demandes",
-    targetRole: "SUPERVISEUR",
-  },
-
   // RESPONSABLE
   {
     id: "notif-5",
@@ -182,28 +105,123 @@ const initialNotifications: AppNotification[] = [
 
 let currentNotifications = [...initialNotifications];
 
+interface NotificationSuperviseurApi {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string | null;
+  type: AppNotification["type"];
+  category: AppNotification["category"];
+  read: boolean;
+  link: string;
+}
+
+async function notificationsSuperviseur(): Promise<AppNotification[]> {
+  const { data } = await client.get<NotificationSuperviseurApi[]>("/superviseur/notifications");
+  return data.map((notification) => ({
+    ...notification,
+    timestamp: notification.createdAt
+      ? new Intl.DateTimeFormat("fr-MA", { dateStyle: "short", timeStyle: "short" })
+          .format(new Date(notification.createdAt))
+      : "Date indisponible",
+    targetRole: "SUPERVISEUR" as const,
+  }));
+}
+
+type EtatAgent = Record<string, "lu" | "masque">;
+
+function cleEtatAgent(): string {
+  try {
+    const token = localStorage.getItem("token") ?? "";
+    const contenu = JSON.parse(atob(token.split(".")[1].replaceAll("-", "+").replaceAll("_", "/")));
+    return `rrm-agent-notifications-${contenu.userId ?? contenu.sub}`;
+  } catch {
+    return "rrm-agent-notifications-session";
+  }
+}
+
+function lireEtatAgent(): EtatAgent {
+  try { return JSON.parse(localStorage.getItem(cleEtatAgent()) ?? "{}"); }
+  catch { return {}; }
+}
+
+function enregistrerEtatAgent(ids: string[], etat: "lu" | "masque") {
+  const prochain = lireEtatAgent();
+  ids.forEach((id) => { prochain[id] = etat; });
+  localStorage.setItem(cleEtatAgent(), JSON.stringify(prochain));
+}
+
+async function notificationsAgent(): Promise<AppNotification[]> {
+  const [actions, dossiers] = await Promise.all([getAgentActions(200), listerRejetsCheques()]);
+  const etat = lireEtatAgent();
+  const date = (valeur?: string | null) => valeur
+    ? new Intl.DateTimeFormat("fr-MA", { dateStyle: "short", timeStyle: "short" }).format(new Date(valeur))
+    : "Date indisponible";
+  const notifications: AppNotification[] = actions.actions.map((action) => {
+    const type = action.type;
+    const id = `agent:${type}:${action.id}`;
+    const titres = { PAIEMENT: "Demande en attente de paiement", IMPRESSION: "Demande d’impression", REMISE: "Carte à remettre" };
+    const messages = {
+      PAIEMENT: `La demande ${action.reference} de ${action.nomClient ?? "ce client"} attend son paiement.`,
+      IMPRESSION: `La carte liée à ${action.reference} doit être imprimée.`,
+      REMISE: `La carte liée à ${action.reference} est prête à être remise.`,
+    };
+    return { id, title: titres[type], message: messages[type], timestamp: date(action.depuis), createdAt: action.depuis,
+      type: action.enRetard ? "warning" as const : "info" as const,
+      category: type === "PAIEMENT" ? "PAIEMENT" as const : "DOSSIER" as const,
+      read: etat[id] === "lu", link: action.lien, targetRole: "AGENT" as const };
+  });
+  dossiers.filter((dossier) => dossier.statut === "BLOQUE").forEach((dossier) => {
+    const id = `agent:BLOQUE:${dossier.id}`;
+    notifications.push({ id, title: "Abonnement bloqué : paiement attendu",
+      message: `${dossier.clientNom} · ${dossier.referenceAbonnement} · ${dossier.montantInitialTtc.toLocaleString("fr-MA")} MAD à régulariser.`,
+      timestamp: date(dossier.dateBlocageCartes ?? dossier.dateDecision ?? dossier.dateDeclaration),
+      createdAt: dossier.dateBlocageCartes ?? dossier.dateDecision ?? dossier.dateDeclaration,
+      type: "warning", category: "PAIEMENT", read: etat[id] === "lu",
+      link: "/agent/rejets-cheques", targetRole: "AGENT" });
+  });
+  return notifications.filter((notification) => etat[notification.id] !== "masque")
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+}
+
 export async function getNotificationsForRole(role: Role): Promise<AppNotification[]> {
+  if (role === "AGENT") return notificationsAgent();
+  if (role === "SUPERVISEUR") return notificationsSuperviseur();
   await new Promise((resolve) => setTimeout(resolve, 150));
   return currentNotifications.filter((n) => n.targetRole === role);
 }
 
 export async function markNotificationAsRead(id: string): Promise<void> {
+  if (id.startsWith("agent:")) { enregistrerEtatAgent([id], "lu"); return; }
+  if (id.startsWith("superviseur:")) {
+    await client.post(`/superviseur/notifications/${encodeURIComponent(id)}/lecture`);
+    return;
+  }
   currentNotifications = currentNotifications.map((n) =>
     n.id === id ? { ...n, read: true } : n
   );
 }
 
 export async function markAllNotificationsAsReadForRole(role: Role): Promise<void> {
+  if (role === "AGENT") { enregistrerEtatAgent((await notificationsAgent()).map((n) => n.id), "lu"); return; }
+  if (role === "SUPERVISEUR") { await client.post("/superviseur/notifications/lecture-totale"); return; }
   currentNotifications = currentNotifications.map((n) =>
     n.targetRole === role ? { ...n, read: true } : n
   );
 }
 
 export async function deleteNotificationMock(id: string): Promise<void> {
+  if (id.startsWith("agent:")) { enregistrerEtatAgent([id], "masque"); return; }
+  if (id.startsWith("superviseur:")) {
+    await client.delete(`/superviseur/notifications/${encodeURIComponent(id)}`);
+    return;
+  }
   currentNotifications = currentNotifications.filter((n) => n.id !== id);
 }
 
 export async function clearAllNotificationsForRoleMock(role: Role): Promise<void> {
+  if (role === "AGENT") { enregistrerEtatAgent((await notificationsAgent()).map((n) => n.id), "masque"); return; }
+  if (role === "SUPERVISEUR") { await client.delete("/superviseur/notifications"); return; }
   currentNotifications = currentNotifications.filter((n) => n.targetRole !== role);
 }
 

@@ -44,10 +44,16 @@ public class AgentDashboardActionsService {
 
     @Transactional(readOnly = true)
     public AgentDashboardActionsResponse actions(Long agentId) {
+        return actions(agentId, LIMITE);
+    }
+
+    @Transactional(readOnly = true)
+    public AgentDashboardActionsResponse actions(Long agentId, int limiteDemandee) {
+        int nombreMaximum = Math.max(1, Math.min(limiteDemandee, 200));
         Long parkingId = parkingAgent(agentId);
         LocalDateTime maintenant = LocalDateTime.now(ZONE_RRM);
         List<AgentDashboardActionsResponse.Action> actions = new ArrayList<>();
-        var limite = PageRequest.of(0, LIMITE);
+        var limite = PageRequest.of(0, nombreMaximum);
         List<DemandeClient> demandes = new ArrayList<>(demandeRepository
                 .prochainesNouvellesDemandes(parkingId, StatutDemande.EN_ATTENTE_PAIEMENT, limite));
         demandes.addAll(demandeRepository.prochainsRenouvellements(
@@ -75,7 +81,7 @@ public class AgentDashboardActionsService {
         return new AgentDashboardActionsResponse(actions.stream()
                 .sorted(Comparator.comparing(AgentDashboardActionsResponse.Action::depuis,
                         Comparator.nullsLast(Comparator.naturalOrder())))
-                .limit(LIMITE).toList(), alertes);
+                .limit(nombreMaximum).toList(), alertes);
     }
 
     @Transactional(readOnly = true)

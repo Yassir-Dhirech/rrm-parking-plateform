@@ -57,7 +57,9 @@ class RecuEmailServiceTest {
                 "Client",
                 "AB123456",
                 "client@example.com",
-                "0612345678"
+                "0612345678",
+                null,
+                null
         );
         byte[] pdf = "%PDF-test".getBytes();
 

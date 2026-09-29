@@ -21,22 +21,27 @@ public class OperationCarteController {
     private final OperationCarteService service;
 
     @GetMapping("/impressions")
-    @PreAuthorize("hasAuthority('CARTE_IMPRIMER')")
+    @PreAuthorize("hasAuthority('CARTE_IMPRIMER') or hasRole('SUPERVISEUR')")
     public List<DemandeOperationnelleResponse> listerImpressions(
             @AuthenticationPrincipal Jwt jwt
     ) {
-        return service.listerImpressions(extraireUtilisateurId(jwt));
+        Long utilisateurId = extraireUtilisateurId(jwt);
+        return estSuperviseur(jwt)
+                ? service.listerImpressionsSuperviseur(utilisateurId)
+                : service.listerImpressions(utilisateurId);
     }
 
     @PostMapping("/{id}/impression-terminee")
-    @PreAuthorize("hasAuthority('CARTE_IMPRIMER')")
+    @PreAuthorize("hasAuthority('CARTE_IMPRIMER') or hasRole('SUPERVISEUR')")
     public ResponseEntity<DemandeOperationnelleResponse> terminerImpression(
             @PathVariable Long id,
             @Valid @RequestBody ImpressionCarteRequest requete,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        return ResponseEntity.ok(service.terminerImpression(
-                id, extraireUtilisateurId(jwt), requete.numeroCarte()));
+        Long utilisateurId = extraireUtilisateurId(jwt);
+        return ResponseEntity.ok(estSuperviseur(jwt)
+                ? service.terminerImpressionSuperviseur(id, utilisateurId, requete.numeroCarte())
+                : service.terminerImpression(id, utilisateurId, requete.numeroCarte()));
     }
 
     @GetMapping("/activations")
@@ -80,5 +85,10 @@ public class OperationCarteController {
                     "Le jeton ne contient pas l'identifiant utilisateur");
         }
         return userId.longValue();
+    }
+
+    private boolean estSuperviseur(Jwt jwt) {
+        List<String> authorities = jwt.getClaimAsStringList("authorities");
+        return authorities != null && authorities.contains("ROLE_SUPERVISEUR");
     }
 }

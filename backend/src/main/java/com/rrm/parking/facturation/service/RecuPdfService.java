@@ -290,17 +290,17 @@ public class RecuPdfService {
 
         ligne(
                 contenu,
-                "Nom et prénom",
-                recu.clientPrenom()
-                        + " "
-                        + recu.clientNom(),
+                recu.entrepriseNom() == null ? "Nom et prénom" : "Entreprise",
+                recu.entrepriseNom() == null
+                        ? recu.clientPrenom() + " " + recu.clientNom()
+                        : recu.entrepriseNom(),
                 500
         );
 
         ligne(
                 contenu,
-                "CIN",
-                recu.cin(),
+                recu.entrepriseIce() == null ? "CIN" : "ICE",
+                recu.entrepriseIce() == null ? recu.cin() : recu.entrepriseIce(),
                 475
         );
 

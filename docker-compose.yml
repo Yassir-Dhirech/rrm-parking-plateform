@@ -96,6 +96,10 @@ services:
     volumes:
       - backend_storage:/app/storage
       - ./backend/secrets:/app/secrets
+      - type: bind
+        source: ${RRM_INVOICE_FONT_DIR:-C:/Windows/Fonts}
+        target: /app/secrets/invoice-fonts
+        read_only: true
 
   # 4. Frontend React SPA & Nginx Reverse Proxy
   frontend:

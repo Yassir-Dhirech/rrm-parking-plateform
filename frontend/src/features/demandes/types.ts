@@ -129,6 +129,8 @@ export interface PieceJointeDetailResponse {
 }
 
 export interface DemandeDetailResponse {
+  entrepriseNom?: string | null;
+  entrepriseIce?: string | null;
   id: number;
   reference: string;
   typeDemande:
@@ -176,6 +178,8 @@ export interface DemandeDetailResponse {
 }
 
 export interface DemandeAbonnementRegulierRequest {
+  entrepriseNom?: string;
+  entrepriseIce?: string;
   nom: string;
   prenom: string;
   cin: string;
@@ -206,6 +210,8 @@ export interface DocumentsDemande {
 }
 
 export interface ModificationDemandeReguliereRequest {
+  entrepriseNom?: string;
+  entrepriseIce?: string;
   nom: string;
   prenom: string;
   cin: string;

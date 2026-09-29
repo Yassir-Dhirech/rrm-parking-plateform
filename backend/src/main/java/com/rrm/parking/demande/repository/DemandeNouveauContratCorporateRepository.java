@@ -47,6 +47,20 @@ public interface DemandeNouveauContratCorporateRepository
     );
 
     @Query("""
+            select count(d.id)
+            from DemandeNouveauContratCorporate d
+            left join d.contratGenere contrat
+            where d.parking.id = :parkingId
+              and d.statut = :statut
+              and (contrat.dateFin is null or contrat.dateFin >= :date)
+            """)
+    long compterContratsParParkingEtStatut(
+            @Param("parkingId") Long parkingId,
+            @Param("statut") StatutDemande statut,
+            @Param("date") LocalDate date
+    );
+
+    @Query("""
             select coalesce(sum(d.nombrePlaces), 0)
             from DemandeNouveauContratCorporate d
             left join d.contratGenere contrat

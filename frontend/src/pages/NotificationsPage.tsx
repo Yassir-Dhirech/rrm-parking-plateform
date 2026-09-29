@@ -27,7 +27,7 @@ import {
 const { Title, Text, Paragraph } = Typography;
 
 export function NotificationsPage() {
-  const { role } = useAuth();
+  const { role, token } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -35,10 +35,11 @@ export function NotificationsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [searchText, setSearchText] = useState<string>("");
 
-  const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ["notifications", role],
+  const { data: notifications = [], isLoading, isError } = useQuery({
+    queryKey: ["notifications", role, token],
     queryFn: () => (role ? getNotificationsForRole(role) : Promise.resolve([])),
     enabled: !!role,
+    refetchInterval: role === "AGENT" || role === "SUPERVISEUR" ? 20_000 : false,
   });
 
   const markReadMutation = useMutation({
@@ -206,6 +207,7 @@ export function NotificationsPage() {
       </Card>
 
       {/* Liste des Notifications */}
+      {isError && <Card><Text type="danger">Impossible de charger les notifications réelles. Réessayez dans quelques instants.</Text></Card>}
       <Card bordered={false} style={{ borderRadius: 12, boxShadow: "var(--shadow-sm)" }}>
         <List
           loading={isLoading}

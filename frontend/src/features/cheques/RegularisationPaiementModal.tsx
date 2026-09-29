@@ -21,7 +21,9 @@ export function RegularisationPaiementModal({ dossier, attente, onFermer, onSoum
   const mode = Form.useWatch("modePaiement", form);
   return (
     <Modal
-      title="Paiement d'un abonnement bloqué"
+      title={<div className="rejets-payment-modal__heading"><span>RÉGULARISATION DU PAIEMENT</span><strong>Paiement d'un abonnement bloqué</strong></div>}
+      className="rejets-payment-modal"
+      width={680}
       open={dossier !== null}
       okText="Soumettre au responsable"
       okButtonProps={{ loading: attente }}
@@ -35,7 +37,7 @@ export function RegularisationPaiementModal({ dossier, attente, onFermer, onSoum
           <Alert type="warning" showIcon style={{ marginBottom: 16 }}
             message="L'abonnement reste bloqué après la réception du paiement"
             description="Le responsable doit valider le paiement avant la demande de réactivation des cartes." />
-          <Descriptions size="small" column={1} bordered style={{ marginBottom: 18 }}
+          <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered style={{ marginBottom: 18 }}
             items={[
               { key: "client", label: "Client", children: dossier.clientNom },
               { key: "identifiant", label: "CIN / ICE", children: dossier.clientIdentifiant || "Non renseigné" },

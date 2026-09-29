@@ -113,6 +113,16 @@ public interface DemandeClientRepository
     );
 
     @Query("""
+            select d from DemandeNouvelAbonnementRegulier d
+            where d.statut = :statut and d.tarifParking.parking.id = :parkingId
+            order by d.dateModification desc, d.id desc
+            """)
+    List<DemandeClient> nouvellesDemandesAValiderParParking(
+            @Param("parkingId") Long parkingId,
+            @Param("statut") StatutDemande statut
+    );
+
+    @Query("""
             select d from DemandeRenouvellementRegulier d
             where d.statut = :statut and d.tarifParking.parking.id = :parkingId
             order by d.dateValidationOtp asc, d.id asc
@@ -121,6 +131,16 @@ public interface DemandeClientRepository
             @Param("parkingId") Long parkingId,
             @Param("statut") StatutDemande statut,
             Pageable limite
+    );
+
+    @Query("""
+            select d from DemandeRenouvellementRegulier d
+            where d.statut = :statut and d.tarifParking.parking.id = :parkingId
+            order by d.dateModification desc, d.id desc
+            """)
+    List<DemandeClient> renouvellementsAValiderParParking(
+            @Param("parkingId") Long parkingId,
+            @Param("statut") StatutDemande statut
     );
 
     @Query("""

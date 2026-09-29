@@ -58,6 +58,12 @@ public class DemandeNouvelAbonnementRegulier
     )
     private ModePaiement modePaiementSouhaite;
 
+    @Column(name = "entreprise_nom", length = 200)
+    private String entrepriseNom;
+
+    @Column(name = "entreprise_ice", length = 15)
+    private String entrepriseIce;
+
     protected DemandeNouvelAbonnementRegulier() {
     }
 
@@ -151,6 +157,27 @@ public class DemandeNouvelAbonnementRegulier
                 modePaiement,
                 "Le mode de paiement souhaité est obligatoire"
         );
+    }
+
+    public void renseignerEntreprise(String nom, String ice) {
+        verifierModifiableAvantPaiement();
+        if (nom == null || nom.isBlank() || ice == null || !ice.matches("[0-9]{15}")) {
+            throw new IllegalArgumentException("Le nom de l'entreprise et un ICE de 15 chiffres sont obligatoires");
+        }
+        this.entrepriseNom = nom.trim();
+        this.entrepriseIce = ice.trim();
+    }
+
+    public boolean estAuNomEntreprise() {
+        return entrepriseIce != null;
+    }
+
+    public String getEntrepriseNom() {
+        return entrepriseNom;
+    }
+
+    public String getEntrepriseIce() {
+        return entrepriseIce;
     }
 
     @PrePersist

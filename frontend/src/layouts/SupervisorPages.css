@@ -1,0 +1,398 @@
+/* The supervisor workspace follows the light, structured visual language of
+   the reference. All rules are role-scoped so other workspaces keep their UI. */
+.rrm-role-shell--superviseur {
+  background: #f5f8fa !important;
+  color: #1b2c42;
+}
+
+.rrm-role-shell--superviseur > main {
+  padding-top: 86px;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen,
+.rrm-role-shell--superviseur .superviseur-dashboard {
+  width: 100%;
+  max-width: none;
+  color: #24374b;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__heading,
+.rrm-role-shell--superviseur .superviseur-dashboard__header,
+.rrm-role-shell--superviseur .superviseur-dashboard__period-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 105px;
+  padding: 22px 26px;
+  border: 1px solid #e2e9ef;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .045);
+  color: #1e2f43;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__heading h1,
+.rrm-role-shell--superviseur .superviseur-dashboard h1 {
+  margin: 4px 0 5px;
+  color: #162a3e;
+  font-size: clamp(24px, 2.3vw, 32px);
+  font-weight: 760;
+  letter-spacing: -.035em;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__heading p,
+.rrm-role-shell--superviseur .superviseur-dashboard__header p {
+  margin: 0;
+  color: #718294;
+  font-size: 13px;
+}
+
+.rrm-role-shell--superviseur .supervisor-operations {
+  display: grid;
+  gap: 18px;
+}
+
+.rrm-role-shell--superviseur .supervisor-operations .supervisor-screen__heading {
+  display: block;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__eyebrow,
+.rrm-role-shell--superviseur .superviseur-dashboard__eyebrow {
+  color: #08769e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  min-height: 72px;
+  padding: 15px 19px;
+  border: 1px solid #e2e9ef;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .04);
+}
+
+.rrm-role-shell--superviseur .supervisor-screen__table {
+  overflow: hidden;
+  border: 1px solid #e2e9ef;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .04);
+}
+
+.rrm-role-shell--superviseur .ant-table,
+.rrm-role-shell--superviseur .ant-table-container {
+  background: #ffffff;
+}
+
+.rrm-role-shell--superviseur .ant-table-thead > tr > th {
+  background: #f3f6f8 !important;
+  color: #607285 !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+.rrm-role-shell--superviseur .ant-table-tbody > tr > td {
+  border-bottom-color: #edf1f4;
+  color: #27394d;
+}
+
+.rrm-role-shell--superviseur .ant-table-tbody > tr:hover > td {
+  background: #f6fafc !important;
+}
+
+.rrm-role-shell--superviseur .ant-btn-primary {
+  border-color: #08729d;
+  background: #08729d;
+  box-shadow: none;
+}
+
+.rrm-role-shell--superviseur .ant-btn-primary:hover {
+  border-color: #075c81 !important;
+  background: #075c81 !important;
+}
+
+.rrm-role-shell--superviseur .ant-input,
+.rrm-role-shell--superviseur .ant-select-selector,
+.rrm-role-shell--superviseur .ant-picker {
+  border-color: #d7e1e9 !important;
+  background: #ffffff !important;
+}
+
+/* Dashboard: four colored KPI cards, then white analytics panels. */
+.rrm-role-shell--superviseur .superviseur-dashboard {
+  gap: 18px;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__header {
+  background: #ffffff;
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi {
+  min-height: 145px;
+  padding: 18px 20px;
+  border: 1px solid #b9e8d7;
+  border-radius: 15px;
+  background: #f0fbf7;
+  color: #174f42;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .04);
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(2) {
+  border-color: #f5dcaa;
+  background: #fffaf0;
+  color: #8d5414;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(3) {
+  border-color: #e7d8f3;
+  background: #fcf8ff;
+  color: #74419a;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(4) {
+  border-color: #cce2f0;
+  background: #f5faff;
+  color: #164b72;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:hover {
+  transform: translateY(-2px);
+  border-color: currentColor;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi-icon {
+  display: grid;
+  place-items: center;
+  align-self: flex-end;
+  width: 37px;
+  height: 37px;
+  margin-bottom: -26px;
+  border-radius: 10px;
+  background: #11b483;
+  color: #ffffff !important;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(2) .superviseur-dashboard__kpi-icon { background: #f2a100; }
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(3) .superviseur-dashboard__kpi-icon { background: #a13be1; }
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi:nth-child(4) .superviseur-dashboard__kpi-icon { background: #0c4873; }
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi-value {
+  color: #182a3c;
+  font-size: 30px;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi-label { order: -1; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.rrm-role-shell--superviseur .superviseur-dashboard__kpi small { color: #758596; }
+
+.rrm-role-shell--superviseur .superviseur-dashboard__panel,
+.rrm-role-shell--superviseur .superviseur-dashboard__period-head {
+  border: 1px solid #e2e9ef;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .045);
+  color: #24374b;
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__period-head { min-height: 80px; }
+.rrm-role-shell--superviseur .superviseur-dashboard h2 { color: #1b2d41; font-size: 18px; }
+.rrm-role-shell--superviseur .superviseur-dashboard__panel-head small,
+.rrm-role-shell--superviseur .superviseur-dashboard__hint { color: #748698; }
+
+.rrm-role-shell--superviseur .superviseur-dashboard__parking-list button,
+.rrm-role-shell--superviseur .superviseur-dashboard__actions button,
+.rrm-role-shell--superviseur .superviseur-dashboard__arretes button,
+.rrm-role-shell--superviseur .superviseur-dashboard__availability-row {
+  border: 1px solid #e2eaf0;
+  background: #f8fafc;
+  color: #25394d;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__parking-list button:hover,
+.rrm-role-shell--superviseur .superviseur-dashboard__actions button:hover,
+.rrm-role-shell--superviseur .superviseur-dashboard__arretes button:hover,
+.rrm-role-shell--superviseur .superviseur-dashboard__parking-list button.is-selected {
+  border-color: #89cce4;
+  background: #edf8fc;
+}
+
+.rrm-role-shell--superviseur .superviseur-dashboard__parking-list strong,
+.rrm-role-shell--superviseur .superviseur-dashboard__bar > span { color: #08769e; }
+.rrm-role-shell--superviseur .superviseur-dashboard__actions small,
+.rrm-role-shell--superviseur .superviseur-dashboard__arretes small,
+.rrm-role-shell--superviseur .superviseur-dashboard__availability-row small,
+.rrm-role-shell--superviseur .superviseur-dashboard__bar small { color: #748698; }
+.rrm-role-shell--superviseur .superviseur-dashboard__distribution-total { color: #172d44; }
+.rrm-role-shell--superviseur .superviseur-dashboard__distribution-total small { color: #748698; }
+.rrm-role-shell--superviseur .superviseur-dashboard__chart { border-bottom-color: #e2e9ef; }
+.rrm-role-shell--superviseur .superviseur-dashboard__bar i { background: linear-gradient(0deg, #0a6797, #27b5dc); box-shadow: none; }
+
+/* Client directory: same data layout, switched from dark glass to clean cards. */
+.rrm-role-shell--superviseur .base-clients--superviseur {
+  --bc-ink: #24374b;
+  --bc-muted: #748698;
+  --bc-border: #e1e9ef;
+  gap: 18px;
+  padding: 0 0 36px;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__hero,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__filters,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__section {
+  border: 1px solid #e1e9ef;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .045);
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__hero { min-height: 120px; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__hero h1,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__section h2 { color: #182b40; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__hero p { color: #748698; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__eyebrow { color: #08769e; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__hero-icon { color: #0b83ad; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__filters label { color: #536b80; }
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__filters input,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__filters select,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__search input {
+  border-color: #d7e2ea;
+  background: #ffffff;
+  color: #263b4e;
+  color-scheme: light;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__filters > button,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__pagination button {
+  border-color: #b8d6e6;
+  background: #f0f8fb;
+  color: #0b688f;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__list-panel,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__detail-panel {
+  border: 1px solid #e3eaf0;
+  background: #f9fbfc;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__item,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__field,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__vehicle,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__history-card {
+  border-color: #e1e9ef;
+  background: #ffffff;
+  color: #263b4e;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__item:hover,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__item.is-selected {
+  border-color: #83c8e3;
+  background: #eef8fc;
+}
+
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__item-icon,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__avatar { background: #e9f7fc; color: #08769e; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__item-icon--corporate,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__avatar--corporate { background: #f5edfc; color: #8946bb; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__count { border-color: #b8d6e6; color: #0b688f; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__status--actif { background: #e2f5ed; color: #17815a; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__status--archive { background: #eef1f4; color: #697b8a; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__detail-section h4 { color: #263b4e; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__detail-section h4 .anticon,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__vehicle strong,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__history-head strong { color: #08769e; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__period { background: #f0f5f8; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__period strong { color: #08769e; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__pill { background: #f4eafa; color: #8146ad; }
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__error,
+.rrm-role-shell--superviseur .base-clients--superviseur .base-clients__validation { color: #b83d4b; }
+
+/* Financial register, recipes, cards and cheque operations. */
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-header,
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-filtres,
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__hero,
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__toolbar {
+  padding: 22px 26px;
+  border: 1px solid #e2e9ef;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .045);
+  color: #1e2f43;
+}
+
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-surtitre { color: #08769e; text-transform: uppercase; letter-spacing: .1em; font-size: 10px; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-header h1 { color: #162a3e; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-kpi,
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-repartition,
+.rrm-role-shell--superviseur .supervisor-factures .comptable-facture-card { border-color: #e2e9ef; box-shadow: 0 5px 18px rgba(28, 58, 81, .045); }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-kpi { border-color: #b9e8d7; background: #f0fbf7; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-kpi > strong { color: #116e55; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-repartition { border-color: #e7d8f3; background: #fcf8ff; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-point--cheque { background: #8a49ba; }
+.rrm-role-shell--superviseur .supervisor-factures .comptable-factures-point--espece { background: #1baa80; }
+
+.rrm-role-shell--superviseur .supervisor-recettes .ant-card,
+.rrm-role-shell--superviseur .supervisor-detail.ant-card,
+.rrm-role-shell--superviseur .supervisor-detail .ant-card,
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__dossier {
+  border: 1px solid #e2e9ef;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 58, 81, .045);
+  backdrop-filter: none;
+}
+
+.rrm-role-shell--superviseur .supervisor-recettes .ant-card-head,
+.rrm-role-shell--superviseur .supervisor-detail .ant-card-head,
+.rrm-role-shell--superviseur .rejets-page--superviseur .ant-card-head {
+  border-bottom-color: #e7edf2;
+  color: #1e2f43;
+}
+
+.rrm-role-shell--superviseur .supervisor-recettes .ant-card-head-title,
+.rrm-role-shell--superviseur .supervisor-detail .ant-card-head-title { color: #1e2f43; font-weight: 700; }
+.rrm-role-shell--superviseur .supervisor-recettes .ant-statistic {
+  min-width: 180px;
+  padding: 18px 22px;
+  border: 1px solid #d9e9ee;
+  border-radius: 14px;
+  background: #f5fafb;
+}
+.rrm-role-shell--superviseur .supervisor-recettes .ant-statistic:nth-child(2) { border-color: #f4dda9; background: #fffaf0; }
+.rrm-role-shell--superviseur .supervisor-recettes .ant-statistic:nth-child(3) { border-color: #dfe1f2; background: #f8f8ff; }
+.rrm-role-shell--superviseur .supervisor-recettes .ant-statistic-title { color: #607587; font-weight: 650; }
+.rrm-role-shell--superviseur .supervisor-recettes .ant-statistic-content { color: #18384c; font-weight: 750; }
+
+.rrm-role-shell--superviseur .rejets-page--superviseur { max-width: none; padding: 0 0 36px; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__hero::after { display: none; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__hero h1,
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__toolbar h2 { color: #162a3e; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__hero p { color: #718294; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__eyebrow { color: #08769e; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__details > div { border-color: #e1e9ef; background: #f8fafc; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__amount { border-color: #f4dda9; background: #fffaf0; }
+.rrm-role-shell--superviseur .rejets-page--superviseur .rejets-page__toolbar { margin-bottom: 16px; }
+
+@media (max-width: 760px) {
+  .rrm-role-shell--superviseur > main { padding-top: 78px; }
+  .rrm-role-shell--superviseur .supervisor-screen__heading,
+  .rrm-role-shell--superviseur .superviseur-dashboard__header,
+  .rrm-role-shell--superviseur .superviseur-dashboard__period-head { align-items: flex-start; flex-direction: column; padding: 19px; }
+  .rrm-role-shell--superviseur .supervisor-screen__filters { padding: 13px; }
+  .rrm-role-shell--superviseur .supervisor-recettes .ant-statistic { min-width: 145px; }
+}

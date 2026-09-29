@@ -27,6 +27,12 @@ public class AbonnementRegulier extends Abonnement {
     )
     private ClientParticulier client;
 
+    @Column(name = "entreprise_nom", length = 200)
+    private String entrepriseNom;
+
+    @Column(name = "entreprise_ice", length = 15)
+    private String entrepriseIce;
+
     @OneToMany(
             mappedBy = "abonnement",
             cascade = {
@@ -68,6 +74,26 @@ public class AbonnementRegulier extends Abonnement {
 
     public ClientParticulier getClient() {
         return client;
+    }
+
+    public void renseignerEntreprise(String nom, String ice) {
+        if (nom == null || nom.isBlank() || ice == null || !ice.matches("[0-9]{15}")) {
+            throw new IllegalArgumentException("Identité de l'entreprise invalide");
+        }
+        this.entrepriseNom = nom.trim();
+        this.entrepriseIce = ice.trim();
+    }
+
+    public String getEntrepriseNom() {
+        return entrepriseNom;
+    }
+
+    public String getEntrepriseIce() {
+        return entrepriseIce;
+    }
+
+    public boolean estAuNomEntreprise() {
+        return entrepriseIce != null;
     }
     public List<AffectationParking> getAffectationsParking() {
         return Collections.unmodifiableList(affectationsParking);

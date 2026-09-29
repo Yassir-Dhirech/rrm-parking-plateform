@@ -23,8 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/comptable/factures")
-@PreAuthorize("hasRole('COMPTABLE')")
+@RequestMapping({"/api/comptable/factures", "/api/responsable/factures"})
+@PreAuthorize("hasAnyRole('COMPTABLE', 'RESPONSABLE_STATIONNEMENT')")
 @RequiredArgsConstructor
 public class FactureComptableController {
 

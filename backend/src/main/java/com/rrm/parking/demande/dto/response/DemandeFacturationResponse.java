@@ -32,7 +32,9 @@ public record DemandeFacturationResponse(
         Long factureId,
         String factureNumero,
         StatutFacture factureStatut,
-        LocalDateTime dateEmission
+        LocalDateTime dateEmission,
+        String entrepriseNom,
+        String entrepriseIce
 ) {
 
     public static DemandeFacturationResponse depuis(
@@ -50,15 +52,21 @@ public record DemandeFacturationResponse(
                 DecomptePaiementDemande.depuis(demandeReelle);
 
         String abonnementReference;
+        String entrepriseNom = null;
+        String entrepriseIce = null;
         if (demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle) {
             abonnementReference = nouvelle.getAbonnementGenere() == null
                     ? null
                     : nouvelle.getAbonnementGenere().getReference();
+            entrepriseNom = nouvelle.getEntrepriseNom();
+            entrepriseIce = nouvelle.getEntrepriseIce();
         } else if (demandeReelle
                 instanceof DemandeRenouvellementRegulier renouvellement) {
             abonnementReference = renouvellement
                     .getAbonnementConcerne()
                     .getReference();
+            entrepriseNom = renouvellement.getAbonnementConcerne().getEntrepriseNom();
+            entrepriseIce = renouvellement.getAbonnementConcerne().getEntrepriseIce();
         } else {
             throw new IllegalArgumentException(
                     "Ce type de demande n'est pas facturable"
@@ -70,7 +78,7 @@ public record DemandeFacturationResponse(
                 demandeReelle.getReference(),
                 demandeReelle.getStatut(),
                 demandeReelle.getDateModification(),
-                client.getNomComplet(),
+                entrepriseNom == null ? client.getNomComplet() : entrepriseNom,
                 client.getCin(),
                 client.getEmail(),
                 decompte.tarifParking().getParking().getNom(),
@@ -83,7 +91,9 @@ public record DemandeFacturationResponse(
                 facture == null ? null : facture.getId(),
                 facture == null ? null : facture.getNumero(),
                 facture == null ? null : facture.getStatut(),
-                facture == null ? null : facture.getDateEmission()
+                facture == null ? null : facture.getDateEmission(),
+                entrepriseNom,
+                entrepriseIce
         );
     }
 }

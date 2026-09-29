@@ -38,7 +38,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,18 @@ public class OperationCarteService {
     }
 
     @Transactional(readOnly = true)
+    public List<DemandeOperationnelleResponse> listerImpressionsSuperviseur(Long superviseurId) {
+        Set<Long> parkingIds = parkingsAffectesSuperviseur(superviseurId);
+        return operationRepository
+                .findByTypeOperationAndStatutInOrderByDateCreationAsc(
+                        TypeOperationCarte.IMPRESSION, STATUTS_OUVERTS)
+                .stream()
+                .filter(operation -> parkingOperation(operation).filter(parkingIds::contains).isPresent())
+                .map(this::versReponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<DemandeOperationnelleResponse> listerActivations() {
         return lister(TypeOperationCarte.ACTIVATION);
     }
@@ -80,9 +94,32 @@ public class OperationCarteService {
             Long utilisateurId,
             String numeroCarte
     ) {
+        return terminerImpressionDansPerimetre(operationId, utilisateurId, numeroCarte, false);
+    }
+
+    @Transactional
+    public DemandeOperationnelleResponse terminerImpressionSuperviseur(
+            Long operationId,
+            Long superviseurId,
+            String numeroCarte
+    ) {
+        return terminerImpressionDansPerimetre(operationId, superviseurId, numeroCarte, true);
+    }
+
+    private DemandeOperationnelleResponse terminerImpressionDansPerimetre(
+            Long operationId, Long utilisateurId, String numeroCarte, boolean superviseur
+    ) {
         DemandeOperationnelle operation = charger(operationId,
                 TypeOperationCarte.IMPRESSION);
-        verifierOperationAgent(operation, utilisateurId);
+        if (superviseur) {
+            Set<Long> parkingIds = parkingsAffectesSuperviseur(utilisateurId);
+            if (parkingOperation(operation).filter(parkingIds::contains).isEmpty()) {
+                throw new ConflitMetierException(
+                        "La carte n'appartient à aucun parking affecté à ce superviseur");
+            }
+        } else {
+            verifierOperationAgent(operation, utilisateurId);
+        }
         Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
         prendreEnChargeSiNecessaire(operation, utilisateur);
         operation.terminerImpression(utilisateur, numeroCarte);
@@ -102,6 +139,18 @@ public class OperationCarteService {
         }
         operationRepository.save(activation);
         return versReponse(operation);
+    }
+
+    private Set<Long> parkingsAffectesSuperviseur(Long superviseurId) {
+        LocalDate aujourdHui = LocalDate.now(ZONE_RRM);
+        return affectationAgentRepository.findAllByUtilisateurIdAndActiveTrue(superviseurId)
+                .stream()
+                .filter(affectation -> affectation.getDateDebut() != null
+                        && !affectation.getDateDebut().isAfter(aujourdHui))
+                .filter(affectation -> affectation.getDateFin() == null
+                        || !affectation.getDateFin().isBefore(aujourdHui))
+                .map(affectation -> affectation.getParking().getId())
+                .collect(Collectors.toSet());
     }
 
     @Transactional

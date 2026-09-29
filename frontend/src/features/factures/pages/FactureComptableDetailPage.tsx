@@ -6,6 +6,7 @@ import {
   consulterFactureComptable,
   telechargerFactureComptablePdf,
 } from "../../../api/facturationApi";
+import { useAuth } from "../../../context/AuthContext";
 import type { FactureLigneResponse } from "../facturationTypes";
 
 const montant = (valeur: number) =>
@@ -13,19 +14,22 @@ const montant = (valeur: number) =>
 
 export function FactureComptableDetailPage() {
   const navigate = useNavigate();
+  const { role, token } = useAuth();
+  const portee = role === "SUPERVISEUR" ? "superviseur"
+    : role === "RESPONSABLE" ? "responsable" : "comptable";
   const { id } = useParams<{ id: string }>();
   const factureId = Number(id);
   const [erreurPdf, setErreurPdf] = useState(false);
   const facture = useQuery({
-    queryKey: ["facture-comptable", factureId],
-    queryFn: () => consulterFactureComptable(factureId),
+    queryKey: ["facture-registre", portee, token, factureId],
+    queryFn: () => consulterFactureComptable(factureId, portee),
     enabled: Number.isSafeInteger(factureId) && factureId > 0,
   });
 
   async function telechargerPdf() {
     setErreurPdf(false);
     try {
-      const blob = await telechargerFactureComptablePdf(factureId);
+      const blob = await telechargerFactureComptablePdf(factureId, portee);
       const url = URL.createObjectURL(blob);
       const lien = document.createElement("a");
       lien.href = url;
@@ -51,9 +55,10 @@ export function FactureComptableDetailPage() {
   const data = facture.data;
   return (
     <Card
+      className={portee === "superviseur" ? "supervisor-screen supervisor-detail" : undefined}
       title={`Facture ${data.numero}`}
       extra={<Space>
-        <Button onClick={() => navigate("/comptable/factures")}>Retour</Button>
+        <Button onClick={() => navigate(`/${portee}/factures`)}>Retour</Button>
         <Button type="primary" disabled={data.statut !== "EMISE"} onClick={telechargerPdf}>
           Télécharger le PDF
         </Button>

@@ -87,17 +87,20 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/superviseur" },
-      { key: "carte-parkings", label: "Carte des Parkings", path: "/superviseur/carte-parkings" },
       {
         key: "demandes",
         label: "Demandes à valider",
         path: "/superviseur/demandes",
         requiredAuthority: "DEMANDE_VALIDER",
       },
-      { key: "abonnements", label: "Abonnements", path: "/superviseur/abonnements" },
+      { key: "base-clients", label: "Base des clients", path: "/superviseur/clients" },
       { key: "recettes", label: "Recettes", path: "/superviseur/recettes" },
       { key: "factures", label: "Factures", path: "/superviseur/factures" },
-      { key: "cartes", label: "Cartes d'accès", path: "/superviseur/cartes" },
+      {
+        key: "impressions-cartes",
+        label: "Cartes à imprimer",
+        path: "/superviseur/impressions-cartes",
+      },
       {
         key: "activations-cartes",
         label: "Activation et test des cartes",
@@ -140,6 +143,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
       },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
       { key: "base-clients", label: "Base des clients", path: "/responsable/clients" },
+      { key: "factures", label: "Factures", path: "/responsable/factures" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
       { key: "rejets-cheques", label: "Rejets de chèques", path: "/responsable/rejets-cheques" },

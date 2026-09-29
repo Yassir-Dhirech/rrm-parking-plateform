@@ -35,8 +35,9 @@ public class AgentDashboardController {
 
     @GetMapping("/actions")
     @PreAuthorize("hasRole('AGENT_ADMINISTRATIF')")
-    public AgentDashboardActionsResponse actions(@AuthenticationPrincipal Jwt jwt) {
-        return actionsService.actions(extraireUtilisateurId(jwt));
+    public AgentDashboardActionsResponse actions(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "8") int limite) {
+        return actionsService.actions(extraireUtilisateurId(jwt), limite);
     }
 
     @GetMapping("/recherche")

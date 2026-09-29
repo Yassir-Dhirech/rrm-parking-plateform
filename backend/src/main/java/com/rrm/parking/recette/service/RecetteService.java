@@ -254,6 +254,14 @@ public class RecetteService {
         return p.getDemande().getReference();
     }
     private String client(Paiement p) {
+        var demande = (com.rrm.parking.demande.entity.DemandeClient) Hibernate.unproxy(p.getDemande());
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle && nouvelle.estAuNomEntreprise()) {
+            return nouvelle.getEntrepriseNom();
+        }
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement
+                && renouvellement.getAbonnementConcerne().estAuNomEntreprise()) {
+            return renouvellement.getAbonnementConcerne().getEntrepriseNom();
+        }
         Object c = Hibernate.unproxy(p.getDemande().getClient());
         if (c instanceof ClientParticulier x) return x.getNomComplet();
         if (c instanceof ClientEntreprise x) return x.getRaisonSociale();

@@ -246,6 +246,7 @@ export function PublicQrForm({ mode = "PUBLIC" }: PublicQrFormProps) {
   const watchedTarifParkingId = Form.useWatch("tarifParkingId", form);
   const watchedModePaiement = Form.useWatch("modePaiement", form);
   const watchedCanalOtp = Form.useWatch("canalOtp", form);
+  const abonnementRegulierEntreprise = Form.useWatch("categorieSouscriptionReguliere", form) === "ENTREPRISE";
 
   // Persistent Form Values state across unmounting steps
   const [formValues, setFormValues] = useState<any>({
@@ -472,7 +473,10 @@ const {
   // Section 1 Validation (Informations Personnelles) -> Folds Sec 1 & Unfolds Sec 2
   const handleValidatePerso = async () => {
     try {
-      await form.validateFields(["nom", "prenom", "cin", "telephone", "email", "photoCinRecto", "photoCinVerso"]);
+      await form.validateFields([
+        "nom", "prenom", "cin", "telephone", "email", "photoCinRecto", "photoCinVerso",
+        ...(abonnementRegulierEntreprise ? ["entrepriseReguliereNom", "entrepriseReguliereIce"] : []),
+      ]);
       setFormValues((prev: any) => ({ ...prev, ...form.getFieldsValue(true) }));
       setIsPersoValid(true);
       message.success("Informations Personnelles & CIN validées !");
@@ -678,7 +682,7 @@ const {
   const getTypeDemandeLabel = () => {
     switch (typeDemande) {
       case "NEW":
-        return "Nouvel Abonnement Particulier";
+        return abonnementRegulierEntreprise ? "Nouvel Abonnement Régulier Entreprise" : "Nouvel Abonnement Particulier";
       case "RENEW":
         return "Renouvellement d'Abonnement Actif";
       case "DUPLICATE":
@@ -725,7 +729,8 @@ const {
       setPendingValues({
         ...consolidated,
         typeDemande,
-        typeClient: typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER",
+        typeClient: typeDemande === "CORPORATE" || (typeDemande === "NEW" && abonnementRegulierEntreprise)
+          ? "ENTREPRISE" : "PARTICULIER",
         baseAbonnementPrice,
         fraisCarte: totalFraisCarte,
         montantTotal: totalPrice,
@@ -780,6 +785,10 @@ const {
           canalOtp,
           modePaiement: (consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE") as ModePaiement,
           conditionsAcceptees: Boolean(consolidated.acceptTerms),
+          ...(abonnementRegulierEntreprise ? {
+            entrepriseNom: consolidated.entrepriseReguliereNom?.trim(),
+            entrepriseIce: consolidated.entrepriseReguliereIce?.trim(),
+          } : {}),
         };
 
         const documents: DocumentsDemande = {
@@ -1049,7 +1058,7 @@ const {
                     Nouvel Abonnement
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Créer une nouvelle souscription pour votre véhicule (Particulier).
+                    Créer une souscription régulière pour un véhicule, personnelle ou au nom de votre entreprise.
                   </p>
                 </div>
               </div>
@@ -1631,14 +1640,14 @@ const {
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-xl font-extrabold text-slate-900 m-0">
-                      Informations du Souscripteur Particulier
+                      Informations du souscripteur
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">
                       Remplissez et validez chaque section pour poursuivre votre souscription.
                     </p>
                   </div>
                   <Tag color="blue" className="font-bold px-3 py-1 rounded-full">
-                    Compte Particulier
+                    {abonnementRegulierEntreprise ? "Régulier · Entreprise" : "Compte Particulier"}
                   </Tag>
                 </div>
 
@@ -1692,6 +1701,32 @@ const {
                           : "bg-white/80 border border-slate-200"
                       }`}
                     >
+                      <Form.Item name="categorieSouscriptionReguliere" initialValue="PERSONNEL"
+                        label="Souscription régulière">
+                        <Radio.Group onChange={() => setIsPersoValid(false)}>
+                          <Radio value="PERSONNEL">En mon nom</Radio>
+                          <Radio value="ENTREPRISE">Au nom de mon entreprise (un seul véhicule)</Radio>
+                        </Radio.Group>
+                      </Form.Item>
+                      {abonnementRegulierEntreprise && (
+                        <Row gutter={16}>
+                          <Col xs={24} md={12}>
+                            <Form.Item name="entrepriseReguliereNom" label="Nom de l'entreprise"
+                              rules={[{ required: true, whitespace: true, message: "Le nom de l'entreprise est requis." },
+                                { max: 200, message: "200 caractères maximum." }]}>
+                              <Input prefix={<BankOutlined />} placeholder="Raison sociale" className="rounded-xl py-2" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={12}>
+                            <Form.Item name="entrepriseReguliereIce" label="ICE de l'entreprise"
+                              normalize={(value) => value ? value.replace(/\D/g, "").slice(0, 15) : ""}
+                              rules={[{ required: true, message: "L'ICE est requis." },
+                                { pattern: /^[0-9]{15}$/, message: "L'ICE doit contenir 15 chiffres." }]}>
+                              <Input inputMode="numeric" maxLength={15} placeholder="15 chiffres" className="rounded-xl py-2" />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                      )}
                       <Row gutter={16}>
                         <Col xs={24} md={12}>
                           <Form.Item
@@ -2196,11 +2231,14 @@ const {
                   <ChequeSpecimenCard
                     montant={totalPrice}
                     clientNom={
-                      form.getFieldValue("raisonSociale") ||
+                      (typeDemande === "NEW" && abonnementRegulierEntreprise
+                        ? form.getFieldValue("entrepriseReguliereNom") : null) ||
+                      (typeDemande === "CORPORATE" ? form.getFieldValue("raisonSociale") : null) ||
                       `${form.getFieldValue("nom") || ""} ${form.getFieldValue("prenom") || ""}`.trim() ||
                       "Souscripteur RRM"
                     }
-                    typeClient={typeDemande === "CORPORATE" ? "ENTREPRISE" : "PARTICULIER"}
+                    typeClient={typeDemande === "CORPORATE" || (typeDemande === "NEW" && abonnementRegulierEntreprise)
+                      ? "ENTREPRISE" : "PARTICULIER"}
                   />
                 </div>
               )}
@@ -2402,6 +2440,14 @@ const {
                           {recapData.email || form.getFieldValue("email") || "-"}
                         </strong>
                       </Col>
+                      {typeDemande === "NEW" && abonnementRegulierEntreprise && (
+                        <Col xs={24}>
+                          <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Entreprise facturée · ICE</span>
+                          <strong className="text-sm text-slate-900 block">
+                            {recapData.entrepriseReguliereNom || "-"} · {recapData.entrepriseReguliereIce || "-"}
+                          </strong>
+                        </Col>
+                      )}
                     </Row>
                   )}
                 </div>

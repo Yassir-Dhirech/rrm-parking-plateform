@@ -31,6 +31,7 @@ import {
   DollarCircleOutlined,
 } from "@ant-design/icons";
 import "./RoleLayout.css";
+import "./SupervisorPages.css";
 
 const menuIconMap: Record<string, React.ReactNode> = {
   dashboard: <DashboardOutlined />,
@@ -128,7 +129,7 @@ return (
     <div
       className={`rrm-role-shell bg-[#f7f9fb] text-slate-900 font-body-md min-h-screen relative overflow-x-hidden selection:bg-secondary selection:text-white ${
         role === "RESPONSABLE" ? "rrm-role-shell--glass" : ""
-      }`}
+      } ${role === "SUPERVISEUR" ? "rrm-role-shell--superviseur" : ""}`}
     >
       {/* Ambient Radial Background Glows */}
       <div className="absolute top-0 left-[20%] w-[500px] h-[500px] rounded-full bg-sky-400/10 blur-3xl pointer-events-none"></div>

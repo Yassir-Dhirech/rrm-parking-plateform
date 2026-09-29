@@ -14,8 +14,10 @@ import {
   listerCartesARemettre,
 } from "../../../api/operationsCartesApi";
 import type { DemandeOperationnelleCarte, TypeOperationCarte } from "../operationCarteTypes";
+import { useAuth } from "../../../context/AuthContext";
 
 export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
+  const { role } = useAuth();
   const [params, setParams] = useSearchParams();
   const operationId = params.get("operationId");
   const queryClient = useQueryClient();
@@ -110,8 +112,9 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
   ];
 
   return (
-    <section className="space-y-5">
-      <div>
+    <section className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-operations" : "space-y-5"}>
+      <div className={role === "SUPERVISEUR" ? "supervisor-screen__heading" : undefined}>
+        {role === "SUPERVISEUR" && <span className="supervisor-screen__eyebrow">Espace superviseur · Cartes d'accès</span>}
         <h1 className="text-2xl font-black text-slate-900">
           {impression
             ? "Demandes d'impression des cartes"
@@ -127,7 +130,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
               : "Confirmez la récupération de la carte par le client."}
         </p>
       </div>
-      <Space>
+      <Space className={role === "SUPERVISEUR" ? "supervisor-screen__filters" : undefined}>
         <Button icon={<ReloadOutlined />} loading={query.isFetching} onClick={() => void query.refetch()}>
           Actualiser
         </Button>
@@ -137,6 +140,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
         message="Opération sélectionnée depuis le tableau de bord"
         action={<Button size="small" onClick={() => setParams({})}>Voir toutes les opérations</Button>} />}
             <Table
+        className={role === "SUPERVISEUR" ? "supervisor-screen__table" : undefined}
         rowKey="id"
         columns={columns}
         dataSource={operationId ? (query.data ?? []).filter((operation) => String(operation.id) === operationId) : (query.data ?? [])}

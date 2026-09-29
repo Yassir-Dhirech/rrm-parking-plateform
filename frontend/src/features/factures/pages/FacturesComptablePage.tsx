@@ -6,7 +6,9 @@ import {
   listerFacturesComptable,
   telechargerFactureComptablePdf,
   type FiltresFacturesComptable,
+  type PorteeFactures,
 } from "../../../api/facturationApi";
+import { useAuth } from "../../../context/AuthContext";
 import type { FactureResponse } from "../facturationTypes";
 import "./FacturesComptablePage.css";
 
@@ -30,9 +32,11 @@ const libelleStatut: Record<FactureResponse["statut"], string> = {
 function CarteFacture({
   facture,
   ouvrir,
+  portee,
 }: {
   facture: FactureResponse;
   ouvrir: (id: number) => void;
+  portee: PorteeFactures;
 }) {
   const [telechargement, setTelechargement] = useState(false);
   const [erreurPdf, setErreurPdf] = useState(false);
@@ -47,7 +51,7 @@ function CarteFacture({
     setTelechargement(true);
     setErreurPdf(false);
     try {
-      const pdf = await telechargerFactureComptablePdf(facture.id);
+      const pdf = await telechargerFactureComptablePdf(facture.id, portee);
       const url = URL.createObjectURL(pdf);
       const lien = document.createElement("a");
       lien.href = url;
@@ -118,6 +122,9 @@ function CarteFacture({
 
 export function FacturesComptablePage() {
   const navigate = useNavigate();
+  const { role, token } = useAuth();
+  const portee: PorteeFactures = role === "SUPERVISEUR" ? "superviseur"
+    : role === "RESPONSABLE" ? "responsable" : "comptable";
   const [page, setPage] = useState(0);
   const [saisie, setSaisie] = useState("");
   const [recherche, setRecherche] = useState("");
@@ -143,8 +150,8 @@ export function FacturesComptablePage() {
   };
   const periodeInvalide = Boolean(dateDebut && dateFin && dateFin < dateDebut);
   const factures = useQuery({
-    queryKey: ["factures-comptable", page, recherche, statut, modePaiement, dateDebut, dateFin],
-    queryFn: () => listerFacturesComptable(page, filtres, TAILLE_PAGE),
+    queryKey: ["factures-registre", portee, token, page, recherche, statut, modePaiement, dateDebut, dateFin],
+    queryFn: () => listerFacturesComptable(page, filtres, TAILLE_PAGE, portee),
     enabled: !periodeInvalide,
   });
   const resultat = periodeInvalide ? undefined : factures.data;
@@ -167,10 +174,12 @@ export function FacturesComptablePage() {
   }
 
   return (
-    <main className="comptable-factures">
+    <main className={`comptable-factures ${portee === "superviseur" ? "supervisor-screen supervisor-factures" : ""}`}>
       <header className="comptable-factures-header">
         <div>
-          <p className="comptable-factures-surtitre">Espace comptable</p>
+          <p className="comptable-factures-surtitre">{portee === "superviseur"
+            ? "Espace superviseur · Parkings affectés"
+            : portee === "responsable" ? "Espace responsable · Tous les parkings" : "Espace comptable"}</p>
           <h1>Registre des factures</h1>
           <p>Consultez les factures enregistrées et leurs paiements.</p>
         </div>
@@ -250,7 +259,7 @@ export function FacturesComptablePage() {
           ) : (
             <div className="comptable-factures-grille">
               {resultat?.factures.content.map((facture) => (
-                <CarteFacture key={facture.id} facture={facture} ouvrir={(id) => navigate(`/comptable/factures/${id}`)} />
+                <CarteFacture key={facture.id} facture={facture} portee={portee} ouvrir={(id) => navigate(`/${portee}/factures/${id}`)} />
               ))}
             </div>
           )}

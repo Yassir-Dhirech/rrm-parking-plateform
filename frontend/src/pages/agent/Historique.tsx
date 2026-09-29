@@ -7,7 +7,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Card, Space, Table, Tabs, Tag, Typography } from "antd";
+import { Alert, Button, Card, Empty, Space, Table, Tabs, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   getAgentHistorique,
@@ -16,6 +16,7 @@ import {
   type HistoriquePaiementValide,
   type HistoriqueModificationDemande,
 } from "../../api/agentHistorique";
+import "./Historique.css";
 
 const formaterDate = (date?: string | null): string =>
   date
@@ -33,13 +34,62 @@ const formaterMontant = (montant: number): string =>
 
 const texte = (valeur?: string | null): string => valeur || "—";
 
-const formaterDetails = (details: string): string => {
-  try {
-    return JSON.stringify(JSON.parse(details), null, 2);
-  } catch {
-    return details;
-  }
+const libellesChamps: Record<string, string> = {
+  nom: "Nom", prenom: "Prénom", cin: "CIN", email: "E-mail",
+  telephone: "Téléphone", entrepriseNom: "Entreprise", entrepriseIce: "ICE",
+  immatriculation: "Immatriculation", marque: "Marque", modele: "Modèle",
+  couleur: "Couleur", typeVehicule: "Type de véhicule",
+  tarifParkingId: "Identifiant du tarif", parking: "Parking", forfait: "Forfait",
+  dureeMois: "Durée (mois)", modePaiement: "Mode de paiement",
 };
+
+const formaterValeur = (valeur: unknown): string =>
+  valeur == null || valeur === "" ? "Non renseigné" :
+  typeof valeur === "object" ? JSON.stringify(valeur) : String(valeur).replaceAll("_", " ");
+
+function DetailsModification({ details }: { details: string }) {
+  try {
+    const donnees = JSON.parse(details) as {
+      avant?: Record<string, unknown>;
+      apres?: Record<string, unknown>;
+      documentsRemplaces?: string[];
+    };
+    const avant = donnees.avant ?? {};
+    const apres = donnees.apres ?? {};
+    const champs = Array.from(new Set([...Object.keys(avant), ...Object.keys(apres)]));
+    return (
+      <div className="agent-history-details">
+        <div className="agent-history-details__heading">
+          <strong>Comparaison de la demande</strong>
+          <span>{champs.filter((champ) => JSON.stringify(avant[champ]) !== JSON.stringify(apres[champ])).length} champ(s) modifié(s)</span>
+        </div>
+        {champs.length === 0 ? <Empty description="Aucun détail disponible" /> : (
+          <div className="agent-history-details__grid">
+            <div className="agent-history-details__column">
+              <h4>Avant modification</h4>
+              {champs.map((champ) => <div className="agent-history-details__field" key={champ}>
+                <span>{libellesChamps[champ] ?? champ}</span>
+                <strong>{formaterValeur(avant[champ])}</strong>
+              </div>)}
+            </div>
+            <div className="agent-history-details__column agent-history-details__column--after">
+              <h4>Après modification</h4>
+              {champs.map((champ) => <div className={`agent-history-details__field ${JSON.stringify(avant[champ]) !== JSON.stringify(apres[champ]) ? "agent-history-details__field--changed" : ""}`} key={champ}>
+                <span>{libellesChamps[champ] ?? champ}</span>
+                <strong>{formaterValeur(apres[champ])}</strong>
+              </div>)}
+            </div>
+          </div>
+        )}
+        {donnees.documentsRemplaces?.length ? (
+          <div className="agent-history-details__documents">Pièces remplacées : {donnees.documentsRemplaces.map((piece) => piece.replaceAll("_", " ")).join(", ")}</div>
+        ) : null}
+      </div>
+    );
+  } catch {
+    return <Alert type="warning" showIcon message="Détail de modification indisponible" />;
+  }
+}
 
 export function AgentHistoriquePage() {
   const historique = useQuery({
@@ -165,14 +215,7 @@ export function AgentHistoriquePage() {
           pagination={{ pageSize: 10 }}
           scroll={{ x: 1000 }}
           expandable={{
-            expandedRowRender: (ligne) => (
-              <div>
-                <Typography.Text strong>Données exactes avant / après</Typography.Text>
-                <pre className="mt-2 max-h-96 overflow-auto rounded bg-slate-950 p-4 text-xs text-slate-100">
-                  {formaterDetails(ligne.detailsAvantApres)}
-                </pre>
-              </div>
-            ),
+            expandedRowRender: (ligne) => <DetailsModification details={ligne.detailsAvantApres} />,
           }}
         />
       ),

@@ -65,7 +65,9 @@ public record DemandeDetailResponse(
         BigDecimal montantTotalTTC,
         ModePaiement modePaiementSouhaite,
 
-        List<PieceJointeInfo> piecesJointes
+        List<PieceJointeInfo> piecesJointes,
+        String entrepriseNom,
+        String entrepriseIce
 
 ) {
 
@@ -99,7 +101,7 @@ public record DemandeDetailResponse(
                 demande.getMotifRefus(),
 
                 client.getId(),
-                "PARTICULIER",
+                demande.estAuNomEntreprise() ? "ENTREPRISE" : "PARTICULIER",
                 client.getNomComplet(),
                 client.getNom(),
                 client.getPrenom(),
@@ -129,7 +131,9 @@ public record DemandeDetailResponse(
 
                 pieces.stream()
                         .map(PieceJointeInfo::depuis)
-                        .toList()
+                        .toList(),
+                demande.getEntrepriseNom(),
+                demande.getEntrepriseIce()
         );
     }
 
@@ -163,7 +167,7 @@ public record DemandeDetailResponse(
                 demande.getMotifRefus(),
 
                 client.getId(),
-                "PARTICULIER",
+                demande.getAbonnementConcerne().estAuNomEntreprise() ? "ENTREPRISE" : "PARTICULIER",
                 client.getNomComplet(),
                 client.getNom(),
                 client.getPrenom(),
@@ -193,7 +197,9 @@ public record DemandeDetailResponse(
 
                 pieces.stream()
                         .map(PieceJointeInfo::depuis)
-                        .toList()
+                        .toList(),
+                demande.getAbonnementConcerne().getEntrepriseNom(),
+                demande.getAbonnementConcerne().getEntrepriseIce()
         );
     }
 

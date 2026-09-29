@@ -106,8 +106,9 @@ export function DemandesAValider() {
   ];
 
   return (
-    <section className="space-y-5">
-      <div>
+    <section className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-operations" : "space-y-5"}>
+      <div className={role === "SUPERVISEUR" ? "supervisor-screen__heading" : undefined}>
+        {role === "SUPERVISEUR" && <span className="supervisor-screen__eyebrow">Espace superviseur · Décisions</span>}
         <h1 className="text-2xl font-black text-slate-900">
           Demandes payées à valider
         </h1>
@@ -117,7 +118,7 @@ export function DemandesAValider() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className={role === "SUPERVISEUR" ? "supervisor-screen__filters" : "rounded-xl border border-slate-200 bg-white p-4"}>
         <Space wrap style={{ width: "100%" }}>
           <Input
             allowClear
@@ -164,6 +165,7 @@ export function DemandesAValider() {
       )}
 
       <Table<DemandeRechercheResponse>
+        className={role === "SUPERVISEUR" ? "supervisor-screen__table" : undefined}
         rowKey="id"
         columns={columns}
         dataSource={query.data ?? []}

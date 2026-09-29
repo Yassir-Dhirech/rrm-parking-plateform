@@ -29,7 +29,8 @@ public class AgentParkingRegistreService {
     private static final String CARTES = """
             select registre.* from (
               select c.id, c.reference, c.numero_carte, c.statut,
-                     c.immatriculation_affectee, c.date_creation,
+                     coalesce(c.immatriculation_affectee, v.immatriculation)
+                       as immatriculation_affectee, c.date_creation,
                      a.reference as abonnement_reference,
                      concat_ws(' ', cp.prenom, cp.nom) as client_nom,
                      cp.cin as client_identifiant,
@@ -37,6 +38,9 @@ public class AgentParkingRegistreService {
               from carte_acces c
               join abonnement a on a.id = c.abonnement_id
               join abonnement_regulier ar on ar.id = a.id
+              left join demande_nouvel_abonnement_regulier dnar
+                on dnar.abonnement_genere_id = ar.id
+              left join vehicule v on v.id = dnar.vehicule_id
               join client_particulier cp on cp.id = ar.client_particulier_id
               join affectation_parking ap on ap.abonnement_regulier_id = ar.id
               where ap.parking_id = :parkingId

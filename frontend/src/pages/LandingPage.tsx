@@ -196,7 +196,7 @@ export function LandingPage() {
             </Button>
           </div>
           <div className="glass-card p-3 rounded-3xl shadow-xl border border-white/80">
-            <RabatParkingsMap height={500} />
+            <RabatParkingsMap height={500} publicView />
           </div>
         </section>
 

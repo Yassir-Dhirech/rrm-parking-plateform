@@ -104,4 +104,32 @@ public interface DemandeOperationnelleRepository
             @Param("parkingId") Long parkingId,
             @Param("dateReference") LocalDate dateReference
     );
+
+    @Query("""
+            select distinct operation
+            from DemandeOperationnelle operation
+            where operation.typeOperation in :types
+              and operation.statut in :statuts
+              and (
+                  exists (
+                      select affectation.id from AffectationParking affectation
+                      where affectation.abonnement.id = operation.carteAcces.abonnement.id
+                        and affectation.parking.id = :parkingId
+                        and affectation.dateDebut <= :dateReference
+                        and (affectation.dateFin is null or affectation.dateFin >= :dateReference)
+                  )
+                  or exists (
+                      select corporate.id from DemandeNouveauContratCorporate corporate
+                      where corporate.id = operation.demandeClientSource.id
+                        and corporate.parking.id = :parkingId
+                  )
+              )
+            order by operation.dateCreation asc
+            """)
+    List<DemandeOperationnelle> findOuvertesParParking(
+            @Param("types") List<TypeOperationCarte> types,
+            @Param("statuts") List<StatutDemandeOperationnelle> statuts,
+            @Param("parkingId") Long parkingId,
+            @Param("dateReference") LocalDate dateReference
+    );
 }

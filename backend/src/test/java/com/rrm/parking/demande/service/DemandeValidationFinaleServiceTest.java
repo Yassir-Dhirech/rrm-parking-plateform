@@ -27,6 +27,8 @@ import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
+import com.rrm.parking.vehicule.entity.Vehicule;
+import com.rrm.parking.vehicule.enums.TypeVehicule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -157,7 +159,7 @@ class DemandeValidationFinaleServiceTest {
 
     @Test
     void doitCreerAbonnementActifCarteEtDemandeImpression() {
-        DemandeNouvelAbonnementRegulier demande = creerDemandePayee();
+        DemandeNouvelAbonnementRegulier demande = creerDemandePayee(true);
         Paiement paiement = Paiement.creerPaiementEspece(
                 "PAY-TEST",
                 demande,
@@ -205,9 +207,12 @@ class DemandeValidationFinaleServiceTest {
                 abonnement.getPeriodes().getFirst().getStatut()
         );
         assertEquals(StatutCarteAcces.A_IMPRIMER, carte.getStatut());
+        assertEquals("12345|A|1", carte.getImmatriculationAffectee());
         assertEquals(TypeOperationCarte.IMPRESSION, operation.getTypeOperation());
         assertNotNull(demande.getAbonnementGenere());
         assertNotNull(paiement.getPeriodeAbonnement());
+        assertEquals("Société Exemple", abonnement.getEntrepriseNom());
+        assertEquals("001234567890123", abonnement.getEntrepriseIce());
     }
 
     @Test
@@ -244,6 +249,10 @@ class DemandeValidationFinaleServiceTest {
     }
 
     private DemandeNouvelAbonnementRegulier creerDemandePayee() {
+        return creerDemandePayee(false);
+    }
+
+    private DemandeNouvelAbonnementRegulier creerDemandePayee(boolean entreprise) {
         ClientParticulier client = new ClientParticulier(
                 "Client",
                 "Test",
@@ -268,6 +277,10 @@ class DemandeValidationFinaleServiceTest {
                         null
                 );
         demande.selectionnerTarif(tarif);
+        demande.selectionnerVehicule(new Vehicule("12345|A|1", TypeVehicule.VOITURE, client));
+        if (entreprise) {
+            demande.renseignerEntreprise("Société Exemple", "001234567890123");
+        }
         demande.soumettre();
         demande.confirmerOtp();
         demande.marquerPayee(decideur);

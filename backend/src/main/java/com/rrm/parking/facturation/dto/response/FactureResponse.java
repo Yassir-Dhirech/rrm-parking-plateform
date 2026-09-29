@@ -29,6 +29,7 @@ public record FactureResponse(
         String referenceDemande,
         String clientNom,
         String clientIdentifiant,
+        String clientAdresse,
         String email,
         String abonnementReference,
         String parkingNom,
@@ -38,6 +39,7 @@ public record FactureResponse(
         LocalDate dateFinAbonnement,
         String immatriculation,
         String modePaiement,
+        String numeroCheque,
         BigDecimal totalHt,
         BigDecimal totalTva,
         BigDecimal totalTtc,
@@ -126,12 +128,23 @@ public record FactureResponse(
 
         String clientIdentifiant = null;
         String clientNom = null;
+        String clientAdresse = null;
         if (client instanceof ClientParticulier particulier) {
             clientIdentifiant = particulier.getCin();
             clientNom = particulier.getNomComplet();
         } else if (client instanceof ClientEntreprise entreprise) {
             clientIdentifiant = entreprise.getIce();
             clientNom = entreprise.getRaisonSociale();
+            clientAdresse = entreprise.getAdresseSiege();
+        }
+        if (demande instanceof DemandeNouvelAbonnementRegulier reguliere
+                && reguliere.estAuNomEntreprise()) {
+            clientNom = reguliere.getEntrepriseNom();
+            clientIdentifiant = reguliere.getEntrepriseIce();
+        } else if (demande instanceof DemandeRenouvellementRegulier renouvellement
+                && renouvellement.getAbonnementConcerne().estAuNomEntreprise()) {
+            clientNom = renouvellement.getAbonnementConcerne().getEntrepriseNom();
+            clientIdentifiant = renouvellement.getAbonnementConcerne().getEntrepriseIce();
         }
 
         return new FactureResponse(
@@ -146,6 +159,7 @@ public record FactureResponse(
                 demande.getReference(),
                 clientNom,
                 clientIdentifiant,
+                clientAdresse,
                 client.getEmail(),
                 abonnementReference,
                 parkingNom,
@@ -155,6 +169,7 @@ public record FactureResponse(
                 dateFinAbonnement,
                 immatriculation,
                 paiement.getModePaiement().name(),
+                paiement.getNumeroCheque(),
                 facture.getTotalHt(),
                 facture.getTotalTva(),
                 facture.getTotalTtc(),

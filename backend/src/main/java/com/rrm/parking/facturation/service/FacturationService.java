@@ -5,6 +5,7 @@ import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.dto.response.DemandeFacturationResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
+import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
@@ -38,6 +39,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -64,6 +66,16 @@ public class FacturationService {
             LocalDate dateDebut,
             LocalDate dateFin
     ) {
+        return listerFactures(page, taille, recherche, statut, modePaiement,
+                dateDebut, dateFin, null);
+    }
+
+    @Transactional(readOnly = true)
+    public FacturesComptableResponse listerFactures(
+            int page, int taille, String recherche, StatutFacture statut,
+            ModePaiement modePaiement, LocalDate dateDebut, LocalDate dateFin,
+            Collection<Long> parkingIds
+    ) {
         if (page < 0 || taille < 1 || taille > 50) {
             throw new IllegalArgumentException(
                     "La page doit être positive et la taille comprise entre 1 et 50"
@@ -77,7 +89,10 @@ public class FacturationService {
             throw new IllegalArgumentException("La recherche ne peut pas dépasser 100 caractères");
         }
 
-        Specification<Facture> filtres = (racine, requete, cb) -> cb.conjunction();
+        Specification<Facture> portee = parkingIds == null
+                ? (racine, requete, cb) -> cb.conjunction()
+                : parkings(parkingIds);
+        Specification<Facture> filtres = portee;
         if (!terme.isEmpty()) {
             String motif = "%" + terme.toLowerCase(Locale.ROOT)
                     .replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
@@ -140,7 +155,7 @@ public class FacturationService {
                 .map(FactureResponse::depuis);
         return new FacturesComptableResponse(
                 factures,
-                factureRepository.count(),
+                factureRepository.count(portee),
                 factureRepository.count(filtres.and(mode(ModePaiement.CHEQUE))),
                 factureRepository.count(filtres.and(mode(ModePaiement.ESPECE)))
         );
@@ -149,6 +164,29 @@ public class FacturationService {
     private Specification<Facture> mode(ModePaiement modePaiement) {
         return (racine, requete, cb) ->
                 cb.equal(racine.join("paiement").get("modePaiement"), modePaiement);
+    }
+
+    private Specification<Facture> parkings(Collection<Long> parkingIds) {
+        return (racine, requete, cb) -> {
+            if (parkingIds.isEmpty()) return cb.disjunction();
+            var demandeId = racine.get("paiement").get("demande").get("id");
+            var nouveaux = requete.subquery(Long.class);
+            var nouveau = nouveaux.from(DemandeNouvelAbonnementRegulier.class);
+            nouveaux.select(nouveau.get("id")).where(
+                    cb.equal(nouveau.get("id"), demandeId),
+                    nouveau.get("tarifParking").get("parking").get("id").in(parkingIds));
+            var renouvellements = requete.subquery(Long.class);
+            var renouvellement = renouvellements.from(DemandeRenouvellementRegulier.class);
+            renouvellements.select(renouvellement.get("id")).where(
+                    cb.equal(renouvellement.get("id"), demandeId),
+                    renouvellement.get("tarifParking").get("parking").get("id").in(parkingIds));
+            var corporates = requete.subquery(Long.class);
+            var corporate = corporates.from(DemandeNouveauContratCorporate.class);
+            corporates.select(corporate.get("id")).where(
+                    cb.equal(corporate.get("id"), demandeId),
+                    corporate.get("parking").get("id").in(parkingIds));
+            return cb.or(cb.exists(nouveaux), cb.exists(renouvellements), cb.exists(corporates));
+        };
     }
 
     @Transactional(readOnly = true)
@@ -246,6 +284,28 @@ public class FacturationService {
                                 "Facture introuvable"
                         ))
         );
+    }
+
+    @Transactional(readOnly = true)
+    public FactureResponse consulterPourParkings(Long factureId, Collection<Long> parkingIds) {
+        Facture facture = factureRepository.findById(factureId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Facture introuvable"));
+        DemandeClient demande = (DemandeClient) Hibernate.unproxy(facture.getPaiement().getDemande());
+        Long parkingId = null;
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle
+                && nouvelle.getTarifParking() != null) {
+            parkingId = nouvelle.getTarifParking().getParking().getId();
+        } else if (demande instanceof DemandeRenouvellementRegulier renouvellement
+                && renouvellement.getTarifParking() != null) {
+            parkingId = renouvellement.getTarifParking().getParking().getId();
+        } else if (demande instanceof DemandeNouveauContratCorporate corporate) {
+            parkingId = corporate.getParking().getId();
+        }
+        if (parkingId == null || !parkingIds.contains(parkingId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Facture introuvable");
+        }
+        return FactureResponse.depuis(facture);
     }
 
     private DemandeFacturationResponse versDemandeFacturation(

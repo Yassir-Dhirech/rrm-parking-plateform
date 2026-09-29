@@ -46,7 +46,7 @@ export function RecetteDetail() {
     { title: "TTC", dataIndex: "montant", key: "montant", render: (v: number) => <strong>{fmt(v)}</strong> },
     { title: "Observation", dataIndex: "observation", key: "observation" },
   ];
-  return <Space direction="vertical" size="large" style={{ width: "100%" }}>
+  return <Space className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-detail" : undefined} direction="vertical" size="large" style={{ width: "100%" }}>
     <Button onClick={() => navigate(`${base}/recettes`)}>← Toutes les recettes</Button>
     <Card className="rrm-glass-card" title={<Typography.Title level={4} style={{ margin: 0 }}>{r.reference}</Typography.Title>} extra={<Tag color={r.statut === "RECUE" ? "green" : r.statut === "RECUE_AVEC_RESERVES" ? "orange" : "blue"}>{labels[r.statut]}</Tag>}>
       <Descriptions column={{ xs: 1, md: 2 }} bordered items={[

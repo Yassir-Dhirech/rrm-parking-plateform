@@ -12,8 +12,6 @@ import { LandingPage } from "../pages/LandingPage";
 import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
 import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
-import { FacturesList } from "../features/factures/pages/FacturesList";
-import { FactureDetail } from "../features/factures/pages/FactureDetail";
 import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
 import { AnalyseCaPage } from "../pages/comptable/AnalyseCaPage";
 import { AvisFeedbackPage } from "../pages/responsable/AvisFeedbackPage";
@@ -118,10 +116,20 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
 
   if (role === "SUPERVISEUR") {
-    extraRoutes.push({
-      path: "/superviseur/activations-cartes",
-      element: <OperationsCartesPage type="ACTIVATION" />,
-    });
+    extraRoutes.push(
+      {
+        path: "/superviseur/clients",
+        element: <BaseClientsPage />,
+      },
+      {
+        path: "/superviseur/impressions-cartes",
+        element: <OperationsCartesPage type="IMPRESSION" />,
+      },
+      {
+        path: "/superviseur/activations-cartes",
+        element: <OperationsCartesPage type="ACTIVATION" />,
+      },
+    );
   }
 
   if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
@@ -132,12 +140,12 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
 
 
-  if (role === "SUPERVISEUR" || role === "COMPTABLE") {
+  if (role === "SUPERVISEUR" || role === "COMPTABLE" || role === "RESPONSABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/factures`,
-        element: role === "COMPTABLE" ? <FacturesComptablePage /> : <FacturesList /> },
+        element: <FacturesComptablePage /> },
       { path: `${roleConfig[role].homePath}/factures/:id`,
-        element: role === "COMPTABLE" ? <FactureComptableDetailPage /> : <FactureDetail /> },
+        element: <FactureComptableDetailPage /> },
     );
   }
 
@@ -189,7 +197,6 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/parkings`, element: <ParkingsList /> },
       { path: `${roleConfig[role].homePath}/tarifs`, element: <PlansTarifairesList /> },
-      { path: `${roleConfig[role].homePath}/factures`, element: <DemandesValidees /> },
     );
   }
 

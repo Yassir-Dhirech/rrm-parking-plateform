@@ -124,24 +124,30 @@ function params(filtres: FiltresBaseClients) {
   };
 }
 
-export async function listerClientsReguliers(filtres: FiltresBaseClients) {
+type PorteeBaseClients = "globale" | "superviseur";
+
+function base(portee: PorteeBaseClients) {
+  return portee === "superviseur" ? "/superviseur/clients" : "/base-clients";
+}
+
+export async function listerClientsReguliers(filtres: FiltresBaseClients, portee: PorteeBaseClients = "globale") {
   const response = await client.get<PageClients<ClientRegulierListe>>(
-    "/base-clients/reguliers", { params: params(filtres) });
+    `${base(portee)}/reguliers`, { params: params(filtres) });
   return response.data;
 }
 
-export async function listerClientsCorporate(filtres: FiltresBaseClients) {
+export async function listerClientsCorporate(filtres: FiltresBaseClients, portee: PorteeBaseClients = "globale") {
   const response = await client.get<PageClients<ClientCorporateListe>>(
-    "/base-clients/corporate", { params: params(filtres) });
+    `${base(portee)}/corporate`, { params: params(filtres) });
   return response.data;
 }
 
-export async function consulterClientRegulier(id: number) {
-  const response = await client.get<ClientRegulierDetail>(`/base-clients/reguliers/${id}`);
+export async function consulterClientRegulier(id: number, portee: PorteeBaseClients = "globale") {
+  const response = await client.get<ClientRegulierDetail>(`${base(portee)}/reguliers/${id}`);
   return response.data;
 }
 
-export async function consulterClientCorporate(id: number) {
-  const response = await client.get<ClientCorporateDetail>(`/base-clients/corporate/${id}`);
+export async function consulterClientCorporate(id: number, portee: PorteeBaseClients = "globale") {
+  const response = await client.get<ClientCorporateDetail>(`${base(portee)}/corporate/${id}`);
   return response.data;
 }

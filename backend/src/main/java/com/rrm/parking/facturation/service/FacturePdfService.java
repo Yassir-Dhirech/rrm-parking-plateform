@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -48,6 +50,14 @@ public class FacturePdfService {
 
     private final FacturationService facturationService;
 
+    // Les polices du modèle Word ne sont pas redistribuées dans le dépôt.
+    // En Docker, placer les fichiers sous /app/secrets/invoice-fonts.
+    private record InvoiceFonts(PDFont bookman, PDFont bookmanItalic,
+                                PDFont bookmanBoldItalic, PDFont garamond,
+                                PDFont garamondBold, PDFont century,
+                                PDFont timesBold, PDFont helvetica,
+                                PDFont arialBold, PDFont arabic) { }
+
     public byte[] generer(Long factureId) {
         FactureResponse facture = facturationService.consulter(factureId);
         try (
@@ -56,17 +66,17 @@ public class FacturePdfService {
         ) {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
-            PDFont unicodeFont = chargerPoliceUnicode(document);
+            InvoiceFonts fonts = chargerPolices(document);
             try (PDPageContentStream content = new PDPageContentStream(
                     document,
                     page
             )) {
-                dessinerEntete(document, content, facture);
-                dessinerClient(content, facture);
-                dessinerReference(content, facture);
-                dessinerTableau(content, facture, unicodeFont);
-                dessinerBasDeFacture(content, facture);
-                dessinerPiedDePage(content);
+                dessinerEntete(document, content, facture, fonts);
+                dessinerClient(content, facture, fonts);
+                dessinerReference(content, facture, fonts);
+                dessinerTableau(content, facture, fonts);
+                dessinerBasDeFacture(content, facture, fonts);
+                dessinerPiedDePage(content, fonts);
             }
             document.save(output);
             return output.toByteArray();
@@ -81,11 +91,14 @@ public class FacturePdfService {
     private void dessinerEntete(
             PDDocument document,
             PDPageContentStream content,
-            FactureResponse facture
+            FactureResponse facture,
+            InvoiceFonts fonts
     ) throws IOException {
-        write(content, BOLD, 11, 78, 795, "ROYAUME DU MAROC");
-        write(content, NORMAL, 9, 82, 782, "----------------------------------");
-        write(content, BOLD, 11, 68, 760, "RABAT REGION MOBILITE");
+        content.setNonStrokingColor(150F / 255F, 150F / 255F, 150F / 255F);
+        write(content, fonts.garamondBold, 9, 80, 795, "ROYAUME DU MAROC");
+        write(content, fonts.garamondBold, 9, 78, 785, "----------------------------------");
+        write(content, fonts.garamondBold, 9, 70, 765, "RABAT REGION MOBILITE");
+        content.setNonStrokingColor(0, 0, 0);
 
         try (InputStream stream = getClass().getResourceAsStream(
                 "/pdf/parking-rrm-logo.png"
@@ -96,99 +109,163 @@ public class FacturePdfService {
                         stream.readAllBytes(),
                         "parking-rrm-logo"
                 );
-                content.drawImage(logo, 415, 740, 120, 72);
+                content.drawImage(logo, 415, 749, 110, 57);
             }
         }
 
         LocalDate date = facture.dateEmission() == null
                 ? LocalDate.now()
                 : facture.dateEmission().toLocalDate();
-        writeRight(content, NORMAL, 12, 545, 720,
+        writeRight(content, fonts.century, 11.04F, 528, 724,
                 "Rabat, le " + date.format(DATE));
     }
 
     private void dessinerClient(
             PDPageContentStream content,
-            FactureResponse facture
+            FactureResponse facture,
+            InvoiceFonts fonts
     ) throws IOException {
-        writeCentered(content, BOLD_ITALIC, 13, 330, 675,
-                safe(facture.clientNom()).toUpperCase(Locale.ROOT));
-        writeCentered(content, ITALIC, 11, 330, 657,
-                "CIN / ICE : " + safe(facture.clientIdentifiant()));
-        writeCentered(content, ITALIC, 10, 330, 640,
-                safe(facture.email()));
+        float y = 696;
+        for (String ligne : wrap(safe(facture.clientNom()).toUpperCase(Locale.ROOT),
+                fonts.bookmanBoldItalic, 12, 285)) {
+            writeCentered(content, fonts.bookmanBoldItalic, 12, 388, y, ligne);
+            y -= 14;
+        }
+        if (facture.clientAdresse() != null && !facture.clientAdresse().isBlank()) {
+            y = Math.min(y, 668);
+            for (String ligne : wrap(facture.clientAdresse().toUpperCase(Locale.ROOT),
+                    fonts.bookmanItalic, 12, 285)) {
+                writeCentered(content, fonts.bookmanItalic, 12, 388, y, ligne);
+                y -= 14;
+            }
+        }
+        String identifiant = facture.clientIdentifiant();
+        if (identifiant != null && !identifiant.isBlank()) {
+            writeRight(content, fonts.bookmanItalic, 12, 497,
+                    Math.min(y - 1, 654),
+                    (identifiant.length() == 15 ? "ICE :" : "CIN :")
+                            + identifiant);
+        }
     }
 
     private void dessinerReference(
             PDPageContentStream content,
-            FactureResponse facture
+            FactureResponse facture,
+            InvoiceFonts fonts
     ) throws IOException {
-        write(content, ITALIC, 13, 70, 605,
-                "Parking : " + safe(facture.parkingNom())
+        write(content, fonts.bookmanItalic, 12, 71, 611,
+                "Parking: " + safe(facture.parkingNom())
                         .toUpperCase(Locale.ROOT));
-        write(content, NORMAL, 13, 70, 578,
+        write(content, fonts.bookman, 12, 71, 583,
                 "Facture N° " + safe(facture.numero()));
     }
 
     private void dessinerTableau(
             PDPageContentStream content,
             FactureResponse facture,
-            PDFont unicodeFont
+            InvoiceFonts fonts
     ) throws IOException {
-        float x0 = 42;
-        float x1 = 410;
-        float x2 = 505;
-        float x3 = 575;
-        float top = 552;
-        float headerBottom = 530;
-        float bodyBottom = 390;
+        float x0 = 42.5F;
+        float x1 = 375.7F;
+        float x2 = 460.8F;
+        float x3 = 538.7F;
+        float top = 567.6F;
+        float headerBottom = 546.9F;
+        float bodyBottom = 433.6F;
 
+        content.setLineWidth(0.5F);
         rectangle(content, x0, bodyBottom, x3 - x0, top - bodyBottom);
         line(content, x1, bodyBottom, x1, top);
         line(content, x2, bodyBottom, x2, top);
         line(content, x0, headerBottom, x3, headerBottom);
-        writeCentered(content, ITALIC, 12, (x0 + x1) / 2, 536,
+        writeCentered(content, fonts.bookmanItalic, 12, (x0 + x1) / 2, 555,
                 "Désignation");
-        writeCentered(content, ITALIC, 12, (x1 + x2) / 2, 536, "P.U");
-        writeCentered(content, ITALIC, 12, (x2 + x3) / 2, 536, "Montant");
+        writeCentered(content, fonts.bookmanItalic, 12, (x1 + x2) / 2, 555, "P.U");
+        writeCentered(content, fonts.bookmanItalic, 12, (x2 + x3) / 2, 555, "Montant");
 
-        float y = 510;
+        float y = 534;
         for (FactureLigneResponse ligne : facture.lignes()) {
+            if (!ligne.typeLigne().name().equals("ABONNEMENT")) {
+                y = 450;
+            }
             float prixY = y;
             for (String description : descriptionLigne(ligne, facture)) {
+                if (description.isBlank()) {
+                    y -= 14.1F;
+                    continue;
+                }
                 PDFont police = contientArabe(description)
-                        ? unicodeFont
-                        : ITALIC;
-                for (String fragment : wrap(description, police, 11, 350)) {
-                    write(content, police, 11, x0 + 7, y, fragment);
-                    y -= 15;
+                        ? fonts.arabic
+                        : fonts.bookmanItalic;
+                for (String fragment : wrap(description, police, 12, x1 - x0 - 12)) {
+                    if (y < bodyBottom + 9) {
+                        break;
+                    }
+                    write(content, police, 12, x0 + 5.5F, y, fragment);
+                    y -= 14.1F;
                 }
             }
-            writeRight(content, ITALIC, 11, x2 - 8, prixY,
+            writeRight(content, fonts.bookmanItalic, 12, x2 - 5, prixY,
                     money(ligne.prixUnitaireHt()));
-            writeRight(content, ITALIC, 11, x3 - 8, prixY,
+            writeRight(content, fonts.bookmanItalic, 12, x3 - 5, prixY,
                     money(ligne.montantHt()));
-            y -= 12;
+            y -= 14;
         }
 
-        float row = 23;
+        float row = 21.1F;
         float totalsBottom = bodyBottom - 3 * row;
         rectangle(content, x1, totalsBottom, x3 - x1, 3 * row);
         line(content, x2, totalsBottom, x2, bodyBottom);
         line(content, x1, bodyBottom - row, x3, bodyBottom - row);
         line(content, x1, bodyBottom - 2 * row, x3, bodyBottom - 2 * row);
-        writeRight(content, ITALIC, 11, x2 - 6, bodyBottom - 16,
+        writeRight(content, fonts.bookmanItalic, 12, x2 - 5, bodyBottom - 13,
                 "Total HT");
-        writeRight(content, ITALIC, 11, x3 - 8, bodyBottom - 16,
+        writeRight(content, fonts.bookmanItalic, 12, x3 - 5, bodyBottom - 13,
                 money(facture.totalHt()));
-        writeRight(content, ITALIC, 11, x2 - 6, bodyBottom - row - 16,
+        writeRight(content, fonts.bookmanItalic, 12, x2 - 5, bodyBottom - row - 13,
                 "TVA 20%");
-        writeRight(content, ITALIC, 11, x3 - 8, bodyBottom - row - 16,
+        writeRight(content, fonts.bookmanItalic, 12, x3 - 5, bodyBottom - row - 13,
                 money(facture.totalTva()));
-        writeRight(content, ITALIC, 11, x2 - 6, totalsBottom + 7,
+        writeRight(content, fonts.bookmanItalic, 12, x2 - 5, totalsBottom + 8,
                 "Montant TTC");
-        writeRight(content, ITALIC, 11, x3 - 8, totalsBottom + 7,
+        writeRight(content, fonts.bookmanItalic, 12, x3 - 5, totalsBottom + 8,
                 money(facture.totalTtc()));
+    }
+
+    private InvoiceFonts chargerPolices(PDDocument document) throws IOException {
+        PDFont arabe = chargerPoliceUnicode(document);
+        return new InvoiceFonts(
+                chargerPolice(document, "BOOKOS.TTF", NORMAL),
+                chargerPolice(document, "BOOKOSI.TTF", ITALIC),
+                chargerPolice(document, "BOOKOSBI.TTF", BOLD_ITALIC),
+                chargerPolice(document, "GARA.TTF", NORMAL),
+                chargerPolice(document, "GARABD.TTF", BOLD),
+                chargerPolice(document, "CENTURY.TTF", NORMAL),
+                chargerPolice(document, "timesbd.ttf", BOLD),
+                new PDType1Font(Standard14Fonts.FontName.HELVETICA),
+                chargerPolice(document, "arialbd.ttf", BOLD),
+                arabe
+        );
+    }
+
+    private PDFont chargerPolice(PDDocument document, String fichier,
+                                PDFont repli) throws IOException {
+        String repertoire = System.getenv("RRM_INVOICE_FONT_DIR");
+        List<Path> repertoires = new ArrayList<>();
+        if (repertoire != null && !repertoire.isBlank()) {
+            repertoires.add(Path.of(repertoire));
+        }
+        repertoires.add(Path.of("/app/secrets/invoice-fonts"));
+        repertoires.add(Path.of("C:/Windows/Fonts"));
+        for (Path dossier : repertoires) {
+            Path chemin = dossier.resolve(fichier);
+            if (Files.isRegularFile(chemin)) {
+                try (InputStream stream = Files.newInputStream(chemin)) {
+                    return PDType0Font.load(document, stream, true);
+                }
+            }
+        }
+        return repli;
     }
 
     private PDFont chargerPoliceUnicode(PDDocument document)
@@ -225,10 +302,7 @@ public class FacturePdfService {
             String libelle = facture.forfaitLibelle() == null
                     ? ligne.description()
                     : facture.forfaitLibelle();
-            descriptions.add("Abonnement " + safe(libelle)
-                    + (facture.dureeEnMois() == null
-                    ? ""
-                    : " " + facture.dureeEnMois() + " mois"));
+            descriptions.add("Abonnement " + safe(libelle));
             if (facture.dateDebutAbonnement() != null) {
                 descriptions.add("Du "
                         + facture.dateDebutAbonnement().format(DATE));
@@ -238,48 +312,69 @@ public class FacturePdfService {
                         + facture.dateFinAbonnement().format(DATE));
             }
             if (facture.immatriculation() != null) {
+                descriptions.add("");
                 descriptions.add("Matricule : " + facture.immatriculation());
+            } else {
+                descriptions.add("");
+                descriptions.add("Matricule :");
             }
         } else {
-            descriptions.add("Carte d'abonnement magnétique");
+            descriptions.add("Carte d’abonnement magnétique");
         }
         return descriptions;
     }
 
     private void dessinerBasDeFacture(
             PDPageContentStream content,
-            FactureResponse facture
+            FactureResponse facture,
+            InvoiceFonts fonts
     ) throws IOException {
-        write(content, ITALIC, 11, 70, 278,
+        write(content, fonts.bookmanItalic, 12, 71, 329,
                 "Arrêté la présente facture à la somme de :");
         String montantLettres = montantEnLettres(facture.totalTtc())
-                + " dirhams toutes taxes comprises";
-        float y = 260;
-        for (String ligne : wrap(montantLettres, ITALIC, 11, 460)) {
-            write(content, ITALIC, 11, 70, y, ligne);
+                .toUpperCase(Locale.ROOT)
+                + " DIRHAMS toutes taxes comprises";
+        float y = 315;
+        for (String ligne : wrap(montantLettres,
+                fonts.bookmanItalic, 12, 460)) {
+            write(content, fonts.bookmanItalic, 12, 71, y, ligne);
             y -= 14;
         }
-        write(content, BOLD_ITALIC, 10, 70, 210,
-                "Mode de paiement : "
-                        + libellePaiement(facture.modePaiement()));
-        writeCentered(content, BOLD, 12, 425, 167, "Nadir YACOUBI");
-        writeCentered(content, BOLD, 10, 425, 151,
-                "Directeur du Développement Stratégique");
-        writeCentered(content, BOLD, 10, 425, 136,
-                "Et des Nouvelles Solutions de Mobilité");
+        String paiement = "Mode de paiement : "
+                + libellePaiement(facture.modePaiement());
+        if ("CHEQUE".equals(facture.modePaiement())
+                && facture.numeroCheque() != null
+                && !facture.numeroCheque().isBlank()) {
+            paiement += " N°: " + facture.numeroCheque();
+        }
+        write(content, fonts.bookmanBoldItalic, 9, 71, 277, paiement);
+        writeCentered(content, fonts.timesBold, 15.96F, 405, 209,
+                "Ismail Behnane");
+        writeCentered(content, fonts.timesBold, 14.04F, 405, 192,
+                "Responsable Business Unit");
+        writeCentered(content, fonts.timesBold, 14.04F, 405, 176,
+                "Stationnement");
     }
 
-    private void dessinerPiedDePage(PDPageContentStream content)
+    private void dessinerPiedDePage(PDPageContentStream content,
+                                  InvoiceFonts fonts)
             throws IOException {
-        content.setStrokingColor(0F, 140F / 255F, 75F / 255F);
-        line(content, 70, 72, 525, 72);
+        content.setStrokingColor(0F, 158F / 255F, 80F / 255F);
+        content.setLineWidth(1F);
+        line(content, 71, 68.2F, 521, 68.2F);
         content.setStrokingColor(0F, 0F, 0F);
-        writeCentered(content, NORMAL, 8, 297.5F, 55,
-                "1, Rue Ghafsa Place El Joulane immeuble Houda 2ème étage - "
-                        + "Tél : 05 37 21 60 00  Fax : 05 37 73 35 87");
-        writeCentered(content, NORMAL, 9, 297.5F, 39,
-                "I.F : 3384576  T.P : 25199098  R.C : 75799 RABAT  "
-                        + "I.C.E : 000096480000072");
+        write(content, fonts.helvetica, 9, 94.7F, 51,
+                "1, Rue Ghafsa Place El joulane immeuble Houda 2");
+        write(content, fonts.helvetica, 6, 298, 53.5F, "ème");
+        write(content, fonts.helvetica, 9, 312.2F, 51,
+                "étage .  Tél : 05 37 21 60 00   Fax : 05 37 73 35 87");
+        String identifiants = "I.F : 3384576  T.P : 25199098  "
+                + "R.C : 75799 RABAT  I.C.E : ";
+        float debut = 113;
+        write(content, fonts.garamond, 12, debut, 38.3F, identifiants);
+        write(content, fonts.arialBold, 9.96F,
+                debut + textWidth(fonts.garamond, 12, identifiants), 38.3F,
+                "000096480000072");
     }
 
     private String libellePaiement(String mode) {
@@ -502,7 +597,6 @@ public class FacturePdfService {
         return value
                 .replace('\u202F', ' ')
                 .replace('\u00A0', ' ')
-                .replace('’', '\'')
                 .replace('–', '-')
                 .replace('—', '-')
                 .replace("œ", "oe")

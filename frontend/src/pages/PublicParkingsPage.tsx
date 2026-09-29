@@ -480,7 +480,7 @@ export function PublicParkingsPage() {
               </p>
             </div>
 
-            {/* Capacity Progress Box (Desktop Only) */}
+            {/* Capacité disponible (Desktop Only) */}
             <div className="hidden md:block p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
               <div className="flex justify-between items-center text-xs font-bold">
                 <span className="text-slate-600 flex items-center gap-1.5">
@@ -491,27 +491,6 @@ export function PublicParkingsPage() {
                 </span>
               </div>
 
-              {(() => {
-                const percentFull = Math.round(
-                  activeParking.tauxOccupationAbonnements
-                );
-                return (
-                  <div className="space-y-1">
-                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          percentFull > 80 ? "bg-rose-500" : percentFull > 50 ? "bg-amber-500" : "bg-emerald-500"
-                        }`}
-                        style={{ width: `${percentFull}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-[11px] font-semibold text-slate-400">
-                      <span>Taux d'occupation</span>
-                      <span className="font-extrabold text-slate-800">{percentFull}%</span>
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
 
             {/* Action Buttons: Direct Souscription & View Tarifs */}

@@ -27,24 +27,27 @@ export interface FacturesComptableResponse {
   nombreEspeces: number;
 }
 
+export type PorteeFactures = "comptable" | "superviseur" | "responsable";
+
 export async function listerFacturesComptable(
   page: number,
   filtres: FiltresFacturesComptable,
   taille = 12,
+  portee: PorteeFactures = "comptable",
 ): Promise<FacturesComptableResponse> {
-  const response = await client.get<FacturesComptableResponse>("/comptable/factures", {
+  const response = await client.get<FacturesComptableResponse>(`/${portee}/factures`, {
     params: { page, taille, ...filtres },
   });
   return response.data;
 }
 
-export async function consulterFactureComptable(id: number): Promise<FactureResponse> {
-  const response = await client.get<FactureResponse>(`/comptable/factures/${id}`);
+export async function consulterFactureComptable(id: number, portee: PorteeFactures = "comptable"): Promise<FactureResponse> {
+  const response = await client.get<FactureResponse>(`/${portee}/factures/${id}`);
   return response.data;
 }
 
-export async function telechargerFactureComptablePdf(id: number): Promise<Blob> {
-  const response = await client.get<Blob>(`/comptable/factures/${id}/pdf`, {
+export async function telechargerFactureComptablePdf(id: number, portee: PorteeFactures = "comptable"): Promise<Blob> {
+  const response = await client.get<Blob>(`/${portee}/factures/${id}/pdf`, {
     responseType: "blob",
   });
   return response.data;

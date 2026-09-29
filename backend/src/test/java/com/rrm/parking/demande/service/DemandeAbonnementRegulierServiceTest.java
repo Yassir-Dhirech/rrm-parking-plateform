@@ -143,7 +143,9 @@ class DemandeAbonnementRegulierServiceTest {
                         15L,
                         ModePaiement.ESPECE,
                         CanalOtp.EMAIL,
-                        true
+                        true,
+                        "Société Exemple",
+                        "001234567890123"
                 );
 
         service.creerAssisteeParAgent(
@@ -169,6 +171,8 @@ class DemandeAbonnementRegulierServiceTest {
         );
         assertSame(agent, demande.getInitieePar());
         assertSame(client, demande.getClient());
+        assertEquals("Société Exemple", demande.getEntrepriseNom());
+        assertEquals("001234567890123", demande.getEntrepriseIce());
     }
 
     @Test

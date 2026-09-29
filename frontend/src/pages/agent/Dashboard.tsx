@@ -38,7 +38,7 @@ export function AgentDashboard() {
   const terme = useDeferredValue(recherche.trim());
   const actions = useQuery({
     queryKey: ["agent-dashboard-actions"],
-    queryFn: getAgentActions,
+    queryFn: () => getAgentActions(),
     refetchInterval: 60_000,
   });
   const resultats = useQuery({

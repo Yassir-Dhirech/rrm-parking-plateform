@@ -78,6 +78,32 @@ public record DemandeAbonnementRegulierRequest(
         @AssertTrue(
                 message = "Les conditions générales doivent être acceptées"
         )
-        boolean conditionsAcceptees
+        boolean conditionsAcceptees,
+
+        @Size(max = 200)
+        String entrepriseNom,
+
+        @Pattern(regexp = "^[0-9]{15}$", message = "L'ICE doit contenir 15 chiffres")
+        String entrepriseIce
 ) {
+    public DemandeAbonnementRegulierRequest(
+            String nom, String prenom, String cin, String telephone, String email,
+            String numeroImmatriculation, String serieImmatriculation,
+            String codeRegion, String marque, String modele, String couleur,
+            TypeVehicule typeVehicule, Long tarifParkingId,
+            ModePaiement modePaiement, CanalOtp canalOtp,
+            boolean conditionsAcceptees
+    ) {
+        this(nom, prenom, cin, telephone, email, numeroImmatriculation,
+                serieImmatriculation, codeRegion, marque, modele, couleur,
+                typeVehicule, tarifParkingId, modePaiement, canalOtp,
+                conditionsAcceptees, null, null);
+    }
+
+    @AssertTrue(message = "Le nom de l'entreprise et l'ICE doivent être renseignés ensemble")
+    public boolean isIdentiteEntrepriseComplete() {
+        boolean nomPresent = entrepriseNom != null && !entrepriseNom.isBlank();
+        boolean icePresent = entrepriseIce != null && !entrepriseIce.isBlank();
+        return nomPresent == icePresent;
+    }
 }

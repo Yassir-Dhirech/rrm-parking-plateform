@@ -24,7 +24,7 @@ import {
 const { Text, Paragraph } = Typography;
 
 export function NotificationPopover() {
-  const { role } = useAuth();
+  const { role, token } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -34,16 +34,17 @@ export function NotificationPopover() {
   const currentRoleConfig = roleConfig[role];
   const notificationsPath = `${currentRoleConfig.homePath}/notifications`;
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["notifications", role],
+  const { data: notifications = [], isError: notificationsEnErreur } = useQuery({
+    queryKey: ["notifications", role, token],
     queryFn: () => getNotificationsForRole(role),
     enabled: !!role,
+    refetchInterval: role === "AGENT" || role === "SUPERVISEUR" ? 20_000 : false,
   });
 
   const { data: rejets = [] } = useQuery({
-    queryKey: ["notifications-rejets-cheques", role],
+    queryKey: ["notifications-rejets-cheques", role, token],
     queryFn: listerNotificationsRejet,
-    enabled: !!role && ["AGENT", "SUPERVISEUR", "RESPONSABLE", "COMPTABLE"].includes(role),
+    enabled: !!role && ["SUPERVISEUR", "RESPONSABLE", "COMPTABLE"].includes(role),
     refetchInterval: 20_000,
   });
 
@@ -142,7 +143,7 @@ export function NotificationPopover() {
 
       {/* Notifications List */}
       {notifications.length === 0 ? (
-        <Empty description="Aucune notification" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: "20px 0" }} />
+        <Empty description={notificationsEnErreur ? "Notifications indisponibles" : "Aucune notification"} image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: "20px 0" }} />
       ) : (
         <div style={{ maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
           <List

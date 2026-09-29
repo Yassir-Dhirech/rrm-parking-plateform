@@ -85,12 +85,12 @@ export function DemandesValidees() {
       key: "referenceDemande",
     },
     {
-      title: "CLIENT / CIN",
+      title: "CLIENT / CIN OU ICE",
       key: "client",
       render: (_, row) => (
         <div>
           <strong>{row.clientNom}</strong>
-          <div className="text-xs text-slate-500">{row.cin}</div>
+          <div className="text-xs text-slate-500">{row.entrepriseIce ? `ICE : ${row.entrepriseIce}` : `CIN : ${row.cin}`}</div>
         </div>
       ),
     },

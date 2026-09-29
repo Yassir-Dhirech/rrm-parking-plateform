@@ -7,6 +7,35 @@
 
 }
 
+/* Keep lower cards aligned when browser zoom changes the column heights. */
+.responsable-dashboard-layout > .responsable-dashboard-layout__primary,
+.responsable-dashboard-layout > .responsable-dashboard-layout__secondary,
+.responsable-dashboard-layout__charts > .responsable-dashboard-layout__chart-column {
+  display: flex;
+  min-width: 0;
+}
+
+.responsable-dashboard-layout__primary-stack,
+.responsable-dashboard-layout__secondary-stack,
+.responsable-dashboard-layout__chart-stack {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  gap: 16px;
+}
+
+.responsable-dashboard-layout__charts {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.responsable-dashboard-layout__chart-stack > .responsable-pending-card,
+.responsable-dashboard-layout__chart-stack > .responsable-mix-card,
+.responsable-dashboard-layout__secondary-stack > .responsable-tasks-card {
+  flex: 1 1 auto;
+}
+
 /* Dark glass surface shared by Ant Design cards and existing dashboard panels. */
 .responsable-dashboard-glass .ant-card,
 .responsable-dashboard-glass [class*="bg-white"] {

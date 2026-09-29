@@ -47,6 +47,33 @@ class DemandeAbonnementRegulierRequestValidationTest {
         assertThat(violationsPourMatricule("123", "أ", "100")).isNotEmpty();
     }
 
+    @Test
+    void accepteUnAbonnementRegulierAuNomDuneEntreprise() {
+        DemandeAbonnementRegulierRequest personnel = requeteValide("0615914461", "123", "أ", "1");
+        DemandeAbonnementRegulierRequest entreprise = avecEntreprise(personnel, "Société Exemple", "001234567890123");
+        assertThat(validator.validate(entreprise)).isEmpty();
+    }
+
+    @Test
+    void refuseUneIdentiteEntrepriseIncompletOuUnIceInvalide() {
+        DemandeAbonnementRegulierRequest personnel = requeteValide("0615914461", "123", "أ", "1");
+        assertThat(validator.validate(avecEntreprise(personnel, "Société Exemple", null))).isNotEmpty();
+        assertThat(validator.validate(avecEntreprise(personnel, null, "001234567890123"))).isNotEmpty();
+        assertThat(validator.validate(avecEntreprise(personnel, "Société Exemple", "123"))).isNotEmpty();
+    }
+
+    private DemandeAbonnementRegulierRequest avecEntreprise(
+            DemandeAbonnementRegulierRequest source, String nom, String ice
+    ) {
+        return new DemandeAbonnementRegulierRequest(
+                source.nom(), source.prenom(), source.cin(), source.telephone(), source.email(),
+                source.numeroImmatriculation(), source.serieImmatriculation(), source.codeRegion(),
+                source.marque(), source.modele(), source.couleur(), source.typeVehicule(),
+                source.tarifParkingId(), source.modePaiement(), source.canalOtp(),
+                source.conditionsAcceptees(), nom, ice
+        );
+    }
+
     private Set<ConstraintViolation<DemandeAbonnementRegulierRequest>> violationsPourTelephone(
             String telephone
     ) {

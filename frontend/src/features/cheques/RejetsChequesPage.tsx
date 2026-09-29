@@ -9,6 +9,7 @@ import {
   type NotificationRejetCheque, type OperationRejetCheque,
 } from "../../api/rejetsChequesApi";
 import { RegularisationPaiementModal } from "./RegularisationPaiementModal";
+import "./RejetsChequesPage.css";
 
 function erreurLisible(erreur: unknown) {
   if (axios.isAxiosError<{ detail?: string }>(erreur)) {
@@ -118,10 +119,14 @@ export function RejetsChequesPage() {
   });
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      <h1>Rejets bancaires de chèques</h1>
-      <p>Un dossier concerne uniquement l'abonnement lié au chèque rejeté. La désactivation et
-        la réactivation de chaque carte sont déclarées après l'action sur le système des barrières.</p>
+    <div className={`rejets-page ${role === "AGENT" ? "rejets-page--agent" : ""} ${role === "SUPERVISEUR" ? "rejets-page--superviseur" : ""}`}>
+      <header className="rejets-page__hero">
+        <span className="rejets-page__eyebrow">SUIVI DES PAIEMENTS · {role === "AGENT" ? "ESPACE AGENT" : "REJETS DE CHÈQUES"}</span>
+        <h1>{role === "AGENT" ? "Abonnements bloqués à régulariser" : "Rejets bancaires de chèques"}</h1>
+        <p>Un dossier concerne uniquement l'abonnement lié au chèque rejeté. La désactivation et
+          la réactivation des cartes sont déclarées après l'action sur le système des barrières.</p>
+        {role === "AGENT" && <span className="rejets-page__count">{visibles.filter((dossier) => dossier.statut === "BLOQUE").length} paiement(s) attendu(s)</span>}
+      </header>
       {messageErreur && <Alert type="error" showIcon message={messageErreur} style={{ marginBottom: 16 }} />}
       {messageSucces && <Alert type="success" showIcon message={messageSucces} style={{ marginBottom: 16 }} />}
       {notifications.length > 0 && (
@@ -175,31 +180,41 @@ export function RejetsChequesPage() {
           )}
         </Card>
       )}
-      <h2>Dossiers</h2>
-      {role === "AGENT" && (
-        <Input.Search placeholder="Nom, CIN / ICE, téléphone, e-mail, abonnement ou ancien chèque"
-          aria-label="Rechercher un client bloqué" allowClear style={{ maxWidth: 460, marginBottom: 16 }}
-          value={rechercheClient} onChange={(evenement) => setRechercheClient(evenement.target.value)} />
-      )}
+      <div className="rejets-page__toolbar">
+        <div><span className="rejets-page__eyebrow">DOSSIERS</span><h2>{role === "AGENT" ? "Paiements et comptes bloqués" : "Dossiers"}</h2></div>
+        {role === "AGENT" && (
+          <Input.Search placeholder="Nom, CIN / ICE, téléphone, e-mail ou abonnement"
+            aria-label="Rechercher un client bloqué" allowClear
+            value={rechercheClient} onChange={(evenement) => setRechercheClient(evenement.target.value)} />
+        )}
+      </div>
       {attente && <Spin />}
       {!visibles.length && <Empty description="Aucun dossier disponible" />}
       {visibles.map((dossier) => (
-        <Card key={dossier.id} title={`Dossier #${dossier.id} · ${dossier.clientNom}`}
-          style={{ marginBottom: 16 }}
+        <Card key={dossier.id} className="rejets-page__dossier" title={`Dossier #${dossier.id} · ${dossier.clientNom}`}
           extra={<Tag color={dossier.statut === "TERMINE" ? "green" : "orange"}>
             {libelles[dossier.statut]}</Tag>}>
-          <p>Abonnement : <strong>{dossier.referenceAbonnement}</strong> · Parking : {dossier.parkingNom}
-            · Chèque rejeté : {dossier.numeroCheque} · Montant initial : {dossier.montantInitialTtc} MAD</p>
-          {role === "AGENT" && (
-            <p>Client : {dossier.clientNom} · CIN / ICE : {dossier.clientIdentifiant || "Non renseigné"}
-              · Téléphone : {dossier.clientTelephone || "Non renseigné"}
-              · E-mail : {dossier.clientEmail || "Non renseigné"}
-              · Statut abonnement : <Tag color={dossier.statutAbonnement === "SUSPENDU" ? "red" : "green"}>
-                {dossier.statutAbonnement}</Tag></p>
-          )}
-          <p>Lettre bancaire du {dossier.dateLettreBanque} · Constat : {dossier.constatComptable}</p>
-          {dossier.factureInitialeNumero && <p>Facture initiale : {dossier.factureInitialeNumero}</p>}
-          {dossier.factureRegularisationNumero && <p>Nouvelle facture : {dossier.factureRegularisationNumero}</p>}
+          {role === "AGENT" || role === "SUPERVISEUR" ? (
+            <div className="rejets-page__details">
+              <div><span>Abonnement</span><strong>{dossier.referenceAbonnement}</strong></div>
+              <div><span>Parking</span><strong>{dossier.parkingNom}</strong></div>
+              <div><span>Chèque rejeté</span><strong>{dossier.numeroCheque}</strong></div>
+              <div className="rejets-page__amount"><span>{role === "AGENT" ? "Montant à régulariser" : "Montant initial"}</span><strong>{dossier.montantInitialTtc.toLocaleString("fr-MA")} MAD</strong></div>
+              <div><span>CIN / ICE</span><strong>{dossier.clientIdentifiant || "Non renseigné"}</strong></div>
+              <div><span>Téléphone</span><strong>{dossier.clientTelephone || "Non renseigné"}</strong></div>
+              <div><span>E-mail</span><strong>{dossier.clientEmail || "Non renseigné"}</strong></div>
+              <div><span>Statut de l'abonnement</span><Tag color={dossier.statutAbonnement === "SUSPENDU" ? "red" : "green"}>{dossier.statutAbonnement}</Tag></div>
+              <div className="rejets-page__wide"><span>Lettre bancaire du {dossier.dateLettreBanque}</span><strong>{dossier.constatComptable}</strong></div>
+              {dossier.factureInitialeNumero && <div><span>Facture initiale</span><strong>{dossier.factureInitialeNumero}</strong></div>}
+              {dossier.factureRegularisationNumero && <div><span>Nouvelle facture</span><strong>{dossier.factureRegularisationNumero}</strong></div>}
+            </div>
+          ) : <>
+            <p>Abonnement : <strong>{dossier.referenceAbonnement}</strong> · Parking : {dossier.parkingNom}
+              · Chèque rejeté : {dossier.numeroCheque} · Montant initial : {dossier.montantInitialTtc} MAD</p>
+            <p>Lettre bancaire du {dossier.dateLettreBanque} · Constat : {dossier.constatComptable}</p>
+            {dossier.factureInitialeNumero && <p>Facture initiale : {dossier.factureInitialeNumero}</p>}
+            {dossier.factureRegularisationNumero && <p>Nouvelle facture : {dossier.factureRegularisationNumero}</p>}
+          </>}
           {dossier.referencePaiementRegularisation && (
             <p>Paiement de remplacement : <strong>{dossier.referencePaiementRegularisation}</strong>
               {dossier.agentRegularisation && ` · enregistré par ${dossier.agentRegularisation}`}

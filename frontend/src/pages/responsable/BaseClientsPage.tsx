@@ -160,7 +160,8 @@ function NavigationPages({ page, total, taille, onPage }: {
 const VIDE: FiltresBaseClients = { recherche: "", statut: "", dateDebut: "", dateFin: "", page: 0 };
 
 export function BaseClientsPage() {
-  const { role } = useAuth();
+  const { role, token } = useAuth();
+  const portee = role === "SUPERVISEUR" ? "superviseur" : "globale";
   const [statut, setStatut] = useState<StatutClient | "">("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
@@ -176,10 +177,10 @@ export function BaseClientsPage() {
 
   const filtresReguliers: FiltresBaseClients = { recherche: rechercheRegulierStable, statut, dateDebut, dateFin, page: pageRegulier };
   const filtresCorporate: FiltresBaseClients = { recherche: rechercheCorporateStable, statut, dateDebut, dateFin, page: pageCorporate };
-  const reguliers = useQuery({ queryKey: ["base-clients-reguliers", filtresReguliers],
-    queryFn: () => listerClientsReguliers(filtresReguliers), enabled: datesValides });
-  const corporate = useQuery({ queryKey: ["base-clients-corporate", filtresCorporate],
-    queryFn: () => listerClientsCorporate(filtresCorporate), enabled: datesValides });
+  const reguliers = useQuery({ queryKey: ["base-clients-reguliers", portee, token, filtresReguliers],
+    queryFn: () => listerClientsReguliers(filtresReguliers, portee), enabled: datesValides });
+  const corporate = useQuery({ queryKey: ["base-clients-corporate", portee, token, filtresCorporate],
+    queryFn: () => listerClientsCorporate(filtresCorporate, portee), enabled: datesValides });
 
   useEffect(() => {
     if (!reguliers.data) return;
@@ -192,10 +193,10 @@ export function BaseClientsPage() {
       ? courant : (corporate.data.content[0]?.id ?? null));
   }, [corporate.data]);
 
-  const detailRegulier = useQuery({ queryKey: ["base-client-regulier", selectionRegulier],
-    queryFn: () => consulterClientRegulier(selectionRegulier!), enabled: selectionRegulier !== null });
-  const detailCorporate = useQuery({ queryKey: ["base-client-corporate", selectionCorporate],
-    queryFn: () => consulterClientCorporate(selectionCorporate!), enabled: selectionCorporate !== null });
+  const detailRegulier = useQuery({ queryKey: ["base-client-regulier", portee, token, selectionRegulier],
+    queryFn: () => consulterClientRegulier(selectionRegulier!, portee), enabled: selectionRegulier !== null });
+  const detailCorporate = useQuery({ queryKey: ["base-client-corporate", portee, token, selectionCorporate],
+    queryFn: () => consulterClientCorporate(selectionCorporate!, portee), enabled: selectionCorporate !== null });
 
   function changerFiltres(action: () => void) {
     action();
@@ -213,9 +214,9 @@ export function BaseClientsPage() {
     });
   }
 
-  return <main className="base-clients">
+  return <main className={`base-clients ${role === "SUPERVISEUR" ? "base-clients--superviseur" : ""}`}>
     <header className="base-clients__hero">
-      <div><span className="base-clients__eyebrow">Espace {role === "COMPTABLE" ? "comptable" : "responsable"} · Répertoire central</span>
+      <div><span className="base-clients__eyebrow">Espace {role === "COMPTABLE" ? "comptable" : role === "SUPERVISEUR" ? "superviseur" : "responsable"} · {role === "SUPERVISEUR" ? "Parkings affectés" : "Répertoire central"}</span>
         <h1>Base des clients</h1>
         <p>Consultez les clients réguliers et corporate, leurs coordonnées et leur historique réel.</p></div>
       <TeamOutlined className="base-clients__hero-icon" aria-hidden="true" />

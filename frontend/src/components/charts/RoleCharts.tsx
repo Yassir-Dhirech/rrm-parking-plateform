@@ -1,11 +1,8 @@
 import React from "react";
-import dayjs from "dayjs";
 import { Card, Row, Col, Progress, Typography, Tag, Tooltip, Space } from "antd";
 import {
   BarChartOutlined,
   CreditCardOutlined,
-  RiseOutlined,
-  PieChartOutlined,
   BankOutlined,
   FileTextOutlined,
   PayCircleOutlined,
@@ -36,8 +33,6 @@ export const RoleCharts: React.FC<RoleChartsProps> = ({ role, filters = {}, rece
   switch (role) {
     case "AGENT":
       return <AgentCharts filters={filters} demandes={demandes} />;
-    case "SUPERVISEUR":
-      return <SuperviseurCharts filters={filters} recettes={recettes} />;
     case "RESPONSABLE":
       return <ResponsableCharts filters={filters} recettes={recettes} contrats={contrats} />;
     case "COMPTABLE":
@@ -105,75 +100,6 @@ function AgentCharts({ filters, demandes = [] }: { filters: GlobalFilters; deman
                 <Progress percent={Math.round((c.val / c.total) * 100)} strokeColor={c.color} showInfo={false} size="small" style={{ marginTop: 8 }} />
               </div>
             ))}
-          </div>
-        </Card>
-      </Col>
-    </Row>
-  );
-}
-
-/* ====================================================================
-   2. SUPERVISEUR CHARTS
-   ==================================================================== */
-function SuperviseurCharts({ filters, recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
-  const weeklyData = Array.from({ length: 7 }, (_, index) => {
-    const date = dayjs().subtract(6 - index, "day");
-    return { day: date.format("DD/MM"),
-      total: recettes.filter(r => r.dateRecette === date.format("YYYY-MM-DD"))
-        .reduce((sum, r) => sum + r.totalHebdo, 0), color: "#10b981" };
-  });
-
-  const maxVal = Math.max(...weeklyData.map((d) => d.total), 1);
-
-  return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} lg={14}>
-        <Card title={<Space><RiseOutlined /><span>Arrêtés de recettes des 7 derniers jours</span></Space>} className="chart-card">
-          <div className="visual-bar-chart">
-            {weeklyData.map((item) => {
-              const heightPercent = Math.round((item.total / maxVal) * 100);
-              return (
-                <div key={item.day} className="v-bar-col">
-                  <div className="v-bar-val">{(item.total / 1000).toFixed(1)}k</div>
-                  <div className="v-bar-track">
-                    <Tooltip title={`${item.day}: ${item.total.toLocaleString("fr-FR")} MAD`}>
-                      <div className="v-bar-fill" style={{ height: `${heightPercent}%`, backgroundColor: item.color }} />
-                    </Tooltip>
-                  </div>
-                  <div className="v-bar-label">{item.day}</div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      </Col>
-
-      <Col xs={24} lg={10}>
-        <Card title={<Space><PieChartOutlined /><span>Distribution des Abonnements Supervisés</span></Space>} className="chart-card">
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>Abonnements Actifs ({filters.parkingId ? 35 : 142})</Text>
-                <Text strong style={{ color: "#10b981" }}>71%</Text>
-              </div>
-              <Progress percent={71} strokeColor="#10b981" />
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>En Attente de Validation ({filters.parkingId ? 9 : 38})</Text>
-                <Text strong style={{ color: "#f59e0b" }}>19%</Text>
-              </div>
-              <Progress percent={19} strokeColor="#f59e0b" />
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text>Expirants sous 7 jours ({filters.parkingId ? 5 : 20})</Text>
-                <Text strong style={{ color: "#ef4444" }}>10%</Text>
-              </div>
-              <Progress percent={10} strokeColor="#ef4444" />
-            </div>
           </div>
         </Card>
       </Col>

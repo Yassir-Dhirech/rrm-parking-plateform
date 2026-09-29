@@ -39,6 +39,8 @@ import type {
 import type { TypeVehicule } from "../../../lib/enums";
 
 interface FormulaireModification {
+  entrepriseNom?: string;
+  entrepriseIce?: string;
   nom: string;
   prenom: string;
   cin: string;
@@ -112,6 +114,8 @@ export function ModificationDemandeAgent() {
       cin: detail.data.cin,
       telephone: detail.data.telephone,
       email: detail.data.email,
+      entrepriseNom: detail.data.entrepriseNom || undefined,
+      entrepriseIce: detail.data.entrepriseIce || undefined,
       numeroImmatriculation: numero,
       serieImmatriculation: serie,
       codeRegion: region,
@@ -142,6 +146,10 @@ export function ModificationDemandeAgent() {
         cin: valeurs.cin,
         telephone: valeurs.telephone,
         email: valeurs.email,
+        ...(detail.data?.entrepriseNom ? {
+          entrepriseNom: valeurs.entrepriseNom?.trim(),
+          entrepriseIce: valeurs.entrepriseIce?.trim(),
+        } : {}),
         immatriculation: [
           valeurs.numeroImmatriculation,
           valeurs.serieImmatriculation,
@@ -212,6 +220,13 @@ export function ModificationDemandeAgent() {
       <Form form={form} layout="vertical" onFinish={(valeurs) => mutation.mutate(valeurs)}>
         <Card title="Client" className="mb-4">
           <Row gutter={16}>
+            {detail.data.entrepriseNom && <>
+              <Col xs={24} md={12}><Form.Item name="entrepriseNom" label="Nom de l'entreprise"
+                rules={[{ required: true, whitespace: true }, { max: 200 }]}><Input /></Form.Item></Col>
+              <Col xs={24} md={12}><Form.Item name="entrepriseIce" label="ICE de l'entreprise"
+                rules={[{ required: true }, { pattern: /^[0-9]{15}$/, message: "L'ICE doit contenir 15 chiffres." }]}>
+                <Input inputMode="numeric" maxLength={15} /></Form.Item></Col>
+            </>}
             <Col xs={24} md={12}><Form.Item name="nom" label="Nom" rules={[{ required: true }]}><Input /></Form.Item></Col>
             <Col xs={24} md={12}><Form.Item name="prenom" label="Prénom" rules={[{ required: true }]}><Input /></Form.Item></Col>
             <Col xs={24} md={8}><Form.Item name="cin" label="CIN" rules={[{ required: true }, { min: 5, max: 20 }]}><Input /></Form.Item></Col>

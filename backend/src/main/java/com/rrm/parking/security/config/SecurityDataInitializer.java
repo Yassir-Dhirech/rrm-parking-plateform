@@ -204,6 +204,9 @@ public class SecurityDataInitializer
                                 || (codeRole == CodeRole.SUPERVISEUR
                                 && permission.getCode()
                                 == CodePermission.CARTE_ACTIVER)
+                                || (codeRole == CodeRole.SUPERVISEUR
+                                && permission.getCode()
+                                == CodePermission.CARTE_IMPRIMER)
                 )
                 .forEach(role.getPermissions()::add);
 

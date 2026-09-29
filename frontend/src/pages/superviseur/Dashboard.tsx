@@ -1,3 +1,1 @@
-export function SuperviseurDashboard() {
-  return <h2>Tableau de bord Agent</h2>;
-}
+export { SuperviseurDashboardView as SuperviseurDashboard } from "./DashboardView";

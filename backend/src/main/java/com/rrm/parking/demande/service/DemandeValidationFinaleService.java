@@ -114,6 +114,9 @@ public class DemandeValidationFinaleService {
                         genererReferenceAbonnement(),
                         client
                 );
+        if (demande.estAuNomEntreprise()) {
+            abonnement.renseignerEntreprise(demande.getEntrepriseNom(), demande.getEntrepriseIce());
+        }
         PeriodeAbonnement periode = new PeriodeAbonnement(
                 1,
                 dateDebut,
@@ -140,7 +143,8 @@ public class DemandeValidationFinaleService {
         CarteAcces carte = carteAccesRepository.save(
                 new CarteAcces(
                         genererReferenceCarte(),
-                        abonnementEnregistre
+                        abonnementEnregistre,
+                        demande.getVehicule().getImmatriculation()
                 )
         );
 

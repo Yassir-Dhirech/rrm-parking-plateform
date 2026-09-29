@@ -68,12 +68,35 @@ public record DemandeRechercheResponse(
                 demandeReelle.getDateValidationOtp(),
                 demandeReelle.getDateModification(),
                 client != null ? client.getId() : null,
-                client != null ? determinerTypeClient(client) : "INCONNU",
-                client != null ? determinerNomClient(client) : null,
-                client != null ? determinerIdentifiantClient(client) : null,
+                entrepriseNom(demandeReelle) != null ? "ENTREPRISE"
+                        : client != null ? determinerTypeClient(client) : "INCONNU",
+                entrepriseNom(demandeReelle) != null ? entrepriseNom(demandeReelle)
+                        : client != null ? determinerNomClient(client) : null,
+                entrepriseIce(demandeReelle) != null ? entrepriseIce(demandeReelle)
+                        : client != null ? determinerIdentifiantClient(client) : null,
                 client != null ? client.getEmail() : null,
                 client != null ? client.getTelephone() : null
         );
+    }
+
+    private static String entrepriseNom(DemandeClient demande) {
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            return nouvelle.getEntrepriseNom();
+        }
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            return renouvellement.getAbonnementConcerne().getEntrepriseNom();
+        }
+        return null;
+    }
+
+    private static String entrepriseIce(DemandeClient demande) {
+        if (demande instanceof DemandeNouvelAbonnementRegulier nouvelle) {
+            return nouvelle.getEntrepriseIce();
+        }
+        if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
+            return renouvellement.getAbonnementConcerne().getEntrepriseIce();
+        }
+        return null;
     }
 
     private static String determinerParking(DemandeClient demande) {

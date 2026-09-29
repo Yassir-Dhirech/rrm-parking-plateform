@@ -6,7 +6,6 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  SafetyCertificateOutlined,
   DashboardOutlined,
   UserOutlined,
   ReloadOutlined,
@@ -28,7 +27,6 @@ import type { RecetteHebdoListItem } from "../features/recettes/types";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
 import { getParkingsMock, getLogsMock } from "../api/adminMock";
-import { getFacturesMock } from "../api/facturesMock";
 import { KpiCard } from "../components/ui/KpiCard";
 import { formatDate } from "../lib/dateUtils";
 import type { AuditLog } from "../features/admin/types";
@@ -38,6 +36,7 @@ import { ChiffreAffairesParkingTable } from "../components/dashboard/ChiffreAffa
 import { getConsolidatedRevenue } from "../lib/chiffreAffairesService";
 import { ChiffreAffairesDashboard } from "../components/dashboard/financial/ChiffreAffairesDashboard";
 import { AgentDashboard } from "./agent/Dashboard";
+import { SuperviseurDashboard } from "./superviseur/Dashboard";
 
 function utiliseDashboardFinancier(role: Role): boolean {
   return role === "COMPTABLE";
@@ -61,6 +60,10 @@ export function Dashboard() {
 
   if (role === "RESPONSABLE") {
     return <ResponsableDashboardView />;
+  }
+
+  if (role === "SUPERVISEUR") {
+    return <SuperviseurDashboard />;
   }
 
   if (role === "RESP_REPORTING") {
@@ -87,7 +90,6 @@ export function Dashboard() {
   const { data: demandes = [] } = useQuery({ queryKey: ["demandes"], queryFn: getDemandesMock });
   const { data: parkingsList = [] } = useQuery({ queryKey: ["admin_parkings"], queryFn: getParkingsMock });
   const { data: logsList = [] } = useQuery<AuditLog[]>({ queryKey: ["audit_logs"], queryFn: getLogsMock });
-  const { data: facturesList = [] } = useQuery({ queryKey: ["factures"], queryFn: getFacturesMock });
 
   const filteredParkings = parkingsList.filter((p) => {
     if (filters.parkingId && p.id !== filters.parkingId) return false;
@@ -132,14 +134,12 @@ export function Dashboard() {
   // Dynamic metrics calculations directly from filtered datasets
   const totalCAHebdo = filteredRecettes.reduce((acc, r) => acc + r.totalHebdo, 0);
   const recettesCompleted = filteredRecettes.filter((r) => r.statut === "COMPLETED").length;
-  const recettesEnAttente = filteredRecettes.filter((r) => r.statut === "EN_COURS").length;
   const contratsEnAttenteSign = filteredContrats.filter((c) => c.statut === "EN_ATTENTE_SIGNATURE").length;
   const demandesSoumises = filteredDemandes.filter((d) => d.statut === "SOUMISE").length;
   const demandesPaiementEnregistre = filteredDemandes.filter((d) => d.statut === "PAYEE").length;
   const demandesValidees = filteredDemandes.filter((d) => d.statut === "VALIDEE").length;
   const totalEncaissementsGuichet = filteredRecettes.reduce((acc, r) => acc + (r.totalEspeces + r.totalCheques), 0) || (filteredDemandes.length * 450);
   const parkingsCount = filteredParkings.length;
-  const facturesEnAttenteSignature = facturesList.filter((f) => f.statut === "EMISE").length;
 
   // Global network figures for Comptable Header (permanent network cash oversight, invariant to filter)
   const globalRecettesCompleted = recettes.filter((r) => r.statut === "COMPLETED");
@@ -157,13 +157,6 @@ export function Dashboard() {
           { title: "Encaissements Guichet (Aujourd'hui)", value: totalEncaissementsGuichet, suffix: "MAD", prefix: <DollarOutlined />, color: "#10b981" },
           { title: "Cartes d'Accès à Encoder", value: demandesPaiementEnregistre, prefix: <CreditCardOutlined />, color: "#2563eb" },
           { title: "Demandes Traitées Aujourd'hui", value: demandesValidees, prefix: <CheckCircleOutlined />, color: "#003566" },
-        ];
-      case "SUPERVISEUR":
-        return [
-          { title: "Demandes à Approuver (Final)", value: demandesPaiementEnregistre, prefix: <SafetyCertificateOutlined />, color: "#2563eb" },
-          { title: "Recettes à Valider", value: recettesEnAttente, prefix: <ClockCircleOutlined />, color: "#d97706" },
-          { title: "Cartes d'Accès à Activer", value: demandesPaiementEnregistre + 4, prefix: <CreditCardOutlined />, color: "#9333ea" },
-          { title: "Taux de Conformité Dossiers", value: 96.4, suffix: "%", prefix: <CheckCircleOutlined />, color: "#10b981" },
         ];
       case "RESPONSABLE":
         return [
@@ -341,81 +334,6 @@ export function Dashboard() {
         </Card>
       )}
 
-      {/* -------------------------------------------------------------
-         3. SUPERVISEUR DASHBOARD VIEW (Weekly Recette Due Alert & Action Cards)
-         ------------------------------------------------------------- */}
-      {role === "SUPERVISEUR" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border border-blue-200 bg-blue-50/60 rounded-2xl shadow-xs">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] text-blue-700 font-extrabold uppercase tracking-wider block">
-                  Validation Finale
-                </span>
-                <span className="text-2xl font-black text-slate-900 leading-none block mt-1">
-                  {demandesPaiementEnregistre} Dossiers
-                </span>
-                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">En attente de validation superviseur</p>
-              </div>
-              <Button size="small" type="primary" onClick={() => navigate(`${basePath}/demandes`)} className="rounded-lg font-bold">
-                Examiner
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="border border-purple-200 bg-purple-50/60 rounded-2xl shadow-xs">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] text-purple-700 font-extrabold uppercase tracking-wider block">
-                  Activation Cartes
-                </span>
-                <span className="text-2xl font-black text-slate-900 leading-none block mt-1">
-                  12 Badges
-                </span>
-                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">Prêtes à être activées</p>
-              </div>
-              <Button size="small" type="primary" onClick={() => navigate(`${basePath}/cartes`)} className="rounded-lg font-bold bg-purple-600 border-none">
-                Activer
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="border border-amber-200 bg-amber-50/60 rounded-2xl shadow-xs">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] text-amber-700 font-extrabold uppercase tracking-wider block">
-                  Arrêté de Recette
-                </span>
-                <span className="text-2xl font-black text-amber-600 leading-none block mt-1">
-                  À Clôturer
-                </span>
-                <p className="text-[11px] text-slate-500 mt-1 mb-0 font-semibold">Génération par date requise</p>
-              </div>
-              <Button size="small" type="primary" onClick={() => navigate(`${basePath}/recettes`)} className="rounded-lg font-bold bg-amber-600 border-none">
-                Générer
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="border border-emerald-200 bg-emerald-50/60 rounded-2xl shadow-xs">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] text-emerald-800 font-extrabold uppercase tracking-wider block">
-                  Factures à Signer
-                </span>
-                <span className="text-2xl font-black text-emerald-950 leading-none block mt-1">
-                  {facturesEnAttenteSignature || 2} Factures
-                </span>
-                <p className="text-[11px] text-emerald-700 mt-1 mb-0 font-semibold">Notification visa active</p>
-              </div>
-              <Button size="small" type="primary" onClick={() => navigate(`${basePath}/factures`)} className="rounded-lg font-bold bg-emerald-600 border-none">
-                Viser / Signer
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-
       {/* Cartes KPIs Spécifiques au Rôle Connecté */}
       <Row gutter={[16, 16]} style={{ display: "flex", flexWrap: "wrap" }}>
         {kpis.map((kpi) => (
@@ -437,7 +355,7 @@ export function Dashboard() {
       <RoleCharts role={role} filters={filters} recettes={filteredRecettes} contrats={filteredContrats} demandes={filteredDemandes} />
 
       {/* Module Chiffre d'Affaires par Parking & Analyse Temporelle (Comptable & Superviseur) */}
-      {(role === "COMPTABLE" || role === "SUPERVISEUR") && (
+      {role === "COMPTABLE" && (
         <ChiffreAffairesParkingTable />
       )}
 
@@ -475,7 +393,7 @@ export function Dashboard() {
       )}
 
       {/* Section Disponibilité & Places Libres des Abonnements par Parking */}
-      {(role === "AGENT" || role === "SUPERVISEUR") && (
+      {role === "AGENT" && (
         <Card
           title={
             <Space>

@@ -70,7 +70,7 @@ class OperationCarteServiceAgentParkingTest {
         Parking parking = mock(Parking.class);
         when(operation.getCarteAcces()).thenReturn(carte);
         when(carte.getAbonnement()).thenReturn(abonnement);
-        when(operation.getTypeOperation()).thenReturn(type);
+        if (type != null) when(operation.getTypeOperation()).thenReturn(type);
         when(abonnement.obtenirAffectationActive(
                 org.mockito.ArgumentMatchers.any(LocalDate.class)))
                 .thenReturn(Optional.of(affectation));
@@ -181,5 +181,98 @@ class OperationCarteServiceAgentParkingTest {
         assertThatThrownBy(() -> service.listerImpressions(5L))
                 .isInstanceOf(ConflitMetierException.class)
                 .hasMessageContaining("affectation active");
+    }
+
+    @Test
+    void superviseurNeVoitPasLesImpressionsDesAutresParkings() {
+        AffectationAgentParking babChellah = mock(AffectationAgentParking.class);
+        Parking parking = mock(Parking.class);
+        when(parking.getId()).thenReturn(8L);
+        when(babChellah.getParking()).thenReturn(parking);
+        when(babChellah.getDateDebut()).thenReturn(LocalDate.now().minusDays(3));
+        when(affectationAgentRepository.findAllByUtilisateurIdAndActiveTrue(4L))
+                .thenReturn(List.of(babChellah));
+        DemandeOperationnelle autre = mock(DemandeOperationnelle.class);
+        CarteAcces carte = mock(CarteAcces.class);
+        AbonnementRegulier abonnement = mock(AbonnementRegulier.class);
+        AffectationParking affectationAbonnement = mock(AffectationParking.class);
+        Parking autreParking = mock(Parking.class);
+        when(autre.getCarteAcces()).thenReturn(carte);
+        when(carte.getAbonnement()).thenReturn(abonnement);
+        when(abonnement.obtenirAffectationActive(
+                org.mockito.ArgumentMatchers.any(LocalDate.class)))
+                .thenReturn(Optional.of(affectationAbonnement));
+        when(affectationAbonnement.getParking()).thenReturn(autreParking);
+        when(autreParking.getId()).thenReturn(9L);
+        when(operationRepository.findByTypeOperationAndStatutInOrderByDateCreationAsc(
+                eq(TypeOperationCarte.IMPRESSION), anyList())).thenReturn(List.of(autre));
+
+        assertThat(service.listerImpressionsSuperviseur(4L)).isEmpty();
+    }
+
+    @Test
+    void superviseurNePeutPasDeclarerImprimeeUneCarteHorsDeSesParkings() {
+        AffectationAgentParking babChellah = mock(AffectationAgentParking.class);
+        Parking parking = mock(Parking.class);
+        when(parking.getId()).thenReturn(8L);
+        when(babChellah.getParking()).thenReturn(parking);
+        when(babChellah.getDateDebut()).thenReturn(LocalDate.now().minusDays(3));
+        when(affectationAgentRepository.findAllByUtilisateurIdAndActiveTrue(4L))
+                .thenReturn(List.of(babChellah));
+        DemandeOperationnelle autre = operationReguliere(TypeOperationCarte.IMPRESSION, 9L);
+        when(operationRepository.findById(44L)).thenReturn(Optional.of(autre));
+
+        assertThatThrownBy(() -> service.terminerImpressionSuperviseur(44L, 4L, "CARTE-44"))
+                .isInstanceOf(ConflitMetierException.class)
+                .hasMessageContaining("parking affecté");
+        verifyNoInteractions(utilisateurRepository);
+    }
+
+    @Test
+    void superviseurSansAffectationNeVoitAucuneImpression() {
+        when(affectationAgentRepository.findAllByUtilisateurIdAndActiveTrue(4L))
+                .thenReturn(List.of());
+        assertThat(service.listerImpressionsSuperviseur(4L)).isEmpty();
+    }
+
+    @Test
+    void superviseurVoitLesImpressionsDeSesPlusieursParkings() {
+        AffectationAgentParking premier = mock(AffectationAgentParking.class);
+        AffectationAgentParking second = mock(AffectationAgentParking.class);
+        Parking parking1 = mock(Parking.class);
+        Parking parking2 = mock(Parking.class);
+        when(premier.getDateDebut()).thenReturn(LocalDate.now().minusDays(4));
+        when(second.getDateDebut()).thenReturn(LocalDate.now().minusDays(4));
+        when(premier.getParking()).thenReturn(parking1);
+        when(second.getParking()).thenReturn(parking2);
+        when(parking1.getId()).thenReturn(8L);
+        when(parking2.getId()).thenReturn(9L);
+        when(affectationAgentRepository.findAllByUtilisateurIdAndActiveTrue(4L))
+                .thenReturn(List.of(premier, second));
+
+        DemandeOperationnelle impression = operationReguliere(null, 9L);
+        DemandeNouvelAbonnementRegulier demande = mock(DemandeNouvelAbonnementRegulier.class);
+        ClientParticulier client = mock(ClientParticulier.class);
+        Vehicule vehicule = mock(Vehicule.class);
+        TarifParking tarif = mock(TarifParking.class);
+        Parking parkingDemande = mock(Parking.class);
+        when(impression.getDemandeClientSource()).thenReturn(demande);
+        when(demande.getClient()).thenReturn(client);
+        when(demande.getId()).thenReturn(37L);
+        when(demande.getReference()).thenReturn("DEM-BAB-37");
+        when(demande.getTarifParking()).thenReturn(tarif);
+        when(tarif.getParking()).thenReturn(parkingDemande);
+        when(parkingDemande.getNom()).thenReturn("Bab El Had");
+        when(demande.getVehicule()).thenReturn(vehicule);
+        when(impression.getCarteAcces().getAbonnement().getId()).thenReturn(17L);
+        when(demandeRepository.findByAbonnementGenereId(17L)).thenReturn(Optional.of(demande));
+        when(factureRepository.findFirstByPaiementDemandeIdOrderByIdAsc(37L))
+                .thenReturn(Optional.empty());
+        when(operationRepository.findByTypeOperationAndStatutInOrderByDateCreationAsc(
+                eq(TypeOperationCarte.IMPRESSION), anyList())).thenReturn(List.of(impression));
+
+        assertThat(service.listerImpressionsSuperviseur(4L))
+                .singleElement()
+                .satisfies(reponse -> assertThat(reponse.parkingNom()).isEqualTo("Bab El Had"));
     }
 }

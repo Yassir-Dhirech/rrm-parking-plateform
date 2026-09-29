@@ -1,6 +1,8 @@
 export type StatutFactureApi = "BROUILLON" | "EMISE" | "ANNULEE";
 
 export interface DemandeFacturationResponse {
+  entrepriseNom?: string | null;
+  entrepriseIce?: string | null;
   demandeId: number;
   referenceDemande: string;
   statutDemande: "VALIDEE";

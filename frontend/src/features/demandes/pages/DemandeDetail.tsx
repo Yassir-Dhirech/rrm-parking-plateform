@@ -506,7 +506,7 @@ export function DemandeDetail() {
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+    <div className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-detail" : undefined} style={{ maxWidth: 1000, margin: "0 auto" }}>
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate(`${basePath}/demandes`)}
@@ -642,6 +642,13 @@ export function DemandeDetail() {
           <Descriptions.Item label="CIN">
             <strong>{data.cin}</strong>
           </Descriptions.Item>
+
+          {data.entrepriseNom && <Descriptions.Item label="Entreprise facturée">
+            <strong>{data.entrepriseNom}</strong>
+          </Descriptions.Item>}
+          {data.entrepriseIce && <Descriptions.Item label="ICE">
+            <strong>{data.entrepriseIce}</strong>
+          </Descriptions.Item>}
 
           <Descriptions.Item label="Email">
             {data.email}
