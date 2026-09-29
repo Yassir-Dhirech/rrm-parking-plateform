@@ -14,6 +14,9 @@ import com.rrm.parking.document.service.FichierStocke;
 import com.rrm.parking.document.service.StockageDocumentService;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.parking.entity.Parking;
+import com.rrm.parking.parking.enums.StatutParking;
+import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
@@ -27,12 +30,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -84,6 +89,7 @@ class DemandeAbonnementRegulierServiceTest {
                 .thenReturn(Optional.of(agent));
         when(tarifParkingRepository.findById(15L))
                 .thenReturn(Optional.of(tarif));
+        when(tarif.getParking()).thenReturn(new com.rrm.parking.parking.entity.Parking());
         when(tarif.estApplicableA(any()))
                 .thenReturn(true);
         when(clientRepository.findByCinIgnoreCase("AB123456"))
@@ -163,5 +169,17 @@ class DemandeAbonnementRegulierServiceTest {
         );
         assertSame(agent, demande.getInitieePar());
         assertSame(client, demande.getClient());
+    }
+
+    @Test
+    void refuseNouvelleSouscriptionPendantMaintenance() {
+        TarifParking tarif = mock(TarifParking.class);
+        Parking parking = new Parking();
+        parking.setStatut(StatutParking.SUSPENDU);
+        when(tarifParkingRepository.findById(15L)).thenReturn(Optional.of(tarif));
+        when(tarif.getParking()).thenReturn(parking);
+
+        assertThrows(ConflitMetierException.class,
+                () -> ReflectionTestUtils.invokeMethod(service, "obtenirTarifApplicable", 15L));
     }
 }

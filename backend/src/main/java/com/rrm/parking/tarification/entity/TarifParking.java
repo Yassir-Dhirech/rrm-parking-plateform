@@ -83,6 +83,9 @@ public class TarifParking {
     @Column(name = "date_fin_validite")
     private LocalDate dateFinValidite;
 
+    @Column(name = "date_retrait")
+    private LocalDateTime dateRetrait;
+
     @Column(name = "date_creation", nullable = false)
     private LocalDateTime dateCreation;
 
@@ -170,7 +173,7 @@ public class TarifParking {
     }
 
     public boolean estApplicableA(LocalDate date) {
-        if (date == null || dateDebutValidite == null) {
+        if (date == null || dateDebutValidite == null || dateRetrait != null) {
             return false;
         }
 
@@ -182,6 +185,12 @@ public class TarifParking {
                         || !date.isAfter(dateFinValidite);
 
         return apresDebut && avantFin;
+    }
+
+    public void retirer() {
+        if (dateRetrait == null) {
+            dateRetrait = LocalDateTime.now();
+        }
     }
 
     public void cloturer(LocalDate dateFin) {

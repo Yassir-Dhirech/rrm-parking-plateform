@@ -24,6 +24,7 @@ import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.demande.repository.DemandeRenouvellementRegulierRepository;
 import com.rrm.parking.demande.service.otp.OtpGenere;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.parking.enums.StatutParking;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -232,6 +233,11 @@ public class DemandeRenouvellementService {
                 .orElseThrow(() -> new RessourceIntrouvableException(
                         "Tarif parking introuvable"
                 ));
+        if (tarif.getParking().getStatut() != StatutParking.ACTIF) {
+            throw new ConflitMetierException(
+                    "Ce parking n'accepte pas de renouvellement pendant la maintenance ou après désactivation"
+            );
+        }
         if (!tarif.estApplicableA(LocalDate.now())) {
             throw new ConflitMetierException(
                     "Le tarif sÃ©lectionnÃ© n'est plus applicable"

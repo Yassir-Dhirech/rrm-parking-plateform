@@ -174,6 +174,8 @@ public class FacturationService {
 
         return demandes.stream()
                 .filter(this::estDemandeReguliereFacturable)
+                .filter(demande -> paiementRepository.existsByDemandeIdAndStatut(
+                        demande.getId(), StatutPaiement.CONFIRME))
                 .map(this::versDemandeFacturation)
                 .filter(reponse -> terme.isBlank()
                         || contient(reponse.referenceDemande(), terme)

@@ -50,9 +50,11 @@ import {
   updateAdminParking,
   toggleLockAdminParking,
   deactivateAdminParking,
+  deposerPvParking,
+  telechargerPvParking,
   type AdminParking,
 } from "../../../api/adminParkingsApi";
-import { getBackendUtilisateurs } from "../../../api/adminUtilisateursApi";
+import { getUtilisateursReels } from "../../../api/adminUtilisateursApi";
 
 
 import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
@@ -60,8 +62,8 @@ import { ParkingPlansTarifairesModal } from "../../../components/parkings/Parkin
 const { Title, Text } = Typography;
 
 function getHtAndTva(ttc: number) {
-  const ht = Math.round(ttc / 1.2);
-  const tva = Math.round(ttc - ht);
+  const ht = Math.round((ttc / 1.2) * 100) / 100;
+  const tva = Math.round((ttc - ht) * 100) / 100;
   return { ht, tva };
 }
 
@@ -71,6 +73,7 @@ export function ParkingsList() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditModeActive, setIsEditModeActive] = useState(false);
   const [attachedPvName, setAttachedPvName] = useState<string | null>(null);
+  const [attachedPvFile, setAttachedPvFile] = useState<File | null>(null);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [selectedParkingForPlans, setSelectedParkingForPlans] = useState<AdminParking | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -83,19 +86,22 @@ export function ParkingsList() {
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
-  const { data: parkings = [], isLoading } = useQuery({
+  const { data: parkings = [], isLoading, isError: parkingsEnErreur } = useQuery({
     queryKey: ["admin_parkings"],
     queryFn: getAdminParkings,
   });
 
-  const { data: utilisateurs = [] } = useQuery({
-    queryKey: ["admin_utilisateurs"],
-    queryFn: getBackendUtilisateurs,
+  const { data: utilisateurs = [], isError: utilisateursEnErreur } = useQuery({
+    queryKey: ["admin_utilisateurs_reels"],
+    queryFn: getUtilisateursReels,
   });
 
 
   const agentsDisponibles = utilisateurs.filter(
-    (u) => (u.role === "AGENT" || u.role === "SUPERVISEUR") && u.actif
+    (u) => u.role === "AGENT" && !u.parkingAssigneIds?.length && u.actif
+  );
+  const superviseursDisponibles = utilisateurs.filter(
+    (u) => u.role === "SUPERVISEUR" && u.actif
   );
 
   const [currentCreateStep, setCurrentCreateStep] = useState(0);
@@ -159,7 +165,8 @@ export function ParkingsList() {
       typeOuvrage: "Souterrain (Ouvrage enterré)",
       nombreNiveaux: 2,
       horairesOuverture: "24h / 24, 7j / 7 (Permanent)",
-      agentAssigneId: agentsDisponibles[0]?.id || 1,
+      agentAssigneId: undefined,
+      superviseurAssigneId: undefined,
       equipements: ["RFID", "LPR", "GUIDAGE_LED", "SURVEILLANCE_247"],
     });
     setCreatePlans([
@@ -198,7 +205,7 @@ export function ParkingsList() {
           return;
         }
       } else if (currentCreateStep === 2) {
-        await createForm.validateFields(["typeOuvrage", "nombreNiveaux", "horairesOuverture", "agentAssigneId"]);
+        await createForm.validateFields(["typeOuvrage", "nombreNiveaux", "horairesOuverture", "agentAssigneId", "superviseurAssigneId"]);
       } else if (currentCreateStep === 3) {
         // Validate plans in step 4
         const hasEmptyName = createPlans.some((p) => !p.libelle.trim());
@@ -222,6 +229,18 @@ export function ParkingsList() {
     setCurrentCreateStep((prev) => Math.max(prev - 1, 0));
   };
 
+  const handleSubmitCreate = () => {
+    // Ant Design ne met dans onFinish que les champs actuellement montés.
+    // À l'étape récapitulative, tous les champs des étapes précédentes sont masqués.
+    const values = createForm.getFieldsValue(true);
+    if (!values.code || !values.nom || !values.adresse || !values.zone) {
+      setCurrentCreateStep(0);
+      message.error("Les informations d'identification du parking sont manquantes.");
+      return;
+    }
+    createMutation.mutate(values);
+  };
+
   // Create Parking Mutation with Step-by-Step Data, Assigned Agent, and Pre-configured Plans
     const createMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -230,19 +249,37 @@ export function ParkingsList() {
         nom: values.nom,
         adresse: values.adresse,
         capaciteTotale: values.capaciteTotale,
-        placesReserveesAbonnes: Math.round(
-          (values.capaciteTotale * (values.pourcentageAbonnements || 50)) / 100
-        ),
+        zone: values.zone,
+        pourcentageTickets: values.pourcentageTickets,
+        pourcentageAbonnements: values.pourcentageAbonnements,
+        pourcentageCorporate: values.pourcentageCorporate,
+        pourcentageParticulier: values.pourcentageParticulier,
         latitude: values.latitude,
         longitude: values.longitude,
+        typeOuvrage: values.typeOuvrage,
+        nombreNiveaux: values.nombreNiveaux,
+        horairesOuverture: values.horairesOuverture,
+        equipements: values.equipements || [],
+        agentAssigneId: values.agentAssigneId,
+        superviseurAssigneId: values.superviseurAssigneId,
+        plans: createPlans.map(({ libelle, categorie, plageHoraire, dureeMois, tarifTTC }) => ({
+          libelle, plageHoraire, dureeMois, tarifTTC,
+          categorie: categorie === "Particulier" ? "PARTICULIER"
+            : categorie === "Corporate 20 Ans" ? "CORPORATE" : "SPECIAL",
+        })),
       });
     },
     onSuccess: (_, variables: any) => {
       message.success(`Nouveau parking "${variables.nom}" enregistré en base de données !`);
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_utilisateurs_reels"] });
       setIsCreateModalOpen(false);
       setCurrentCreateStep(0);
       createForm.resetFields();
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.detail || error?.response?.data?.message
+        || "Création impossible : vérifiez les données et la connexion au serveur.");
     },
   });
 
@@ -255,28 +292,43 @@ export function ParkingsList() {
     const editMutation = useMutation({
     mutationFn: async (values: Partial<AdminParking> & { motifModification?: string }) => {
       if (!selectedParking) return;
-      return updateAdminParking(selectedParking.id, values);
+      const resultat = await updateAdminParking(selectedParking.id, values);
+      if (attachedPvFile) {
+        try {
+          await deposerPvParking(selectedParking.id, attachedPvFile);
+        } catch {
+          throw new Error("Caractéristiques enregistrées, mais le PV n'a pas pu être déposé. Réessayez l'envoi.");
+        }
+      }
+      return resultat;
     },
     onSuccess: () => {
       message.success(`Caractéristiques du parking mises à jour en base de données !`);
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
       setIsEditModeActive(false);
       setIsEditModalOpen(false);
+      setAttachedPvFile(null);
+      setAttachedPvName(null);
+    },
+    onError: (error: any) => message.error(error?.response?.data?.detail || error?.message || "Modification du parking impossible."),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_utilisateurs_reels"] });
     },
   });
 
 
   // Lock / Unlock Parking Mutation
     const toggleLockMutation = useMutation({
-    mutationFn: async ({ lock, reason }: { lock: boolean; reason?: string }) => {
-      if (!selectedParking) return;
-      return toggleLockAdminParking(selectedParking.id, lock, reason);
+    mutationFn: async ({ id, lock, reason }: { id: number; lock: boolean; reason?: string }) => {
+      return toggleLockAdminParking(id, lock, reason);
     },
     onSuccess: (_, variables) => {
       message.success(variables.lock ? "Parking verrouillé pour maintenance." : "Parking déverrouillé.");
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
       setIsLockModalOpen(false);
     },
+    onError: (error: any) => message.error(error?.response?.data?.detail || "Changement de maintenance impossible."),
   });
 
   const deactivateMutation = useMutation({
@@ -287,9 +339,11 @@ export function ParkingsList() {
     onSuccess: () => {
       message.info(`Parking ${selectedParking?.nom} désactivé.`);
       queryClient.invalidateQueries({ queryKey: ["admin_parkings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_utilisateurs_reels"] });
       setIsDeactivateModalOpen(false);
       setDeactivateReason("");
     },
+    onError: (error: any) => message.error(error?.response?.data?.detail || "Désactivation impossible."),
   });
 
 
@@ -297,8 +351,18 @@ export function ParkingsList() {
     setSelectedParking(record);
     setIsEditModeActive(false);
     setAttachedPvName(null);
+    setAttachedPvFile(null);
     editForm.setFieldsValue({
       ...record,
+      pourcentageAbonnements: record.capaciteTotale
+        ? Math.round(record.placesReserveesAbonnes * 100 / record.capaciteTotale) : 0,
+      pourcentageTickets: record.capaciteTotale
+        ? 100 - Math.round(record.placesReserveesAbonnes * 100 / record.capaciteTotale) : 100,
+      pourcentageCorporate: record.placesReserveesAbonnes
+        ? Math.round(record.quotaCorporate * 100 / record.placesReserveesAbonnes) : 60,
+      pourcentageParticulier: record.placesReserveesAbonnes
+        ? 100 - Math.round(record.quotaCorporate * 100 / record.placesReserveesAbonnes) : 40,
+      equipements: record.equipements?.split(",").filter(Boolean) || [],
       motifModification: "",
     });
     setIsEditModalOpen(true);
@@ -311,7 +375,7 @@ export function ParkingsList() {
 
   const handleOpenLock = (record: AdminParking) => {
     setSelectedParking(record);
-    setLockReason(record.motifVerrouillage || "");
+    setLockReason(record.motifMaintenance || "");
     setIsLockModalOpen(true);
   };
 
@@ -380,6 +444,18 @@ export function ParkingsList() {
       },
     },
     {
+      title: "Affectations",
+      key: "affectations",
+      render: (_: unknown, record: AdminParking) => {
+        const agent = utilisateurs.find((u) => u.id === record.agentAssigneId);
+        const superviseur = utilisateurs.find((u) => u.id === record.superviseurAssigneId);
+        return <div className="text-xs leading-5">
+          <div><strong>Agent :</strong> {agent ? `${agent.prenom} ${agent.nom}` : "Non affecté"}</div>
+          <div><strong>Superviseur :</strong> {superviseur ? `${superviseur.prenom} ${superviseur.nom}` : "Non affecté"}</div>
+        </div>;
+      },
+    },
+    {
       title: "Paramètres",
       key: "actions",
       width: 150,
@@ -393,6 +469,7 @@ export function ParkingsList() {
           },
           {
             key: "edit",
+            disabled: !record.actif,
             icon: <EditOutlined style={{ color: "#0284c7" }} />,
             label: <span>Modifier Caractéristiques</span>,
             onClick: () => handleOpenEdit(record),
@@ -413,11 +490,12 @@ export function ParkingsList() {
                 label: <span style={{ fontWeight: 700, color: "#16a34a" }}>Déverrouiller le Parking</span>,
                 onClick: () => {
                   setSelectedParking(record);
-                  toggleLockMutation.mutate({ lock: false });
+                  toggleLockMutation.mutate({ id: record.id, lock: false });
                 },
               }
             : {
                 key: "lock",
+                disabled: !record.actif,
                 icon: <LockOutlined style={{ color: "#d97706" }} />,
                 label: <span style={{ color: "#d97706" }}>Verrouiller (Maintenance)</span>,
                 onClick: () => handleOpenLock(record),
@@ -460,6 +538,7 @@ export function ParkingsList() {
           icon={<PlusOutlined />}
           size="large"
           onClick={handleOpenCreateModal}
+          disabled={utilisateursEnErreur}
           style={{ backgroundColor: "#0284c7", borderColor: "#0284c7" }}
         >
           Ajouter un Nouveau Parking
@@ -477,6 +556,9 @@ export function ParkingsList() {
       <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
         Gérez les parkings de Rabat, configurez les quotas d'abonnés, géolocalisez sur Google Maps et verrouillez en cas de maintenance.
       </Text>
+
+      {parkingsEnErreur && <Alert type="error" showIcon message="Impossible de charger les parkings réels depuis le serveur." className="mb-3" />}
+      {utilisateursEnErreur && <Alert type="error" showIcon message="Impossible de charger les collaborateurs réels : l'affectation d'un nouveau parking est indisponible." className="mb-3" />}
 
       <Table
         columns={columns}
@@ -561,7 +643,7 @@ export function ParkingsList() {
           <Form
             form={createForm}
             layout="vertical"
-            onFinish={(v) => createMutation.mutate(v)}
+            onFinish={handleSubmitCreate}
             className="mt-3"
           >
             {/* ÉTAPE 1: Identification & Localisation */}
@@ -575,7 +657,6 @@ export function ParkingsList() {
                   description="Renseignez le code officiel, le nom de l'ouvrage, le quartier d'implantation et les coordonnées GPS pour la cartographie interactive."
                   className="rounded-xl border-blue-200 bg-blue-50/70 mb-4"
                 />
-
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
@@ -779,29 +860,33 @@ export function ParkingsList() {
                   type="info"
                   showIcon
                   icon={<UserOutlined style={{ color: "#006398" }} />}
-                  message="Étape 3/5 : Spécifications d'Exploitation & Affectation du Compte Agent"
-                  description="Sélectionnez un compte utilisateur Agent ou Superviseur existant dans le système pour superviser ce parking, puis renseignez les caractéristiques physiques et les équipements."
+                  message="Étape 3/5 : Exploitation et double affectation"
+                  description="Choisissez un agent non affecté (un seul parking par agent) et un superviseur (plusieurs parkings possibles), puis renseignez les caractéristiques de l'ouvrage."
                   className="rounded-xl border-blue-200 bg-blue-50/70 mb-4"
                 />
+                {(!agentsDisponibles.length || !superviseursDisponibles.length) && <Alert type="warning" showIcon
+                  message="Affectations impossibles pour le moment"
+                  description="Créez d'abord un agent non affecté et un superviseur actif dans la gestion des utilisateurs."
+                  className="mb-4" />}
 
-                {/* Agent Account Selection Dropdown */}
+                  {/* Agent et superviseur sont deux affectations distinctes. */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4">
                   <Form.Item
                     name="agentAssigneId"
                     label={
                       <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
                         <UserOutlined style={{ color: "#006398" }} />
-                        Compte Agent / Superviseur Référent Affecté à ce Parking <span className="text-red-500">*</span>
+                        Agent affecté à ce parking <span className="text-red-500">*</span>
                       </span>
                     }
-                    rules={[{ required: true, message: "Veuillez sélectionner un compte agent ou superviseur" }]}
+                    rules={[{ required: true, message: "Veuillez sélectionner un agent non affecté" }]}
                     className="mb-2"
                   >
                     <Select
-                      placeholder="Sélectionnez un compte agent ou superviseur dans la liste des collaborateurs RRM..."
+                      placeholder="Sélectionnez un agent disponible..."
                       options={agentsDisponibles.map((a) => ({
                         value: a.id,
-                        label: `${a.prenom} ${a.nom} (${a.role === "SUPERVISEUR" ? "Superviseur" : "Agent d'Exploitation"}) — ${a.email}`,
+                        label: `${a.prenom} ${a.nom} — ${a.email}`,
                       }))}
                       className="rounded-lg"
                     />
@@ -815,9 +900,7 @@ export function ParkingsList() {
                     return (
                       <div className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between text-xs mt-2">
                         <div className="flex items-center gap-2">
-                          <Tag color={agent.role === "SUPERVISEUR" ? "gold" : "blue"} className="font-black m-0">
-                            {agent.role}
-                          </Tag>
+                          <Tag color="blue" className="font-black m-0">AGENT</Tag>
                           <span className="font-bold text-slate-900">{agent.prenom} {agent.nom}</span>
                           <span className="text-slate-500">({agent.email})</span>
                         </div>
@@ -825,6 +908,13 @@ export function ParkingsList() {
                       </div>
                     );
                   })()}
+                  <Form.Item name="superviseurAssigneId" label="Superviseur responsable de ce parking"
+                    rules={[{ required: true, message: "Veuillez sélectionner un superviseur" }]} className="mt-4 mb-0">
+                    <Select placeholder="Sélectionnez un superviseur..." options={superviseursDisponibles.map((s) => ({
+                      value: s.id, label: `${s.prenom} ${s.nom} — ${s.email}`,
+                    }))} />
+                  </Form.Item>
+                  <div className="text-xs text-slate-500 mt-1">Un superviseur peut suivre plusieurs parkings simultanément.</div>
                 </div>
 
                 <Row gutter={16}>
@@ -1013,7 +1103,7 @@ export function ParkingsList() {
                   showIcon
                   icon={<CheckCircleOutlined style={{ color: "#16a34a" }} />}
                   message="Étape 5/5 : Récapitulatif & Déploiement Clé en Main"
-                  description="Vérifiez l'ensemble des informations saisies. La validation déploiera immédiatement le parking avec son agent référent affecté et ses formules tarifaires opérationnelles."
+                  description="Vérifiez l'ensemble des informations saisies. La validation enregistrera le parking, son référent et ses tarifs en une seule opération."
                   className="rounded-xl border-emerald-200 bg-emerald-50/70 mb-4"
                 />
 
@@ -1031,6 +1121,9 @@ export function ParkingsList() {
 
                   const assignedAgent = agentsDisponibles.find(
                     (a) => a.id === watchedCreateValues?.agentAssigneId
+                  );
+                  const assignedSuperviseur = superviseursDisponibles.find(
+                    (s) => s.id === watchedCreateValues?.superviseurAssigneId
                   );
 
                   return (
@@ -1078,18 +1171,21 @@ export function ParkingsList() {
                           {watchedCreateValues?.horairesOuverture || "24h / 24, 7j / 7"}
                         </Descriptions.Item>
 
-                        <Descriptions.Item label="Agent / Superviseur Référent" span={2}>
+                        <Descriptions.Item label="Agent affecté" span={2}>
                           {assignedAgent ? (
                             <div className="flex items-center gap-2">
-                              <Tag color={assignedAgent.role === "SUPERVISEUR" ? "gold" : "blue"} className="font-black m-0">
-                                {assignedAgent.role}
-                              </Tag>
+                              <Tag color="blue" className="font-black m-0">AGENT</Tag>
                               <strong className="text-slate-900">{assignedAgent.prenom} {assignedAgent.nom}</strong>
                               <span className="text-slate-500">({assignedAgent.email})</span>
                             </div>
                           ) : (
                             <span className="text-slate-400">Non affecté</span>
                           )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Superviseur affecté" span={2}>
+                          {assignedSuperviseur
+                            ? `${assignedSuperviseur.prenom} ${assignedSuperviseur.nom} (${assignedSuperviseur.email})`
+                            : "Non affecté"}
                         </Descriptions.Item>
                       </Descriptions>
 
@@ -1120,7 +1216,7 @@ export function ParkingsList() {
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2 mt-3">
                   <SafetyCertificateOutlined className="text-emerald-600 text-base" />
                   <span>
-                    <strong>Déploiement Clé en Main</strong> : Le parking sera créé avec le statut <strong>En Exploitation</strong>, le compte agent sera immédiatement affecté, et l'ensemble de ses grilles tarifaires sera instantanément actif pour la souscription d'abonnements.
+                    <strong>Déploiement Clé en Main</strong> : Le parking sera créé avec le statut <strong>En Exploitation</strong>, l'agent et le superviseur seront affectés et les formules particulières seront disponibles à la souscription. Les formules corporate seront enregistrées dans la grille, mais le calcul du parcours corporate suit actuellement sa tarification propre.
                   </span>
                 </div>
               </div>
@@ -1148,6 +1244,7 @@ export function ParkingsList() {
           </div>
         }
         open={isEditModalOpen}
+        destroyOnClose
         onCancel={() => setIsEditModalOpen(false)}
         footer={
           !isEditModeActive ? (
@@ -1208,8 +1305,8 @@ export function ParkingsList() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="code" label="Code Identifiant Unique" rules={[{ required: true }]}>
-                <Input disabled={!isEditModeActive} />
+              <Form.Item name="code" label="Code Identifiant Unique (immuable)" rules={[{ required: true }]}>
+                <Input disabled />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -1221,6 +1318,10 @@ export function ParkingsList() {
 
           <Form.Item name="adresse" label="Adresse Physique Complète" rules={[{ required: true }]}>
             <Input disabled={!isEditModeActive} />
+          </Form.Item>
+
+          <Form.Item name="zone" label="Quartier / zone">
+            <Input disabled={!isEditModeActive} maxLength={100} />
           </Form.Item>
 
           <Row gutter={16}>
@@ -1274,10 +1375,50 @@ export function ParkingsList() {
             </Col>
           </Row>
 
+          <Divider titlePlacement="left" style={{ margin: "16px 0" }}>3. Exploitation</Divider>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="typeOuvrage" label="Type d'ouvrage">
+                <Input disabled={!isEditModeActive} maxLength={100} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="nombreNiveaux" label="Nombre de niveaux">
+                <InputNumber disabled={!isEditModeActive} style={{ width: "100%" }} min={1} max={100} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="horairesOuverture" label="Horaires d'ouverture">
+            <Input disabled={!isEditModeActive} maxLength={120} />
+          </Form.Item>
+          <Form.Item name="equipements" label="Équipements">
+            <Checkbox.Group disabled={!isEditModeActive} options={[
+              { label: "RFID", value: "RFID" }, { label: "Lecture de plaques", value: "LPR" },
+              { label: "Guidage LED", value: "GUIDAGE_LED" }, { label: "Surveillance 24/7", value: "SURVEILLANCE_247" },
+              { label: "Bornes électriques", value: "EV_CHARGERS" }, { label: "Accès PMR", value: "PMR_ACCESS" },
+            ]} />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="agentAssigneId" label="Agent affecté">
+                <Select disabled={!isEditModeActive} placeholder="Aucun agent"
+                  options={utilisateurs.filter((u) => u.actif && u.role === "AGENT"
+                    && (!u.parkingAssigneIds?.length || u.parkingAssigneIds.includes(selectedParking?.id || -1)))
+                    .map((u) => ({ value: u.id, label: `${u.prenom} ${u.nom}` }))} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="superviseurAssigneId" label="Superviseur affecté">
+                <Select disabled={!isEditModeActive} placeholder="Aucun superviseur"
+                  options={superviseursDisponibles.map((u) => ({ value: u.id, label: `${u.prenom} ${u.nom}` }))} />
+              </Form.Item>
+            </Col>
+          </Row>
+
           {isEditModeActive && (
             <>
               <Divider titlePlacement="left" style={{ margin: "16px 0 16px" }}>
-                <FileProtectOutlined style={{ color: "#006398" }} /> 3. Justification Réglementaire & PV Officiel
+                <FileProtectOutlined style={{ color: "#006398" }} /> 4. Justification Réglementaire & PV Officiel
               </Divider>
 
               <Form.Item
@@ -1305,12 +1446,16 @@ export function ParkingsList() {
               >
                 <Upload
                   beforeUpload={(file) => {
-                    message.success(`Document PV joint : ${file.name}`);
+                    if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type) || file.size > 5_000_000) {
+                      message.error("Le PV doit être un PDF, PNG ou JPEG de 5 Mo maximum.");
+                      return Upload.LIST_IGNORE;
+                    }
                     setAttachedPvName(file.name);
+                    setAttachedPvFile(file);
                     return false;
                   }}
                   maxCount={1}
-                  onRemove={() => setAttachedPvName(null)}
+                  onRemove={() => { setAttachedPvName(null); setAttachedPvFile(null); }}
                 >
                   <Button icon={<UploadOutlined />} className="rounded-xl font-semibold">
                     {attachedPvName ? `PV Attaché : ${attachedPvName}` : "Joindre le document PV (PDF / Image - Optionnel)"}
@@ -1318,10 +1463,21 @@ export function ParkingsList() {
                 </Upload>
                 {attachedPvName && (
                   <div className="text-xs text-emerald-700 font-bold mt-1.5 flex items-center gap-1">
-                    <FileProtectOutlined /> Fichier prêt pour enregistrement : {attachedPvName}
+                    <FileProtectOutlined /> Fichier à déposer lors de l'enregistrement : {attachedPvName}
                   </div>
                 )}
               </Form.Item>
+              {selectedParking?.pvNom && <Button type="link" onClick={async () => {
+                try {
+                  const blob = await telechargerPvParking(selectedParking.id);
+                  const url = URL.createObjectURL(blob);
+                  const lien = document.createElement("a");
+                  lien.href = url;
+                  lien.download = selectedParking.pvNom || "parking-pv";
+                  lien.click();
+                  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                } catch { message.error("Impossible de télécharger le dernier PV."); }
+              }}>Télécharger le dernier PV : {selectedParking.pvNom}</Button>}
             </>
           )}
         </Form>
@@ -1379,10 +1535,10 @@ export function ParkingsList() {
         title="Verrouillage d'un Parking (Maintenance & Clôture Temporaire)"
         open={isLockModalOpen}
         onCancel={() => setIsLockModalOpen(false)}
-        onOk={() => toggleLockMutation.mutate({ lock: true, reason: lockReason })}
+        onOk={() => selectedParking && toggleLockMutation.mutate({ id: selectedParking.id, lock: true, reason: lockReason })}
         confirmLoading={toggleLockMutation.isPending}
         okText="Verrouiller le parking"
-        okButtonProps={{ danger: true }}
+        okButtonProps={{ danger: true, disabled: !lockReason.trim() }}
         cancelText="Annuler"
       >
         <Alert
@@ -1412,7 +1568,7 @@ export function ParkingsList() {
         onOk={() => deactivateMutation.mutate(deactivateReason)}
         confirmLoading={deactivateMutation.isPending}
         okText="Confirmer la désactivation"
-        okButtonProps={{ danger: true }}
+        okButtonProps={{ danger: true, disabled: !deactivateReason.trim() }}
         cancelText="Annuler"
       >
         <Alert

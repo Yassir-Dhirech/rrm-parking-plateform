@@ -159,6 +159,8 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "dashboard", label: "Tableau de bord", path: "/comptable" },
       { key: "carte-parkings", label: "Carte des Parkings", path: "/comptable/carte-parkings" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
+      { key: "base-clients", label: "Base des clients", path: "/comptable/clients" },
+      { key: "recettes", label: "Recettes à réceptionner", path: "/comptable/recettes" },
       { key: "analyse-ca", label: "Analyse CA", path: "/comptable/analyse-ca" },
       { key: "rejets-cheques", label: "Déclarer un chèque rejeté", path: "/comptable/rejets-cheques" },
     ],

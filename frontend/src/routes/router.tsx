@@ -124,7 +124,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     });
   }
 
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/abonnements`, element: <AbonnementsList /> },
       { path: `${roleConfig[role].homePath}/abonnements/:id`, element: <AbonnementDetail /> },
@@ -142,7 +142,10 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
 
   if (role === "COMPTABLE") {
-    extraRoutes.push({ path: "/comptable/analyse-ca", element: <AnalyseCaPage /> });
+    extraRoutes.push(
+      { path: "/comptable/analyse-ca", element: <AnalyseCaPage /> },
+      { path: "/comptable/clients", element: <BaseClientsPage /> },
+    );
   }
 
   if (role === "AGENT" || role === "SUPERVISEUR") {
@@ -175,7 +178,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
-  if (role === "SUPERVISEUR" || role === "RESPONSABLE") {
+  if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
       { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }

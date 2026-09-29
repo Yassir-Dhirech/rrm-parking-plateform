@@ -37,6 +37,10 @@ public class Forfait {
     @Column(length = 500)
     private String description;
 
+    // Null pour les forfaits historiques : ils restent des offres particulières.
+    @Column(length = 30)
+    private String categorie;
+
     @Column(name = "place_reservee", nullable = false)
     private Boolean placeReservee = false;
 

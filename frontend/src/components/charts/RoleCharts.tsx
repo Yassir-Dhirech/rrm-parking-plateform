@@ -1,4 +1,5 @@
 import React from "react";
+import dayjs from "dayjs";
 import { Card, Row, Col, Progress, Typography, Tag, Tooltip, Space } from "antd";
 import {
   BarChartOutlined,
@@ -115,25 +116,19 @@ function AgentCharts({ filters, demandes = [] }: { filters: GlobalFilters; deman
    2. SUPERVISEUR CHARTS
    ==================================================================== */
 function SuperviseurCharts({ filters, recettes }: { filters: GlobalFilters; recettes: RecetteHebdoListItem[] }) {
-  const baseTotal = recettes.reduce((acc, r) => acc + r.totalHebdo, 0);
-  const factor = recettes.length > 0 ? baseTotal / 80900 : filters.parkingId ? 0.5 : 1;
-
-  const weeklyData = [
-    { day: "Lun", total: Math.round(6000 * factor), color: "#003566" },
-    { day: "Mar", total: Math.round(7200 * factor), color: "#003566" },
-    { day: "Mer", total: Math.round(8100 * factor), color: "#003566" },
-    { day: "Jeu", total: Math.round(6500 * factor), color: "#003566" },
-    { day: "Ven", total: Math.round(9400 * factor), color: "#10b981" },
-    { day: "Sam", total: Math.round(5200 * factor), color: "#003566" },
-    { day: "Dim", total: Math.round(4100 * factor), color: "#003566" },
-  ];
+  const weeklyData = Array.from({ length: 7 }, (_, index) => {
+    const date = dayjs().subtract(6 - index, "day");
+    return { day: date.format("DD/MM"),
+      total: recettes.filter(r => r.dateRecette === date.format("YYYY-MM-DD"))
+        .reduce((sum, r) => sum + r.totalHebdo, 0), color: "#10b981" };
+  });
 
   const maxVal = Math.max(...weeklyData.map((d) => d.total), 1);
 
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={14}>
-        <Card title={<Space><RiseOutlined /><span>Évolution des Recettes Quotidiennes (Semaine 32)</span></Space>} className="chart-card">
+        <Card title={<Space><RiseOutlined /><span>Arrêtés de recettes des 7 derniers jours</span></Space>} className="chart-card">
           <div className="visual-bar-chart">
             {weeklyData.map((item) => {
               const heightPercent = Math.round((item.total / maxVal) * 100);

@@ -106,13 +106,15 @@ public class ParkingPublicService {
                 );
 
         // 2. Si aucun tarif n'est configuré pour ce parking, utiliser la grille standard par défaut (BAB_EL_HAD)
-        if (tarifs.isEmpty()) {
+        if (tarifs.isEmpty() && !tarifParkingRepository.existsByParkingId(parkingId)) {
             tarifs = parkingRepository.findByCodeIgnoreCase("BAB_EL_HAD")
                     .map(refParking -> tarifParkingRepository.trouverTarifsApplicables(refParking.getId(), LocalDate.now()))
                     .orElseGet(List::of);
         }
 
         return tarifs.stream()
+                // Le parcours particulier ne doit jamais afficher une formule corporate.
+                .filter(t -> !"CORPORATE".equals(t.getForfait().getCategorie()))
                 .map(t -> {
                     // On s'assure que le parkingId retourné est bien celui du parking demandé
                     TarifParkingPublicResponse resp = TarifParkingPublicResponse.depuis(t);

@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public interface DossierRejetChequeRepository extends JpaRepository<DossierRejetCheque, Long> {
     boolean existsByPaiementInitialId(Long paiementId);
+    boolean existsByPaiementRegularisationId(Long paiementId);
+    Optional<DossierRejetCheque> findByPaiementRegularisationId(Long paiementId);
     boolean existsByAbonnementIdAndStatutIn(Long abonnementId, List<StatutRejetCheque> statuts);
     List<DossierRejetCheque> findByStatutInOrderByDateDeclarationAsc(List<StatutRejetCheque> statuts);
 

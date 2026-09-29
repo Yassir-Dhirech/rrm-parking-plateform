@@ -13,6 +13,7 @@ import {
   type VehiculeClient,
 } from "../../api/baseClients";
 import "./BaseClientsPage.css";
+import { useAuth } from "../../context/AuthContext";
 
 const DATE = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -159,6 +160,7 @@ function NavigationPages({ page, total, taille, onPage }: {
 const VIDE: FiltresBaseClients = { recherche: "", statut: "", dateDebut: "", dateFin: "", page: 0 };
 
 export function BaseClientsPage() {
+  const { role } = useAuth();
   const [statut, setStatut] = useState<StatutClient | "">("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
@@ -213,7 +215,7 @@ export function BaseClientsPage() {
 
   return <main className="base-clients">
     <header className="base-clients__hero">
-      <div><span className="base-clients__eyebrow">Espace responsable · Répertoire central</span>
+      <div><span className="base-clients__eyebrow">Espace {role === "COMPTABLE" ? "comptable" : "responsable"} · Répertoire central</span>
         <h1>Base des clients</h1>
         <p>Consultez les clients réguliers et corporate, leurs coordonnées et leur historique réel.</p></div>
       <TeamOutlined className="base-clients__hero-icon" aria-hidden="true" />

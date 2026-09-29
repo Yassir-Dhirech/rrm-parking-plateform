@@ -126,22 +126,22 @@ function params(filtres: FiltresBaseClients) {
 
 export async function listerClientsReguliers(filtres: FiltresBaseClients) {
   const response = await client.get<PageClients<ClientRegulierListe>>(
-    "/responsable/clients/reguliers", { params: params(filtres) });
+    "/base-clients/reguliers", { params: params(filtres) });
   return response.data;
 }
 
 export async function listerClientsCorporate(filtres: FiltresBaseClients) {
   const response = await client.get<PageClients<ClientCorporateListe>>(
-    "/responsable/clients/corporate", { params: params(filtres) });
+    "/base-clients/corporate", { params: params(filtres) });
   return response.data;
 }
 
 export async function consulterClientRegulier(id: number) {
-  const response = await client.get<ClientRegulierDetail>(`/responsable/clients/reguliers/${id}`);
+  const response = await client.get<ClientRegulierDetail>(`/base-clients/reguliers/${id}`);
   return response.data;
 }
 
 export async function consulterClientCorporate(id: number) {
-  const response = await client.get<ClientCorporateDetail>(`/responsable/clients/corporate/${id}`);
+  const response = await client.get<ClientCorporateDetail>(`/base-clients/corporate/${id}`);
   return response.data;
 }

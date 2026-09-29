@@ -22,10 +22,33 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TarificationDataInitializerTest {
+
+    @Test
+    void neRemplacePasUneGrilleDejaConfigureeAuRedemarrage() throws Exception {
+        ParkingRepository parkingRepository = mock(ParkingRepository.class);
+        ForfaitRepository forfaitRepository = mock(ForfaitRepository.class);
+        TarifParkingRepository tarifParkingRepository = mock(TarifParkingRepository.class);
+        TarificationDataInitializer initializer = new TarificationDataInitializer(
+                parkingRepository, forfaitRepository, tarifParkingRepository);
+        ReflectionTestUtils.setField(initializer, "enabled", true);
+        ReflectionTestUtils.setField(initializer, "datePriseEffet", LocalDate.of(2026, 9, 16));
+
+        Parking parking = new Parking();
+        parking.setId(8L);
+        parking.setCode("BAB_CHELLAH");
+        when(parkingRepository.findAllByStatutOrderByNomAsc(StatutParking.ACTIF))
+                .thenReturn(List.of(parking));
+        when(tarifParkingRepository.existsByParkingId(8L)).thenReturn(true);
+
+        initializer.run(mock(ApplicationArguments.class));
+
+        verify(tarifParkingRepository, never()).save(any(TarifParking.class));
+    }
 
     @Test
     void appliqueLeProfilBabElHadAuxParkingsSansProfilExplicite() throws Exception {

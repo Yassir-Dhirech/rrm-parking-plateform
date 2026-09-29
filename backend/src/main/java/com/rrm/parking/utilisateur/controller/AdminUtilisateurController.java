@@ -19,6 +19,8 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -109,24 +111,54 @@ public class AdminUtilisateurController {
             });
         }
 
-        // Mise à jour des parkings assignés (Cases à cocher multiples)
+        if (user.getRoles().stream().anyMatch(r -> r.getCode() == CodeRole.AGENT_ADMINISTRATIF)) {
+            int total = req.parkingAssigneIds() != null ? new HashSet<>(req.parkingAssigneIds()).size()
+                    : affectationRepository.findAllByUtilisateurIdAndActiveTrue(user.getId()).size();
+            if (total > 1) throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Un agent ne peut être affecté qu'à un seul parking");
+        }
+
+        // Conserver les affectations inchangées : les recréer le même jour
+        // violerait la clé unique (utilisateur, parking, date_debut).
         if (req.parkingAssigneIds() != null) {
             List<AffectationAgentParking> anciennes = affectationRepository.findAllByUtilisateurIdAndActiveTrue(user.getId());
-            for (AffectationAgentParking aff : anciennes) {
-                aff.setActive(false);
-                aff.setDateFin(LocalDate.now());
-                affectationRepository.save(aff);
+            Set<Long> cibles = new LinkedHashSet<>(req.parkingAssigneIds());
+            for (Long pId : cibles) {
+                if (!parkingRepository.existsById(pId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parking affecté introuvable : " + pId);
+                }
             }
-
-            for (Long pId : req.parkingAssigneIds()) {
-                parkingRepository.findById(pId).ifPresent(p -> {
+            for (AffectationAgentParking aff : anciennes) {
+                if (!cibles.contains(aff.getParking().getId())) {
+                    aff.setActive(false);
+                    aff.setDateFin(LocalDate.now());
+                    affectationRepository.save(aff);
+                }
+            }
+            Set<Long> dejaActifs = new HashSet<>();
+            anciennes.forEach(a -> dejaActifs.add(a.getParking().getId()));
+            List<AffectationAgentParking> historique = affectationRepository
+                    .findAllByUtilisateurIdOrderByDateDebutDesc(user.getId());
+            for (Long pId : cibles) {
+                if (!dejaActifs.contains(pId)) {
+                    AffectationAgentParking duJour = historique.stream()
+                            .filter(a -> a.getParking().getId().equals(pId)
+                                    && LocalDate.now().equals(a.getDateDebut()))
+                            .findFirst().orElse(null);
+                    if (duJour != null) {
+                        duJour.setActive(true);
+                        duJour.setDateFin(null);
+                        affectationRepository.save(duJour);
+                        continue;
+                    }
+                    Parking p = parkingRepository.findById(pId).orElseThrow();
                     AffectationAgentParking nouvelle = new AffectationAgentParking();
                     nouvelle.setUtilisateur(user);
                     nouvelle.setParking(p);
                     nouvelle.setDateDebut(LocalDate.now());
                     nouvelle.setActive(true);
                     affectationRepository.save(nouvelle);
-                });
+                }
             }
         }
 
@@ -169,20 +201,25 @@ public class AdminUtilisateurController {
         user.setStatut(StatutUtilisateur.ACTIF);
 
         CodeRole codeRole = versBackendRole(req.role());
+        if (codeRole == CodeRole.AGENT_ADMINISTRATIF && req.parkingAssigneIds() != null
+                && new HashSet<>(req.parkingAssigneIds()).size() > 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Un agent ne peut être affecté qu'à un seul parking");
+        }
         roleRepository.findByCode(codeRole).ifPresent(user::ajouterRole);
 
         Utilisateur sauve = utilisateurRepository.save(user);
 
         if (req.parkingAssigneIds() != null) {
-            for (Long pId : req.parkingAssigneIds()) {
-                parkingRepository.findById(pId).ifPresent(p -> {
+            for (Long pId : new LinkedHashSet<>(req.parkingAssigneIds())) {
+                Parking p = parkingRepository.findById(pId).orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parking affecté introuvable : " + pId));
                     AffectationAgentParking aff = new AffectationAgentParking();
                     aff.setUtilisateur(sauve);
                     aff.setParking(p);
                     aff.setDateDebut(LocalDate.now());
                     aff.setActive(true);
                     affectationRepository.save(aff);
-                });
             }
         }
 

@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/responsable/clients")
+@RequestMapping({"/api/base-clients", "/api/responsable/clients"})
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_RESPONSABLE_STATIONNEMENT')")
+@PreAuthorize("hasAnyAuthority('ROLE_RESPONSABLE_STATIONNEMENT', 'ROLE_COMPTABLE')")
 public class BaseClientsResponsableController {
 
     private final BaseClientsResponsableService service;
