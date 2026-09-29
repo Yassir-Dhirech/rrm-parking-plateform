@@ -74,10 +74,12 @@ public class TarificationDataInitializer implements ApplicationRunner {
         int nombreTarifs = 0;
 
         for (Parking parking : parkings) {
+            // Une grille déjà configurée (ou révisée dans l'application) reste la source de vérité.
+            if (tarifParkingRepository.existsByParkingId(parking.getId())) {
+                continue;
+            }
             String codeParking = normaliserCode(parking.getCode());
             List<LigneTarif> lignes = profils.getOrDefault(codeParking, profilParDefaut);
-
-            cloturerAncienneGrille(parking, datePriseEffet.minusDays(1));
 
             for (LigneTarif ligne : lignes) {
                 Forfait forfait = forfaits.get(ligne.forfaitCode());
@@ -90,7 +92,7 @@ public class TarificationDataInitializer implements ApplicationRunner {
         }
 
         log.info(
-                "Grille tarifaire RRM synchronisée : {} tarifs pour {} parkings, prise d'effet {}",
+                "Grille tarifaire RRM initialisée : {} nouveaux tarifs pour {} parkings examinés, prise d'effet {}",
                 nombreTarifs,
                 parkings.size(),
                 datePriseEffet
@@ -190,9 +192,11 @@ public class TarificationDataInitializer implements ApplicationRunner {
     }
 
     private Forfait obtenirOuCreerForfait(LigneTarif ligne) {
-        Forfait forfait = forfaitRepository
-                .findByCodeIgnoreCase(ligne.forfaitCode())
-                .orElseGet(Forfait::new);
+        var existant = forfaitRepository.findByCodeIgnoreCase(ligne.forfaitCode());
+        if (existant.isPresent()) {
+            return existant.get();
+        }
+        Forfait forfait = new Forfait();
 
         forfait.setCode(ligne.forfaitCode());
         forfait.setLibelle(ligne.libelle());
@@ -201,14 +205,6 @@ public class TarificationDataInitializer implements ApplicationRunner {
         forfait.setActif(true);
 
         return forfaitRepository.save(forfait);
-    }
-
-    private void cloturerAncienneGrille(Parking parking, LocalDate dateFin) {
-        tarifParkingRepository
-                .trouverTarifsApplicables(parking.getId(), datePriseEffet)
-                .stream()
-                .filter(tarif -> !datePriseEffet.equals(tarif.getDateDebutValidite()))
-                .forEach(tarif -> tarif.cloturer(dateFin));
     }
 
     private void synchroniserTarif(

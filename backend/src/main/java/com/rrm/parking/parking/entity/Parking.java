@@ -55,6 +55,30 @@ public class Parking {
     )
     private Integer capaciteReserveeAbonnements;
 
+    @Column(length = 100)
+    private String zone;
+
+    @Column(name = "quota_corporate")
+    private Integer quotaCorporate;
+
+    @Column(name = "type_ouvrage", length = 100)
+    private String typeOuvrage;
+
+    @Column(name = "nombre_niveaux")
+    private Integer nombreNiveaux;
+
+    @Column(name = "horaires_ouverture", length = 120)
+    private String horairesOuverture;
+
+    @Column(length = 255)
+    private String equipements;
+
+    @Column(name = "motif_maintenance", length = 500)
+    private String motifMaintenance;
+
+    @Column(name = "motif_desactivation", length = 500)
+    private String motifDesactivation;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private StatutParking statut = StatutParking.ACTIF;

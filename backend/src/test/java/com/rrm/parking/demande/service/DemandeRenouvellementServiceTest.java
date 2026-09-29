@@ -17,6 +17,10 @@ import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.demande.repository.DemandeRenouvellementRegulierRepository;
 import com.rrm.parking.paiement.enums.ModePaiement;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
+import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.parking.entity.Parking;
+import com.rrm.parking.parking.enums.StatutParking;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,5 +120,17 @@ class DemandeRenouvellementServiceTest {
         verify(demandeClientRepository, never()).saveAndFlush(
                 org.mockito.ArgumentMatchers.any()
         );
+    }
+
+    @Test
+    void refuseRenouvellementPendantMaintenance() {
+        TarifParking tarif = org.mockito.Mockito.mock(TarifParking.class);
+        Parking parking = new Parking();
+        parking.setStatut(StatutParking.SUSPENDU);
+        when(tarifParkingRepository.findById(25L)).thenReturn(Optional.of(tarif));
+        when(tarif.getParking()).thenReturn(parking);
+
+        assertThrows(ConflitMetierException.class,
+                () -> ReflectionTestUtils.invokeMethod(service, "chargerTarifApplicable", 25L));
     }
 }

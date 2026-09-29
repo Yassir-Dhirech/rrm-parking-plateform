@@ -73,6 +73,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
         label: "Historique",
         path: "/agent/historique",
       },
+      { key: "rejets-cheques", label: "Paiements · comptes bloqués", path: "/agent/rejets-cheques" },
     ],
   },
   SUPERVISEUR: {
@@ -103,6 +104,7 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/superviseur/activations-cartes",
         requiredAuthority: "CARTE_ACTIVER",
       },
+      { key: "rejets-cheques", label: "Cartes des chèques rejetés", path: "/superviseur/rejets-cheques" },
     ],
   },
   RESPONSABLE: {
@@ -137,8 +139,11 @@ export const roleConfig: Record<Role, RoleConfig> = {
         requiredAuthority: "DEMANDE_VALIDER",
       },
       { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
+      { key: "base-clients", label: "Base des clients", path: "/responsable/clients" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
       { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
+      { key: "rejets-cheques", label: "Rejets de chèques", path: "/responsable/rejets-cheques" },
+      { key: "avis-feedbacks", label: "Avis & feedbacks", path: "/responsable/avis" },
     ],
   },
     COMPTABLE: {
@@ -157,6 +162,10 @@ export const roleConfig: Record<Role, RoleConfig> = {
       { key: "contrats", label: "Contrats Corporate", path: "/comptable/contrats" },
       { key: "recettes", label: "Recettes (Versement)", path: "/comptable/recettes" },
       { key: "factures", label: "Factures", path: "/comptable/factures" },
+      { key: "base-clients", label: "Base des clients", path: "/comptable/clients" },
+      { key: "recettes", label: "Recettes à réceptionner", path: "/comptable/recettes" },
+      { key: "analyse-ca", label: "Analyse CA", path: "/comptable/analyse-ca" },
+      { key: "rejets-cheques", label: "Déclarer un chèque rejeté", path: "/comptable/rejets-cheques" },
     ],
   },
 

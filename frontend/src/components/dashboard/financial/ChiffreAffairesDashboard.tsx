@@ -192,7 +192,7 @@ function SubscriptionMix({ data, parkingNom }: { data: ChiffreAffairesDashboardR
       <div className="ca-mix">
         <div
           className="ca-donut"
-          style={{ background: `conic-gradient(#0f6cbd 0 ${regular}%, #8b5cf6 ${regular}% 100%)` }}
+          style={{ background: `conic-gradient(var(--ca-mix-regular) 0 ${regular}%, var(--ca-mix-corporate) ${regular}% 100%)` }}
           aria-label={`${regular}% régulier et ${synthese.partCorporatePourcentage}% corporate`}
         >
           <div className="ca-donut__center">

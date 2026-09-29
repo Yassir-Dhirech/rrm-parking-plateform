@@ -14,6 +14,11 @@ import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
 import { FacturesList } from "../features/factures/pages/FacturesList";
 import { FactureDetail } from "../features/factures/pages/FactureDetail";
+import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
+import { AnalyseCaPage } from "../pages/comptable/AnalyseCaPage";
+import { AvisFeedbackPage } from "../pages/responsable/AvisFeedbackPage";
+import { BaseClientsPage } from "../pages/responsable/BaseClientsPage";
+import { FactureComptableDetailPage } from "../features/factures/pages/FactureComptableDetailPage";
 import { CartesList } from "../features/cartes/pages/CartesList";
 import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
 import { AgentParkingVue } from "../components/dashboard/AgentParkingVue";
@@ -42,6 +47,7 @@ import { DemandesCorporateResponsable } from "../features/demandes/pages/Demande
 import { DemandeCorporateDetail } from "../features/demandes/pages/DemandeCorporateDetail";
 import { AgentHistoriquePage } from "../pages/agent/Historique";
 import { ModificationDemandeAgent } from "../features/demandes/pages/ModificationDemandeAgent";
+import { RejetsChequesPage } from "../features/cheques/RejetsChequesPage";
 
 function RootLayout() {
   return (
@@ -58,6 +64,13 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     { path: `${roleConfig[role].homePath}/notifications`, element: <NotificationsPage /> },
     { path: `${roleConfig[role].homePath}/carte-parkings`, element: <InternalParkingsMapPage /> },
   ];
+
+  if (["COMPTABLE", "RESPONSABLE", "SUPERVISEUR", "AGENT"].includes(role)) {
+    extraRoutes.push({
+      path: `${roleConfig[role].homePath}/rejets-cheques`,
+      element: <RejetsChequesPage />,
+    });
+  }
 
  if (
    role === "AGENT"
@@ -121,8 +134,17 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "SUPERVISEUR" || role === "COMPTABLE") {
     extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/factures`, element: <FacturesList /> },
-      { path: `${roleConfig[role].homePath}/factures/:id`, element: <FactureDetail /> },
+      { path: `${roleConfig[role].homePath}/factures`,
+        element: role === "COMPTABLE" ? <FacturesComptablePage /> : <FacturesList /> },
+      { path: `${roleConfig[role].homePath}/factures/:id`,
+        element: role === "COMPTABLE" ? <FactureComptableDetailPage /> : <FactureDetail /> },
+    );
+  }
+
+  if (role === "COMPTABLE") {
+    extraRoutes.push(
+      { path: "/comptable/analyse-ca", element: <AnalyseCaPage /> },
+      { path: "/comptable/clients", element: <BaseClientsPage /> },
     );
   }
 
@@ -137,6 +159,8 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
   if (role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
+      { path: "/responsable/avis", element: <AvisFeedbackPage /> },
+      { path: "/responsable/clients", element: <BaseClientsPage /> },
       {
         path: "/responsable/demandes-corporate",
         element: <DemandesCorporateResponsable />,
@@ -154,7 +178,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
     );
   }
 
-  if (role === "SUPERVISEUR" || role === "COMPTABLE" || role === "RESPONSABLE") {
+  if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
       { path: `${roleConfig[role].homePath}/recettes`, element: <RecettesList /> },
       { path: `${roleConfig[role].homePath}/recettes/:id`, element: <RecetteDetail /> }

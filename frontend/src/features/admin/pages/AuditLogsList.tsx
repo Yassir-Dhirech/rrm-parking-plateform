@@ -11,7 +11,6 @@ import {
   Drawer,
   Timeline,
   Tooltip,
-  Badge,
 } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,9 +21,6 @@ import {
   ClockCircleOutlined,
   GlobalOutlined,
   FilterOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { getAuditLogs } from "../../../api/adminAuditApi";
 import type { Role } from "../../../lib/roleConfig";

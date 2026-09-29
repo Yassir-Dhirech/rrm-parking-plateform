@@ -54,6 +54,13 @@ export async function getBackendUtilisateurs(): Promise<BackendUtilisateur[]> {
   }
 }
 
+// Pour une affectation, jamais de collaborateurs fictifs en cas d'erreur réseau.
+export async function getUtilisateursReels(): Promise<BackendUtilisateur[]> {
+  const response = await client.get<BackendUtilisateur[]>("/admin/utilisateurs");
+  if (!Array.isArray(response.data)) throw new Error("Réponse utilisateurs invalide");
+  return response.data;
+}
+
 export async function modifierUtilisateur(
   id: number,
   data: Partial<BackendUtilisateur> & { motDePasse?: string }

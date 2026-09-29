@@ -4,18 +4,15 @@ import { PublicNavbar } from "../components/ui/PublicNavbar";
 import { PublicFooter } from "../components/ui/PublicFooter";
 import {
   BankOutlined,
- 
   DollarOutlined,
   DownOutlined,
   EnvironmentOutlined,
-  
   RightOutlined,
-  SafetyCertificateOutlined,
   SearchOutlined,
   StarOutlined,
   UpOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Input, Spin, Tag, Tabs } from "antd";
+import { Alert, Button, Input, Spin, Tag } from "antd";
 import {
   getPublicParkings,
   getTarifsParking,
@@ -239,7 +236,6 @@ export function PublicTarifsPage() {
               const corpGrandCompteDb = tarifsCorporateDb.find((t) => t.forfaitCode === "CORP_GRAND_COMPTE");
               const prixCorpStandard = corpStandardDb ? Number(corpStandardDb.prixMensuelTTC) : 375;
               const prixCorpGrandCompte = corpGrandCompteDb ? Number(corpGrandCompteDb.prixMensuelTTC) : 325;
-              const isCorpFromDb = tarifsCorporateDb.length > 0;
 
 
 

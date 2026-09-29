@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { roleConfig } from "../../lib/roleConfig";
+import { listerNotificationsRejet } from "../../api/rejetsChequesApi";
 import {
   getNotificationsForRole,
   markNotificationAsRead,
@@ -37,6 +38,13 @@ export function NotificationPopover() {
     queryKey: ["notifications", role],
     queryFn: () => getNotificationsForRole(role),
     enabled: !!role,
+  });
+
+  const { data: rejets = [] } = useQuery({
+    queryKey: ["notifications-rejets-cheques", role],
+    queryFn: listerNotificationsRejet,
+    enabled: !!role && ["AGENT", "SUPERVISEUR", "RESPONSABLE", "COMPTABLE"].includes(role),
+    refetchInterval: 20_000,
   });
 
   const markReadMutation = useMutation({
@@ -106,6 +114,31 @@ export function NotificationPopover() {
       </div>
 
       <Divider style={{ margin: "4px 0 12px 0" }} />
+
+      {rejets.length > 0 && (
+        <>
+          <Text strong style={{ color: "#003566" }}>Rejets de chèques</Text>
+          <List
+            size="small"
+            dataSource={rejets.slice(0, 3)}
+            renderItem={(notification) => (
+              <List.Item
+                style={{ cursor: "pointer", background: "#f0f9ff", padding: 8 }}
+                onClick={() => {
+                  setPopoverOpen(false);
+                  navigate(`${currentRoleConfig.homePath}/rejets-cheques`);
+                }}
+              >
+                <List.Item.Meta
+                  title={notification.sujet}
+                  description={notification.contenu}
+                />
+              </List.Item>
+            )}
+          />
+          <Divider style={{ margin: "8px 0" }} />
+        </>
+      )}
 
       {/* Notifications List */}
       {notifications.length === 0 ? (

@@ -28,11 +28,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class FacturationServiceTest {
@@ -50,6 +52,44 @@ class FacturationServiceTest {
                 paiementRepository,
                 factureRepository
         );
+    }
+
+    @Test
+    void uneDemandeAuChequeRejeteNeBloquePasLesDemandesFacturables() {
+        ClientParticulier client = new ClientParticulier("Client", "Payeur", "EF123456");
+        Parking parking = new Parking();
+        parking.setNom("Bab Chellah");
+        Forfait forfait = new Forfait();
+        forfait.setLibelle("Jour 7j/7");
+        TarifParking tarif = new TarifParking();
+        tarif.setParking(parking);
+        tarif.setForfait(forfait);
+        tarif.setDureeEnMois(3);
+        tarif.setPrixHT(new BigDecimal("291.67"));
+        tarif.setTauxTVA(new BigDecimal("20.00"));
+
+        DemandeNouvelAbonnementRegulier rejetee = new DemandeNouvelAbonnementRegulier(
+                "DEM-CHEQUE-REJETE", CanalInitiation.EN_LIGNE, client, null);
+        ReflectionTestUtils.setField(rejetee, "id", 58L);
+        DemandeNouvelAbonnementRegulier facturable = new DemandeNouvelAbonnementRegulier(
+                "DEM-PAIEMENT-CONFIRME", CanalInitiation.EN_LIGNE, client, null);
+        ReflectionTestUtils.setField(facturable, "id", 59L);
+        facturable.selectionnerTarif(tarif);
+        facturable.choisirModePaiement(ModePaiement.ESPECE);
+        Paiement paiement = Paiement.creerPaiementEspece(
+                "PAY-CONFIRME", facturable, new BigDecimal("1100.00"));
+
+        when(demandeRepository.findByStatutOrderByDateModificationDesc(StatutDemande.VALIDEE))
+                .thenReturn(List.of(facturable, rejetee));
+        when(paiementRepository.existsByDemandeIdAndStatut(59L, StatutPaiement.CONFIRME))
+                .thenReturn(true);
+        when(paiementRepository.findByDemandeIdAndStatut(59L, StatutPaiement.CONFIRME))
+                .thenReturn(Optional.of(paiement));
+
+        var demandes = service.listerDemandesValidees(null, "RECENT");
+
+        assertEquals(1, demandes.size());
+        assertEquals("DEM-PAIEMENT-CONFIRME", demandes.getFirst().referenceDemande());
     }
 
     @Test

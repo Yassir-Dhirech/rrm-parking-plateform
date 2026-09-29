@@ -19,6 +19,7 @@ import com.rrm.parking.document.repository.PieceJointeRepository;
 import com.rrm.parking.document.service.FichierStocke;
 import com.rrm.parking.document.service.StockageDocumentService;
 import com.rrm.parking.tarification.entity.TarifParking;
+import com.rrm.parking.parking.enums.StatutParking;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;
 import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
@@ -312,6 +313,12 @@ public class DemandeAbonnementRegulierService {
                                         "Tarif parking introuvable"
                                 )
                         );
+
+        if (tarif.getParking().getStatut() != StatutParking.ACTIF) {
+            throw new ConflitMetierException(
+                    "Ce parking n'accepte pas de nouvelle souscription pendant la maintenance ou après désactivation"
+            );
+        }
 
         if (!tarif.estApplicableA(
                 LocalDate.now()

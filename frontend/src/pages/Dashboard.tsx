@@ -23,7 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import { roleConfig, type Role } from "../lib/roleConfig";
 import { GlobalFilterBar, type GlobalFilters } from "../components/ui/GlobalFilterBar";
 import { RoleCharts } from "../components/charts/RoleCharts";
-import { getRecettesMock } from "../api/recettesMock";
+import { listerRecettes } from "../api/recettes";
+import type { RecetteHebdoListItem } from "../features/recettes/types";
 import { getContratsMock } from "../api/contratsMock";
 import { getDemandesMock } from "../api/demandesMock";
 import { getParkingsMock, getLogsMock } from "../api/adminMock";
@@ -73,8 +74,15 @@ export function Dashboard() {
   const currentRoleConfig = roleConfig[role];
   const basePath = currentRoleConfig.homePath;
 
-  // Requêtes de synthèse réelles
-  const { data: recettes = [] } = useQuery({ queryKey: ["recettes"], queryFn: getRecettesMock });
+  const { data: recettes = [] } = useQuery({ queryKey: ["recettes-reelles"], queryFn: listerRecettes,
+    select: (items): RecetteHebdoListItem[] => items.filter(r => r.statut !== "ANNULEE").map(r => ({
+      id: r.id, reference: r.reference, parkingNom: r.parkingNom, parkingId: r.parkingId,
+      dateRecette: r.dateArret, dateDebut: r.periodeDu ?? r.dateArret,
+      dateFin: r.periodeAu ?? r.dateArret, totalHebdo: r.total,
+      totalEspeces: r.totalEspeces, totalCheques: r.totalCheques, totalCarte: 0,
+      nombreCheques: r.nombreCheques,
+      statut: r.statut === "BROUILLON" ? "EN_COURS" : r.statut === "TRANSMISE" ? "COMPLETED" : "RECEIVED",
+    })) });
   const { data: contrats = [] } = useQuery({ queryKey: ["contrats"], queryFn: getContratsMock });
   const { data: demandes = [] } = useQuery({ queryKey: ["demandes"], queryFn: getDemandesMock });
   const { data: parkingsList = [] } = useQuery({ queryKey: ["admin_parkings"], queryFn: getParkingsMock });
@@ -135,7 +143,7 @@ export function Dashboard() {
 
   // Global network figures for Comptable Header (permanent network cash oversight, invariant to filter)
   const globalRecettesCompleted = recettes.filter((r) => r.statut === "COMPLETED");
-  const globalCompletedCount = globalRecettesCompleted.length || 3;
+  const globalCompletedCount = globalRecettesCompleted.length;
 
   // Données financières consolidées et synchronisées (Source Unique de Vérité)
   const consolidatedData = getConsolidatedRevenue(filters.parkingId);
