@@ -1,6 +1,5 @@
 package com.rrm.parking.audit.controller;
 
-import com.rrm.parking.audit.entity.AuditLog;
 import com.rrm.parking.audit.repository.AuditLogRepository;
 import com.rrm.parking.security.entity.Role;
 import lombok.RequiredArgsConstructor;

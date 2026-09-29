@@ -9,7 +9,6 @@ import com.rrm.parking.auth.dto.LoginResponse;
 import com.rrm.parking.security.auth.TokenAcces;
 import com.rrm.parking.security.auth.UtilisateurPrincipal;
 import com.rrm.parking.security.service.JwtService;
-import com.rrm.parking.utilisateur.entity.Utilisateur;
 import com.rrm.parking.utilisateur.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

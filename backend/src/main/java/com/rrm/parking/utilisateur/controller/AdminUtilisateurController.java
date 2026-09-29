@@ -6,7 +6,6 @@ import com.rrm.parking.audit.enums.TypeActionAudit;
 import com.rrm.parking.audit.repository.AuditLogRepository;
 import com.rrm.parking.parking.entity.Parking;
 import com.rrm.parking.parking.repository.ParkingRepository;
-import com.rrm.parking.security.entity.Role;
 import com.rrm.parking.security.enums.CodeRole;
 import com.rrm.parking.security.repository.RoleRepository;
 import com.rrm.parking.utilisateur.entity.AffectationAgentParking;

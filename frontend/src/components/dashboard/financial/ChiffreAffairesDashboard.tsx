@@ -178,7 +178,7 @@ function RevenueTrend({ data, parkingNom }: { data: ChiffreAffairesDashboardResp
 }
 
 function SubscriptionMix({ data, parkingNom }: { data: ChiffreAffairesDashboardResponse; parkingNom?: string }) {
-  const { synthese, filtres } = data;
+  const { synthese } = data;
   const regular = Math.max(0, Math.min(100, synthese.partRegulierPourcentage));
 
   return (

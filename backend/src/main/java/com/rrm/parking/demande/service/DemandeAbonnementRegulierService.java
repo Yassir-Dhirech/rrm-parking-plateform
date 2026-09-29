@@ -16,8 +16,6 @@ import com.rrm.parking.demande.service.otp.OtpGenere;
 import com.rrm.parking.document.entity.PieceJointe;
 import com.rrm.parking.document.enums.TypePieceJointe;
 import com.rrm.parking.document.repository.PieceJointeRepository;
-import com.rrm.parking.document.service.FichierStocke;
-import com.rrm.parking.document.service.StockageDocumentService;
 import com.rrm.parking.tarification.entity.TarifParking;
 import com.rrm.parking.parking.enums.StatutParking;
 import com.rrm.parking.tarification.repository.TarifParkingRepository;

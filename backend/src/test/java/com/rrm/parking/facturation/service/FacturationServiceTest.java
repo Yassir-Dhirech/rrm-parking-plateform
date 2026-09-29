@@ -9,7 +9,6 @@ import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.facturation.dto.response.FactureResponse;
-import com.rrm.parking.facturation.entity.Facture;
 import com.rrm.parking.facturation.enums.StatutFacture;
 import com.rrm.parking.facturation.repository.FactureRepository;
 import com.rrm.parking.paiement.entity.Paiement;

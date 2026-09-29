@@ -1,12 +1,10 @@
 package com.rrm.parking.utilisateur.entity;
 
 import com.rrm.parking.parking.entity.Parking;
-import com.rrm.parking.utilisateur.enums.StatutUtilisateur;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDate;
 
