@@ -32,6 +32,7 @@ import {
 } from "@ant-design/icons";
 import "./RoleLayout.css";
 import "./SupervisorPages.css";
+import "./ResponsableTheme.css";
 
 const menuIconMap: Record<string, React.ReactNode> = {
   dashboard: <DashboardOutlined />,
@@ -150,21 +151,6 @@ return (
               className="rrm-responsable-mobile-menu md:hidden"
             />
 
-            <Tooltip title={isCollapsed ? "Déplier le menu" : "Replier le menu"}>
-              <Button
-                type="text"
-                icon={
-                  isCollapsed ? (
-                    <MenuUnfoldOutlined style={{ fontSize: 18, color: "#ffffff" }} />
-                  ) : (
-                    <MenuFoldOutlined style={{ fontSize: 18, color: "#ffffff" }} />
-                  )
-                }
-                onClick={toggleSidebar}
-                className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all shrink-0 cursor-pointer"
-              />
-            </Tooltip>
-
             <h1 className="rrm-responsable-page-title truncate">
               {currentPageTitle}
             </h1>
@@ -256,15 +242,11 @@ return (
       >
         {/* Top of Sidebar: Slim fold / unfold header */}
         <div
-          className={`flex items-center mb-1.5 px-3 py-1 border-b transition-all duration-300 ${
-            role === "RESPONSABLE" ? "border-white/10" : "border-slate-100"
-          } ${isCollapsed ? "justify-center px-1" : "justify-between"}`}
+          className={`flex items-center mb-1.5 px-3 py-1 border-b border-slate-100 transition-all duration-300 ${isCollapsed ? "justify-center px-1" : "justify-between"}`}
         >
           {!isCollapsed && (
             <span
-              className={`text-[10.5px] font-black uppercase tracking-wider select-none ${
-                role === "RESPONSABLE" ? "text-white/60" : "text-slate-400"
-              }`}
+              className="text-[10.5px] font-black uppercase tracking-wider select-none text-slate-400"
             >
               Menu
             </span>
@@ -281,24 +263,20 @@ return (
                   <MenuUnfoldOutlined
                     style={{
                       fontSize: 15,
-                      color: role === "RESPONSABLE" ? "#ffffff" : "#003566",
+                      color: "#003566",
                     }}
                   />
                 ) : (
                   <MenuFoldOutlined
                     style={{
                       fontSize: 15,
-                      color: role === "RESPONSABLE" ? "#ffffff" : "#003566",
+                      color: "#003566",
                     }}
                   />
                 )
               }
               onClick={toggleSidebar}
-              className={`rrm-sidebar-toggle-button flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all shrink-0 ${
-                role === "RESPONSABLE"
-                  ? "bg-white/10 hover:bg-white/20 text-white border border-white/20"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80"
-              }`}
+              className="rrm-sidebar-toggle-button flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80"
             />
           </Tooltip>
         </div>
@@ -396,7 +374,6 @@ return (
         onClose={() => setMobileDrawerOpen(false)}
         open={mobileDrawerOpen}
         width={280}
-        rootClassName={role === "RESPONSABLE" ? "rrm-mobile-drawer--glass" : undefined}
         styles={{ body: { padding: "16px 12px" } }}
       >
         <div className="flex flex-col h-full gap-4">

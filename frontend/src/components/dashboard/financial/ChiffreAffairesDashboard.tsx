@@ -24,6 +24,7 @@ import {
   type Parking,
 } from "../../../api/parkings";
 import "./ChiffreAffairesDashboard.css";
+import "./ChiffreAffairesResponsableLight.css";
 
 type FilterMode = "PERIODE" | "ANNEE" | "MOIS";
 
@@ -226,6 +227,7 @@ function ParkingRevenue({ data }: { data: ChiffreAffairesDashboardResponse }) {
         <div>
           <span className="ca-eyebrow">Répartition par Parking</span>
           <h3>Chiffre d’affaires HT par Parking</h3>
+          <small>Abonnements réglés, calculés au prorata du {formatPeriod(data.filtres.dateDebut, data.filtres.dateFin)}.</small>
         </div>
         <span className="ca-panel__hint">
           {data.filtres.parkingId 
@@ -257,7 +259,7 @@ function ParkingRevenue({ data }: { data: ChiffreAffairesDashboardResponse }) {
   );
 }
 
-function DashboardContent({ data, selectedParkingNom }: { data: ChiffreAffairesDashboardResponse; selectedParkingNom?: string }) {
+function DashboardContent({ data, selectedParkingNom, audience }: { data: ChiffreAffairesDashboardResponse; selectedParkingNom?: string; audience: Props["audience"] }) {
   const { synthese, filtres } = data;
   const tvaEstimee = synthese.caActuelHt * 0.20;
   const totalTtc = synthese.caActuelHt + tvaEstimee;
@@ -320,7 +322,7 @@ function DashboardContent({ data, selectedParkingNom }: { data: ChiffreAffairesD
 
       {/* Graphiques dynamiques connectés aux filtres */}
       <section className="ca-chart-grid">
-        <RevenueTrend data={data} parkingNom={selectedParkingNom} />
+        {audience !== "RESPONSABLE" && <RevenueTrend data={data} parkingNom={selectedParkingNom} />}
         <SubscriptionMix data={data} parkingNom={selectedParkingNom} />
       </section>
 
@@ -497,6 +499,7 @@ export function ChiffreAffairesDashboard({ audience }: Props) {
       {dashboardQuery.data && (
         <DashboardContent 
           data={dashboardQuery.data} 
+          audience={audience}
           selectedParkingNom={parkingsQuery.data?.find((p) => p.id === parkingId)?.nom}
         />
       )}

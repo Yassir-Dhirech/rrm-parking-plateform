@@ -296,6 +296,14 @@
   font-weight: 800;
 }
 
+.ca-parking-panel .ca-panel__header small {
+  display: block;
+  margin-top: 5px;
+  color: var(--ca-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .ca-panel__total {
   color: var(--ca-blue-dark);
   font-size: 14px;
@@ -709,6 +717,10 @@
 .ca-dashboard--responsable .ca-parking-panel .ca-panel__hint {
   color: #bfd0e3;
   font-size: 12px;
+}
+
+.ca-dashboard--responsable .ca-parking-panel .ca-panel__header small {
+  color: #bfd0e3;
 }
 
 .ca-dashboard--responsable .ca-parking-list {

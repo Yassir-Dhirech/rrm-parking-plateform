@@ -55,6 +55,7 @@ import {
   type AdminParking,
 } from "../../../api/adminParkingsApi";
 import { getUtilisateursReels } from "../../../api/adminUtilisateursApi";
+import { useAuth } from "../../../context/AuthContext";
 
 
 import { ParkingPlansTarifairesModal } from "../../../components/parkings/ParkingPlansTarifairesModal";
@@ -68,6 +69,7 @@ function getHtAndTva(ttc: number) {
 }
 
 export function ParkingsList() {
+  const { role } = useAuth();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -546,9 +548,9 @@ export function ParkingsList() {
       }
     >
             <div className="flex items-center gap-3 mb-1">
-        <Title level={4} style={{ margin: 0 }}>
+        {role !== "RESPONSABLE" && <Title level={4} style={{ margin: 0 }}>
           <SafetyCertificateOutlined /> Gestion des Parkings & Stationnement
-        </Title>
+        </Title>}
         <Tag color="blue" className="font-bold text-xs rounded-full px-2.5 py-0.5">
           {parkings.length} parkings au total
         </Tag>

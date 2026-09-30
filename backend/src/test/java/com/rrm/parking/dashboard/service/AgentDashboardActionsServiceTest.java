@@ -68,7 +68,8 @@ class AgentDashboardActionsServiceTest {
                 StatutDemandeOperationnelle.CREEE,
                 LocalDateTime.now(ZoneId.of("Africa/Casablanca")).minusHours(30), null,
                 22L, "CARTE-22", null, StatutCarteAcces.A_IMPRIMER, "ABO-22",
-                15L, "DEM-15", "Client", "A123", null, null, "Bab Chellah", null, null)));
+                15L, "DEM-15", "Client", "A123", null, null, "Bab Chellah", null, null,
+                null, null)));
         when(operations.listerRemises(31L)).thenReturn(List.of());
         when(demandes.countNouvellesEnRetard(eq(8L), eq(StatutDemande.EN_ATTENTE_PAIEMENT), any()))
                 .thenReturn(2L);

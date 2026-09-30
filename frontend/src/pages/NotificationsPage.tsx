@@ -39,7 +39,7 @@ export function NotificationsPage() {
     queryKey: ["notifications", role, token],
     queryFn: () => (role ? getNotificationsForRole(role) : Promise.resolve([])),
     enabled: !!role,
-    refetchInterval: role === "AGENT" || role === "SUPERVISEUR" ? 20_000 : false,
+    refetchInterval: role === "AGENT" || role === "SUPERVISEUR" || role === "RESPONSABLE" ? 20_000 : false,
   });
 
   const markReadMutation = useMutation({

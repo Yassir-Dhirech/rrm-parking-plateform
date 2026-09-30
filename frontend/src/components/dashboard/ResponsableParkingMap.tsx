@@ -40,7 +40,7 @@ function createSubscriptionMarker(count: number) {
   return L.divIcon({
     className: "responsable-parking-marker-host",
     html: `
-      <div class="responsable-parking-marker" aria-label="${count} abonnements">
+      <div class="responsable-parking-marker" aria-label="${count} places occupées par des abonnements">
         <span class="responsable-parking-marker__pulse" aria-hidden="true"></span>
         <span class="responsable-parking-marker__ring" aria-hidden="true"></span>
         <span class="responsable-parking-marker__core" aria-hidden="true"></span>
@@ -304,7 +304,10 @@ export function ResponsableParkingMap() {
       title={
         <div className="responsable-map-card__title">
           <EnvironmentOutlined className="responsable-map-card__title-icon" />
-          <span className="responsable-map-card__title-text">Réseau des parkings</span>
+          <div className="responsable-map-card__title-copy">
+            <span className="responsable-map-card__title-text">Nombre de places occupées par parking</span>
+            <span className="responsable-map-card__description">Chaque repère indique les places occupées par des abonnements. Cliquez pour voir le détail du parking.</span>
+          </div>
         </div>
       }
       extra={
@@ -321,8 +324,8 @@ export function ResponsableParkingMap() {
       }
       styles={{
         header: {
-          minHeight: 62,
-          borderBottom: "1px solid rgba(255, 255, 255, 0.10)",
+          minHeight: 78,
+          borderBottom: "1px solid #e5ecf3",
           paddingInline: 18,
           background: "transparent",
         },
@@ -332,54 +335,64 @@ export function ResponsableParkingMap() {
         },
       }}
       style={{
-        background: "rgba(0, 0, 0, 0.53)",
-        border: "1px solid rgba(255, 255, 255, 0.10)",
-        borderRadius: 18,
-        boxShadow: "0 18px 42px rgba(0, 0, 0, 0.30)",
+        background: "#fff",
+        border: "1px solid #dce6ef",
+        borderRadius: 15,
+        boxShadow: "0 8px 24px rgba(20, 45, 76, .055)",
         overflow: "hidden",
-        backdropFilter: "blur(50px)",
-        WebkitBackdropFilter: "blur(50px)",
       }}
     >
       <style>{`
         .responsable-map-card__title {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 10px;
         }
 
+        .responsable-map-card__title-copy {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          gap: 3px;
+        }
+
         .responsable-map-card__title-icon {
-          color: #57cfff;
+          color: #149bd0;
           font-size: 18px;
         }
 
         .responsable-map-card__title-text {
-          color: #e7f6ff;
+          color: #1d3048;
           font-family: "Segoe UI", Inter, sans-serif;
-          font-size: 22px;
-          font-weight: 400;
+          font-size: 19px;
+          font-weight: 750;
           letter-spacing: -0.02em;
         }
 
+        .responsable-map-card__description {
+          color: #60758a;
+          font-family: "Segoe UI", Inter, sans-serif;
+          font-size: 13px;
+          font-weight: 400;
+          line-height: 1.35;
+          white-space: normal;
+        }
+
         .responsable-map-style-toggle.ant-segmented {
-          background: rgba(0, 0, 0, 0.53);
-          border: 1px solid rgba(255, 255, 255, 0.10);
-          border-radius: 12px;
-          box-shadow:
-            0 14px 34px rgba(0, 0, 0, 0.26),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
-          -webkit-backdrop-filter: blur(50px);
-          backdrop-filter: blur(50px);
+          background: #f3f7fb;
+          border: 1px solid #dce6ef;
+          border-radius: 10px;
+          box-shadow: none;
         }
 
         .responsable-map-style-toggle .ant-segmented-item {
-          color: rgba(222, 241, 255, 0.82);
-          font-weight: 500;
+          color: #526b82;
+          font-weight: 650;
         }
 
         .responsable-map-style-toggle .ant-segmented-item-selected {
-          background: rgba(255, 255, 255, 0.10);
-          color: #ffffff;
+          background: #e7f5fc;
+          color: #08699d;
           box-shadow: none;
         }
 

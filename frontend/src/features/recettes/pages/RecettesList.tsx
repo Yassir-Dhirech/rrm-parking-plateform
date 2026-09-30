@@ -103,12 +103,12 @@ export function RecettesList() {
   ];
 
   return (
-    <Space className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-recettes" : undefined}
+    <Space className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-recettes" : role === "RESPONSABLE" ? "recettes-responsable" : undefined}
       direction="vertical" size="large" style={{ width: "100%" }}>
       {/* En-tête */}
       <Card
         className="rrm-glass-card"
-        title={<Title level={4} style={{ margin: 0 }}>Gestion & Remise des Recettes par Date</Title>}
+        title={role === "RESPONSABLE" ? undefined : <Title level={4} style={{ margin: 0 }}>Gestion & Remise des Recettes par Date</Title>}
         extra={
           role === "SUPERVISEUR" ? (
             <Button
@@ -151,7 +151,7 @@ export function RecettesList() {
       )}
 
       {/* Statistiques Synthèse */}
-      <Space wrap size="large">
+      <Space wrap size="large" className={role === "RESPONSABLE" ? "recettes-responsable__stats" : undefined}>
         <Statistic
           title="Arrêtés Validés"
           value={recettes.filter((r) => r.statut !== "ANNULEE").length}

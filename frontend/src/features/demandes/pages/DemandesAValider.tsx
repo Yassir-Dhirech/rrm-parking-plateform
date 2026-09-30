@@ -106,19 +106,19 @@ export function DemandesAValider() {
   ];
 
   return (
-    <section className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-operations" : "space-y-5"}>
+    <section className={role === "SUPERVISEUR" ? "supervisor-screen supervisor-operations" : role === "RESPONSABLE" ? "space-y-5 responsable-worklist" : "space-y-5"}>
       <div className={role === "SUPERVISEUR" ? "supervisor-screen__heading" : undefined}>
         {role === "SUPERVISEUR" && <span className="supervisor-screen__eyebrow">Espace superviseur · Décisions</span>}
-        <h1 className="text-2xl font-black text-slate-900">
+        {role !== "RESPONSABLE" && <h1 className="text-2xl font-black text-slate-900">
           Demandes payées à valider
-        </h1>
+        </h1>}
         <p className="text-sm text-slate-500">
           Contrôle final avant création de l’abonnement et demande
           d’impression de la carte.
         </p>
       </div>
 
-      <div className={role === "SUPERVISEUR" ? "supervisor-screen__filters" : "rounded-xl border border-slate-200 bg-white p-4"}>
+      <div className={role === "SUPERVISEUR" ? "supervisor-screen__filters" : role === "RESPONSABLE" ? "rounded-xl border border-slate-200 bg-white p-4 responsable-worklist__filters" : "rounded-xl border border-slate-200 bg-white p-4"}>
         <Space wrap style={{ width: "100%" }}>
           <Input
             allowClear

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Card, Empty, Pagination, Rate, Spin, Statistic, Tag, message } from "antd";
+import { Alert, Button, Card, Empty, Pagination, Rate, Spin, Tag, message } from "antd";
 import { FilePdfOutlined, MessageOutlined, StarFilled } from "@ant-design/icons";
 import { consulterAvis, rapportAvis, statistiquesAvis } from "../../api/avisApi";
 import "./AvisFeedbackPage.css";
@@ -46,25 +46,34 @@ export function AvisFeedbackPage() {
   }
 
   return <main className="avis-page">
-    <header className="avis-page__header">
-      <div><span className="avis-page__eyebrow">Rabat Région Mobilité · Espace responsable</span>
-        <h1>Avis & feedbacks</h1><p>Retours transmis depuis le formulaire public.</p></div>
-      <Button type="primary" icon={<FilePdfOutlined />} loading={exportEnCours}
-        onClick={() => void exporter()} disabled={!stats.data}>Générer le rapport PDF</Button>
-    </header>
-
     {(stats.isError || liste.isError) && <Alert type="error" showIcon
       message="Impossible de charger les avis. Vérifiez la connexion, puis rechargez la page." />}
     {stats.isPending ? <Spin /> : stats.data && <>
       <section className="avis-page__kpis" aria-label="Indicateurs des avis">
-        <Card><Statistic title="Note moyenne" value={stats.data.moyenne} precision={2} suffix="/ 5"
-          prefix={<StarFilled style={{ color: "#e9b949" }} />} /></Card>
-        <Card><Statistic title="Nombre total de feedbacks" value={stats.data.total}
-          prefix={<MessageOutlined style={{ color: "#126994" }} />} /></Card>
-        <Card><Statistic title="Avis avec 5 étoiles" value={stats.data.cinqEtoiles}
-          prefix={<StarFilled style={{ color: "#e9b949" }} />} /></Card>
+        <Card className="avis-page__kpi avis-page__kpi--rating">
+          <div className="avis-page__kpi-head"><span>Note moyenne</span><StarFilled /></div>
+          <strong>{stats.data.moyenne.toFixed(2)} <small>/ 5</small></strong>
+          <p>Évaluation globale des usagers</p>
+        </Card>
+        <Card className="avis-page__kpi avis-page__kpi--total">
+          <div className="avis-page__kpi-head"><span>Nombre total de feedbacks</span><MessageOutlined /></div>
+          <strong>{stats.data.total.toLocaleString("fr-FR")}</strong>
+          <p>Retours reçus depuis le formulaire public</p>
+        </Card>
+        <Card className="avis-page__kpi avis-page__kpi--five">
+          <div className="avis-page__kpi-head"><span>Avis avec 5 étoiles</span><StarFilled /></div>
+          <strong>{stats.data.cinqEtoiles.toLocaleString("fr-FR")}</strong>
+          <p>Meilleures évaluations</p>
+        </Card>
+        <Card className="avis-page__export-card">
+          <div className="avis-page__kpi-head"><span>Rapport des avis</span><FilePdfOutlined /></div>
+          <strong>Exporter en PDF</strong>
+          <Button type="primary" icon={<FilePdfOutlined />} loading={exportEnCours}
+            onClick={() => void exporter()}>Générer le rapport</Button>
+        </Card>
       </section>
 
+      <div className="avis-page__content">
       <section className="avis-page__analyses" aria-label="Répartition des évaluations">
         <Card title="Répartition par nombre d’étoiles" className="avis-page__graph">
           {[...repartition].reverse().map((r) => <div className="avis-page__bar-row" key={r.note}>
@@ -87,10 +96,11 @@ export function AvisFeedbackPage() {
           </div>
         </Card>
       </section>
-    </>}
 
     <section className="avis-page__list" aria-labelledby="avis-list-title">
-      <h2 id="avis-list-title">Tous les avis</h2>
+      <div className="avis-page__list-heading"><div><span>Retours des usagers</span>
+        <h2 id="avis-list-title">Feedbacks récents</h2></div>
+        <strong>{liste.data?.totalElements ?? stats.data.total} avis</strong></div>
       {liste.isPending ? <Spin /> : liste.data?.content.length === 0 ? <Empty description="Aucun avis reçu pour le moment" /> :
         liste.data?.content.map((avis) => <Card className="avis-page__review" key={avis.id}>
           <div className="avis-page__review-head"><div><strong>{avis.nomContact || "Visiteur anonyme"}</strong>
@@ -104,5 +114,7 @@ export function AvisFeedbackPage() {
         total={liste.data.totalElements} showSizeChanger={false}
         onChange={(suivante) => setPage(suivante - 1)} />}
     </section>
+      </div>
+    </>}
   </main>;
 }

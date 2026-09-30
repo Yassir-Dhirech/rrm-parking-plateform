@@ -102,17 +102,14 @@ export function DemandesCorporateResponsable() {
   ];
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5 responsable-worklist">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">
-          Demandes corporate à traiter
-        </h1>
         <p className="text-sm text-slate-500">
           Du contrôle initial jusqu'à la facturation, aux cartes et à la finalisation.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 responsable-worklist__filters">
         <Space wrap style={{ width: "100%" }}>
           <Input
             allowClear

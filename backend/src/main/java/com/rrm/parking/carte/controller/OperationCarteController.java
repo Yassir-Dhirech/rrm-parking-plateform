@@ -46,8 +46,8 @@ public class OperationCarteController {
 
     @GetMapping("/activations")
     @PreAuthorize("hasAuthority('CARTE_ACTIVER')")
-    public List<DemandeOperationnelleResponse> listerActivations() {
-        return service.listerActivations();
+    public List<DemandeOperationnelleResponse> listerActivations(@AuthenticationPrincipal Jwt jwt) {
+        return service.listerActivations(extraireUtilisateurId(jwt));
     }
 
     @PostMapping("/{id}/activation-terminee")

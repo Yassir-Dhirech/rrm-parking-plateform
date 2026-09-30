@@ -118,15 +118,34 @@ export function RejetsChequesPage() {
     return true;
   });
 
+  const estResponsable = role === "RESPONSABLE";
+  const dossiersEnAttente = dossiers.filter((dossier) => dossier.statut === "EN_ATTENTE_VALIDATION");
+  const historique = dossiers.filter((dossier) => dossier.statut !== "EN_ATTENTE_VALIDATION");
+  const termeResponsable = rechercheClient.trim().toLocaleLowerCase("fr-FR");
+  const dossiersAffiches = estResponsable && termeResponsable
+    ? visibles.filter((dossier) => [dossier.clientNom, dossier.clientIdentifiant,
+      dossier.clientTelephone, dossier.clientEmail, dossier.referenceAbonnement,
+      dossier.numeroCheque, dossier.parkingNom, String(dossier.id)]
+      .some((valeur) => valeur?.toLocaleLowerCase("fr-FR").includes(termeResponsable)))
+    : visibles;
+
+  function voirDossier(id: number) {
+    setRechercheClient("");
+    window.requestAnimationFrame(() => {
+      document.getElementById(`rejet-dossier-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   return (
-    <div className={`rejets-page ${role === "AGENT" ? "rejets-page--agent" : ""} ${role === "SUPERVISEUR" ? "rejets-page--superviseur" : ""}`}>
-      <header className="rejets-page__hero">
+    <div className={`rejets-page ${role === "AGENT" ? "rejets-page--agent" : ""} ${role === "SUPERVISEUR" ? "rejets-page--superviseur" : ""} ${estResponsable ? "rejets-page--responsable" : ""}`}>
+      {!estResponsable && <header className="rejets-page__hero">
         <span className="rejets-page__eyebrow">SUIVI DES PAIEMENTS · {role === "AGENT" ? "ESPACE AGENT" : "REJETS DE CHÈQUES"}</span>
         <h1>{role === "AGENT" ? "Abonnements bloqués à régulariser" : "Rejets bancaires de chèques"}</h1>
         <p>Un dossier concerne uniquement l'abonnement lié au chèque rejeté. La désactivation et
           la réactivation des cartes sont déclarées après l'action sur le système des barrières.</p>
         {role === "AGENT" && <span className="rejets-page__count">{visibles.filter((dossier) => dossier.statut === "BLOQUE").length} paiement(s) attendu(s)</span>}
-      </header>
+      </header>}
+      {estResponsable && <p className="rejets-page__intro">Suivez les chèques rejetés, validez les blocages et consultez chaque étape de régularisation.</p>}
       {messageErreur && <Alert type="error" showIcon message={messageErreur} style={{ marginBottom: 16 }} />}
       {messageSucces && <Alert type="success" showIcon message={messageSucces} style={{ marginBottom: 16 }} />}
       {notifications.length > 0 && (
@@ -180,8 +199,44 @@ export function RejetsChequesPage() {
           )}
         </Card>
       )}
+      <div className={estResponsable ? "rejets-page__workspace" : undefined}>
+      {estResponsable && <aside className="rejets-page__side" aria-label="Suivi des rejets de chèques">
+        <section className="rejets-page__summary rejets-page__summary--pending" aria-labelledby="rejets-pending-title">
+          <div className="rejets-page__summary-heading">
+            <div><span>À TRAITER</span><h2 id="rejets-pending-title">Dossiers de blocage en attente de validation</h2></div>
+            <strong>{dossiersEnAttente.length}</strong>
+          </div>
+          {dossiersEnAttente.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun blocage à valider" /> :
+            dossiersEnAttente.map((dossier) => <button type="button" key={dossier.id}
+              className="rejets-page__summary-item" onClick={() => voirDossier(dossier.id)}>
+              <strong>Dossier #{dossier.id} · {dossier.clientNom}</strong>
+              <span>{dossier.parkingNom} · {dossier.montantInitialTtc.toLocaleString("fr-MA")} MAD</span>
+              <small>Voir et valider le dossier →</small>
+            </button>)}
+        </section>
+        <section className="rejets-page__summary rejets-page__summary--history" aria-labelledby="rejets-history-title">
+          <div className="rejets-page__summary-heading">
+            <div><span>TRAÇABILITÉ</span><h2 id="rejets-history-title">Historique des demandes passées par le blocage</h2></div>
+            <strong>{historique.length}</strong>
+          </div>
+          {historique.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun dossier dans l'historique" /> :
+            historique.map((dossier) => <button type="button" key={dossier.id}
+              className="rejets-page__summary-item" onClick={() => voirDossier(dossier.id)}>
+              <strong>Dossier #{dossier.id} · {dossier.clientNom}</strong>
+              <span>{dossier.parkingNom} · {dossier.dateDeclaration?.slice(0, 10)}</span>
+              <small>{libelles[dossier.statut]} →</small>
+            </button>)}
+        </section>
+      </aside>}
+      <section className={estResponsable ? "rejets-page__main" : undefined} aria-label={estResponsable ? "Recherche et dossiers de rejet" : undefined}>
+      {estResponsable && <div className="rejets-page__search-panel">
+        <div><span>RECHERCHE</span><h2>Retrouver un chèque rejeté</h2></div>
+        <Input.Search placeholder="Client, CIN / ICE, chèque, abonnement ou parking"
+          aria-label="Rechercher un dossier de chèque rejeté" allowClear
+          value={rechercheClient} onChange={(evenement) => setRechercheClient(evenement.target.value)} />
+      </div>}
       <div className="rejets-page__toolbar">
-        <div><span className="rejets-page__eyebrow">DOSSIERS</span><h2>{role === "AGENT" ? "Paiements et comptes bloqués" : "Dossiers"}</h2></div>
+        <div><span className="rejets-page__eyebrow">DOSSIERS</span><h2>{role === "AGENT" ? "Paiements et comptes bloqués" : estResponsable ? "Dossiers de rejets" : "Dossiers"}</h2></div>
         {role === "AGENT" && (
           <Input.Search placeholder="Nom, CIN / ICE, téléphone, e-mail ou abonnement"
             aria-label="Rechercher un client bloqué" allowClear
@@ -189,12 +244,12 @@ export function RejetsChequesPage() {
         )}
       </div>
       {attente && <Spin />}
-      {!visibles.length && <Empty description="Aucun dossier disponible" />}
-      {visibles.map((dossier) => (
-        <Card key={dossier.id} className="rejets-page__dossier" title={`Dossier #${dossier.id} · ${dossier.clientNom}`}
+      {!dossiersAffiches.length && <Empty description={termeResponsable ? "Aucun dossier ne correspond à la recherche" : "Aucun dossier disponible"} />}
+      {dossiersAffiches.map((dossier) => (
+        <Card id={`rejet-dossier-${dossier.id}`} key={dossier.id} className="rejets-page__dossier" title={`Dossier #${dossier.id} · ${dossier.clientNom}`}
           extra={<Tag color={dossier.statut === "TERMINE" ? "green" : "orange"}>
             {libelles[dossier.statut]}</Tag>}>
-          {role === "AGENT" || role === "SUPERVISEUR" ? (
+          {role === "AGENT" || role === "SUPERVISEUR" || estResponsable ? (
             <div className="rejets-page__details">
               <div><span>Abonnement</span><strong>{dossier.referenceAbonnement}</strong></div>
               <div><span>Parking</span><strong>{dossier.parkingNom}</strong></div>
@@ -270,6 +325,8 @@ export function RejetsChequesPage() {
           ))}
         </Card>
       ))}
+      </section>
+      </div>
       <RegularisationPaiementModal dossier={dossierPaiement} attente={attente}
         onFermer={() => { if (!attente) setDossierPaiement(null); }}
         onSoumettre={(id, valeurs) => void executer(async () => {

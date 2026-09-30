@@ -154,13 +154,8 @@
   font-weight: 700 !important;
 }
 .rrm-role-shell--glass {
-  background-image:
-    linear-gradient(135deg, rgba(7, 24, 39, 0.26), rgba(14, 45, 68, 0.16)),
-    url("/api/public/assets/mountain");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-color: #f7f9fb;
+  background-image: none;
 }
 
 .rrm-role-shell--glass > header {
@@ -173,49 +168,13 @@
   color: #f5f5f5;
 }
 
-.rrm-role-shell--glass > aside {
-  background: rgba(92, 92, 92, 0.27) !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  border-radius: 19px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
-  backdrop-filter: blur(29px) saturate(168%);
-  -webkit-backdrop-filter: blur(29px) saturate(168%);
-  color: #f5f5f5;
-}
-
-.rrm-role-shell--glass > aside button:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-
-.rrm-role-shell--glass > aside button[class*="bg-secondary"] {
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
 .rrm-role-shell--glass > main {
   background: transparent;
 }
 
-.rrm-mobile-drawer--glass .ant-drawer-content,
-.rrm-mobile-drawer--glass .ant-drawer-header,
-.rrm-mobile-drawer--glass .ant-drawer-body {
-  background: rgba(92, 92, 92, 0.27) !important;
-  color: #f5f5f5;
-  backdrop-filter: blur(29px) saturate(168%);
-  -webkit-backdrop-filter: blur(29px) saturate(168%);
-}
-
-.rrm-mobile-drawer--glass .ant-drawer-content {
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 19px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-}
-
 .rrm-role-shell--glass > header .header-user-name,
 .rrm-role-shell--glass > header .header-user-role,
-.rrm-role-shell--glass > header .anticon,
-.rrm-role-shell--glass > aside,
-.rrm-role-shell--glass > aside .ant-menu-item,
-.rrm-role-shell--glass > aside .ant-menu-item .anticon {
+.rrm-role-shell--glass > header .anticon {
   color: #f5f5f5 !important;
 }
 
@@ -342,200 +301,6 @@
   background: #ffe4e6 !important;
 }
 
-.rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
-  color: #f8fafc !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-nav-button,
-.rrm-role-shell--glass > aside .rrm-sidebar-footer-button {
-  color: rgba(248, 250, 252, 0.92) !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover,
-.rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.10) !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.14) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-footer-button--logout {
-  color: #fda4af !important;
-}
-
-.rrm-role-shell--glass > aside .rrm-sidebar-footer-button--logout:hover {
-  color: #fecdd3 !important;
-  background: rgba(244, 63, 94, 0.12) !important;
-}
-
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button,
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button {
-  color: rgba(248, 250, 252, 0.92) !important;
-}
-
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button:hover,
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button:hover {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.10) !important;
-}
-
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-nav-button--active {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.14) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-}
-
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button--logout {
-  color: #fda4af !important;
-}
-
-.rrm-mobile-drawer--glass .rrm-mobile-sidebar-footer-button--logout:hover {
-  color: #fecdd3 !important;
-  background: rgba(244, 63, 94, 0.12) !important;
-}
-/* === RRM_RESPONSABLE_FLOATING_SIDEBAR_START === */
-
-@media (min-width: 769px) {
-  /*
-   * Sidebar RESPONSABLE inspirée de la référence :
-   * flottante, légèrement décollée du bord gauche,
-   * du haut jusqu'au bas de l'écran, avec le logo RRM intégré.
-   */
-  .rrm-role-shell--glass > aside {
-    left: 10px !important;
-    top: 10px !important;
-    height: calc(100vh - 20px) !important;
-
-    padding-top: 54px !important;
-    padding-bottom: 12px !important;
-
-    border-radius: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.28) !important;
-
-    background: rgba(179, 177, 177, 0.49) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-
-    box-shadow:
-      0 14px 34px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
-
-    overflow: hidden;
-    z-index: 60 !important;
-  }
-
-  .rrm-role-shell--glass > aside.rrm-sidebar--collapsed {
-    padding-top: 10px !important;
-  }
-
-  .rrm-role-shell--glass > aside.rrm-sidebar--collapsed::before {
-    display: none !important;
-  }
-
-  /*
-   * Logo RRM intégré à l'intérieur de la sidebar.
-   * On réutilise l'asset déjà présent dans le projet.
-   */
-  .rrm-role-shell--glass > aside::before {
-    content: "";
-    position: absolute;
-    top: 10px;
-    left: 14px;
-    right: 14px;
-    height: 36px;
-
-    background-image: url("/pictures/logo-rrm.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /*
-   * Le logo du header desktop est cachÃ© pour Ã©viter le doublon :
-   * le logo fait maintenant partie de la sidebar.
-   */
-  .rrm-role-shell--glass > header img[alt="Rabat RÃ©gion MobilitÃ©"] {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-
-  /*
-   * Le header reste derriÃ¨re la sidebar flottante,
-   * comme sur la rÃ©fÃ©rence visuelle.
-   */
-  .rrm-role-shell--glass > header {
-    z-index: 50 !important;
-  }
-
-  /*
-   * Rail navigation plus compact et propre.
-   */
-  .rrm-role-shell--glass > aside > div:nth-of-type(2) {
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    gap: 5px !important;
-  }
-
-  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button {
-    min-height: 38px;
-    border-radius: 8px !important;
-  }
-
-  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
-    background: rgba(32, 34, 38, 0.28) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    color: #ffffff !important;
-  }
-
-  .rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover {
-    background: rgba(32, 34, 38, 0.20) !important;
-    color: #ffffff !important;
-  }
-
-  /*
-   * Le bouton replier/dÃ©plier reprend le style sombre discret
-   * de la rÃ©fÃ©rence.
-   */
-  .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
-    border-radius: 8px !important;
-    background: rgba(30, 31, 34, 0.28) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    color: #ffffff !important;
-  }
-
-  .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
-    background: rgba(30, 31, 34, 0.40) !important;
-  }
-
-  /*
-   * Footer sÃ©parÃ© mais cohÃ©rent avec le rail.
-   */
-  .rrm-role-shell--glass > aside .rrm-sidebar-footer-button {
-    border-radius: 8px !important;
-  }
-
-  .rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover {
-    background: rgba(32, 34, 38, 0.20) !important;
-  }
-}
-
-/* === RRM_RESPONSABLE_FLOATING_SIDEBAR_END === */
 /* === RRM_RESPONSABLE_CLEAN_TOPBAR_START === */
 
 /*
@@ -558,13 +323,13 @@
 /* Titre fin, professionnel et trÃ¨s lisible. */
 .rrm-responsable-page-title {
   margin: 0;
-  color: #ffffff;
+  color: #1b2c42;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 27px;
   font-weight: 300;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.38);
+  text-shadow: none;
 }
 
 /* Zone droite : compacte et sans gros cadre. */
@@ -618,19 +383,19 @@
 
 .rrm-responsable-user-copy strong {
   overflow: hidden;
-  color: #ffffff;
+  color: #1b2c42;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.42);
+  text-shadow: none;
 }
 
 .rrm-responsable-user-copy small {
   margin-top: 2px;
-  color: rgba(255, 255, 255, 0.68);
+  color: #687b8d;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 9.5px;
   font-weight: 400;
@@ -844,47 +609,6 @@
 }
 
 /* === RRM_RESPONSABLE_TOPBAR_LARGE_END === */
-/* === RRM_RESPONSABLE_SIDEBAR_DARK_GLASS_START === */
-
-/*
- * Sidebar RESPONSABLE â€” dark glass
- * Valeurs demandÃ©es :
- * background: rgba(0, 0, 0, 0.53)
- * blur: 50px
- */
-body .rrm-role-shell--glass > aside {
-  background: rgba(0, 0, 0, 0.53) !important;
-  background-color: rgba(0, 0, 0, 0.53) !important;
-  background-image: none !important;
-
-  -webkit-backdrop-filter: blur(50px) !important;
-  backdrop-filter: blur(50px) !important;
-
-  border-color: rgba(255, 255, 255, 0.10) !important;
-
-  box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+.rrm-role-shell--glass > header.rrm-responsable-topbar .rrm-responsable-collapse .anticon {
+  color: #1b2c42 !important;
 }
-
-/*
- * Les Ã©lÃ©ments internes restent transparents pour laisser
- * le blur de la sidebar visible.
- */
-body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button,
-body .rrm-role-shell--glass > aside .rrm-sidebar-footer-button,
-body .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button {
-  background-color: transparent !important;
-}
-
-body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button--active {
-  background: rgba(255, 255, 255, 0.10) !important;
-}
-
-body .rrm-role-shell--glass > aside .rrm-sidebar-nav-button:hover,
-body .rrm-role-shell--glass > aside .rrm-sidebar-footer-button:hover,
-body .rrm-role-shell--glass > aside .rrm-sidebar-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.07) !important;
-}
-
-/* === RRM_RESPONSABLE_SIDEBAR_DARK_GLASS_END === */

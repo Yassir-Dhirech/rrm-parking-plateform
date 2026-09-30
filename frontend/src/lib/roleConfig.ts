@@ -121,7 +121,6 @@ export const roleConfig: Record<Role, RoleConfig> = {
     ],
     menuItems: [
       { key: "dashboard", label: "Tableau de bord", path: "/responsable" },
-      { key: "carte-parkings", label: "Carte des Parkings", path: "/responsable/carte-parkings" },
       { key: "parkings", label: "Gestion Parkings", path: "/responsable/parkings" },
       {
         key: "demandes",
@@ -141,11 +140,11 @@ export const roleConfig: Record<Role, RoleConfig> = {
         path: "/responsable/demandes-validees",
         requiredAuthority: "DEMANDE_VALIDER",
       },
-      { key: "abonnements", label: "Abonnements", path: "/responsable/abonnements" },
+      { key: "abonnements", label: "Base des abonnements", path: "/responsable/abonnements" },
+      { key: "rappels-cartes-corporate", label: "Rappels cartes corporate", path: "/responsable/rappels-cartes-corporate" },
       { key: "base-clients", label: "Base des clients", path: "/responsable/clients" },
       { key: "factures", label: "Factures", path: "/responsable/factures" },
       { key: "recettes", label: "Recettes", path: "/responsable/recettes" },
-      { key: "contrats", label: "Contrats Corporate", path: "/responsable/contrats" },
       { key: "rejets-cheques", label: "Rejets de chèques", path: "/responsable/rejets-cheques" },
       { key: "avis-feedbacks", label: "Avis & feedbacks", path: "/responsable/avis" },
     ],

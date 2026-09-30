@@ -8,6 +8,7 @@ import { ResponsableParkingMap } from "./ResponsableParkingMap";
 import { ResponsableTasksCard } from "./ResponsableTasksCard";
 import { ChiffreAffairesDashboard } from "./financial/ChiffreAffairesDashboard";
 import "./ResponsableDashboardGlass.css";
+import "./ResponsableDashboardLight.css";
 
 export function ResponsableDashboardView() {
   return (

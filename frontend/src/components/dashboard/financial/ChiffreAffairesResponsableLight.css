@@ -1,0 +1,55 @@
+/* La vue comptable garde son thème ; ces règles concernent uniquement le responsable. */
+.ca-dashboard--responsable {
+  --ca-ink: #203249;
+  --ca-muted: #61758a;
+  --ca-blue: #1681a9;
+  --ca-blue-dark: #08699d;
+  --ca-mix-regular: #149bd0;
+  --ca-mix-corporate: #974cdb;
+  --ca-border: #dce6ef;
+  color: #203249;
+}
+.ca-dashboard--responsable :is(.ca-filter-panel, .ca-kpi, .ca-panel, .ca-loading, .ca-error) {
+  border: 1px solid #dce6ef;
+  border-radius: 15px;
+  background: #fff;
+  color: #203249;
+  box-shadow: 0 8px 24px rgba(20, 45, 76, .055);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.ca-dashboard--responsable .ca-filter-panel { border-top: 4px solid #0bb879; }
+.ca-dashboard--responsable .ca-mix-panel { border-top: 4px solid #974cdb; }
+.ca-dashboard--responsable .ca-parking-panel { border-top: 4px solid #149bd0; }
+.ca-dashboard--responsable :is(.ca-mix-panel, .ca-parking-panel)::before { display: none; }
+.ca-dashboard--responsable .ca-kpi { border-top: 4px solid #149bd0; }
+.ca-dashboard--responsable .ca-kpi:nth-child(2) { border-top-color: #0bb879; }
+.ca-dashboard--responsable .ca-kpi:nth-child(3) { border-top-color: #974cdb; }
+.ca-dashboard--responsable .ca-kpi:nth-child(4) { border-top-color: #ee9c17; }
+.ca-dashboard--responsable :is(.ca-kpi > strong, .ca-panel__header h3, .ca-parking-name strong, .ca-parking-value, .ca-mix__legend b, .ca-mix__legend p strong, .ca-donut__center strong) { color: #1d3048; }
+.ca-dashboard--responsable :is(.ca-kpi__label, .ca-filter-grid label > span, .ca-mode-switch button, .ca-kpi small, .ca-panel__hint, .ca-parking-name span, .ca-parking-panel .ca-panel__header small, .ca-donut__center span) { color: #60758a; }
+.ca-dashboard--responsable :is(.ca-mix-panel .ca-eyebrow, .ca-parking-panel .ca-eyebrow) { color: #1681a9; font-size: 12px; }
+.ca-dashboard--responsable .ca-mode-switch { border-color: #dce6ef; background: #f3f7fb; }
+.ca-dashboard--responsable .ca-mode-switch button.is-active { background: #dff3fc; color: #08699d; box-shadow: inset 0 0 0 1px #9ed5ea; }
+.ca-dashboard--responsable .ca-filter-grid :is(input, select),
+.ca-dashboard--responsable .ca-filter-grid .ant-picker { border-color: #d5e2ec; background: #f8fafc; color: #203249; color-scheme: light; }
+.ca-dashboard--responsable .ca-filter-grid .ant-picker-input > input { color: #203249; }
+.ca-dashboard--responsable .ca-reset { border-color: #b9d9ed; background: #eaf7ff; color: #08699d; }
+.ca-dashboard--responsable .ca-kpi__icon { border-color: #c9e4f3; background: #e8f6ff; color: #0877a5; }
+.ca-dashboard--responsable .ca-kpi:nth-child(2) .ca-kpi__icon { border-color: #b7e8d1; background: #e5faef; color: #087754; }
+.ca-dashboard--responsable .ca-kpi:nth-child(3) .ca-kpi__icon { border-color: #dfc4f6; background: #f2e7fc; color: #7435af; }
+.ca-dashboard--responsable .ca-kpi:nth-child(4) .ca-kpi__icon { border-color: #f5d79e; background: #fff4dd; color: #a56a06; }
+.ca-dashboard--responsable .ca-mix__legend > div,
+.ca-dashboard--responsable .ca-parking-row { border-color: #e0e9f1; background: #f8fafc; backdrop-filter: none; }
+.ca-dashboard--responsable .ca-parking-row:hover { border-color: #9ad6ec; background: #f0faff; box-shadow: none; }
+.ca-dashboard--responsable .ca-parking-rank { border-color: #b7ddee; background: #e9f7ff; color: #0877a5; }
+.ca-dashboard--responsable .ca-parking-row:nth-child(even) .ca-parking-rank { border-color: #dfc4f6; background: #f2e7fc; color: #7435af; }
+.ca-dashboard--responsable .ca-parking-bar { background: #e9eff5; }
+.ca-dashboard--responsable .ca-parking-bar span { background: linear-gradient(90deg, #087fb7, #24c8ff); box-shadow: none; }
+.ca-dashboard--responsable .ca-parking-row:nth-child(even) .ca-parking-bar span { background: linear-gradient(90deg, #6644c9, #b067ff); box-shadow: none; }
+.ca-dashboard--responsable .ca-donut { box-shadow: 0 0 0 1px #d5e2ec; }
+.ca-dashboard--responsable .ca-donut__center { border-color: #dce6ef; background: #fff; box-shadow: none; }
+.ca-dashboard--responsable .ca-mix__legend p span { color: #0877a5; }
+.ca-dashboard--responsable .ca-mix__legend > div:nth-child(2) p span { color: #7435af; }
+.ca-dashboard--responsable :is(.ca-loading, .ca-empty) { color: #60758a; }
+.ca-dashboard--responsable .ca-error { color: #a73737; }

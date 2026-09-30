@@ -21,4 +21,6 @@ export interface DemandeOperationnelleCarte {
   parkingNom: string;
   factureId: number | null;
   numeroFacture: string | null;
+  dateDebutAbonnement: string | null;
+  dateFinAbonnement: string | null;
 }

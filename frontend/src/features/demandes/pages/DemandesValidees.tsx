@@ -165,17 +165,17 @@ export function DemandesValidees() {
   ];
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5 responsable-worklist">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">
+        {role !== "RESPONSABLE" && <h1 className="text-2xl font-black text-slate-900">
           Demandes validées — facturation
-        </h1>
+        </h1>}
         <p className="text-sm text-slate-500">
           Consultez les dossiers validés, générez leur facture officielle et imprimez-la.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 responsable-worklist__filters">
         <Space wrap style={{ width: "100%" }}>
           <Input
             allowClear

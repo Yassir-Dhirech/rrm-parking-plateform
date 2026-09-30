@@ -12,10 +12,13 @@ import { LandingPage } from "../pages/LandingPage";
 import { DemandeDetail } from "../features/demandes/pages/DemandeDetail";
 import { AbonnementsList } from "../features/abonnements/pages/AbonnementsList";
 import { AbonnementDetail } from "../features/abonnements/pages/AbonnementDetail";
+import { BaseAbonnementsResponsablePage } from "../features/abonnements/pages/BaseAbonnementsResponsablePage";
+import { AbonnementResponsableDetailPage } from "../features/abonnements/pages/AbonnementResponsableDetailPage";
 import { FacturesComptablePage } from "../features/factures/pages/FacturesComptablePage";
 import { AnalyseCaPage } from "../pages/comptable/AnalyseCaPage";
 import { AvisFeedbackPage } from "../pages/responsable/AvisFeedbackPage";
 import { BaseClientsPage } from "../pages/responsable/BaseClientsPage";
+import { RappelsCartesCorporatePage } from "../pages/responsable/RappelsCartesCorporatePage";
 import { FactureComptableDetailPage } from "../features/factures/pages/FactureComptableDetailPage";
 import { CartesList } from "../features/cartes/pages/CartesList";
 import { CartesAgentRegistrePage } from "../features/cartes/pages/CartesAgentRegistrePage";
@@ -134,8 +137,8 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
 
   if (role === "SUPERVISEUR" || role === "RESPONSABLE" || role === "COMPTABLE") {
     extraRoutes.push(
-      { path: `${roleConfig[role].homePath}/abonnements`, element: <AbonnementsList /> },
-      { path: `${roleConfig[role].homePath}/abonnements/:id`, element: <AbonnementDetail /> },
+      { path: `${roleConfig[role].homePath}/abonnements`, element: role === "RESPONSABLE" ? <BaseAbonnementsResponsablePage /> : <AbonnementsList /> },
+      { path: `${roleConfig[role].homePath}/abonnements/:id`, element: role === "RESPONSABLE" ? <AbonnementResponsableDetailPage /> : <AbonnementDetail /> },
     );
   }
 
@@ -167,6 +170,7 @@ const roleRoutes = (Object.keys(roleConfig) as Role[]).map((role) => {
   }
   if (role === "RESPONSABLE") {
     extraRoutes.push(
+      { path: "/responsable/rappels-cartes-corporate", element: <RappelsCartesCorporatePage /> },
       { path: "/responsable/avis", element: <AvisFeedbackPage /> },
       { path: "/responsable/clients", element: <BaseClientsPage /> },
       {

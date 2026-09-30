@@ -2,6 +2,9 @@ package com.rrm.parking.carte.service;
 
 import com.rrm.parking.abonnement.entity.AbonnementEntreprise;
 import com.rrm.parking.abonnement.entity.AbonnementRegulier;
+import com.rrm.parking.abonnement.enums.StatutAbonnement;
+import com.rrm.parking.carte.corporate.EcheanceCarteCorporateRepository;
+import com.rrm.parking.carte.corporate.StatutEcheanceCorporate;
 import com.rrm.parking.carte.dto.response.DemandeOperationnelleResponse;
 import com.rrm.parking.carte.entity.DemandeOperationnelle;
 import com.rrm.parking.carte.enums.StatutDemandeOperationnelle;
@@ -60,6 +63,7 @@ public class OperationCarteService {
     private final UtilisateurRepository utilisateurRepository;
     private final AffectationAgentParkingRepository affectationAgentRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EcheanceCarteCorporateRepository echeancesCorporate;
 
     @Transactional(readOnly = true)
     public List<DemandeOperationnelleResponse> listerImpressions(Long agentId) {
@@ -79,8 +83,17 @@ public class OperationCarteService {
     }
 
     @Transactional(readOnly = true)
-    public List<DemandeOperationnelleResponse> listerActivations() {
-        return lister(TypeOperationCarte.ACTIVATION);
+    public List<DemandeOperationnelleResponse> listerActivations(Long superviseurId) {
+        Set<Long> parkings = parkingsAffectesSuperviseur(superviseurId);
+        return operationRepository.findByTypeOperationAndStatutInOrderByDateCreationAsc(
+                        TypeOperationCarte.ACTIVATION, STATUTS_OUVERTS)
+                .stream().filter(operation -> operation.getDossierRejetCheque() == null)
+                .filter(operation -> echeancesCorporate.findByOperationId(operation.getId())
+                        .map(dossier -> Hibernate.unproxy(dossier.getOperation().getDemandeClientSource())
+                                instanceof DemandeNouveauContratCorporate corporate
+                                && parkings.contains(corporate.getParking().getId()))
+                        .orElse(true))
+                .map(this::versReponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -160,9 +173,32 @@ public class OperationCarteService {
     ) {
         DemandeOperationnelle operation = charger(operationId,
                 TypeOperationCarte.ACTIVATION);
+        if (operation.getCarteAcces().getAbonnement().getStatut()
+                == StatutAbonnement.SUSPENDU) {
+            throw new ConflitMetierException(
+                    "L'abonnement est suspendu : la carte ne peut pas être activée");
+        }
         if (operation.getDossierRejetCheque() != null) {
             throw new ConflitMetierException(
                     "Cette activation relève du dossier de rejet de chèque");
+        }
+        var renouvellementCorporate = echeancesCorporate.findByOperationId(operationId).orElse(null);
+        if (renouvellementCorporate != null) {
+            var source = (DemandeNouveauContratCorporate) Hibernate.unproxy(
+                    operation.getDemandeClientSource());
+            if (!parkingsAffectesSuperviseur(utilisateurId).contains(source.getParking().getId())) {
+                throw new ConflitMetierException("Ce parking n'est pas affecté au superviseur");
+            }
+            if (renouvellementCorporate.getStatut() != StatutEcheanceCorporate.DEMANDEE
+                    || !operation.getCarteAcces().getDateActivation()
+                    .equals(renouvellementCorporate.getActivationReference())) {
+                throw new ConflitMetierException("Cette réactivation n'est plus en attente");
+            }
+            Utilisateur superviseur = chargerUtilisateur(utilisateurId);
+            prendreEnChargeSiNecessaire(operation, superviseur);
+            operation.terminerActivation(superviseur);
+            renouvellementCorporate.declarer(superviseur);
+            return versReponse(operation);
         }
         Utilisateur utilisateur = chargerUtilisateur(utilisateurId);
         ContexteDemande contexte = chargerContexte(operation);

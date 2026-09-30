@@ -1,0 +1,182 @@
+/* Présentation claire du dashboard responsable. Les données et sa grille restent inchangées. */
+body .rrm-role-shell--glass main .responsable-dashboard-glass {
+  padding: 14px 0 42px;
+  color: #203249;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-kpi-card.glass-effect,
+  .responsable-chart-card.glass-effect,
+  .responsable-area-card.glass-effect,
+  .responsable-pending-card.glass-effect,
+  .responsable-mix-card.glass-effect,
+  .responsable-tasks-card,
+  .ant-card
+) {
+  border: 1px solid #dce6ef !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  background-color: #fff !important;
+  background-image: none !important;
+  color: #203249 !important;
+  box-shadow: 0 8px 24px rgba(20, 45, 76, .055) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect:is(
+  .responsable-kpi-card--revenue,
+  .responsable-kpi-card--occupancy,
+  .responsable-kpi-card--active,
+  .responsable-kpi-card--delay
+) { background: #fff !important; background-color: #fff !important; background-image: none !important; border-top-width: 4px !important; box-shadow: 0 8px 24px rgba(20, 45, 76, .055) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect.responsable-kpi-card--revenue { border-color: #dce6ef !important; border-top-color: #974cdb !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect.responsable-kpi-card--occupancy { border-color: #dce6ef !important; border-top-color: #ee9c17 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect.responsable-kpi-card--active { border-color: #dce6ef !important; border-top-color: #0bb879 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card.glass-effect.responsable-kpi-card--delay { border-color: #dce6ef !important; border-top-color: #149bd0 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card :is(.responsable-kpi-value, .responsable-kpi-title, .responsable-kpi-info, .responsable-kpi-description),
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(.responsable-chart-heading h3, .responsable-area-heading h3, .responsable-pending-heading h3, .responsable-mix-heading-copy h3, .responsable-mix-ring-meta h4) {
+  color: #1d3048 !important;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-title { font-size: 14px !important; font-weight: 750 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-value { font-size: clamp(26px, 2vw, 34px); }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-description { border-top-color: #e1e9f1 !important; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-icon { border-color: #d5e5f0 !important; background: #e8f6ff !important; color: #0877a5 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card--revenue .responsable-kpi-icon { border-color: #dfc4f6 !important; background: #f2e7fc !important; color: #7435af !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card--occupancy .responsable-kpi-icon { border-color: #f5d79e !important; background: #fff4dd !important; color: #a56a06 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-card--active .responsable-kpi-icon { border-color: #b7e8d1 !important; background: #e5faef !important; color: #087754 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-evolution--positive { background: #ddf7e9; color: #087754; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-evolution--negative { background: #ffe7e5; color: #ae4138; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-evolution--stable { background: #fff2d8; color: #9b6005; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-kpi-evolution--none { background: #edf1f5; color: #63768b; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(.responsable-chart-card, .responsable-area-card, .responsable-pending-card, .responsable-mix-card) { border-top: 4px solid #149bd0 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-card { border-top-color: #974cdb !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-card { border-top-color: #ee9c17 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-card { border-top-color: #0bb879 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-summary, .responsable-area-summary,
+  .responsable-pending-kpi, .responsable-pending-item,
+  .responsable-mix-description, .responsable-mix-ring-card,
+  .responsable-mix-legend-row
+) {
+  border: 1px solid #e0e9f1 !important;
+  background: #f8fafc !important;
+  color: #203249 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-heading p, .responsable-area-heading p,
+  .responsable-pending-heading p, .responsable-mix-heading-copy p,
+  .responsable-chart-summary span, .responsable-area-summary span,
+  .responsable-pending-kpi span, .responsable-mix-description span,
+  .responsable-mix-ring-meta p
+) { color: #60758a !important; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-summary strong, .responsable-area-summary strong,
+  .responsable-pending-kpi strong, .responsable-mix-description strong,
+  .responsable-mix-ring-meta h4, .responsable-mix-ring__inner strong
+) { color: #1d3048 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(.responsable-chart-axis-value, .responsable-chart-label, .responsable-area-axis-value, .responsable-area-month) { color: #60758a !important; fill: #60758a; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card-head-title,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-card .ant-typography,
+body .rrm-role-shell--glass main .responsable-dashboard-glass [class*="text-slate-"] { color: #203249 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-btn-default,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-select-selector,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-segmented {
+  border-color: #d5e2ec !important;
+  background: #f8fafc !important;
+  color: #203249 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-segmented-item-selected { background: #e7f5fc !important; color: #08699d !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-table :is(th, td) { color: #203249 !important; border-bottom-color: #e5ecf3 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-table-thead > tr > th { background: #f3f7fb !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .ant-table-tbody > tr:hover > td { background: #f1f9ff !important; }
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details-card.glass-effect { border-top: 4px solid #0bb879 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__heading,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel h3,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel dd,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel--gauge strong { color: #1d3048 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel { border-color: #e0e9f1; background: #f8fafc; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel dl > div { border-bottom-color: #e0e9f1; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel dt,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__panel--gauge > span,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__empty { color: #60758a; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__percentage { fill: #1d3048; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__gauge-label { fill: #60758a; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-parking-details__action.ant-btn { border-color: #a9dfd2; background: #e5faef !important; color: #087754 !important; }
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card.glass-effect { border-top: 4px solid #ee9c17 !important; background: #fff !important; color: #203249 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__header { border-bottom-color: #e5ecf3; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__eyebrow { color: #a56a06; font-size: 12px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__header h2,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__text strong,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__count { color: #1d3048; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__text strong { font-size: 14px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__text small { color: #60758a; font-size: 12px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__item + .responsable-tasks-card__item { border-top-color: #e5ecf3; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__item:hover { background: #f0faff; border-color: #b9d9ed; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-tasks-card__total { border-color: #f4d49a; background: #fff4dd; color: #9b6005; }
+
+/* Contrastes des graphiques et des dossiers, après les anciennes règles néon. */
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-heading p, .responsable-area-heading p,
+  .responsable-mix-heading-copy p, .responsable-pending-heading p
+) { color: #526b82 !important; font-size: 14px !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-summary span, .responsable-area-summary span,
+  .responsable-mix-description span
+) { color: #526b82 !important; font-size: 13px !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(
+  .responsable-chart-summary strong, .responsable-area-summary strong,
+  .responsable-mix-description strong
+) { color: #1d3048 !important; font-weight: 750; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-bar-chart {
+  gap: 9px !important;
+  justify-content: flex-start !important;
+  overflow-x: auto;
+  border-bottom-color: #dce6ef;
+  background-image: linear-gradient(to bottom, #e8eef4 1px, transparent 1px);
+  scrollbar-color: #b4cddd transparent;
+  scrollbar-width: thin;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-bar-column {
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  grid-template-rows: 30px 1fr 64px !important;
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-bar-value { color: #075b92 !important; font-size: 14px !important; font-weight: 800 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-bar-label { color: #33516e !important; font-size: 12px !important; font-weight: 700 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-bar-track { background: #e6eff7 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass :is(.responsable-area-axis-value, .responsable-area-month) { fill: #405c76 !important; color: #405c76 !important; font-size: 13px !important; font-weight: 700 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-grid-line { stroke: #dce6ef !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-year-select .ant-select-selector { background: #f8fafc !important; border-color: #d5e2ec !important; color: #203249 !important; box-shadow: none !important; backdrop-filter: none !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-area-year-select :is(.ant-select-selection-item, .ant-select-arrow) { color: #203249 !important; }
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-reference { color: #1d3048 !important; font-size: 14px; font-weight: 750; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-client { color: #526b82 !important; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-status--paid.ant-tag { border-color: #f4d49a; background: #fff2d8; color: #9b6005; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-status--corporate.ant-tag { border-color: #dfc4f6; background: #f2e7fc; color: #7435af; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-action .ant-btn { color: #08699d !important; font-size: 13px; font-weight: 750; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-action .ant-btn:hover { background: #e7f5fc !important; color: #075b92 !important; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-open-workspace { border-color: #b9d9ed; background: #eaf7ff; color: #08699d; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-open-workspace:hover { background: #d9f1fd; color: #075b92; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-empty,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-state { color: #60758a; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-empty strong,
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-pending-state strong { color: #1d3048; }
+
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring::before {
+  background: conic-gradient(var(--ring-gradient) 0 var(--progress), #d9e2ed var(--progress) 100%);
+}
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring__inner strong { color: #fff !important; font-size: 38px; text-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring__inner span { color: #cbd7e6 !important; font-size: 12px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring-meta p { color: #526b82 !important; font-size: 13px; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring-card--corporate .responsable-mix-ring-meta b { color: #a56a06; }
+body .rrm-role-shell--glass main .responsable-dashboard-glass .responsable-mix-ring-card--regulier .responsable-mix-ring-meta b { color: #08699d; }
+
+@media (max-width: 768px) {
+  body .rrm-role-shell--glass main .responsable-dashboard-glass { padding: 12px 0 32px; }
+}

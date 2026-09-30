@@ -16,6 +16,12 @@ import {
 import type { DemandeOperationnelleCarte, TypeOperationCarte } from "../operationCarteTypes";
 import { useAuth } from "../../../context/AuthContext";
 
+function afficherDate(date: string | null | undefined): string {
+  if (!date) return "Non renseignée";
+  const [annee, mois, jour] = date.split("-");
+  return `${jour}/${mois}/${annee}`;
+}
+
 export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
   const { role } = useAuth();
   const [params, setParams] = useSearchParams();
@@ -51,7 +57,9 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
         impression
           ? "Carte déclarée imprimée. La demande d'activation a été créée."
           : activation
-            ? "Carte activée et testée. Le client sera informé par e-mail."
+            ? selection?.reference.startsWith("RCC-")
+              ? "Réactivation déclarée. Le responsable peut clôturer le dossier."
+              : "Carte activée et testée. Le client sera informé par e-mail."
             : "La récupération de la carte a été confirmée."
       );
       setSelection(null);
@@ -76,6 +84,15 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
 <Tag color="blue">{`CRT-${new Date().getFullYear()}-${String(r.carteId).padStart(4, "0")}`}</Tag>      ),
     },
     { title: "PARKING", dataIndex: "parkingNom" },
+    ...(activation ? [{
+      title: "DÉBUT ABONNEMENT",
+      dataIndex: "dateDebutAbonnement",
+      render: afficherDate,
+    }, {
+      title: "FIN ABONNEMENT",
+      dataIndex: "dateFinAbonnement",
+      render: afficherDate,
+    }] : []),
     {
       title: "FACTURE",
       dataIndex: "numeroFacture",
@@ -104,7 +121,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
           {impression
             ? "Déclarer imprimée"
             : activation
-              ? "Déclarer activée et testée"
+              ? row.reference.startsWith("RCC-") ? "Déclarer la réactivation" : "Déclarer activée et testée"
               : "Confirmer la récupération"}
         </Button>
       ),
@@ -145,7 +162,7 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
         columns={columns}
         dataSource={operationId ? (query.data ?? []).filter((operation) => String(operation.id) === operationId) : (query.data ?? [])}
         loading={query.isLoading}
-        scroll={{ y: 550, x: 1300 }}
+        scroll={{ y: 550, x: activation ? 1600 : 1300 }}
         pagination={false}
         locale={{ emptyText: <Empty description="Aucune demande en attente" /> }}
       />
@@ -155,12 +172,12 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
         title={impression
           ? "Confirmer l'impression"
           : activation
-            ? "Confirmer l'activation et le test"
+            ? selection?.reference.startsWith("RCC-") ? "Confirmer la réactivation et le test" : "Confirmer l'activation et le test"
             : "Confirmer la récupération"}
         okText={impression
           ? "Carte imprimée"
           : activation
-            ? "Carte activée et testée"
+            ? selection?.reference.startsWith("RCC-") ? "Réactivation effectuée" : "Carte activée et testée"
             : "Carte remise au client"}
         cancelText="Annuler"
         confirmLoading={mutation.isPending}
@@ -176,11 +193,16 @@ export function OperationsCartesPage({ type }: { type: TypeOperationCarte }) {
             placeholder="Numéro physique de la carte"
             onChange={(event) => setNumeroCarte(event.target.value)}
           />
+        ) : activation && selection?.reference.startsWith("RCC-") ? (
+          <div>
+            <p><strong>Période de l’abonnement :</strong> du {afficherDate(selection.dateDebutAbonnement)} au {afficherDate(selection.dateFinAbonnement)}.</p>
+            <p>Confirmez uniquement après avoir réactivé la carte corporate dans le système de barrières et réussi le test. Le responsable verra ensuite votre déclaration et clôturera le dossier.</p>
+          </div>
         ) : activation ? (
-          <p>
-            Confirmez uniquement après l’activation dans les systèmes de barrière et un test réussi.
-            La facture doit déjà avoir été générée par le responsable.
-          </p>
+          <div>
+            <p><strong>Période de l’abonnement :</strong> du {afficherDate(selection?.dateDebutAbonnement)} au {afficherDate(selection?.dateFinAbonnement)}.</p>
+            <p>Confirmez uniquement après l’activation dans les systèmes de barrière et un test réussi. La facture doit déjà avoir été générée par le responsable.</p>
+          </div>
         ) : (
           <p>
             Confirmez que le client a effectivement récupéré sa carte d’accès.

@@ -210,6 +210,21 @@ public class ChiffreAffairesReportingService {
                 from periode_abonnement p
                 join abonnement_regulier ar on ar.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
+                  and (
+                      exists (
+                          select 1 from paiement encaisse
+                          where encaisse.periode_abonnement_id = p.id
+                            and encaisse.statut = 'CONFIRME'
+                      )
+                      or exists (
+                          select 1 from dossier_rejet_cheque rejet_regle
+                          join paiement initial on initial.id = rejet_regle.paiement_initial_id
+                          join paiement regularisation on regularisation.id = rejet_regle.paiement_regularisation_id
+                          where initial.periode_abonnement_id = p.id
+                            and rejet_regle.statut = 'TERMINE'
+                            and regularisation.statut = 'CONFIRME'
+                      )
+                  )
                   and not exists (
                       select 1
                       from dossier_rejet_cheque rejet
@@ -238,6 +253,21 @@ public class ChiffreAffairesReportingService {
                 from periode_abonnement p
                 join abonnement_entreprise ae on ae.id = p.abonnement_id
                 where p.statut <> 'ANNULEE'
+                  and (
+                      exists (
+                          select 1 from paiement encaisse
+                          where encaisse.periode_abonnement_id = p.id
+                            and encaisse.statut = 'CONFIRME'
+                      )
+                      or exists (
+                          select 1 from dossier_rejet_cheque rejet_regle
+                          join paiement initial on initial.id = rejet_regle.paiement_initial_id
+                          join paiement regularisation on regularisation.id = rejet_regle.paiement_regularisation_id
+                          where initial.periode_abonnement_id = p.id
+                            and rejet_regle.statut = 'TERMINE'
+                            and regularisation.statut = 'CONFIRME'
+                      )
+                  )
                   and not exists (
                       select 1
                       from dossier_rejet_cheque rejet
@@ -284,6 +314,21 @@ public class ChiffreAffairesReportingService {
                 left join affectation_parking ap on ap.abonnement_regulier_id = ar.id
                 left join parking pk on pk.id = ap.parking_id
                 where p.statut <> 'ANNULEE'
+                  and (
+                      exists (
+                          select 1 from paiement encaisse
+                          where encaisse.periode_abonnement_id = p.id
+                            and encaisse.statut = 'CONFIRME'
+                      )
+                      or exists (
+                          select 1 from dossier_rejet_cheque rejet_regle
+                          join paiement initial on initial.id = rejet_regle.paiement_initial_id
+                          join paiement regularisation on regularisation.id = rejet_regle.paiement_regularisation_id
+                          where initial.periode_abonnement_id = p.id
+                            and rejet_regle.statut = 'TERMINE'
+                            and regularisation.statut = 'CONFIRME'
+                      )
+                  )
                   and not exists (
                       select 1
                       from dossier_rejet_cheque rejet
@@ -325,6 +370,21 @@ public class ChiffreAffairesReportingService {
                 left join tarif_parking tp on tp.id = dnc.tarif_parking_id
                 left join parking pk on pk.id = coalesce(dnc.parking_id, tp.parking_id)
                 where p.statut <> 'ANNULEE'
+                  and (
+                      exists (
+                          select 1 from paiement encaisse
+                          where encaisse.periode_abonnement_id = p.id
+                            and encaisse.statut = 'CONFIRME'
+                      )
+                      or exists (
+                          select 1 from dossier_rejet_cheque rejet_regle
+                          join paiement initial on initial.id = rejet_regle.paiement_initial_id
+                          join paiement regularisation on regularisation.id = rejet_regle.paiement_regularisation_id
+                          where initial.periode_abonnement_id = p.id
+                            and rejet_regle.statut = 'TERMINE'
+                            and regularisation.statut = 'CONFIRME'
+                      )
+                  )
                   and not exists (
                       select 1
                       from dossier_rejet_cheque rejet

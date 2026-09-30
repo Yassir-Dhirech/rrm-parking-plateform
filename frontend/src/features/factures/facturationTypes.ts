@@ -50,6 +50,7 @@ export interface FactureResponse {
   email: string | null;
   abonnementReference: string | null;
   parkingNom: string | null;
+  forfaitLibelle?: string | null;
   modePaiement: "ESPECE" | "CHEQUE";
   totalHt: number;
   totalTva: number;

@@ -187,12 +187,22 @@ async function notificationsAgent(): Promise<AppNotification[]> {
 export async function getNotificationsForRole(role: Role): Promise<AppNotification[]> {
   if (role === "AGENT") return notificationsAgent();
   if (role === "SUPERVISEUR") return notificationsSuperviseur();
+  if (role === "RESPONSABLE") {
+    const response = await client.get<Array<Omit<AppNotification, "timestamp" | "targetRole">>>(
+      "/responsable/cartes-corporate/echeances/notifications");
+    return response.data.map((item) => ({ ...item, targetRole: "RESPONSABLE" as const,
+      timestamp: item.createdAt ? new Date(item.createdAt).toLocaleString("fr-FR") : "—" }));
+  }
   await new Promise((resolve) => setTimeout(resolve, 150));
   return currentNotifications.filter((n) => n.targetRole === role);
 }
 
 export async function markNotificationAsRead(id: string): Promise<void> {
   if (id.startsWith("agent:")) { enregistrerEtatAgent([id], "lu"); return; }
+  if (id.startsWith("resp:corp:")) {
+    await client.post(`/responsable/cartes-corporate/echeances/notifications/${encodeURIComponent(id)}/lecture`);
+    return;
+  }
   if (id.startsWith("superviseur:")) {
     await client.post(`/superviseur/notifications/${encodeURIComponent(id)}/lecture`);
     return;
@@ -204,6 +214,7 @@ export async function markNotificationAsRead(id: string): Promise<void> {
 
 export async function markAllNotificationsAsReadForRole(role: Role): Promise<void> {
   if (role === "AGENT") { enregistrerEtatAgent((await notificationsAgent()).map((n) => n.id), "lu"); return; }
+  if (role === "RESPONSABLE") { await client.post("/responsable/cartes-corporate/echeances/notifications/lecture-totale"); return; }
   if (role === "SUPERVISEUR") { await client.post("/superviseur/notifications/lecture-totale"); return; }
   currentNotifications = currentNotifications.map((n) =>
     n.targetRole === role ? { ...n, read: true } : n
@@ -212,6 +223,10 @@ export async function markAllNotificationsAsReadForRole(role: Role): Promise<voi
 
 export async function deleteNotificationMock(id: string): Promise<void> {
   if (id.startsWith("agent:")) { enregistrerEtatAgent([id], "masque"); return; }
+  if (id.startsWith("resp:corp:")) {
+    await client.delete(`/responsable/cartes-corporate/echeances/notifications/${encodeURIComponent(id)}`);
+    return;
+  }
   if (id.startsWith("superviseur:")) {
     await client.delete(`/superviseur/notifications/${encodeURIComponent(id)}`);
     return;
@@ -221,6 +236,7 @@ export async function deleteNotificationMock(id: string): Promise<void> {
 
 export async function clearAllNotificationsForRoleMock(role: Role): Promise<void> {
   if (role === "AGENT") { enregistrerEtatAgent((await notificationsAgent()).map((n) => n.id), "masque"); return; }
+  if (role === "RESPONSABLE") { await client.delete("/responsable/cartes-corporate/echeances/notifications"); return; }
   if (role === "SUPERVISEUR") { await client.delete("/superviseur/notifications"); return; }
   currentNotifications = currentNotifications.filter((n) => n.targetRole !== role);
 }

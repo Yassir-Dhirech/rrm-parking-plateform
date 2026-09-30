@@ -180,7 +180,7 @@ export function FacturesComptablePage() {
           <p className="comptable-factures-surtitre">{portee === "superviseur"
             ? "Espace superviseur · Parkings affectés"
             : portee === "responsable" ? "Espace responsable · Tous les parkings" : "Espace comptable"}</p>
-          <h1>Registre des factures</h1>
+          {portee !== "responsable" && <h1>Registre des factures</h1>}
           <p>Consultez les factures enregistrées et leurs paiements.</p>
         </div>
       </header>

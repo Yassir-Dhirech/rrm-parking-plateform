@@ -1,0 +1,130 @@
+/* Langage visuel commun aux pages du responsable, hors dashboard spécialisé. */
+.rrm-role-shell--glass > main { color: #203249; }
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) { width: 100%; max-width: none; }
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-card {
+  border-color: #dce6ef;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(20, 45, 76, .055);
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-card-head {
+  border-bottom-color: #e5ecf3;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-card-head-title {
+  color: #1d3048;
+  font-size: 18px;
+  font-weight: 750;
+  white-space: normal;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-table-wrapper {
+  overflow: hidden;
+  border: 1px solid #dce6ef;
+  border-radius: 12px;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-table-thead > tr > th {
+  background: #f3f7fb;
+  color: #35506b;
+  font-size: 13px;
+  font-weight: 750;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-table-tbody > tr:hover > td {
+  background: #f1f9ff;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-tag {
+  margin-inline-end: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-progress-inner { background: #e9eff5; }
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-btn { border-radius: 8px; font-weight: 650; }
+.rrm-role-shell--glass > main > :not(.responsable-dashboard-glass) .ant-btn-primary { background: #08699d; border-color: #08699d; }
+
+/* Répertoire clients : surfaces claires, largeur totale et statuts colorés. */
+.rrm-role-shell--glass > main .base-clients {
+  --bc-ink: #203249;
+  --bc-muted: #61758a;
+  --bc-border: #dce6ef;
+  padding: 14px 0 42px;
+  color: #203249;
+}
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__hero, .base-clients__filters, .base-clients__section, .base-clients__list-panel, .base-clients__detail-panel) {
+  border: 1px solid #dce6ef;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(20, 45, 76, .055);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.rrm-role-shell--glass > main .base-clients__hero { min-height: 0; padding: 20px 24px; border-top: 4px solid #149bd0; }
+.rrm-role-shell--glass > main .base-clients__hero h1 { margin: 4px 0 5px; color: #1d3048; font-size: 27px; }
+.rrm-role-shell--glass > main .base-clients__hero p,
+.rrm-role-shell--glass > main .base-clients__filters label,
+.rrm-role-shell--glass > main .base-clients__item-main small,
+.rrm-role-shell--glass > main .base-clients__detail-title p { color: #61758a; font-size: 13px; }
+.rrm-role-shell--glass > main .base-clients__eyebrow { color: #1681a9; font-size: 12px; }
+.rrm-role-shell--glass > main .base-clients__filters { border-top: 4px solid #0bb879; }
+.rrm-role-shell--glass > main .base-clients__section:nth-of-type(odd) { border-top: 4px solid #974cdb; }
+.rrm-role-shell--glass > main .base-clients__section:nth-of-type(even) { border-top: 4px solid #149bd0; }
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__filters input, .base-clients__filters select, .base-clients__search input) {
+  border-color: #d5e2ec;
+  background: #f8fafc;
+  color: #203249;
+  color-scheme: light;
+  font-size: 14px;
+}
+.rrm-role-shell--glass > main .base-clients__search input::placeholder { color: #8294a6; }
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__item, .base-clients__field, .base-clients__vehicle, .base-clients__history-card, .base-clients__period) {
+  border-color: #e0e9f1;
+  background: #f8fafc;
+  color: #203249;
+}
+.rrm-role-shell--glass > main .base-clients__item:hover,
+.rrm-role-shell--glass > main .base-clients__item.is-selected { border-color: #80cbea; background: #edf9ff; }
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__detail-section h4, .base-clients__detail-title h3, .base-clients__field strong, .base-clients__history-card p b) { color: #203249; }
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__history-head strong, .base-clients__vehicle strong, .base-clients__period strong) { color: #0877a5; }
+.rrm-role-shell--glass > main .base-clients__count { border-color: #c9e4f3; background: #f1faff; color: #1577a0; font-size: 13px; }
+.rrm-role-shell--glass > main .base-clients__status--actif { background: #dcf8eb; color: #087754; }
+.rrm-role-shell--glass > main .base-clients__status--archive { background: #e9edf1; color: #586b7e; }
+.rrm-role-shell--glass > main .base-clients__pill { background: #f0e4fb; color: #7435af; }
+.rrm-role-shell--glass > main .base-clients :is(.base-clients__filters > button, .base-clients__pagination button) {
+  border-color: #b9d9ed;
+  background: #eaf7ff;
+  color: #08699d;
+}
+
+/* Les listes déjà claires adoptent la même échelle de lecture et les mêmes accents. */
+.rrm-role-shell--glass > main .comptable-factures { padding: 14px 0 42px; }
+.rrm-role-shell--glass > main .comptable-factures-kpi { border-top: 4px solid #0bb879; }
+.rrm-role-shell--glass > main .comptable-factures-repartition { border-top: 4px solid #974cdb; }
+.rrm-role-shell--glass > main .comptable-facture-card:nth-child(3n+1) { border-top: 3px solid #149bd0; }
+.rrm-role-shell--glass > main .comptable-facture-card:nth-child(3n+2) { border-top: 3px solid #0bb879; }
+.rrm-role-shell--glass > main .comptable-facture-card:nth-child(3n) { border-top: 3px solid #ee9c17; }
+.rrm-role-shell--glass > main .comptable-factures :is(.comptable-factures-header h1, .comptable-factures-liste-entete h2) { color: #1d3048; }
+.rrm-role-shell--glass > main .comptable-factures-surtitre { color: #1681a9; }
+.rrm-role-shell--glass > main .comptable-facture-ligne { font-size: 13px; }
+
+/* Demandes : même rythme de lecture que les pages Avis et Rejets. */
+.rrm-role-shell--glass > main .responsable-worklist { width: 100%; max-width: none; padding: 14px 0 42px; color: #203249; }
+.rrm-role-shell--glass > main .responsable-worklist > div:first-child h1 { margin: 0 0 4px; color: #1d3048; font-size: 24px; }
+.rrm-role-shell--glass > main .responsable-worklist > div:first-child p { margin: 0; color: #60758a; font-size: 15px; }
+.rrm-role-shell--glass > main .responsable-worklist__filters { border: 1px solid #dce6ef; border-top: 4px solid #0bb879; border-radius: 15px; background: #fff; box-shadow: 0 8px 24px rgba(20, 45, 76, .055); }
+.rrm-role-shell--glass > main .responsable-worklist .ant-table-wrapper { border-top: 4px solid #149bd0; background: #fff; box-shadow: 0 8px 24px rgba(20, 45, 76, .055); }
+.rrm-role-shell--glass > main .responsable-worklist .ant-input,
+.rrm-role-shell--glass > main .responsable-worklist .ant-select-selector { min-height: 38px; background: #f8fafc; border-color: #d5e2ec; }
+
+/* Recettes : les trois chiffres réels deviennent des KPI lisibles et colorés. */
+.rrm-role-shell--glass > main .recettes-responsable { padding: 14px 0 42px; }
+.rrm-role-shell--glass > main .recettes-responsable__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.rrm-role-shell--glass > main .recettes-responsable__stats > .ant-space-item { min-width: 0; padding: 18px 20px; border: 1px solid #dce6ef; border-top: 4px solid #149bd0; border-radius: 15px; background: #fff; box-shadow: 0 8px 24px rgba(20, 45, 76, .055); }
+.rrm-role-shell--glass > main .recettes-responsable__stats > .ant-space-item:nth-child(2) { border-top-color: #ee9c17; }
+.rrm-role-shell--glass > main .recettes-responsable__stats > .ant-space-item:nth-child(3) { border-top-color: #0bb879; }
+.rrm-role-shell--glass > main .recettes-responsable__stats .ant-statistic-title { color: #60758a; font-size: 14px; font-weight: 700; }
+.rrm-role-shell--glass > main .recettes-responsable__stats .ant-statistic-content { color: #1d3048; font-size: 28px; font-weight: 750; }
+.rrm-role-shell--glass > main .recettes-responsable > .ant-space-item:first-child .ant-card { border-top: 4px solid #149bd0; }
+.rrm-role-shell--glass > main .recettes-responsable > .ant-space-item:last-child .ant-card { border-top: 4px solid #974cdb; }
+
+@media (max-width: 650px) {
+  .rrm-role-shell--glass > main .base-clients { padding: 12px 0 32px; }
+  .rrm-role-shell--glass > main .recettes-responsable__stats { grid-template-columns: 1fr; }
+}

@@ -217,7 +217,7 @@ export function BaseClientsPage() {
   return <main className={`base-clients ${role === "SUPERVISEUR" ? "base-clients--superviseur" : ""}`}>
     <header className="base-clients__hero">
       <div><span className="base-clients__eyebrow">Espace {role === "COMPTABLE" ? "comptable" : role === "SUPERVISEUR" ? "superviseur" : "responsable"} · {role === "SUPERVISEUR" ? "Parkings affectés" : "Répertoire central"}</span>
-        <h1>Base des clients</h1>
+        {role !== "RESPONSABLE" && <h1>Base des clients</h1>}
         <p>Consultez les clients réguliers et corporate, leurs coordonnées et leur historique réel.</p></div>
       <TeamOutlined className="base-clients__hero-icon" aria-hidden="true" />
     </header>
