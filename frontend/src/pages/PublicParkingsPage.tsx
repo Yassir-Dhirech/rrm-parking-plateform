@@ -188,37 +188,20 @@ export function PublicParkingsPage() {
     markersRef.current = {};
 
     // Render Markers
+        // Render Markers
     filteredParkings.forEach((parking) => {
       const pinColor = getPinColor(parking.statutSaturation);
 
       const customIcon = L.divIcon({
-        className: "custom-leaflet-marker",
+        className: "custom-numbered-marker",
         html: `
-          <div style="
-            background: linear-gradient(135deg, ${pinColor}, #003566);
-            width: 36px;
-            height: 36px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 16px rgba(0,99,152,0.35), inset 0 2px 4px rgba(255,255,255,0.6);
-            border: 2px solid white;
-            cursor: pointer;
-          ">
-            <span style="
-              transform: rotate(45deg);
-              color: white;
-              font-weight: 900;
-              font-size: 14px;
-              font-family: sans-serif;
-              text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-            ">${parking.numeroPin}</span>
-          </div>
-        `,
-        iconSize: [36, 36],
-        iconAnchor: [18, 36],
+          <div style="position:relative;width:38px;height:38px;border-radius:50%;background-color:#001E3D;color:#fff;border:3px solid ${pinColor};box-shadow:0 4px 14px rgba(0,53,102,.4);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;font-family:system-ui,-apple-system,sans-serif;">
+            ${parking.numeroPin}
+            <div style="position:absolute;bottom:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background-color:${pinColor};border:2px solid #fff;"></div>
+          </div>`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],     // Centre le cercle (38x38) sur les coordonnées GPS
+        popupAnchor: [0, -22],    // Décale l'accroche de la bulle au sommet du cercle
       });
 
       const marker = L.marker([parking.latitude, parking.longitude], { icon: customIcon }).addTo(map);
@@ -230,9 +213,15 @@ export function PublicParkingsPage() {
           <div style="font-size:11px;color:#64748b;margin-bottom:8px;">${parking.adresse}</div>
           <div style="font-size:12px;font-weight:700;color:#16a34a;">${parking.placesDisponiblesAbonnements} / ${parking.capaciteReserveeAbonnements} places abonnés disponibles</div>
         </div>
-      `);
+      `, {
+        closeButton: false,
+        autoPan: false,
+      });
 
+      // Affiche au survol et masque à la sortie
       marker.on("mouseover", () => marker.openPopup());
+      marker.on("mouseout", () => marker.closePopup());
+
       marker.on("click", () => {
         setActiveParking(parking);
         map.flyTo([parking.latitude, parking.longitude], 15, { animate: true, duration: 0.5 });
@@ -240,6 +229,7 @@ export function PublicParkingsPage() {
 
       markersRef.current[parking.id] = marker;
     });
+
 
     if (filteredParkings.length > 0 && !searchQuery.trim()) {
       const bounds = L.latLngBounds(

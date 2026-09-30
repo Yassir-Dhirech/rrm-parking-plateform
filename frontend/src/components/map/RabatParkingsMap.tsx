@@ -156,15 +156,17 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
     markersRef.current = {};
 
     filteredParkings.forEach((parking) => {
-      const pinColor = getPinColor();
+            const pinColor = getPinColor();
       const customIcon = L.divIcon({
         className: "custom-numbered-marker",
         html: `
-          <div style="position:relative;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background-color:#001E3D;color:#fff;border:3px solid ${pinColor};box-shadow:0 4px 14px rgba(0,53,102,.4);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;font-family:system-ui,-apple-system,sans-serif;">
+          <div style="position:relative;width:38px;height:38px;border-radius:50%;background-color:#001E3D;color:#fff;border:3px solid ${pinColor};box-shadow:0 4px 14px rgba(0,53,102,.4);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;font-family:system-ui,-apple-system,sans-serif;">
             ${parking.numeroPin}
             <div style="position:absolute;bottom:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background-color:${pinColor};border:2px solid #fff;"></div>
           </div>`,
         iconSize: [38, 38],
+        iconAnchor: [19, 19],     // Centre le cercle de 38x38 px sur les coordonnées GPS
+        popupAnchor: [0, -22],    // Positionne la flèche de la popup pile au sommet du cercle
       });
 
       const marker = L.marker([parking.latitude, parking.longitude], { icon: customIcon }).addTo(map);
@@ -178,14 +180,21 @@ export function RabatParkingsMap({ height = 500 }: RabatParkingsMapProps) {
             <div style="font-size:16px;font-weight:800;color:#16a34a;margin-top:2px;">${parking.placesDisponiblesAbonnements} / ${parking.capaciteReserveeAbonnements}</div>
             <div style="font-size:10px;color:#64748b;margin-top:3px;">Occupation : ${parking.tauxOccupationAbonnements}%</div>
           </div>
-        </div>`);
+        </div>`, {
+          closeButton: false,
+          autoPan: false,
+        });
 
+      // Affiche au survol et masque à la sortie
       marker.on("mouseover", () => marker.openPopup());
+      marker.on("mouseout", () => marker.closePopup());
+
       marker.on("click", () => {
         setActiveParking(parking);
         map.flyTo([parking.latitude, parking.longitude], 15, { duration: 1.2 });
       });
       markersRef.current[parking.id] = marker;
+
     });
 
     if (filteredParkings.length > 0 && !searchQuery.trim()) {

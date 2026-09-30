@@ -135,8 +135,9 @@ public interface DemandeClientRepository
     @Query(value = """
             select dc.id from demande_client dc
             join client_particulier cp on cp.id = dc.client_id
-            where (exists (select 1 from demande_nouvel_abonnement_regulier n where n.id = dc.id)
-                or exists (select 1 from demande_renouvellement_regulier r where r.id = dc.id))
+                        where (exists (select 1 from demande_nouvel_abonnement_regulier n where n.id = dc.id)
+                or exists (select 1 from demande_renouvellement_regulier r where r.id = dc.id)
+                or exists (select 1 from demande_perte_carte p where p.id = dc.id))
               and (lower(dc.reference) like :terme escape '!'
                 or lower(cp.cin) like :terme escape '!'
                 or lower(cp.nom) like :terme escape '!'

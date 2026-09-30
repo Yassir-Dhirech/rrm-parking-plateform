@@ -60,6 +60,10 @@ import {
   validerOtpRenouvellement,
   validerOtpAssisteParAgent,
   validerOtpCorporate,
+  rechercherCartePerdueParCin,
+  declarerPerteCarte,
+  validerOtpPerteCarte,
+  type InfoCartePerdueResponse,
 } from "../../../api/demandesApi";
 import type {
   DemandeAbonnementRegulierRequest,
@@ -228,6 +232,9 @@ export function PublicQrForm({ mode = "PUBLIC" }: PublicQrFormProps) {
   });
   const [renewalAccount, setRenewalAccount] =
     useState<RenouvellementConsultationResponse | null>(null);
+  const [duplicateCin, setDuplicateCin] = useState("");
+  const [duplicateAccount, setDuplicateAccount] =
+    useState<InfoCartePerdueResponse | null>(null);
   const [isSearchingLookup, setIsSearchingLookup] = useState(false);
   const [hasFoundAccount, setHasFoundAccount] = useState(false);
 
@@ -428,6 +435,44 @@ const {
           ...lookupValues,
         }));
         message.success("Abonnement identifié avec succès.");
+      } catch (error) {
+        message.error(extraireMessageErreur(error));
+      } finally {
+        setIsSearchingLookup(false);
+      }
+      return;
+    }
+
+    if (typeDemande === "DUPLICATE") {
+      const cin = (duplicateCin || lookupQuery || "").trim().toUpperCase();
+      if (!cin) {
+        message.warning("Veuillez saisir votre CIN pour rechercher votre carte perdue.");
+        return;
+      }
+
+      setIsSearchingLookup(true);
+      setHasFoundAccount(false);
+      setDuplicateAccount(null);
+      try {
+        const info = await rechercherCartePerdueParCin(cin);
+        setDuplicateAccount(info);
+        setHasFoundAccount(true);
+
+        const lookupValues = {
+          nom: info.clientNom,
+          cin: info.cin,
+          carteRfidActuelle: info.numeroCarte,
+          parkingNom: info.parkingNom,
+          dateFinAbonnement: info.dateFinAbonnement,
+          telephoneMasque: info.telephoneMasque,
+          modePaiement: "ESPECE",
+        };
+        form.setFieldsValue(lookupValues);
+        setFormValues((previous: any) => ({
+          ...previous,
+          ...lookupValues,
+        }));
+        message.success("Carte active identifiée avec succès.");
       } catch (error) {
         message.error(extraireMessageErreur(error));
       } finally {
@@ -883,6 +928,27 @@ const {
         } finally {
           setIsSubmittingBackend(false);
         }
+      } else if (typeDemande === "DUPLICATE") {
+        if (!duplicateAccount || !hasFoundAccount) {
+          message.error("Veuillez d'abord identifier votre abonnement avec votre CIN.");
+          return;
+        }
+
+        const cin = duplicateAccount.cin;
+        const modePaiement =
+          (consolidated.modePaiement === "CHEQUE" ? "CHEQUE" : "ESPECE") as ModePaiement;
+
+        setIsSubmittingBackend(true);
+        try {
+          const response = await declarerPerteCarte(cin, modePaiement);
+          setBackendDemandeResponse(response);
+          setIsOtpModalOpen(true);
+          message.success("Déclaration enregistrée ! Code OTP envoyé par SMS pour valider la mise en opposition.");
+        } catch (error) {
+          message.error(extraireMessageErreur(error));
+        } finally {
+          setIsSubmittingBackend(false);
+        }
       }
     } catch {
       message.error("Veuillez remplir les champs obligatoires et accepter les conditions d'utilisation.");
@@ -1201,6 +1267,18 @@ const {
                           className="rounded-xl"
                         />
                       </>
+                    ) : typeDemande === "DUPLICATE" ? (
+                      <Input
+                        size="large"
+                        placeholder="Saisissez votre CIN (ex: AB123456)"
+                        value={duplicateCin}
+                        onChange={(e) => {
+                          setDuplicateCin(e.target.value.toUpperCase());
+                          setHasFoundAccount(false);
+                          setDuplicateAccount(null);
+                        }}
+                        className="rounded-xl"
+                      />
                     ) : (
                       <Input
                         size="large"
@@ -1231,6 +1309,71 @@ const {
                     onValuesChange={(_, all) => setFormValues((prev: any) => ({ ...prev, ...all }))}
                     className="space-y-4"
                   >
+                    {typeDemande === "DUPLICATE" && duplicateAccount ? (
+                      <AntCard className="rounded-2xl border-purple-200 bg-purple-50/50 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Tag color="purple" className="font-bold">Abonnement & Carte Détectés</Tag>
+                            <span className="font-bold text-slate-900 text-sm">{duplicateAccount.clientNom}</span>
+                          </div>
+                          <Tag color="red" className="font-bold">Mise en opposition à la validation</Tag>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-purple-100 mb-4">
+                          <div>
+                            <span className="text-xs text-slate-500 block">Titulaire de l'abonnement</span>
+                            <span className="font-bold text-slate-800">{duplicateAccount.clientNom}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-slate-500 block">N° Carte RFID déclarée perdue</span>
+                            <span className="font-bold text-red-600 font-mono">{duplicateAccount.numeroCarte}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-slate-500 block">Parking affecté</span>
+                            <span className="font-bold text-slate-800">{duplicateAccount.parkingNom}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-slate-500 block">Validité de l'abonnement</span>
+                            <span className="font-bold text-slate-800">Jusqu'au {duplicateAccount.dateFinAbonnement}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-slate-500 block">Téléphone de vérification (OTP)</span>
+                            <span className="font-bold text-slate-800">{duplicateAccount.telephoneMasque}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-slate-500 block">Frais de remplacement (Duplicata)</span>
+                            <span className="font-bold text-emerald-700 text-base">50.00 DH TTC</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-4 text-xs text-amber-900">
+                          ⚠️ <strong>Avertissement :</strong> Dès confirmation du code OTP envoyé par SMS, le badge n° <strong>{duplicateAccount.numeroCarte}</strong> sera immédiatement suspendu et interdit d'accès aux barrières. Un ordre d'impression du nouveau badge sera généré dès le règlement de la facture de 50 DH au guichet.
+                        </div>
+
+                        <Row gutter={16}>
+                          <Col xs={24} md={12}>
+                            <Form.Item name="modePaiement" label="Mode de règlement souhaité au guichet" initialValue="ESPECE">
+                              <Radio.Group className="w-full">
+                                <Radio.Button value="ESPECE" className="rounded-l-xl font-semibold">Espèces au guichet</Radio.Button>
+                                <Radio.Button value="CHEQUE" className="rounded-r-xl font-semibold">Chèque</Radio.Button>
+                              </Radio.Group>
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={12}>
+                            <Form.Item
+                              name="acceptTerms"
+                              valuePropName="checked"
+                              rules={[{ validator: (_, value) => value ? Promise.resolve() : Promise.reject(new Error("Veuillez accepter pour continuer")) }]}
+                              className="mt-6"
+                            >
+                              <Checkbox className="text-xs text-slate-700">
+                                J'atteste la perte de mon badge et demande l'émission d'un duplicata moyennant 50 DH.
+                              </Checkbox>
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                      </AntCard>
+                    ) : (
                     <AntCard className="rounded-2xl border-emerald-200 bg-emerald-50/50 shadow-sm">
                       <div className="flex items-center gap-2 mb-3">
                         <Tag color="green" className="font-bold">Abonné Validé</Tag>
@@ -1296,6 +1439,7 @@ const {
                         )}
                       </Row>
                     </AntCard>
+                    )}
                   </Form>
                 )}
 
@@ -1312,10 +1456,11 @@ const {
                     <Button
                       type="primary"
                       disabled={!hasFoundAccount}
+                      loading={isSubmittingBackend}
                       onClick={handleNextToOtp}
                       className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 border-purple-600 text-white rounded-xl h-11 px-8 font-bold shadow-md flex items-center justify-center"
                     >
-                      Valider & Recevoir Code OTP →
+                      Déclarer la perte & Valider par Code OTP (50 DH) →
                     </Button>
                   ) : (
                     <Button
@@ -2414,12 +2559,48 @@ const {
                   <Row gutter={[16, 12]} className="bg-white/90 p-4 rounded-xl border border-slate-200/80">
                     {typeDemande !== "CORPORATE" && (
                       <>
-                        <Col xs={12} sm={8}>
-                          <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculation</span>
-                          <strong className="text-sm text-secondary font-mono block">
-                            {recapData.immatriculation || form.getFieldValue("immatriculation") || "-"}
-                          </strong>
+                                                <Col xs={12} sm={8}>
+                          <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold mb-1">
+                            Immatriculation
+                          </span>
+                          {(() => {
+                            const rawImmat = recapData.immatriculation || form.getFieldValue("immatriculation");
+                            if (!rawImmat) return <span className="text-slate-400 font-mono text-sm">-</span>;
+
+                            const plate = parseMoroccanPlate(rawImmat);
+                            if (!plate.numeroImmatriculation) {
+                              return <strong className="text-sm text-secondary font-mono block">{rawImmat}</strong>;
+                            }
+
+                            return (
+                              <div
+                                dir="ltr"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border-2 border-slate-800 bg-gradient-to-r from-slate-100 via-white to-slate-100 font-mono shadow-2xs"
+                              >
+                                <div className="flex items-center gap-1 pr-1 border-r border-slate-300">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />
+                                  <span className="text-[9px] font-black text-slate-600">MA</span>
+                                </div>
+                                <div className="font-extrabold text-sm tracking-wider text-slate-900 flex items-center gap-1.5">
+                                  <span>{plate.numeroImmatriculation}</span>
+                                  {plate.serieImmatriculation && (
+                                    <>
+                                      <span className="text-secondary font-black">|</span>
+                                      <span className="text-secondary font-black px-0.5 text-base">{plate.serieImmatriculation}</span>
+                                    </>
+                                  )}
+                                  {plate.codeRegion && (
+                                    <>
+                                      <span className="text-secondary font-black">|</span>
+                                      <span>{plate.codeRegion}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </Col>
+
                         <Col xs={12} sm={8}>
                           <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Marque & Modèle</span>
                           <strong className="text-sm text-slate-800 block">
@@ -2436,17 +2617,41 @@ const {
                         )}
                       </>
                     )}
-                    {typeDemande === "CORPORATE" && (
+                                        {typeDemande === "CORPORATE" && (
                       <Col xs={24}>
-                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Immatriculations renseignées (facultatives)</span>
-                        <strong className="text-sm text-secondary font-mono block">
-                          {(form.getFieldValue("flotteVehicules") || [])
-                            .map((vehicule: any) => vehicule?.immatriculation?.trim())
-                            .filter(Boolean)
-                            .join(", ") || "Aucune immatriculation renseignée"}
-                        </strong>
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold mb-1">
+                          Immatriculations renseignées (facultatives)
+                        </span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {(() => {
+                            const vehicules = (form.getFieldValue("flotteVehicules") || [])
+                              .map((v: any) => v?.immatriculation?.trim())
+                              .filter(Boolean);
+                            if (vehicules.length === 0) {
+                              return <span className="text-xs text-slate-400 font-mono">Aucune immatriculation renseignée</span>;
+                            }
+                            return vehicules.map((immat: string, idx: number) => {
+                              const p = parseMoroccanPlate(immat);
+                              return (
+                                <div
+                                  key={idx}
+                                  dir="ltr"
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-slate-700 bg-white font-mono text-xs shadow-2xs"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />
+                                  <span className="font-bold text-slate-900">{p.numeroImmatriculation || immat}</span>
+                                  {p.serieImmatriculation && <span className="text-secondary font-black">|</span>}
+                                  {p.serieImmatriculation && <span className="font-black text-secondary">{p.serieImmatriculation}</span>}
+                                  {p.codeRegion && <span className="text-secondary font-black">|</span>}
+                                  {p.codeRegion && <span className="font-bold text-slate-900">{p.codeRegion}</span>}
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
                       </Col>
                     )}
+
                     <Col xs={24} sm={typeDemande === "CORPORATE" ? 12 : 8}>
                       <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Parking Sélectionné</span>
                       <strong className="text-sm text-slate-900 block">
@@ -2668,7 +2873,9 @@ const {
             ? validerOtpRenouvellement
             : typeDemande === "CORPORATE"
               ? validerOtpCorporate
-              : undefined
+              : typeDemande === "DUPLICATE"
+                ? validerOtpPerteCarte
+                : undefined
         }
         onResendOtp={
           typeDemande === "RENEW" ? renvoyerOtpRenouvellement : undefined

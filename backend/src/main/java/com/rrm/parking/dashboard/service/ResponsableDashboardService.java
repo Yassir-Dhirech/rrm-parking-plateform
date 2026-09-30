@@ -878,7 +878,8 @@ public class ResponsableDashboardService {
                         coalesce(
                             dnc.parking_id,
                             tr.parking_id,
-                            tn.parking_id
+                            tn.parking_id,
+                            dpc.parking_id
                         ) as parking_id
                     from paiement p
                     left join demande_nouveau_contrat_corporate dnc
@@ -891,6 +892,8 @@ public class ResponsableDashboardService {
                       on dna.id = p.demande_id
                     left join tarif_parking tn
                       on tn.id = dna.tarif_parking_id
+                    left join demande_perte_carte dpc
+                      on dpc.id = p.demande_id
                     left join activation_par_demande apd
                       on apd.demande_id = p.demande_id
                     where p.statut = 'CONFIRME'

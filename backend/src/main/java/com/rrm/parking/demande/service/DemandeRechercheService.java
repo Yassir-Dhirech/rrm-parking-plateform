@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.rrm.parking.demande.dto.response.DemandeDetailResponse;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.document.repository.PieceJointeRepository;
 import org.hibernate.Hibernate;
@@ -184,6 +185,10 @@ public class DemandeRechercheService {
                     pieceJointeRepository
                             .findByDemandeIdOrderByDateDepotDesc(initiale.getId())
             );
+        }
+
+        if (demandeReelle instanceof DemandePerteCarte perte) {
+            return DemandeDetailResponse.depuis(perte);
         }
 
         throw new ResponseStatusException(

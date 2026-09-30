@@ -7,6 +7,7 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.facturation.enums.TypeLigneFacture;
 import com.rrm.parking.facturation.repository.FactureRepository;
@@ -81,7 +82,7 @@ public class RecetteService {
             if (p.getDateConfirmation() == null || p.getDateConfirmation().toLocalDate().isAfter(dateArret)
                     || lignes.existsByPaiementId(p.getId())) continue;
             var d = (com.rrm.parking.demande.entity.DemandeClient) Hibernate.unproxy(p.getDemande());
-            if (!(d instanceof DemandeNouvelAbonnementRegulier) && !(d instanceof DemandeRenouvellementRegulier)) continue;
+            if (!(d instanceof DemandeNouvelAbonnementRegulier) && !(d instanceof DemandeRenouvellementRegulier) && !(d instanceof DemandePerteCarte)) continue;
             if (!parkingId.equals(parkingId(p))) continue;
             var f = factures.findByPaiementId(p.getId()).orElse(null);
             resultat.add(new PaiementDisponibleDto(p.getId(), p.getReference(), client(p), abonnement(p),
@@ -226,10 +227,12 @@ public class RecetteService {
         var d = (com.rrm.parking.demande.entity.DemandeClient) Hibernate.unproxy(p.getDemande());
         if (d instanceof DemandeNouvelAbonnementRegulier n) return n.getTarifParking().getParking().getId();
         if (d instanceof DemandeRenouvellementRegulier n) return n.getTarifParking().getParking().getId();
+        if (d instanceof DemandePerteCarte perte && perte.getParking() != null) return perte.getParking().getId();
         return null;
     }
     private String typeAbonnement(Paiement p) {
         var d = (com.rrm.parking.demande.entity.DemandeClient) Hibernate.unproxy(p.getDemande());
+        if (d instanceof DemandePerteCarte) return "Duplicata Carte (Perte)";
         var tarif = d instanceof DemandeNouvelAbonnementRegulier n ? n.getTarifParking()
                 : d instanceof DemandeRenouvellementRegulier n ? n.getTarifParking() : null;
         return tarif == null ? "Abonnement" : tarif.getForfait().getLibelle() + " " + tarif.getDureeEnMois() + " mois";
@@ -251,6 +254,8 @@ public class RecetteService {
         if (d instanceof DemandeNouvelAbonnementRegulier n && n.getAbonnementGenere() != null)
             return n.getAbonnementGenere().getReference();
         if (d instanceof DemandeRenouvellementRegulier n) return n.getAbonnementConcerne().getReference();
+        if (d instanceof DemandePerteCarte perte && perte.getAbonnementConcerne() != null)
+            return perte.getAbonnementConcerne().getReference();
         return p.getDemande().getReference();
     }
     private String client(Paiement p) {
