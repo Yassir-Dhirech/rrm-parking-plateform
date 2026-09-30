@@ -209,42 +209,77 @@ export function AgentDashboard() {
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-  <Card title="Répartition des dossiers du parking" extra={<Tag color="blue">Activité</Tag>}>
-    <Space direction="vertical" style={{ width: "100%" }} size="middle">
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>En attente de paiement</span>
-          <span style={{ fontWeight: 700, color: "#d97706" }}>45%</span>
-        </div>
-        <Progress percent={45} strokeColor="#d97706" showInfo={false} />
-      </div>
+          <Card
+            title="Répartition des dossiers du parking"
+            extra={
+              <Tag color="blue">
+                {data.repartitionDossiers ? `${data.repartitionDossiers.total} dossier${data.repartitionDossiers.total > 1 ? "s" : ""}` : "Activité"}
+              </Tag>
+            }
+          >
+            {data.repartitionDossiers && data.repartitionDossiers.total > 0 ? (
+              <Space direction="vertical" style={{ width: "100%" }} size="middle">
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>En attente de paiement</span>
+                    <span style={{ fontWeight: 700, color: "#d97706" }}>
+                      {data.repartitionDossiers.enAttentePaiement} ({data.repartitionDossiers.pctEnAttentePaiement}%)
+                    </span>
+                  </div>
+                  <Progress percent={data.repartitionDossiers.pctEnAttentePaiement} strokeColor="#d97706" showInfo={false} />
+                </div>
 
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Paiements confirmés (Payées)</span>
-          <span style={{ fontWeight: 700, color: "#059669" }}>30%</span>
-        </div>
-        <Progress percent={30} strokeColor="#059669" showInfo={false} />
-      </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Paiements confirmés (Payées)</span>
+                    <span style={{ fontWeight: 700, color: "#059669" }}>
+                      {data.repartitionDossiers.payees} ({data.repartitionDossiers.pctPayees}%)
+                    </span>
+                  </div>
+                  <Progress percent={data.repartitionDossiers.pctPayees} strokeColor="#059669" showInfo={false} />
+                </div>
 
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Cartes actives remises</span>
-          <span style={{ fontWeight: 700, color: "#2563eb" }}>20%</span>
-        </div>
-        <Progress percent={20} strokeColor="#2563eb" showInfo={false} />
-      </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Cartes actives remises</span>
+                    <span style={{ fontWeight: 700, color: "#2563eb" }}>
+                      {data.repartitionDossiers.validees} ({data.repartitionDossiers.pctValidees}%)
+                    </span>
+                  </div>
+                  <Progress percent={data.repartitionDossiers.pctValidees} strokeColor="#2563eb" showInfo={false} />
+                </div>
 
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Dossiers finalisés</span>
-          <span style={{ fontWeight: 700, color: "#7c3aed" }}>5%</span>
-        </div>
-        <Progress percent={5} strokeColor="#7c3aed" showInfo={false} />
-      </div>
-    </Space>
-  </Card>
-</Col>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Dossiers finalisés</span>
+                    <span style={{ fontWeight: 700, color: "#7c3aed" }}>
+                      {data.repartitionDossiers.finalisees} ({data.repartitionDossiers.pctFinalisees}%)
+                    </span>
+                  </div>
+                  <Progress percent={data.repartitionDossiers.pctFinalisees} strokeColor="#7c3aed" showInfo={false} />
+                </div>
+
+                {data.repartitionDossiers.autres > 0 && (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>Autres statuts (refusés / annulés)</span>
+                      <span style={{ fontWeight: 700, color: "#6b7280" }}>
+                        {data.repartitionDossiers.autres} ({data.repartitionDossiers.pctAutres}%)
+                      </span>
+                    </div>
+                    <Progress percent={data.repartitionDossiers.pctAutres} strokeColor="#6b7280" showInfo={false} />
+                  </div>
+                )}
+              </Space>
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Aucun dossier enregistré pour ce parking"
+                style={{ margin: "24px 0" }}
+              />
+            )}
+          </Card>
+        </Col>
 
       </Row>
     </section>

@@ -66,16 +66,13 @@ class AgentDashboardServiceTest {
         when(affectationRepository
                 .findByUtilisateurIdAndActiveTrue(utilisateurId))
                 .thenReturn(Optional.of(affectation));
-        when(demandeRepository
-                .countNouvellesDemandesRegulieresParParkingEtStatut(
-                        parkingId,
-                        StatutDemande.EN_ATTENTE_PAIEMENT
-                )).thenReturn(3L);
-        when(demandeRepository
-                .countRenouvellementsParParkingEtStatut(
-                        parkingId,
-                        StatutDemande.EN_ATTENTE_PAIEMENT
-                )).thenReturn(2L);
+        when(demandeRepository.compterDemandesParStatutEtParking(parkingId))
+                .thenReturn(List.of(
+                        new Object[]{StatutDemande.EN_ATTENTE_PAIEMENT.name(), 5L},
+                        new Object[]{StatutDemande.PAYEE.name(), 3L},
+                        new Object[]{StatutDemande.VALIDEE.name(), 2L},
+                        new Object[]{StatutDemande.FINALISEE.name(), 1L}
+                ));
         when(paiementRepository.sumMontantConfirmeParUtilisateurEntre(
                 eq(utilisateurId),
                 eq(StatutPaiement.CONFIRME),
@@ -111,5 +108,15 @@ class AgentDashboardServiceTest {
         assertThat(resultat.nombreEncaissementsJour()).isEqualTo(4L);
         assertThat(resultat.cartesAImprimer()).isEqualTo(6L);
         assertThat(resultat.cartesARemettre()).isEqualTo(1L);
+        assertThat(resultat.repartitionDossiers()).isNotNull();
+        assertThat(resultat.repartitionDossiers().total()).isEqualTo(11L);
+        assertThat(resultat.repartitionDossiers().enAttentePaiement()).isEqualTo(5L);
+        assertThat(resultat.repartitionDossiers().payees()).isEqualTo(3L);
+        assertThat(resultat.repartitionDossiers().validees()).isEqualTo(2L);
+        assertThat(resultat.repartitionDossiers().finalisees()).isEqualTo(1L);
+        assertThat(resultat.repartitionDossiers().pctEnAttentePaiement()).isEqualTo(45);
+        assertThat(resultat.repartitionDossiers().pctPayees()).isEqualTo(27);
+        assertThat(resultat.repartitionDossiers().pctValidees()).isEqualTo(18);
+        assertThat(resultat.repartitionDossiers().pctFinalisees()).isEqualTo(9);
     }
 }

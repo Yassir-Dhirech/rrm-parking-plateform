@@ -166,4 +166,19 @@ public interface DemandeClientRepository
     long countRenouvellementsEnRetard(@Param("parkingId") Long parkingId,
             @Param("statut") StatutDemande statut,
             @Param("seuil") LocalDateTime seuil);
+
+    @Query(value = """
+            select dc.statut, count(dc.id)
+            from demande_client dc
+            left join demande_nouvel_abonnement_regulier dna on dna.id = dc.id
+            left join tarif_parking tn on tn.id = dna.tarif_parking_id
+            left join demande_renouvellement_regulier drr on drr.id = dc.id
+            left join tarif_parking tr on tr.id = drr.tarif_parking_id
+            left join demande_perte_carte dpc on dpc.id = dc.id
+            left join demande_nouveau_contrat_corporate dnc on dnc.id = dc.id
+            left join demande_changement_parking dcp on dcp.id = dc.id
+            where coalesce(tn.parking_id, tr.parking_id, dpc.parking_id, dnc.parking_id, dcp.nouveau_parking_id) = :parkingId
+            group by dc.statut
+            """, nativeQuery = true)
+    List<Object[]> compterDemandesParStatutEtParking(@Param("parkingId") Long parkingId);
 }

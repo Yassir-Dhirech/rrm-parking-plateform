@@ -1,5 +1,19 @@
 import client from "./client";
 
+export interface RepartitionDossiers {
+  total: number;
+  enAttentePaiement: number;
+  payees: number;
+  validees: number;
+  finalisees: number;
+  autres: number;
+  pctEnAttentePaiement: number;
+  pctPayees: number;
+  pctValidees: number;
+  pctFinalisees: number;
+  pctAutres: number;
+}
+
 export interface AgentDashboardKpis {
   parkingId: number;
   parkingNom: string;
@@ -9,6 +23,7 @@ export interface AgentDashboardKpis {
   nombreEncaissementsJour: number;
   cartesAImprimer: number;
   cartesARemettre: number;
+  repartitionDossiers?: RepartitionDossiers;
 }
 
 export async function getAgentDashboardKpis(): Promise<AgentDashboardKpis> {
