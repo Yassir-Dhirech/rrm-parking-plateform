@@ -13,6 +13,7 @@ import com.rrm.parking.dashboard.dto.response.AgentHistoriqueResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.repository.DemandeClientRepository;
 import com.rrm.parking.paiement.entity.Paiement;
@@ -179,6 +180,9 @@ public class AgentHistoriqueService {
         if (demande instanceof DemandeNouveauContratCorporate corporate) {
             return corporate.getParking().getNom();
         }
+        if (demande instanceof DemandePerteCarte perte && perte.getParking() != null) {
+            return perte.getParking().getNom();
+        }
         return null;
     }
 
@@ -191,6 +195,9 @@ public class AgentHistoriqueService {
         }
         if (demande instanceof DemandeNouveauContratCorporate) {
             return "NOUVEAU_CONTRAT_CORPORATE";
+        }
+        if (demande instanceof DemandePerteCarte) {
+            return "PERTE_CARTE";
         }
         return demande.getClass().getSimpleName();
     }

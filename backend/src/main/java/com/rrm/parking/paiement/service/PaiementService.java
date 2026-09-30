@@ -1,5 +1,6 @@
 package com.rrm.parking.paiement.service;
 
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.entity.DemandeClient;
@@ -84,15 +85,22 @@ public class PaiementService {
                         "Aucun parking actif n'est affecté à cet agent"
                 ));
 
-        Long parkingDemandeId = decompte.tarifParking()
-                .getParking()
-                .getId();
+        Long parkingDemandeId;
+        String parkingDemandeNom;
+        if (demande instanceof DemandePerteCarte perte) {
+            parkingDemandeId = perte.getParking().getId();
+            parkingDemandeNom = perte.getParking().getNom();
+        } else {
+            parkingDemandeId = decompte.tarifParking().getParking().getId();
+            parkingDemandeNom = decompte.tarifParking().getParking().getNom();
+        }
+
         Long parkingAgentId = affectation.getParking().getId();
 
         if (!parkingAgentId.equals(parkingDemandeId)) {
             throw new ConflitMetierException(
                     "Cette demande appartient au parking "
-                            + decompte.tarifParking().getParking().getNom()
+                            + parkingDemandeNom
                             + ". Vous ne pouvez encaisser que les demandes du parking "
                             + affectation.getParking().getNom()
             );

@@ -2,6 +2,7 @@ package com.rrm.parking.demande.dto.response;
 
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
@@ -200,6 +201,62 @@ public record DemandeDetailResponse(
                         .toList(),
                 demande.getAbonnementConcerne().getEntrepriseNom(),
                 demande.getAbonnementConcerne().getEntrepriseIce()
+        );
+    }
+
+    public static DemandeDetailResponse depuis(
+            DemandePerteCarte demande
+    ) {
+        ClientParticulier client = (ClientParticulier) Hibernate.unproxy(
+                demande.getClient()
+        );
+        Parking parking = demande.getParking();
+        DecomptePaiementDemande decompte = DecomptePaiementDemande.depuis(demande);
+        String immat = demande.getCartePerdue() != null ? demande.getCartePerdue().getImmatriculationAffectee() : null;
+
+        return new DemandeDetailResponse(
+                demande.getId(),
+                demande.getReference(),
+                "PERTE_CARTE",
+                demande.getStatut(),
+                demande.getCanalInitiation(),
+
+                demande.getDateCreation(),
+                demande.getDateSoumission(),
+                demande.getDateValidationOtp(),
+                demande.getDateModification(),
+                demande.getMotifRefus(),
+
+                client.getId(),
+                "PARTICULIER",
+                client.getNomComplet(),
+                client.getNom(),
+                client.getPrenom(),
+                client.getCin(),
+                client.getEmail(),
+                client.getTelephone(),
+
+                null,
+                immat,
+                null,
+                null,
+                null,
+                null,
+
+                null,
+                parking != null ? parking.getId() : null,
+                parking != null ? parking.getNom() : null,
+                null,
+                "Duplicata Carte RFID (Perte)",
+                null,
+                BigDecimal.ZERO,
+                new BigDecimal("20.00"),
+                decompte.montantAbonnementTTC(),
+                decompte.fraisCarteTTC(),
+                decompte.montantTotalTTC(),
+                demande.getModePaiementSouhaite(),
+
+                List.of()
         );
     }
 

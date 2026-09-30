@@ -9,6 +9,7 @@ import com.rrm.parking.demande.entity.DemandeClient;
 import org.hibernate.Hibernate;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.CanalInitiation;
 import com.rrm.parking.demande.enums.StatutDemande;
@@ -121,6 +122,13 @@ public record DemandeRechercheResponse(
             return null;
         }
 
+        if (demande instanceof DemandePerteCarte perte) {
+            if (perte.getParking() != null) {
+                return perte.getParking().getNom();
+            }
+            return null;
+        }
+
         return null;
     }
 
@@ -150,6 +158,11 @@ public record DemandeRechercheResponse(
         if (demande
                 instanceof DemandeNouveauContratCorporate) {
             return "NOUVEAU_CONTRAT_CORPORATE";
+        }
+
+        if (demande
+                instanceof DemandePerteCarte) {
+            return "PERTE_CARTE";
         }
 
         return "AUTRE";

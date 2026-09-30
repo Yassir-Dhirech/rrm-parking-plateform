@@ -125,7 +125,7 @@ export function LandingPage() {
                   <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center mb-6 text-cyan-600 shadow-sm">
                     <EnvironmentOutlined className="text-3xl" />
                   </div>
-                  <Tag color="cyan" className="mb-3 font-semibold">Réseau des 17 Parkings</Tag>
+                  <Tag color="cyan" className="mb-3 font-semibold">Réseau des 15 Parkings</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Nos Parkings & Carte</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     Carte interactive en temps réel des 15 ouvrages de stationnement, capacités et taux d'occupation.
@@ -170,7 +170,7 @@ export function LandingPage() {
                   <Tag color="blue" className="mb-3 font-semibold">Formulaire en Ligne</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Abonnement & Démarches</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    Effectuez votre souscription, renouvellement,demande de duplicata RFID sans compte.
+                    Effectuez votre souscription, renouvellement ou déclaration de perte de badge RFID en quelques clics.
                   </p>
                 </div>
                 <Button type="primary" block className="bg-secondary rounded-xl h-11 font-bold">

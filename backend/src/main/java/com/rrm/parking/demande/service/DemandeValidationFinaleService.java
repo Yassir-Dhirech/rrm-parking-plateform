@@ -20,6 +20,7 @@ import com.rrm.parking.common.exception.RessourceIntrouvableException;
 import com.rrm.parking.demande.dto.response.DecisionDemandeResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.StatutDemande;
 import com.rrm.parking.demande.event.CorrectionDemandeDemandeeEvent;
@@ -87,6 +88,10 @@ public class DemandeValidationFinaleService {
 
         if (demande instanceof DemandeRenouvellementRegulier renouvellement) {
             return validerRenouvellement(renouvellement, decideur, paiement);
+        }
+
+        if (demande instanceof DemandePerteCarte perte) {
+            return validerPerteCarte(perte, decideur, paiement);
         }
 
         throw new ConflitMetierException(
@@ -277,6 +282,58 @@ public class DemandeValidationFinaleService {
         );
     }
 
+    private DecisionDemandeResponse validerPerteCarte(
+            DemandePerteCarte demande,
+            Utilisateur decideur,
+            Paiement paiement
+    ) {
+        AbonnementRegulier abonnement = demande.getAbonnementConcerne();
+        CarteAcces cartePerdue = demande.getCartePerdue();
+        if (cartePerdue != null && (cartePerdue.getStatut() == StatutCarteAcces.ACTIVE
+                || cartePerdue.getStatut() == StatutCarteAcces.SUSPENDUE)) {
+            cartePerdue.desactiver("Remplacement suite à perte déclarée et payée");
+            carteAccesRepository.save(cartePerdue);
+        }
+
+        demande.valider(decideur, "Validation finale du duplicata payé");
+
+        String immatriculation = cartePerdue != null ? cartePerdue.getImmatriculationAffectee() : null;
+        CarteAcces nouvelleCarte = carteAccesRepository.save(
+                new CarteAcces(
+                        genererReferenceCarte(),
+                        abonnement,
+                        immatriculation
+                )
+        );
+
+        DemandeOperationnelle impression = new DemandeOperationnelle(
+                genererReferenceImpression(),
+                nouvelleCarte,
+                TypeOperationCarte.IMPRESSION,
+                "Impression du duplicata de carte d'accès suite à perte",
+                decideur
+        );
+        impression.definirDemandeClientSource(demande);
+        DemandeOperationnelle impressionEnregistree =
+                demandeOperationnelleRepository.save(impression);
+
+        demandeClientRepository.save(demande);
+
+        return new DecisionDemandeResponse(
+                demande.getId(),
+                demande.getReference(),
+                demande.getStatut(),
+                abonnement.getId(),
+                abonnement.getReference(),
+                nouvelleCarte.getId(),
+                nouvelleCarte.getReference(),
+                impressionEnregistree.getId(),
+                impressionEnregistree.getReference(),
+                null,
+                null
+        );
+    }
+
     @Transactional
     public DecisionDemandeResponse demanderCorrection(
             Long demandeId,
@@ -319,7 +376,8 @@ public class DemandeValidationFinaleService {
                 (DemandeClient) Hibernate.unproxy(demande);
 
         if (!(demandeReelle instanceof DemandeNouvelAbonnementRegulier)
-                && !(demandeReelle instanceof DemandeRenouvellementRegulier)) {
+                && !(demandeReelle instanceof DemandeRenouvellementRegulier)
+                && !(demandeReelle instanceof DemandePerteCarte)) {
             throw new ConflitMetierException(
                     "Ce type de demande n'est pas encore pris en charge"
             );

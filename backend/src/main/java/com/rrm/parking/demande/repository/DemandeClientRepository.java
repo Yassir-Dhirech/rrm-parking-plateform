@@ -155,8 +155,9 @@ public interface DemandeClientRepository
     @Query(value = """
             select dc.id from demande_client dc
             join client_particulier cp on cp.id = dc.client_id
-            where (exists (select 1 from demande_nouvel_abonnement_regulier n where n.id = dc.id)
-                or exists (select 1 from demande_renouvellement_regulier r where r.id = dc.id))
+                        where (exists (select 1 from demande_nouvel_abonnement_regulier n where n.id = dc.id)
+                or exists (select 1 from demande_renouvellement_regulier r where r.id = dc.id)
+                or exists (select 1 from demande_perte_carte p where p.id = dc.id))
               and (lower(dc.reference) like :terme escape '!'
                 or lower(cp.cin) like :terme escape '!'
                 or lower(cp.nom) like :terme escape '!'
@@ -185,4 +186,19 @@ public interface DemandeClientRepository
     long countRenouvellementsEnRetard(@Param("parkingId") Long parkingId,
             @Param("statut") StatutDemande statut,
             @Param("seuil") LocalDateTime seuil);
+
+    @Query(value = """
+            select dc.statut, count(dc.id)
+            from demande_client dc
+            left join demande_nouvel_abonnement_regulier dna on dna.id = dc.id
+            left join tarif_parking tn on tn.id = dna.tarif_parking_id
+            left join demande_renouvellement_regulier drr on drr.id = dc.id
+            left join tarif_parking tr on tr.id = drr.tarif_parking_id
+            left join demande_perte_carte dpc on dpc.id = dc.id
+            left join demande_nouveau_contrat_corporate dnc on dnc.id = dc.id
+            left join demande_changement_parking dcp on dcp.id = dc.id
+            where coalesce(tn.parking_id, tr.parking_id, dpc.parking_id, dnc.parking_id, dcp.nouveau_parking_id) = :parkingId
+            group by dc.statut
+            """, nativeQuery = true)
+    List<Object[]> compterDemandesParStatutEtParking(@Param("parkingId") Long parkingId);
 }

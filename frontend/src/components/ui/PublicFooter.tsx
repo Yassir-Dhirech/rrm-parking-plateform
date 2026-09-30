@@ -7,7 +7,7 @@ import {
   
   LockOutlined,
   ArrowRightOutlined,
-  FileExcelOutlined,
+  
 } from "@ant-design/icons";
 
 export function PublicFooter() {
@@ -90,12 +90,12 @@ export function PublicFooter() {
                 <span className="font-mono font-bold text-slate-200">+212 537 216 000</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <FileExcelOutlined className="text-cyan-400 text-sm shrink-0" />
+                <PhoneOutlined className="text-cyan-400 text-sm shrink-0" />
                 <span className="font-mono font-bold text-slate-200">+212 537 733 587</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <MailOutlined className="text-cyan-400 text-sm shrink-0" />
-                <span className="text-slate-300">contact@rabatmobilite.ma</span>
+                <span className="text-slate-300">contact@rrm.ma</span>
               </div>
               <div className="flex items-center gap-2.5 pt-1">
                 <ClockCircleOutlined className="text-emerald-400 text-sm shrink-0" />
