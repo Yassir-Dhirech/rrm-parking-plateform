@@ -256,7 +256,9 @@ public record DemandeDetailResponse(
                 decompte.montantTotalTTC(),
                 demande.getModePaiementSouhaite(),
 
-                List.of()
+                List.of(),
+                null,
+                null
         );
     }
 
