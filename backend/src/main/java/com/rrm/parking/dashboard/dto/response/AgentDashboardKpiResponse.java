@@ -11,6 +11,22 @@ public record AgentDashboardKpiResponse(
         BigDecimal encaissementsJourTtc,
         long nombreEncaissementsJour,
         long cartesAImprimer,
-        long cartesARemettre
+        long cartesARemettre,
+        RepartitionDossiersDto repartitionDossiers
 ) {
+    public record RepartitionDossiersDto(
+            long total,
+            long enAttentePaiement,
+            long payees,
+            long validees,
+            long finalisees,
+            long autres,
+            int pctEnAttentePaiement,
+            int pctPayees,
+            int pctValidees,
+            int pctFinalisees,
+            int pctAutres
+    ) {
+    }
 }
+

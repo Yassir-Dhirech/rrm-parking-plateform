@@ -5,6 +5,7 @@ import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.facturation.entity.Facture;
@@ -115,6 +116,18 @@ public record FactureResponse(
             immatriculation = corporate.getImmatriculationsDeclarees().isEmpty()
                     ? null
                     : String.join(", ", corporate.getImmatriculationsDeclarees());
+        } else if (demande instanceof DemandePerteCarte perte) {
+            if (perte.getAbonnementConcerne() != null) {
+                abonnementReference = perte.getAbonnementConcerne().getReference();
+            }
+            if (perte.getParking() != null) {
+                parkingNom = perte.getParking().getNom();
+            }
+            forfaitLibelle = "Duplicata Carte RFID (Perte)";
+            dureeEnMois = null;
+            if (perte.getCartePerdue() != null) {
+                immatriculation = perte.getCartePerdue().getImmatriculationAffectee();
+            }
         }
 
         LocalDate dateDebutAbonnement = null;

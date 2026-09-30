@@ -1,5 +1,6 @@
 package com.rrm.parking.facturation.service;
 
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.demande.dto.response.DemandeFacturationResponse;
@@ -235,30 +236,40 @@ public class FacturationService {
 
         DecomptePaiementDemande decompte =
                 DecomptePaiementDemande.depuis(demande);
-        TarifParking tarif = decompte.tarifParking();
 
-        BigDecimal tauxTva = tarif.getTauxTVA();
+        BigDecimal tauxTva = (decompte.tarifParking() != null)
+                ? decompte.tarifParking().getTauxTVA()
+                : new BigDecimal("20.00");
+
         Facture facture = new Facture(
                 genererNumeroFacture(),
                 paiement
         );
 
-        facture.ajouterLigne(new LigneFacture(
-                TypeLigneFacture.ABONNEMENT,
-                "Abonnement parking " + tarif.getForfait().getLibelle()
-                        + " - " + tarif.getDureeEnMois() + " mois",
-                1,
-                convertirTtcEnHt(
-                        decompte.montantAbonnementTTC(),
-                        tauxTva
-                ),
-                tauxTva
-        ));
+        // Ligne abonnement seulement si le montant est supérieur à 0
+        if (decompte.montantAbonnementTTC().signum() > 0 && decompte.tarifParking() != null) {
+            TarifParking tarif = decompte.tarifParking();
+            facture.ajouterLigne(new LigneFacture(
+                    TypeLigneFacture.ABONNEMENT,
+                    "Abonnement parking " + tarif.getForfait().getLibelle()
+                            + " - " + tarif.getDureeEnMois() + " mois",
+                    1,
+                    convertirTtcEnHt(
+                            decompte.montantAbonnementTTC(),
+                            tauxTva
+                    ),
+                    tauxTva
+            ));
+        }
 
+        // Ligne carte (50 DH)
         if (decompte.fraisCarteTTC().signum() > 0) {
+            String libelle = (demande instanceof DemandePerteCarte)
+                    ? "Frais de remplacement et réédition de carte RFID suite à déclaration de perte"
+                    : "Frais d'émission de la carte RFID sans contact";
             facture.ajouterLigne(new LigneFacture(
                     TypeLigneFacture.CARTE_ACCES,
-                    "Frais d'émission de la carte RFID sans contact",
+                    libelle,
                     1,
                     convertirTtcEnHt(
                             decompte.fraisCarteTTC(),
@@ -267,6 +278,7 @@ public class FacturationService {
                     tauxTva
             ));
         }
+
 
         facture.emettre();
         return FactureResponse.depuis(
@@ -353,23 +365,26 @@ public class FacturationService {
         boolean resultatGenere =
                 demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle
                         ? nouvelle.getAbonnementGenere() != null
-                        : ((DemandeRenouvellementRegulier) demandeReelle)
-                                .getPeriodeGeneree() != null;
-        if (demandeReelle.getStatut() != StatutDemande.VALIDEE
-                || !resultatGenere) {
+                        : demandeReelle instanceof DemandeRenouvellementRegulier renouv
+                                ? renouv.getPeriodeGeneree() != null
+                                : true; // Pour une perte de carte, pas d'abonnement à régénérer
+
+        if (demandeReelle.getStatut() != StatutDemande.VALIDEE || !resultatGenere) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "La demande doit être validée et générer son abonnement ou sa période"
+                    "La demande doit être validée pour être facturée"
             );
         }
         return demandeReelle;
     }
 
-    private boolean estDemandeReguliereFacturable(DemandeClient demande) {
+       private boolean estDemandeReguliereFacturable(DemandeClient demande) {
         Object demandeReelle = Hibernate.unproxy(demande);
         return demandeReelle instanceof DemandeNouvelAbonnementRegulier
-                || demandeReelle instanceof DemandeRenouvellementRegulier;
+                || demandeReelle instanceof DemandeRenouvellementRegulier
+                || demandeReelle instanceof DemandePerteCarte;
     }
+
 
     private Paiement chargerPaiementConfirme(Long demandeId) {
         return paiementRepository

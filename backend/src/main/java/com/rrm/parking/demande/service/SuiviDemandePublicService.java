@@ -9,6 +9,7 @@ import com.rrm.parking.demande.dto.response.DemandeRechercheResponse;
 import com.rrm.parking.demande.dto.response.SuiviDemandePublicResponse;
 import com.rrm.parking.demande.entity.DemandeClient;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.enums.CanalOtp;
 import com.rrm.parking.demande.enums.StatutDemande;
@@ -39,7 +40,8 @@ public class SuiviDemandePublicService {
     public SuiviDemandePublicResponse consulter(String reference) {
         DemandeClient demande = trouver(reference);
         if (demande instanceof DemandeNouvelAbonnementRegulier
-                || demande instanceof DemandeRenouvellementRegulier) {
+                || demande instanceof DemandeRenouvellementRegulier
+                || demande instanceof DemandePerteCarte) {
             return SuiviDemandePublicResponse.depuis(recherche.obtenirDetail(demande.getId()));
         }
         return SuiviDemandePublicResponse.depuis(DemandeRechercheResponse.depuis(demande),

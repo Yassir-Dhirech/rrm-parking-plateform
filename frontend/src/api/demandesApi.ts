@@ -471,6 +471,47 @@ export async function chargerContenuPieceJointe(
   return URL.createObjectURL(response.data);
 }
 
+export interface InfoCartePerdueResponse {
+  clientNom: string;
+  cin: string;
+  telephoneMasque: string;
+  numeroCarte: string;
+  parkingNom: string;
+  dateFinAbonnement: string;
+}
+
+export async function rechercherCartePerdueParCin(
+  cin: string
+): Promise<InfoCartePerdueResponse> {
+  const response = await client.post<InfoCartePerdueResponse>(
+    "/api/public/demandes/perte-carte/recherche",
+    { cin }
+  );
+  return response.data;
+}
+
+export async function declarerPerteCarte(
+  cin: string,
+  modePaiement: ModePaiement
+): Promise<DemandeAbonnementRegulierResponse> {
+  const response = await client.post<DemandeAbonnementRegulierResponse>(
+    "/api/public/demandes/perte-carte/declarer",
+    { cin, modePaiement }
+  );
+  return response.data;
+}
+
+export async function validerOtpPerteCarte(
+  reference: string,
+  code: string
+): Promise<ValidationOtpResponse> {
+  const response = await client.post<ValidationOtpResponse>(
+    `/api/public/demandes/perte-carte/${encodeURIComponent(reference)}/otp/validation`,
+    { code }
+  );
+  return response.data;
+}
+
 export function extraireMessageErreur(error: unknown): string {
   if (axios.isAxiosError<{ detail?: string; message?: string; error?: string }>(error)) {
     const data = error.response?.data;

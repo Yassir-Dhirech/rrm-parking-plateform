@@ -9,6 +9,7 @@ import com.rrm.parking.client.entity.ClientParticulier;
 import com.rrm.parking.client.entity.ClientEntreprise;
 import com.rrm.parking.demande.entity.DemandeNouveauContratCorporate;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.demande.event.RenouvellementOtpValideEvent;
 import com.rrm.parking.demande.event.DemandeOtpValideeEvent;
@@ -231,6 +232,10 @@ public class OtpValidationService {
                             corporate.getMontantTotalTtc()
                     )
             );
+            return;
+        }
+
+        if (demande instanceof DemandePerteCarte) {
             return;
         }
 

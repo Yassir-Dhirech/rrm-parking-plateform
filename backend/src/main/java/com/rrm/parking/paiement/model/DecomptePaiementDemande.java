@@ -2,6 +2,7 @@ package com.rrm.parking.paiement.model;
 
 import com.rrm.parking.common.exception.ConflitMetierException;
 import com.rrm.parking.demande.entity.DemandeClient;
+import com.rrm.parking.demande.entity.DemandePerteCarte;
 import com.rrm.parking.demande.entity.DemandeNouvelAbonnementRegulier;
 import com.rrm.parking.demande.entity.DemandeRenouvellementRegulier;
 import com.rrm.parking.paiement.enums.ModePaiement;
@@ -32,9 +33,12 @@ public record DecomptePaiementDemande(
             );
         }
 
+        
+
         DemandeClient demandeReelle =
                 (DemandeClient) Hibernate.unproxy(demande);
 
+                
         if (demandeReelle instanceof DemandeNouvelAbonnementRegulier nouvelle) {
             DecompteNouvelAbonnement decompte =
                     DecompteNouvelAbonnement.depuis(
@@ -64,6 +68,20 @@ public record DecomptePaiementDemande(
                     montantAbonnement
             );
         }
+
+        if (demandeReelle instanceof DemandePerteCarte perte) {
+            BigDecimal fraisCarte = perte.getFraisCarteTtc().setScale(2, RoundingMode.HALF_UP);
+            return new DecomptePaiementDemande(
+                    perte.getModePaiementSouhaite(),
+                    null,
+                    ZERO_MONTANT,         // 0 DH d'abonnement
+                    fraisCarte,           // 50 DH pour la carte
+                    fraisCarte            // Total net à payer = 50 DH TTC
+            );
+        }
+
+        
+
 
         throw new ConflitMetierException(
                 "Ce type de demande n'est pas pris en charge pour le paiement"

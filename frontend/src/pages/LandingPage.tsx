@@ -24,16 +24,17 @@ export function LandingPage() {
       <div className="max-w-[1500px] mx-auto px-4 md:px-8 my-6 w-full">
         <div className="relative rounded-3xl overflow-hidden shadow-2xl p-8 md:p-14 border border-white/60 group">
           {/* Clean Light White Shadow Overlay */}
+                    {/* Image de fond : Parking Bab Chellah RRM avec dégradé fluide */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div
-              className="w-full h-full bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
+              className="w-full h-full bg-cover bg-right md:bg-center transition-transform duration-1000 group-hover:scale-105"
               style={{
-                backgroundImage:
-                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDAokY5-A7_HtQT0hHWLoOTKNAgY6SMjA1KnsLqHmE2s0LwmQ4_WUA-DMS6SKfQKu7Mt8OcNAxl9A0CpSiNhPm9k-IUAp9u2lLK2xzH_RINNLM1NmdwOwVfE9L35RbqCbHWtMsRo5PkcL0og675GwhC4BeCkd0_FGGJbwybr67fXGhjVNscvb7QfA2jVcxWCx42lFEvNqVMXpfJJiYaSGyy6tzjenTHhfCwAv9brzvEfnpNVB31sHBh')",
+                backgroundImage: "url('/pictures/hero-parking.png')",
               }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/40 shadow-inner"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/20 shadow-inner"></div>
           </div>
+
 
           <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
             <div className="max-w-3xl">
@@ -124,7 +125,7 @@ export function LandingPage() {
                   <div className="w-14 h-14 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center mb-6 text-cyan-600 shadow-sm">
                     <EnvironmentOutlined className="text-3xl" />
                   </div>
-                  <Tag color="cyan" className="mb-3 font-semibold">Réseau des 17 Parkings</Tag>
+                  <Tag color="cyan" className="mb-3 font-semibold">Réseau des 15 Parkings</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Nos Parkings & Carte</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     Carte interactive en temps réel des 15 ouvrages de stationnement, capacités et taux d'occupation.
@@ -169,7 +170,7 @@ export function LandingPage() {
                   <Tag color="blue" className="mb-3 font-semibold">Formulaire en Ligne</Tag>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Abonnement & Démarches</h3>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    Effectuez votre souscription, renouvellement,demande de duplicata RFID sans compte.
+                    Effectuez votre souscription, renouvellement ou déclaration de perte de badge RFID en quelques clics.
                   </p>
                 </div>
                 <Button type="primary" block className="bg-secondary rounded-xl h-11 font-bold">
