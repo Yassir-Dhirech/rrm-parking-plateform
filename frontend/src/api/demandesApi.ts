@@ -21,6 +21,7 @@ import type {
   ConvocationCorporateResponse,
   ModificationDemandeReguliereRequest,
   DocumentsModificationDemande,
+  ModePaiement,
 } from "../features/demandes/types";
 
 async function lireReponseJson<T>(response: Response): Promise<T> {
